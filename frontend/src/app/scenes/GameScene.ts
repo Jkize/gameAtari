@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { socketManager } from '../network/socket';
-import { GameState, PlayerPublicState, BulletPublicState, Obstacle } from '../types/game-state.types';
+import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType } from '../types/game-state.types';
 import { PlayerInput } from '../types/input.types';
 import type { Socket } from 'socket.io-client';
 
@@ -33,6 +33,14 @@ const OBS: Record<string, { fill: number; glow: number }> = {
   rock:   { fill: 0x30303a, glow: 0x8888aa },
   steel:  { fill: 0x1a2438, glow: 0x3366ff },
   mirror: { fill: 0x004455, glow: 0x00ddff },
+};
+
+const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
+  bush: 'bush_01',
+  wood: 'wood_barricade_01',
+  rock: 'rock_block_01',
+  steel: 'steel_block_01',
+  mirror: 'mirror_panel_01',
 };
 
 const MONO = 'Share Tech Mono, Courier New, monospace';
@@ -72,8 +80,8 @@ export class GameScene extends Phaser.Scene {
   private glowGfx!: Phaser.GameObjects.Graphics;  // ADD blend – all glows (depth 4)
   private mainGfx!: Phaser.GameObjects.Graphics;  // NORMAL – bodies, HP bars (depth 5)
 
-  // Static obstacle graphics (one per obstacle, depth 2)
-  private obsGfx: Map<string, Phaser.GameObjects.Graphics> = new Map();
+  // Static obstacle render objects (one per obstacle, depth 2)
+  private obsGfx: Map<string, Phaser.GameObjects.GameObject> = new Map();
 
   // Camera follow target (invisible rectangle that we move each frame)
   private camTarget!: Phaser.GameObjects.Rectangle;
@@ -290,7 +298,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Obstacle management ───────────────────────────────────────────────────
-  private createObstacleGfx(obs: Obstacle): Phaser.GameObjects.Graphics {
+  private createObstacleGfx(obs: Obstacle): Phaser.GameObjects.GameObject {
+    const textureKey = this.getObstacleTextureKey(obs);
+    if (textureKey && this.textures.exists(textureKey)) {
+      return this.add.image(obs.x, obs.y, textureKey)
+        .setOrigin(0.5)
+        .setDisplaySize(obs.width, obs.height)
+        .setDepth(obs.type === 'bush' ? 6 : 2);
+    }
+
     const gfx = this.add.graphics().setDepth(obs.type === 'bush' ? 6 : 2);
     const rng = seededRandom(hashString(obs.id));
 
@@ -308,6 +324,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     return gfx;
+  }
+
+  private getObstacleTextureKey(obs: Obstacle): string | null {
+    const assetId = obs.assetId ?? OBSTACLE_ASSET_BY_TYPE[obs.type];
+    return assetId ? `obstacle-${assetId}` : null;
   }
 
   // ── Obstacle draw methods ─────────────────────────────────────────────────

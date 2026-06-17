@@ -1,9 +1,16 @@
 export type ObstacleType = 'bush' | 'wood' | 'rock' | 'steel' | 'mirror';
+export type ObstacleAssetId =
+  | 'bush_01'
+  | 'wood_barricade_01'
+  | 'rock_block_01'
+  | 'steel_block_01'
+  | 'mirror_panel_01';
 export type GameStatus  = 'waiting' | 'playing' | 'finished';
 
 export interface Obstacle {
   id: string;
   type: ObstacleType;
+  assetId?: ObstacleAssetId;
   // Center position. Keep this aligned with backend collision bounds.
   x: number;
   y: number;

@@ -23,6 +23,14 @@ const OBSTACLE_DESTRUCTIBLE: Record<ObstacleType, boolean> = {
   mirror: false,
 };
 
+const OBSTACLE_ASSET_ID: Record<ObstacleType, Obstacle['assetId']> = {
+  bush: 'bush_01',
+  wood: 'wood_barricade_01',
+  rock: 'rock_block_01',
+  steel: 'steel_block_01',
+  mirror: 'mirror_panel_01',
+};
+
 @Injectable()
 export class MapService {
   createMap(): GameMap {
@@ -43,6 +51,7 @@ export class MapService {
     return {
       id: uuidv4(),
       type,
+      assetId: OBSTACLE_ASSET_ID[type],
       x,
       y,
       width: w,
@@ -80,8 +89,8 @@ export class MapService {
       w = TILE,
       h = TILE,
     ) => {
-      const mirroredX = MAP_WIDTH - x - w;
-      const mirroredY = MAP_HEIGHT - y - h;
+      const mirroredX = MAP_WIDTH - x;
+      const mirroredY = MAP_HEIGHT - y;
 
       add(type, x, y, w, h);
       add(type, mirroredX, y, w, h);
@@ -89,71 +98,90 @@ export class MapService {
       add(type, mirroredX, mirroredY, w, h);
     };
 
+    const addHorizontalLine = (
+      type: ObstacleType,
+      startX: number,
+      y: number,
+      count: number,
+      gap = 80,
+      w = TILE,
+      h = TILE,
+    ) => {
+      for (let i = 0; i < count; i++) {
+        add(type, startX + i * gap, y, w, h);
+      }
+    };
+
+    const addVerticalLine = (
+      type: ObstacleType,
+      x: number,
+      startY: number,
+      count: number,
+      gap = 80,
+      w = TILE,
+      h = TILE,
+    ) => {
+      for (let i = 0; i < count; i++) {
+        add(type, x, startY + i * gap, w, h);
+      }
+    };
+
+    const addBushPair = (x: number, y: number, horizontal = true) => {
+      const gap = 72;
+      if (horizontal) {
+        add('bush', x - gap / 2, y);
+        add('bush', x + gap / 2, y);
+      } else {
+        add('bush', x, y - gap / 2);
+        add('bush', x, y + gap / 2);
+      }
+    };
+
+    const addBushQuad = (x: number, y: number) => {
+      const gap = 72;
+      add('bush', x - gap / 2, y - gap / 2);
+      add('bush', x + gap / 2, y - gap / 2);
+      add('bush', x - gap / 2, y + gap / 2);
+      add('bush', x + gap / 2, y + gap / 2);
+    };
+
     /*
-      Spawn areas are intentionally left mostly empty:
-      top-left, top-right, bottom-left, bottom-right.
+      Open spawn corners, clear horizontal/vertical lanes, and symmetric cover.
+      Coordinates are obstacle centers, matching frontend and collision bounds.
     */
 
-    // Outer steel anchors
-    addSymmetric('steel', 128, 128);
-    addSymmetric('steel', 256, 128);
-    addSymmetric('steel', 128, 256);
+    // Soft cover near spawn exits. These are grouped but do not block movement.
+    addBushPair(330, 230, true);
+    addBushPair(MAP_WIDTH - 330, 230, true);
+    addBushPair(330, MAP_HEIGHT - 230, true);
+    addBushPair(MAP_WIDTH - 330, MAP_HEIGHT - 230, true);
 
-    // Side steel bunkers
-    addSymmetric('steel', 448, 320, 128, 24);
-    addSymmetric('steel', 448, 856, 128, 24);
+    // Four-bush islands in open green zones, intentionally away from rocks.
+    addBushQuad(660, 290);
+    addBushQuad(940, 910);
 
-    // Vertical steel walls near mid lanes
-    addSymmetric('steel', 640, 256, 24, 128);
-    addSymmetric('steel', 936, 256, 24, 128);
+    // A light central screen: cover to hide in, not a wall to get stuck on.
+    addBushPair(800, 600, true);
 
-    // Central steel core
-    add('steel', 704, 536, 64, 64);
-    add('steel', 832, 536, 64, 64);
-    add('steel', 704, 664, 64, 64);
-    add('steel', 832, 664, 64, 64);
+    // Defensive rock triplets. They read like cover lines but leave wide lanes.
+    addHorizontalLine('rock', 360, 430, 3, 92);
+    addHorizontalLine('rock', MAP_WIDTH - 544, 770, 3, 92);
 
-    // Central destructible rock ring
-    add('rock', 768, 472);
-    add('rock', 768, 728);
-    add('rock', 640, 600);
-    add('rock', 896, 600);
+    // Wood barricade triplets on the side lanes.
+    addHorizontalLine('wood', 260, 610, 3, 88);
+    addHorizontalLine('wood', MAP_WIDTH - 436, 610, 3, 88);
 
-    // Diagonal rock clusters
-    addSymmetric('rock', 384, 384);
-    addSymmetric('rock', 448, 448);
-    addSymmetric('rock', 512, 384);
+    // A few hard anchors, isolated so tanks can rotate and pass around them.
+    add('steel', 470, 600);
+    add('steel', MAP_WIDTH - 470, 600);
+    add('steel', 700, 500);
+    add('steel', 900, 700);
 
-    // Wood barricades near side lanes
-    addSymmetric('wood', 288, 544);
-    addSymmetric('wood', 352, 544);
-    addSymmetric('wood', 416, 544);
-
-    // Wood barricades near upper/lower middle
-    addSymmetric('wood', 672, 192);
-    addSymmetric('wood', 736, 192);
-    addSymmetric('wood', 800, 192);
-
-    // Bush cover near spawn approaches
-    addSymmetric('bush', 320, 192);
-    addSymmetric('bush', 384, 192);
-    addSymmetric('bush', 320, 256);
-
-    // Bush cover in open lanes
-    addSymmetric('bush', 544, 480);
-    addSymmetric('bush', 544, 544);
-    addSymmetric('bush', 544, 608);
-
-    // Bush cover near center but not blocking it completely
-    addSymmetric('bush', 672, 416);
-    addSymmetric('bush', 864, 416);
-
-    // Mirror panels for ricochet mechanics
-    addSymmetric('mirror', 768, 320, 16, 128);
-    addSymmetric('mirror', 608, 592, 128, 16);
-
-    // Extra mirror pair in side lanes
-    addSymmetric('mirror', 320, 704, 128, 16);
+    // Ricochet accents. Sparse placement keeps the arena readable.
+    add('mirror', 260, 350, 140, 18);
+    add('mirror', MAP_WIDTH - 260, MAP_HEIGHT - 350, 140, 18);
+    add('mirror', 620, 900, 18, 130);
+    add('mirror', MAP_WIDTH - 620, 300, 18, 130);
 
     return obstacles;
   }

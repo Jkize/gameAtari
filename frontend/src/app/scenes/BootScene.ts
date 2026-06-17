@@ -5,6 +5,14 @@ export class BootScene extends Phaser.Scene {
     super({ key: 'BootScene' });
   }
 
+  preload(): void {
+    this.load.image('obstacle-bush_01', 'assets/obstacle/bush_01.png');
+    this.load.image('obstacle-wood_barricade_01', 'assets/obstacle/wood_barricade_01.png');
+    this.load.image('obstacle-rock_block_01', 'assets/obstacle/rock_block_01.png');
+    this.load.image('obstacle-steel_block_01', 'assets/obstacle/steel_block_01.png');
+    this.load.image('obstacle-mirror_panel_01', 'assets/obstacle/mirror_panel_01.png');
+  }
+
   create(): void {
     const W = this.scale.width;
     const H = this.scale.height;
