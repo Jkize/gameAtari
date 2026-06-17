@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { socketManager } from '../network/socket';
 import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType } from '../types/game-state.types';
 import { PlayerInput } from '../types/input.types';
-import { ensureTankSvgTextures, TANK_BODY_ROTATION_OFFSET, TANK_TURRET_ORIGIN_X, TANK_TURRET_ROTATION_OFFSET } from '../rendering/tank-svg-textures';
+import { ensureTankSvgTextures, TANK_BODY_ROTATION_OFFSET, TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y, TANK_TURRET_ROTATION_OFFSET } from '../rendering/tank-svg-textures';
 import type { Socket } from 'socket.io-client';
 
 // ── Colour palette ────────────────────────────────────────────────────────────
@@ -48,6 +48,9 @@ const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
 };
 
 const MONO = 'Share Tech Mono, Courier New, monospace';
+const BODY_TURN_STEP = 0.1;
+const PLAYER_LABEL_OFFSET = 1.5;
+const TANK_TURRET_SCALE = 3;
 
 interface TankSprites {
   body: Phaser.GameObjects.Image;
@@ -842,23 +845,57 @@ export class GameScene extends Phaser.Scene {
         const nameLabel = p.id.slice(0, 8);
         const label = isLocal ? nameLabel : `${nameLabel}\n${p.hp}hp`;
         txt.setText(label);
-        txt.setPosition(p.x, p.y - p.radius * 3.6);
+        txt.setPosition(p.x, p.y - p.radius * PLAYER_LABEL_OFFSET);
         txt.setVisible(p.alive);
       }
     });
   }
 
   private drawTank(p: PlayerPublicState, isLocal: boolean, time: number): void {
+    const { x, y, radius: r, bodyAngle, aimAngle: a, color } = p;
+    const textureKeys = ensureTankSvgTextures(this, color);
+    if (!textureKeys) return;
+
+    let sprites = this.playerTankSprites.get(p.id);
+    if (!sprites) {
+      sprites = {
+        body: this.add.image(x, y, textureKeys.body)
+          .setOrigin(0.5)
+          .setDepth(5),
+        turret: this.add.image(x, y, textureKeys.turret)
+          .setOrigin(TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y)
+          .setDepth(7),
+      };
+      this.playerTankSprites.set(p.id, sprites);
+    }
+
+    const bodyScale = (r * 2.7) / sprites.body.width;
+    const turretScale = (r * TANK_TURRET_SCALE) / sprites.turret.width;
+
     if (!p.alive) {
-      const sprites = this.playerTankSprites.get(p.id);
-      if (sprites) {
-        sprites.body.setVisible(false);
-        sprites.turret.setVisible(false);
-      }
+      this.mainGfx.fillStyle(0x000000, 0.42);
+      this.mainGfx.fillEllipse(x + 4, y + 6, r * 2.35, r * 1.9);
+
+      sprites.body
+        .setVisible(true)
+        .setTexture(textureKeys.destroyedBody)
+        .setPosition(x, y)
+        .setScale(bodyScale)
+        .setRotation(bodyAngle + TANK_BODY_ROTATION_OFFSET)
+        .setAlpha(0.78)
+        .setTint(0x777777);
+      sprites.turret
+        .setVisible(true)
+        .setTexture(textureKeys.destroyedTurret)
+        .setPosition(x, y)
+        .setScale(turretScale)
+        .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
+        .setAlpha(0.72)
+        .setTint(0x777777);
+
       return;
     }
 
-    const { x, y, radius: r, bodyAngle, aimAngle: a, color } = p;
     const pulse     = isLocal ? (0.85 + 0.15 * Math.sin(time * 0.004)) : 1;
 
     this.glowGfx.fillStyle(color, 0.055 * pulse);
@@ -879,32 +916,20 @@ export class GameScene extends Phaser.Scene {
     this.mainGfx.fillStyle(0x000000, 0.30);
     this.mainGfx.fillEllipse(x + 4, y + 5, r * 2.2, r * 1.8);
 
-    const textureKeys = ensureTankSvgTextures(this, color);
-    if (!textureKeys) return;
-
-    let sprites = this.playerTankSprites.get(p.id);
-    if (!sprites) {
-      sprites = {
-        body: this.add.image(x, y, textureKeys.body)
-          .setOrigin(0.5)
-          .setDepth(5),
-        turret: this.add.image(x, y, textureKeys.turret)
-          .setOrigin(TANK_TURRET_ORIGIN_X, 0.5)
-          .setDepth(7),
-      };
-      this.playerTankSprites.set(p.id, sprites);
-    }
-
-    const bodyScale = (r * 2.7) / sprites.body.width;
-    const turretScale = (r * 1.62) / sprites.turret.width;
     sprites.body
       .setVisible(true)
       .setTexture(textureKeys.body)
       .setPosition(x, y)
       .setScale(bodyScale)
-      .setRotation(bodyAngle + TANK_BODY_ROTATION_OFFSET)
       .setAlpha(1)
       .clearTint();
+    sprites.body.setRotation(
+      Phaser.Math.Angle.RotateTo(
+        sprites.body.rotation,
+        bodyAngle + TANK_BODY_ROTATION_OFFSET,
+        BODY_TURN_STEP,
+      ),
+    );
     sprites.turret
       .setVisible(true)
       .setTexture(textureKeys.turret)
@@ -913,27 +938,6 @@ export class GameScene extends Phaser.Scene {
       .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
       .setAlpha(1)
       .clearTint();
-
-    const ca = Math.cos(a);
-    const sa = Math.sin(a);
-    const barrelStart = r * 0.34;
-    const barrelEnd = r * 1.25;
-    const barrelBaseX = x + ca * barrelStart;
-    const barrelBaseY = y + sa * barrelStart;
-    const barrelTipX = x + ca * barrelEnd;
-    const barrelTipY = y + sa * barrelEnd;
-
-    this.playerUiGfx.lineStyle(8, 0xededed, 0.96);
-    this.playerUiGfx.lineBetween(barrelBaseX, barrelBaseY, barrelTipX, barrelTipY);
-    this.playerUiGfx.lineStyle(5, color, 1);
-    this.playerUiGfx.lineBetween(barrelBaseX, barrelBaseY, barrelTipX, barrelTipY);
-    this.playerUiGfx.fillStyle(0xededed, 1);
-    this.playerUiGfx.fillCircle(barrelTipX, barrelTipY, r * 0.18);
-    this.playerUiGfx.fillStyle(color, 1);
-    this.playerUiGfx.fillCircle(barrelTipX, barrelTipY, r * 0.11);
-
-    this.glowGfx.fillStyle(0xffffff, 0.35 * pulse);
-    this.glowGfx.fillCircle(barrelTipX, barrelTipY, r * 0.14);
 
   }
 

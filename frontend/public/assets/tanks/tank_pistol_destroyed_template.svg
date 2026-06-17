@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="deadTurret" cx="44%" cy="36%" r="76%">
+      <stop offset="0%" stop-color="var(--tank-shadow)"/>
+      <stop offset="55%" stop-color="#191919"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </radialGradient>
+    <linearGradient id="deadBarrel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#2b2d31"/>
+      <stop offset="60%" stop-color="#0d0e10"/>
+      <stop offset="100%" stop-color="#030303"/>
+    </linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#000" flood-opacity="0.42"/>
+    </filter>
+    <style>
+      :root {
+        --tank-color: #e54637;
+        --tank-highlight: color-mix(in srgb, var(--tank-color), white 20%);
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 40%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 50%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 82%);
+        --tank-outline: #050505;
+      }
+      .line { stroke:var(--tank-outline); stroke-width:5; stroke-linejoin:round; }
+      .fine { stroke:#050505; stroke-width:2.4; stroke-linejoin:round; }
+      .scar { stroke:#050505; stroke-width:7; stroke-linecap:round; opacity:.82; }
+      .hot-scar { stroke:#ff8a1f; stroke-width:2.5; stroke-linecap:round; opacity:.45; }
+      .ember { fill:#ff6a18; opacity:.7; }
+    </style>
+  </defs>
+
+  <g filter="url(#shadow)" transform="rotate(-13 256 256)">
+    <ellipse cx="256" cy="406" rx="126" ry="30" fill="#000" opacity=".3"/>
+
+    <g transform="translate(256 300)">
+      <path d="M-28 -10 L25 -15 L31 39 L18 157 L-18 154 L-24 39 Z" fill="url(#deadBarrel)" class="line"/>
+      <path d="M-18 146 L21 151 L14 229 L-9 244 L-30 222 Z" fill="#0a0a0b" class="line"/>
+      <path d="M-11 48 l26 38" class="scar"/>
+      <path d="M8 122 l-20 28" class="scar"/>
+      <path d="M-5 54 l15 23" class="hot-scar"/>
+      <circle cx="-5" cy="217" r="10" fill="#030303" class="fine"/>
+    </g>
+
+    <path d="M151 142 L208 95 L310 104 L361 139 L382 235 L340 299 L258 323 L169 303 L124 237 Z" fill="url(#deadTurret)" class="line"/>
+    <path d="M174 162 L216 127 L296 129 L337 161 L352 229 L322 274 L258 295 L188 278 L158 232 Z" fill="#151516" class="fine"/>
+    <path d="M188 140 L323 143 L347 169 L323 203 L188 205 L164 171 Z" fill="var(--tank-deep-shadow)" class="fine"/>
+    <path d="M205 207 L306 204 L319 250 L257 282 L191 251 Z" fill="#0c0d0f" class="fine"/>
+
+    <path d="M211 132 L300 133 L330 164 L314 222 L256 244 L198 224 L181 166 Z" fill="#111214" class="line"/>
+    <path d="M229 157 L285 158 L301 188 L284 221 L255 232 L226 218 L213 187 Z" fill="#050505" class="fine"/>
+    <circle cx="256" cy="190" r="18" fill="#18191b" class="fine"/>
+    <path d="M235 169 l41 41" class="scar"/>
+    <path d="M276 166 l-39 47" class="scar"/>
+    <path d="M244 180 l21 21" class="hot-scar"/>
+
+    <path d="M229 61 L283 58 L296 91 L290 130 L219 134 L214 90 Z" fill="var(--tank-deep-shadow)" class="line"/>
+    <path d="M240 70 L271 68 L280 91 L276 120 L232 123 L229 91 Z" fill="#0a0a0b" class="fine"/>
+
+    <g>
+      <path d="M166 187 l49 -36" class="scar"/>
+      <path d="M319 145 l-33 37" class="scar"/>
+      <path d="M178 255 l54 18" class="scar"/>
+      <path d="M305 259 l31 -30" class="scar"/>
+      <path d="M185 182 l27 -19" class="hot-scar"/>
+      <path d="M298 159 l-18 21" class="hot-scar"/>
+      <path d="M199 262 l27 8" class="hot-scar"/>
+    </g>
+
+    <g>
+      <circle cx="234" cy="211" r="4" class="ember"/>
+      <circle cx="284" cy="232" r="3.5" class="ember"/>
+      <circle cx="331" cy="223" r="2.8" class="ember"/>
+      <circle cx="226" cy="102" r="2.8" class="ember"/>
+    </g>
+  </g>
+</svg>
