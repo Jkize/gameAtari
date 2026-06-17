@@ -62,6 +62,9 @@ export class GameService {
   private usedColorIndices = new Set<number>();
 
   addPlayer(socketId: string): Player {
+    const existing = this.players.get(socketId);
+    if (existing) return existing;
+
     const spawn = SPAWN_POINTS[this.players.size % SPAWN_POINTS.length];
     const colorIndex = this.pickColorIndex();
 

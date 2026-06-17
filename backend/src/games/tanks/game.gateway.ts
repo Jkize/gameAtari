@@ -70,4 +70,24 @@ export class GameGateway
     this.server.emit('gameStarted', { status: 'playing' });
     console.log('[startGame] Game started');
   }
+
+  @SubscribeMessage('restartGame')
+  handleRestartGame(): void {
+    if (this.gameService.status !== 'finished') return;
+
+    this.gameLoopService.stop();
+    this.gameService.reset();
+    this.gameService.map = this.mapService.createMap();
+
+    for (const client of this.server.sockets.sockets.values()) {
+      const player = this.gameService.addPlayer(client.id);
+      client.emit('gameJoined', {
+        playerId: player.id,
+        map: this.gameService.map,
+        status: this.gameService.status,
+      });
+    }
+
+    console.log('[restartGame] Game reset');
+  }
 }

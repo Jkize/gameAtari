@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { socketManager } from '../network/socket';
 import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType } from '../types/game-state.types';
 import { PlayerInput } from '../types/input.types';
+import { ensureTankSvgTextures, TANK_TURRET_ORIGIN_X } from '../rendering/tank-svg-textures';
 import type { Socket } from 'socket.io-client';
 
 // ── Colour palette ────────────────────────────────────────────────────────────
@@ -48,6 +49,11 @@ const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
 
 const MONO = 'Share Tech Mono, Courier New, monospace';
 
+interface TankSprites {
+  body: Phaser.GameObjects.Image;
+  turret: Phaser.GameObjects.Image;
+}
+
 // ── Seeded random helpers ─────────────────────────────────────────────────────
 function hashString(value: string): number {
   let h = 0;
@@ -82,6 +88,7 @@ export class GameScene extends Phaser.Scene {
   private bgGfx!: Phaser.GameObjects.Graphics;    // static background (depth 0)
   private glowGfx!: Phaser.GameObjects.Graphics;  // ADD blend – all glows (depth 4)
   private mainGfx!: Phaser.GameObjects.Graphics;  // NORMAL – bodies, HP bars (depth 5)
+  private playerUiGfx!: Phaser.GameObjects.Graphics;
 
   // Static obstacle render objects (one per obstacle, depth 2)
   private obsGfx: Map<string, Phaser.GameObjects.GameObject> = new Map();
@@ -114,6 +121,7 @@ export class GameScene extends Phaser.Scene {
 
   // Per-player name labels (world space, depth 10)
   private playerNameTexts: Map<string, Phaser.GameObjects.Text> = new Map();
+  private playerTankSprites: Map<string, TankSprites> = new Map();
 
   // Effect tracking
   private playerMaxHp: Map<string, number> = new Map();
@@ -133,6 +141,7 @@ export class GameScene extends Phaser.Scene {
     this.bgGfx   = this.add.graphics().setDepth(0);
     this.glowGfx = this.add.graphics().setDepth(4).setBlendMode(Phaser.BlendModes.ADD);
     this.mainGfx = this.add.graphics().setDepth(5);
+    this.playerUiGfx = this.add.graphics().setDepth(8);
 
     this.camTarget = this.add.rectangle(800, 600, 1, 1, 0x000000, 0).setDepth(-1);
     this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
@@ -156,6 +165,7 @@ export class GameScene extends Phaser.Scene {
 
     this.glowGfx.clear();
     this.mainGfx.clear();
+    this.playerUiGfx.clear();
 
     this.drawObstacleGlows();
     this.drawPlayers(time);
@@ -170,9 +180,8 @@ export class GameScene extends Phaser.Scene {
   private setupSocket(): void {
     this.socket = socketManager.connect();
 
-    this.socket.emit('joinGame');
-
     this.socket.on('gameJoined', (data: { playerId: string; map: GameState['map']; status: GameState['status'] }) => {
+      this.resetRoundRenderState();
       this.myPlayerId = data.playerId;
       this.gameState = { status: data.status, map: data.map, players: [], bullets: [] };
       this.mapW = data.map.width;
@@ -196,6 +205,10 @@ export class GameScene extends Phaser.Scene {
     this.socket.on('connect', () => {
       this.socket.emit('joinGame');
     });
+
+    if (this.socket.connected) {
+      this.socket.emit('joinGame');
+    }
   }
 
   // ── Input setup ───────────────────────────────────────────────────────────
@@ -213,6 +226,8 @@ export class GameScene extends Phaser.Scene {
     kb.on('keydown-ENTER', () => {
       if (this.gameState?.status === 'waiting' && this.myPlayerId) {
         this.socket.emit('startGame');
+      } else if (this.gameState?.status === 'finished') {
+        this.socket.emit('restartGame');
       }
     });
 
@@ -222,6 +237,28 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Background ────────────────────────────────────────────────────────────
+  private resetRoundRenderState(): void {
+    this.obsGfx.forEach(gfx => gfx.destroy());
+    this.obsGfx.clear();
+
+    this.playerNameTexts.forEach(txt => txt.destroy());
+    this.playerNameTexts.clear();
+
+    this.playerTankSprites.forEach(tank => {
+      tank.body.destroy();
+      tank.turret.destroy();
+    });
+    this.playerTankSprites.clear();
+
+    this.playerMaxHp.clear();
+    this.playerLastHp.clear();
+    this.playerLastPos.clear();
+    this.bulletLastPos.clear();
+    this.prevPlayerIds.clear();
+    this.prevBulletIds.clear();
+    this.prevObsIds.clear();
+  }
+
   private drawBackground(): void {
     const W   = this.mapW;
     const H   = this.mapH;
@@ -306,7 +343,7 @@ export class GameScene extends Phaser.Scene {
   // ── Obstacle management ───────────────────────────────────────────────────
   private createObstacleGfx(obs: Obstacle): Phaser.GameObjects.GameObject {
     const textureKey = this.getObstacleTextureKey(obs);
-    if (textureKey && this.textures.exists(textureKey)) {
+    if (obs.type !== 'mirror' && textureKey && this.textures.exists(textureKey)) {
       return this.add.image(obs.x, obs.y, textureKey)
         .setOrigin(0.5)
         .setDisplaySize(obs.width, obs.height)
@@ -606,63 +643,75 @@ export class GameScene extends Phaser.Scene {
     const y = obs.y - obs.height / 2;
     const w = obs.width;
     const h = obs.height;
+    const horizontal = w >= h;
+    const frame = Math.max(3, Math.min(7, Math.min(w, h) * 0.22));
+    const glassX = x + frame;
+    const glassY = y + frame;
+    const glassW = Math.max(1, w - frame * 2);
+    const glassH = Math.max(1, h - frame * 2);
+    const longSide = horizontal ? w : h;
+    const segmentCount = Math.max(2, Math.floor(longSide / 34));
 
     // Drop shadow
-    gfx.fillStyle(0x000000, 0.32);
-    gfx.fillRect(x + 4, y + 5, w + 6, h + 6);
+    gfx.fillStyle(0x000000, 0.42);
+    gfx.fillRect(x + 5, y + 6, w + 8, h + 8);
 
-    // Outer dark housing frame
-    gfx.fillStyle(0x002233, 1);
-    gfx.fillRect(x - 3, y - 3, w + 6, h + 6);
+    // Dark reinforced housing
+    gfx.fillStyle(0x001823, 1);
+    gfx.fillRect(x - 5, y - 5, w + 10, h + 10);
+    gfx.fillStyle(0x00384e, 1);
+    gfx.fillRect(x - 2, y - 2, w + 4, h + 4);
 
-    // Inner metallic frame
-    gfx.fillStyle(0x003c55, 1);
+    // Inner frame and continuous reflective glass
+    gfx.fillStyle(0x001f2b, 1);
     gfx.fillRect(x, y, w, h);
+    gfx.fillStyle(0x008fa8, 0.58);
+    gfx.fillRect(glassX, glassY, glassW, glassH);
+    gfx.fillStyle(0x18e6ff, 0.32);
+    gfx.fillRect(glassX + 2, glassY + 2, Math.max(1, glassW - 4), Math.max(1, glassH * 0.42));
+    gfx.fillStyle(0x004f68, 0.35);
+    gfx.fillRect(glassX + 2, glassY + glassH * 0.58, Math.max(1, glassW - 4), Math.max(1, glassH * 0.34));
 
-    // Bright cyan glass fill
-    gfx.fillStyle(0x00aacc, 0.35);
-    gfx.fillRect(x + 3, y + 3, w - 6, h - 6);
-
-    // Brighter inner core
-    gfx.fillStyle(0x00ccee, 0.22);
-    gfx.fillRect(x + 6, y + 6, w - 12, h - 12);
-
-    // Diagonal reflective stripes (clipped to glass area)
-    gfx.lineStyle(1.5, 0x00eeff, 0.50);
-    for (let d = -h; d < w + h; d += 10) {
-      const x1 = x + 3 + d;
-      const y1 = y + 3;
-      const x2 = x + 3 + d + (h - 6);
-      const y2 = y + h - 3;
-      const cx1 = Math.max(x + 3, Math.min(x + w - 3, x1));
-      const cx2 = Math.max(x + 3, Math.min(x + w - 3, x2));
-      if (Math.abs(cx2 - cx1) > 0.5) gfx.lineBetween(cx1, y1, cx2, y2);
+    // Repeated reflective cells make long mirrors read as one full-width surface.
+    gfx.lineStyle(2, 0x00f7ff, 0.55);
+    for (let i = 1; i < segmentCount; i++) {
+      const t = i / segmentCount;
+      if (horizontal) {
+        const sx = x + w * t + (rng() - 0.5) * 2;
+        gfx.lineBetween(sx, y + frame * 0.7, sx, y + h - frame * 0.7);
+      } else {
+        const sy = y + h * t + (rng() - 0.5) * 2;
+        gfx.lineBetween(x + frame * 0.7, sy, x + w - frame * 0.7, sy);
+      }
     }
 
-    // Bold white primary highlight streak
-    gfx.lineStyle(3, 0xffffff, 0.75);
-    gfx.lineBetween(x + w * 0.20, y + 5, x + w * 0.25, y + h - 5);
-    gfx.lineStyle(1.5, 0xffffff, 0.45);
-    gfx.lineBetween(x + w * 0.28, y + 5, x + w * 0.31, y + h - 5);
+    gfx.lineStyle(2.5, 0xffffff, 0.62);
+    if (horizontal) {
+      gfx.lineBetween(glassX + glassW * 0.12, glassY + glassH * 0.34, glassX + glassW * 0.36, glassY + glassH * 0.34);
+      gfx.lineBetween(glassX + glassW * 0.50, glassY + glassH * 0.50, glassX + glassW * 0.76, glassY + glassH * 0.50);
+      gfx.lineStyle(1.5, 0x9dffff, 0.48);
+      gfx.lineBetween(glassX + glassW * 0.18, glassY + glassH * 0.68, glassX + glassW * 0.90, glassY + glassH * 0.68);
+    } else {
+      gfx.lineBetween(glassX + glassW * 0.36, glassY + glassH * 0.12, glassX + glassW * 0.36, glassY + glassH * 0.36);
+      gfx.lineBetween(glassX + glassW * 0.50, glassY + glassH * 0.50, glassX + glassW * 0.50, glassY + glassH * 0.76);
+      gfx.lineStyle(1.5, 0x9dffff, 0.48);
+      gfx.lineBetween(glassX + glassW * 0.68, glassY + glassH * 0.18, glassX + glassW * 0.68, glassY + glassH * 0.90);
+    }
 
-    // Secondary cyan streak
-    gfx.lineStyle(1.5, 0x88eeff, 0.38);
-    gfx.lineBetween(x + w * 0.54, y + 5, x + w * 0.57, y + h - 5);
-
-    // Top + bottom metallic end caps
-    gfx.fillStyle(0x00aabb, 1);
-    gfx.fillRect(x - 2, y - 4, w + 4, 6);
-    gfx.fillRect(x - 2, y + h - 2, w + 4, 6);
-    // End cap highlight
-    gfx.fillStyle(0x00eeff, 0.60);
-    gfx.fillRect(x - 2, y - 4, w + 4, 2);
-    gfx.fillRect(x - 2, y + h + 2, w + 4, 2);
-
-    // Strong outer glow border (baked in)
-    gfx.lineStyle(5, 0x00ddff, 0.85);
+    // Bright rails and end caps.
+    gfx.lineStyle(3, 0x00eaff, 0.88);
     gfx.strokeRect(x - 1, y - 1, w + 2, h + 2);
-    gfx.lineStyle(2, 0x00ffff, 0.55);
-    gfx.strokeRect(x + 3, y + 3, w - 6, h - 6);
+    gfx.lineStyle(1.5, 0xb9ffff, 0.72);
+    gfx.strokeRect(glassX, glassY, glassW, glassH);
+
+    gfx.fillStyle(0x00eaff, 0.90);
+    if (horizontal) {
+      gfx.fillRect(x - 3, y - 3, 7, h + 6);
+      gfx.fillRect(x + w - 4, y - 3, 7, h + 6);
+    } else {
+      gfx.fillRect(x - 3, y - 3, w + 6, 7);
+      gfx.fillRect(x - 3, y + h - 4, w + 6, 7);
+    }
   }
 
   private drawObstacleGlows(): void {
@@ -724,6 +773,12 @@ export class GameScene extends Phaser.Scene {
         this.playerLastPos.delete(id);
         const txt = this.playerNameTexts.get(id);
         if (txt) { txt.destroy(); this.playerNameTexts.delete(id); }
+        const tank = this.playerTankSprites.get(id);
+        if (tank) {
+          tank.body.destroy();
+          tank.turret.destroy();
+          this.playerTankSprites.delete(id);
+        }
       }
     });
 
@@ -794,28 +849,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawTank(p: PlayerPublicState, isLocal: boolean, time: number): void {
-    if (!p.alive) return;
+    if (!p.alive) {
+      const sprites = this.playerTankSprites.get(p.id);
+      if (sprites) {
+        sprites.body.setVisible(false);
+        sprites.turret.setVisible(false);
+      }
+      return;
+    }
 
     const { x, y, radius: r, aimAngle: a, color } = p;
-    const bodyColor = darken(color, 0.35);
     const pulse     = isLocal ? (0.85 + 0.15 * Math.sin(time * 0.004)) : 1;
 
     this.glowGfx.fillStyle(color, 0.055 * pulse);
     this.glowGfx.fillCircle(x, y, r * 1.75);
     this.glowGfx.fillStyle(color, 0.035 * pulse);
     this.glowGfx.fillCircle(x, y, r * 1.05);
-
-    // Barrel glow
-    const bL = r * 1.6;
-    const bW = r * 0.32;
-    const ca = Math.cos(a), sa = Math.sin(a), hw = bW / 2;
-    this.glowGfx.fillStyle(color, 0.18 * pulse);
-    this.glowGfx.fillPoints([
-      new Phaser.Math.Vector2(x + sa * hw * 1.6, y - ca * hw * 1.6),
-      new Phaser.Math.Vector2(x - sa * hw * 1.6, y + ca * hw * 1.6),
-      new Phaser.Math.Vector2(x - sa * hw * 1.6 + ca * bL, y + ca * hw * 1.6 + sa * bL),
-      new Phaser.Math.Vector2(x + sa * hw * 1.6 + ca * bL, y - ca * hw * 1.6 + sa * bL),
-    ], true);
 
     if (p.dashing) {
       this.glowGfx.fillStyle(color, 0.13);
@@ -830,38 +879,59 @@ export class GameScene extends Phaser.Scene {
     this.mainGfx.fillStyle(0x000000, 0.30);
     this.mainGfx.fillEllipse(x + 4, y + 5, r * 2.2, r * 1.8);
 
-    // Tracks
-    const tw = r * 0.22;
-    const th = r * 1.6;
-    this.mainGfx.fillStyle(0x000000, 0.55);
-    this.mainGfx.fillRect(x - r * 0.95,      y - th / 2, tw, th);
-    this.mainGfx.fillRect(x + r * 0.95 - tw, y - th / 2, tw, th);
+    const textureKeys = ensureTankSvgTextures(this);
+    if (!textureKeys) return;
 
-    // Body hull (darkened player color)
-    this.mainGfx.fillStyle(bodyColor, 1);
-    this.mainGfx.fillRect(x - r * 0.74, y - r * 0.78, r * 1.48, r * 1.56);
+    let sprites = this.playerTankSprites.get(p.id);
+    if (!sprites) {
+      sprites = {
+        body: this.add.image(x, y, textureKeys.body)
+          .setOrigin(0.5)
+          .setDepth(5),
+        turret: this.add.image(x, y, textureKeys.turret)
+          .setOrigin(TANK_TURRET_ORIGIN_X, 0.5)
+          .setDepth(7),
+      };
+      this.playerTankSprites.set(p.id, sprites);
+    }
 
-    // Hull highlight
-    this.mainGfx.fillStyle(0xffffff, 0.09);
-    this.mainGfx.fillRect(x - r * 0.70, y - r * 0.74, r * 1.40, r * 0.38);
+    const bodyScale = (r * 2.7) / sprites.body.width;
+    const turretScale = (r * 1.62) / sprites.turret.width;
+    sprites.body
+      .setVisible(true)
+      .setPosition(x, y)
+      .setScale(bodyScale)
+      .setRotation(0)
+      .setAlpha(1)
+      .setTint(color);
+    sprites.turret
+      .setVisible(true)
+      .setPosition(x, y)
+      .setScale(turretScale)
+      .setRotation(a)
+      .setAlpha(1)
+      .setTint(color);
 
-    // Turret dome (full player color)
-    this.mainGfx.fillStyle(color, 1);
-    this.mainGfx.fillCircle(x, y, r * 0.44);
-    this.mainGfx.fillStyle(0xffffff, 0.20);
-    this.mainGfx.fillCircle(x - r * 0.12, y - r * 0.12, r * 0.16);
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    const barrelStart = r * 0.34;
+    const barrelEnd = r * 1.25;
+    const barrelBaseX = x + ca * barrelStart;
+    const barrelBaseY = y + sa * barrelStart;
+    const barrelTipX = x + ca * barrelEnd;
+    const barrelTipY = y + sa * barrelEnd;
 
-    // Barrel
-    const bwH = bW / 2;
-    this.mainGfx.fillStyle(color, 0.88);
-    this.mainGfx.fillPoints([
-      new Phaser.Math.Vector2(x + sa * bwH,           y - ca * bwH          ),
-      new Phaser.Math.Vector2(x - sa * bwH,           y + ca * bwH          ),
-      new Phaser.Math.Vector2(x - sa * bwH + ca * bL, y + ca * bwH + sa * bL),
-      new Phaser.Math.Vector2(x + sa * bwH + ca * bL, y - ca * bwH + sa * bL),
-    ], true);
+    this.playerUiGfx.lineStyle(8, 0xededed, 0.96);
+    this.playerUiGfx.lineBetween(barrelBaseX, barrelBaseY, barrelTipX, barrelTipY);
+    this.playerUiGfx.lineStyle(5, color, 1);
+    this.playerUiGfx.lineBetween(barrelBaseX, barrelBaseY, barrelTipX, barrelTipY);
+    this.playerUiGfx.fillStyle(0xededed, 1);
+    this.playerUiGfx.fillCircle(barrelTipX, barrelTipY, r * 0.18);
+    this.playerUiGfx.fillStyle(color, 1);
+    this.playerUiGfx.fillCircle(barrelTipX, barrelTipY, r * 0.11);
+
     this.glowGfx.fillStyle(0xffffff, 0.35 * pulse);
-    this.glowGfx.fillCircle(x + ca * bL, y + sa * bL, bwH * 0.9);
+    this.glowGfx.fillCircle(barrelTipX, barrelTipY, r * 0.14);
 
   }
 
@@ -875,12 +945,12 @@ export class GameScene extends Phaser.Scene {
     const bx    = p.x - bW / 2;
     const by    = p.y - r * 1.5;
 
-    this.mainGfx.fillStyle(0x0a0a0a, 0.85);
-    this.mainGfx.fillRect(bx - 1, by - 1, bW + 2, bH + 2);
+    this.playerUiGfx.fillStyle(0x0a0a0a, 0.85);
+    this.playerUiGfx.fillRect(bx - 1, by - 1, bW + 2, bH + 2);
 
     const col = frac > 0.5 ? C.HP_HIGH : frac > 0.25 ? C.HP_MED : C.HP_LOW;
-    this.mainGfx.fillStyle(col, 1);
-    this.mainGfx.fillRect(bx, by, bW * frac, bH);
+    this.playerUiGfx.fillStyle(col, 1);
+    this.playerUiGfx.fillRect(bx, by, bW * frac, bH);
 
     if (frac <= 0.25) {
       this.glowGfx.fillStyle(C.HP_LOW, 0.22);
@@ -1089,7 +1159,7 @@ export class GameScene extends Phaser.Scene {
       } else {
         this.centerSub.setAlpha(0);
       }
-      this.centerHint.setAlpha(0.6).setText('REFRESH TO PLAY AGAIN');
+      this.centerHint.setAlpha(0.6).setText('PRESS [ENTER] TO PLAY AGAIN');
       this.hudStatusText.setText('');
     }
   }
