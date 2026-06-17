@@ -15,6 +15,7 @@ export interface Player {
   hp: number;
   maxHp: number;
   aimAngle: number;
+  color: number;
   input: PlayerInput;
   lastShotAt: number;
   shotCooldown: number;
@@ -32,6 +33,7 @@ export interface PlayerPublicState {
   hp: number;
   maxHp: number;
   aimAngle: number;
+  color: number;
   dashCooldownMs: number;
   dashing: boolean;
   alive: boolean;

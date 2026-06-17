@@ -12,7 +12,7 @@ const OBSTACLE_HP: Record<ObstacleType, number> = {
   wood: 68,
   rock: 102,
   steel: 9999,
-  mirror: 9999,
+  mirror: 9999, 
 };
 
 const OBSTACLE_DESTRUCTIBLE: Record<ObstacleType, boolean> = {

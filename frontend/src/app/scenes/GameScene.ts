@@ -6,26 +6,29 @@ import type { Socket } from 'socket.io-client';
 
 // ── Colour palette ────────────────────────────────────────────────────────────
 const C = {
-  BG:           0x060d06,
-  GRID:         0x0b160b,
-  GRID_MAJOR:   0x0e1f0e,
-  BORDER:       0x00ff88,
+  BG:         0x060d06,
+  GRID:       0x0b160b,
+  GRID_MAJOR: 0x0e1f0e,
+  BORDER:     0x00ff88,
 
-  LOCAL_BODY:   0x1a5c38,
-  LOCAL_TURRET: 0x00ff88,
-  LOCAL_GLOW:   0x00dd66,
-
-  ENEMY_BODY:   0x5c1a1a,
-  ENEMY_TURRET: 0xff5555,
-  ENEMY_GLOW:   0xff2244,
-
-  BULLET:       0xffee00,
-  BULLET_GLOW:  0xff9900,
+  BULLET:     0xffee00,
+  BULLET_GLOW: 0xff9900,
 
   HP_HIGH: 0x00ff44,
   HP_MED:  0xffcc00,
   HP_LOW:  0xff2244,
 } as const;
+
+function darken(color: number, factor: number): number {
+  const r = Math.round(((color >> 16) & 0xff) * factor);
+  const g = Math.round(((color >>  8) & 0xff) * factor);
+  const b = Math.round(( color        & 0xff) * factor);
+  return (r << 16) | (g << 8) | b;
+}
+
+function colorToCss(color: number): string {
+  return '#' + color.toString(16).padStart(6, '0');
+}
 
 const OBS: Record<string, { fill: number; glow: number }> = {
   bush:   { fill: 0x16451f, glow: 0x33cc33 },
@@ -108,6 +111,9 @@ export class GameScene extends Phaser.Scene {
   private lastInputSend = 0;
   private readonly INPUT_HZ = 1000 / 30;
   private pendingDash = false;
+
+  // Per-player name labels (world space, depth 10)
+  private playerNameTexts: Map<string, Phaser.GameObjects.Text> = new Map();
 
   // Effect tracking
   private playerMaxHp: Map<string, number> = new Map();
@@ -716,6 +722,8 @@ export class GameScene extends Phaser.Scene {
         this.playerMaxHp.delete(id);
         this.playerLastHp.delete(id);
         this.playerLastPos.delete(id);
+        const txt = this.playerNameTexts.get(id);
+        if (txt) { txt.destroy(); this.playerNameTexts.delete(id); }
       }
     });
 
@@ -748,6 +756,15 @@ export class GameScene extends Phaser.Scene {
       }
       this.playerLastHp.set(p.id, p.hp);
       this.playerLastPos.set(p.id, { x: p.x, y: p.y });
+
+      if (!this.playerNameTexts.has(p.id)) {
+        const txt = this.add.text(p.x, p.y, p.id.slice(0, 8), {
+          fontSize: '11px', fontFamily: MONO,
+          color: colorToCss(p.color),
+          stroke: '#000000', strokeThickness: 3,
+        }).setOrigin(0.5, 1).setDepth(10);
+        this.playerNameTexts.set(p.id, txt);
+      }
     });
 
     s.bullets.forEach(b => this.bulletLastPos.set(b.id, { x: b.x, y: b.y }));
@@ -764,24 +781,35 @@ export class GameScene extends Phaser.Scene {
       const isLocal = p.id === this.myPlayerId;
       this.drawTank(p, isLocal, time);
       this.drawHpBar(p);
+
+      const txt = this.playerNameTexts.get(p.id);
+      if (txt) {
+        const nameLabel = p.id.slice(0, 8);
+        const label = isLocal ? nameLabel : `${nameLabel}\n${p.hp}hp`;
+        txt.setText(label);
+        txt.setPosition(p.x, p.y - p.radius * 3.6);
+        txt.setVisible(p.alive);
+      }
     });
   }
 
   private drawTank(p: PlayerPublicState, isLocal: boolean, time: number): void {
-    const { x, y, radius: r, aimAngle: a } = p;
-    const bodyColor   = isLocal ? C.LOCAL_BODY   : C.ENEMY_BODY;
-    const turretColor = isLocal ? C.LOCAL_TURRET : C.ENEMY_TURRET;
-    const glowColor   = isLocal ? C.LOCAL_GLOW   : C.ENEMY_GLOW;
-    const pulse       = isLocal ? (0.85 + 0.15 * Math.sin(time * 0.004)) : 1;
-    const dashPulse   = p.dashing ? 1.8 : 1;
+    if (!p.alive) return;
 
-    this.glowGfx.fillStyle(glowColor, 0.10 * pulse);
-    this.glowGfx.fillCircle(x, y, r * 2.4 * dashPulse);
+    const { x, y, radius: r, aimAngle: a, color } = p;
+    const bodyColor = darken(color, 0.35);
+    const pulse     = isLocal ? (0.85 + 0.15 * Math.sin(time * 0.004)) : 1;
 
+    this.glowGfx.fillStyle(color, 0.055 * pulse);
+    this.glowGfx.fillCircle(x, y, r * 1.75);
+    this.glowGfx.fillStyle(color, 0.035 * pulse);
+    this.glowGfx.fillCircle(x, y, r * 1.05);
+
+    // Barrel glow
     const bL = r * 1.6;
     const bW = r * 0.32;
     const ca = Math.cos(a), sa = Math.sin(a), hw = bW / 2;
-    this.glowGfx.fillStyle(glowColor, 0.18 * pulse);
+    this.glowGfx.fillStyle(color, 0.18 * pulse);
     this.glowGfx.fillPoints([
       new Phaser.Math.Vector2(x + sa * hw * 1.6, y - ca * hw * 1.6),
       new Phaser.Math.Vector2(x - sa * hw * 1.6, y + ca * hw * 1.6),
@@ -790,45 +818,55 @@ export class GameScene extends Phaser.Scene {
     ], true);
 
     if (p.dashing) {
-      this.glowGfx.lineStyle(4, glowColor, 0.35);
+      this.glowGfx.fillStyle(color, 0.13);
+      this.glowGfx.fillCircle(x, y, r * 2.05);
+      this.glowGfx.lineStyle(4, color, 0.55);
       this.glowGfx.strokeCircle(x, y, r * 1.45);
-      this.glowGfx.lineStyle(2, 0xffffff, 0.28);
+      this.glowGfx.lineStyle(2, color, 0.35);
       this.glowGfx.strokeCircle(x, y, r * 1.9);
     }
 
+    // Shadow
     this.mainGfx.fillStyle(0x000000, 0.30);
     this.mainGfx.fillEllipse(x + 4, y + 5, r * 2.2, r * 1.8);
 
+    // Tracks
     const tw = r * 0.22;
     const th = r * 1.6;
     this.mainGfx.fillStyle(0x000000, 0.55);
-    this.mainGfx.fillRect(x - r * 0.95,        y - th / 2, tw, th);
-    this.mainGfx.fillRect(x + r * 0.95 - tw,   y - th / 2, tw, th);
+    this.mainGfx.fillRect(x - r * 0.95,      y - th / 2, tw, th);
+    this.mainGfx.fillRect(x + r * 0.95 - tw, y - th / 2, tw, th);
 
+    // Body hull (darkened player color)
     this.mainGfx.fillStyle(bodyColor, 1);
     this.mainGfx.fillRect(x - r * 0.74, y - r * 0.78, r * 1.48, r * 1.56);
 
+    // Hull highlight
     this.mainGfx.fillStyle(0xffffff, 0.09);
     this.mainGfx.fillRect(x - r * 0.70, y - r * 0.74, r * 1.40, r * 0.38);
 
-    this.mainGfx.fillStyle(turretColor, 1);
+    // Turret dome (full player color)
+    this.mainGfx.fillStyle(color, 1);
     this.mainGfx.fillCircle(x, y, r * 0.44);
     this.mainGfx.fillStyle(0xffffff, 0.20);
     this.mainGfx.fillCircle(x - r * 0.12, y - r * 0.12, r * 0.16);
 
+    // Barrel
     const bwH = bW / 2;
-    this.mainGfx.fillStyle(turretColor, 0.88);
+    this.mainGfx.fillStyle(color, 0.88);
     this.mainGfx.fillPoints([
-      new Phaser.Math.Vector2(x + sa * bwH,            y - ca * bwH           ),
-      new Phaser.Math.Vector2(x - sa * bwH,            y + ca * bwH           ),
-      new Phaser.Math.Vector2(x - sa * bwH + ca * bL,  y + ca * bwH + sa * bL ),
-      new Phaser.Math.Vector2(x + sa * bwH + ca * bL,  y - ca * bwH + sa * bL ),
+      new Phaser.Math.Vector2(x + sa * bwH,           y - ca * bwH          ),
+      new Phaser.Math.Vector2(x - sa * bwH,           y + ca * bwH          ),
+      new Phaser.Math.Vector2(x - sa * bwH + ca * bL, y + ca * bwH + sa * bL),
+      new Phaser.Math.Vector2(x + sa * bwH + ca * bL, y - ca * bwH + sa * bL),
     ], true);
     this.glowGfx.fillStyle(0xffffff, 0.35 * pulse);
     this.glowGfx.fillCircle(x + ca * bL, y + sa * bL, bwH * 0.9);
+
   }
 
   private drawHpBar(p: PlayerPublicState): void {
+    if (!p.alive) return;
     const maxHp = this.playerMaxHp.get(p.id) ?? p.hp;
     const frac  = Math.max(0, p.hp / (maxHp || 1));
     const r     = p.radius;

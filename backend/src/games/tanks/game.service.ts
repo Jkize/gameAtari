@@ -17,11 +17,40 @@ const BULLET_DAMAGE  = 34;
 const BULLET_RADIUS  = 6;
 const BULLET_LIFETIME = 3000; // ms
 
+export const PLAYER_COLORS = [
+  0x00ff88, // neon green
+  0xff3b30, // red
+  0x3498db, // blue
+  0xf1c40f, // yellow
+  0x9b59b6, // purple
+  0xe67e22, // orange
+  0x1abc9c, // turquoise
+  0xff66cc, // pink
+  0xecf0f1, // off-white
+  0x2ecc71, // light green
+  0x00d9ff, // cyan
+  0xff0066, // magenta
+  0xc0392b, // dark red
+  0x95a5a6, // grey
+  0x8e44ad, // dark violet
+];
+
 const SPAWN_POINTS = [
   { x: 150,  y: 150  },
-  { x: 1450, y: 1050 },
-  { x: 150,  y: 1050 },
   { x: 1450, y: 150  },
+  { x: 150,  y: 1050 },
+  { x: 1450, y: 1050 },
+  { x: 800,  y: 120  },
+  { x: 800,  y: 1080 },
+  { x: 120,  y: 600  },
+  { x: 1480, y: 600  },
+  { x: 400,  y: 300  },
+  { x: 1200, y: 300  },
+  { x: 400,  y: 900  },
+  { x: 1200, y: 900  },
+  { x: 550,  y: 550  },
+  { x: 1050, y: 550  },
+  { x: 800,  y: 400  },
 ];
 
 @Injectable()
@@ -30,9 +59,11 @@ export class GameService {
   bullets: Bullet[] = [];
   map: GameMap | null = null;
   status: GameStatus = 'waiting';
+  private usedColorIndices = new Set<number>();
 
   addPlayer(socketId: string): Player {
     const spawn = SPAWN_POINTS[this.players.size % SPAWN_POINTS.length];
+    const colorIndex = this.pickColorIndex();
 
     const player: Player = {
       id: socketId,
@@ -43,6 +74,7 @@ export class GameService {
       hp: PLAYER_HP,
       maxHp: PLAYER_HP,
       aimAngle: 0,
+      color: PLAYER_COLORS[colorIndex],
       input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false },
       lastShotAt: 0,
       shotCooldown: SHOT_COOLDOWN,
@@ -57,7 +89,22 @@ export class GameService {
   }
 
   removePlayer(socketId: string): void {
+    const player = this.players.get(socketId);
+    if (player) {
+      const idx = PLAYER_COLORS.indexOf(player.color);
+      if (idx !== -1) this.usedColorIndices.delete(idx);
+    }
     this.players.delete(socketId);
+  }
+
+  private pickColorIndex(): number {
+    for (let i = 0; i < PLAYER_COLORS.length; i++) {
+      if (!this.usedColorIndices.has(i)) {
+        this.usedColorIndices.add(i);
+        return i;
+      }
+    }
+    return 0;
   }
 
   applyInput(socketId: string, raw: Partial<PlayerInput>): void {
@@ -124,6 +171,7 @@ export class GameService {
     this.bullets = [];
     this.map = null;
     this.status = 'waiting';
+    this.usedColorIndices.clear();
   }
 
   private clamp(val: number, min: number, max: number): number {

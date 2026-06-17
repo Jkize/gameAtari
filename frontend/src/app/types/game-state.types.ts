@@ -28,6 +28,7 @@ export interface PlayerPublicState {
   hp: number;
   maxHp: number;
   aimAngle: number;
+  color: number;
   dashCooldownMs: number;
   dashing: boolean;
   alive: boolean;
