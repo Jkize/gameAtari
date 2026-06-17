@@ -3,14 +3,18 @@ import { socketManager } from '../network/socket';
 import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType } from '../types/game-state.types';
 import { PlayerInput } from '../types/input.types';
 import { ensureTankSvgTextures, TANK_BODY_ROTATION_OFFSET, TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y, TANK_TURRET_ROTATION_OFFSET } from '../rendering/tank-svg-textures';
+import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 import type { Socket } from 'socket.io-client';
 
 // ── Colour palette ────────────────────────────────────────────────────────────
 const C = {
-  BG:         0x060d06,
-  GRID:       0x0b160b,
-  GRID_MAJOR: 0x0e1f0e,
-  BORDER:     0x00ff88,
+  BG:         ACTIVE_BACKGROUND_SCENARIO.base,
+  GRID:       ACTIVE_BACKGROUND_SCENARIO.minorLine,
+  GRID_MAJOR: ACTIVE_BACKGROUND_SCENARIO.majorLine,
+  BORDER:     ACTIVE_BACKGROUND_SCENARIO.border,
+  PANEL:      0x2b1d10,
+  TEXT_WARM:  0xf2cf8f,
+  TEXT_MUTED: 0x8c714a,
 
   BULLET:     0xffee00,
   BULLET_GLOW: 0xff9900,
@@ -267,41 +271,63 @@ export class GameScene extends Phaser.Scene {
     const H   = this.mapH;
     const ts  = 80;
     const rng = seededRandom(0xdeadbeef);
+    const scenario = ACTIVE_BACKGROUND_SCENARIO;
 
     this.bgGfx.clear();
 
-    // Very dark stone base
-    this.bgGfx.fillStyle(0x050c05, 1);
+    // Warm sand base
+    this.bgGfx.fillStyle(scenario.base, 1);
     this.bgGfx.fillRect(0, 0, W, H);
 
-    // Stone tile minor grid
-    this.bgGfx.lineStyle(1, 0x0c180c, 1);
+    // Broad color variation keeps the terrain natural without image tiles.
+    const noiseCount = Math.floor(W * H / 36000);
+    for (let i = 0; i < noiseCount; i++) {
+      const color = scenario.baseNoise[Math.floor(rng() * scenario.baseNoise.length)] ?? scenario.base;
+      this.bgGfx.fillStyle(color, 0.08 + rng() * 0.08);
+      this.bgGfx.fillEllipse(
+        rng() * W,
+        rng() * H,
+        100 + rng() * 220,
+        28 + rng() * 70,
+      );
+    }
+
+    // Faint survey/tile lines, like a worn arena marked into sand.
+    this.bgGfx.lineStyle(1, scenario.minorLine, 0.20);
     for (let x = 0; x <= W; x += ts) this.bgGfx.lineBetween(x, 0, x, H);
     for (let y = 0; y <= H; y += ts) this.bgGfx.lineBetween(0, y, W, y);
 
-    // Major tile divisions
-    this.bgGfx.lineStyle(1, 0x112011, 1);
+    this.bgGfx.lineStyle(1, scenario.majorLine, 0.24);
     for (let x = 0; x <= W; x += ts * 4) this.bgGfx.lineBetween(x, 0, x, H);
     for (let y = 0; y <= H; y += ts * 4) this.bgGfx.lineBetween(0, y, W, y);
 
-    // ── Large moss/vegetation floor patches ──────────────────────────────
-    const patchCount = 20 + Math.floor(W * H / 70000);
+    // Wind-shaped dunes and compacted sand patches.
+    const patch = scenario.patch;
+    const patchCount = 18 + Math.floor(W * H / 65000);
     for (let i = 0; i < patchCount; i++) {
       const cx = 70 + rng() * (W - 140);
       const cy = 70 + rng() * (H - 140);
-      const pr = 40 + rng() * 60;
-      // Outer dark mass
-      this.bgGfx.fillStyle(0x091a0b, 0.60 + rng() * 0.20);
-      this.bgGfx.fillEllipse(cx, cy, pr * 2.4, pr * (0.55 + rng() * 0.75));
-      // Mid green layer
-      this.bgGfx.fillStyle(0x0f3015, 0.50 + rng() * 0.20);
-      this.bgGfx.fillEllipse(cx + (rng()-0.5)*12, cy + (rng()-0.5)*8, pr * 1.5, pr * 0.70);
-      // Bright centre highlight
-      this.bgGfx.fillStyle(0x175c1e, 0.28 + rng() * 0.14);
-      this.bgGfx.fillEllipse(cx + (rng()-0.5)*8, cy - pr*0.10, pr * 0.75, pr * 0.38);
+      const pr = patch.radiusMin + rng() * (patch.radiusMax - patch.radiusMin);
+      this.bgGfx.fillStyle(patch.color, patch.alphaMin + rng() * (patch.alphaMax - patch.alphaMin));
+      this.bgGfx.fillEllipse(
+        cx,
+        cy,
+        pr * patch.widthScale,
+        pr * (patch.heightScaleMin + rng() * (patch.heightScaleMax - patch.heightScaleMin)),
+      );
+
+      patch.layers.forEach(layer => {
+        this.bgGfx.fillStyle(layer.color, layer.alphaMin + rng() * (layer.alphaMax - layer.alphaMin));
+        this.bgGfx.fillEllipse(
+          cx + layer.offsetX + (rng() - 0.5) * 18,
+          cy + layer.offsetY + (rng() - 0.5) * 12,
+          pr * layer.widthScale,
+          pr * layer.heightScale,
+        );
+      });
     }
 
-    // Dense vegetation clusters along every border
+    // Dry scrub clusters around the border make the arena feel grounded.
     const borderPoints: [number, number][] = [
       [0, 0], [W, 0], [0, H], [W, H],
       [W/2, 0], [W/2, H], [0, H/2], [W, H/2],
@@ -314,11 +340,13 @@ export class GameScene extends Phaser.Scene {
       for (let j = 0; j < 4; j++) {
         const ox = cx + (rng() - 0.5) * 80;
         const oy = cy + (rng() - 0.5) * 80;
-        const r2 = 28 + rng() * 45;
-        this.bgGfx.fillStyle(0x0b2410, 0.70);
-        this.bgGfx.fillEllipse(ox, oy, r2 * 2, r2 * (0.45 + rng() * 0.65));
-        this.bgGfx.fillStyle(0x163d1c, 0.40);
-        this.bgGfx.fillEllipse(ox, oy - r2*0.08, r2 * 1.3, r2 * 0.55);
+        const r2 = 16 + rng() * 30;
+        this.bgGfx.fillStyle(scenario.scrubDark, 0.42);
+        this.bgGfx.fillEllipse(ox, oy, r2 * 1.9, r2 * (0.35 + rng() * 0.45));
+        this.bgGfx.fillStyle(scenario.scrubMid, 0.28);
+        this.bgGfx.fillEllipse(ox, oy - r2 * 0.10, r2 * 1.2, r2 * 0.42);
+        this.bgGfx.fillStyle(scenario.scrubLight, 0.16);
+        this.bgGfx.fillEllipse(ox - r2 * 0.12, oy - r2 * 0.16, r2 * 0.7, r2 * 0.24);
       }
     }
 
@@ -329,17 +357,17 @@ export class GameScene extends Phaser.Scene {
       const cy = rng() * H;
       const ex = cx + (rng() - 0.5) * 60;
       const ey = cy + (rng() - 0.5) * 60;
-      this.bgGfx.lineStyle(1, 0x040804, 0.55);
+      this.bgGfx.lineStyle(1, scenario.crack, 0.32);
       this.bgGfx.lineBetween(cx, cy, ex, ey);
       const mx2 = (cx + ex) / 2;
       const my2 = (cy + ey) / 2;
       this.bgGfx.lineBetween(mx2, my2, mx2 + (rng()-0.5)*22, my2 + (rng()-0.5)*22);
     }
 
-    // Neon border
+    // Worn arena boundary
     this.bgGfx.lineStyle(3, C.BORDER, 0.45);
     this.bgGfx.strokeRect(0, 0, W, H);
-    this.bgGfx.lineStyle(1, C.BORDER, 0.10);
+    this.bgGfx.lineStyle(1, scenario.innerBorder, 0.22);
     this.bgGfx.strokeRect(4, 4, W - 8, H - 8);
   }
 
@@ -1029,7 +1057,7 @@ export class GameScene extends Phaser.Scene {
     this.hudHpBarGfx = this.add.graphics().setScrollFactor(0).setDepth(101);
 
     this.hudTitleText = this.add.text(W / 2, 14, 'TANK ARENA', {
-      fontSize: '14px', fontFamily: MONO, color: '#00cc66',
+      fontSize: '14px', fontFamily: MONO, color: '#f2cf8f',
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(101).setAlpha(0.55);
 
     this.hudHpText = this.add.text(20, 18, 'HP ---', {
@@ -1041,7 +1069,7 @@ export class GameScene extends Phaser.Scene {
     }).setScrollFactor(0).setDepth(101);
 
     this.hudPlayerCountText = this.add.text(W - 16, 18, 'PLAYERS: -', {
-      fontSize: '12px', fontFamily: MONO, color: '#557766',
+      fontSize: '12px', fontFamily: MONO, color: '#8c714a',
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(101);
 
     this.hudStatusText = this.add.text(W / 2, H - 20, '', {
@@ -1051,8 +1079,8 @@ export class GameScene extends Phaser.Scene {
     this.overlayGfx = this.add.graphics().setScrollFactor(0).setDepth(108);
 
     this.centerBig = this.add.text(W / 2, H / 2 - 28, '', {
-      fontSize: '48px', fontFamily: MONO, color: '#00ff88',
-      stroke: '#002211', strokeThickness: 6,
+      fontSize: '48px', fontFamily: MONO, color: '#f2cf8f',
+      stroke: '#4a2c17', strokeThickness: 6,
     }).setOrigin(0.5).setScrollFactor(0).setDepth(109).setAlpha(0);
 
     this.centerSub = this.add.text(W / 2, H / 2 + 36, '', {
@@ -1060,7 +1088,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(109).setAlpha(0);
 
     this.centerHint = this.add.text(W / 2, H / 2 + 70, '', {
-      fontSize: '13px', fontFamily: MONO, color: '#556677',
+      fontSize: '13px', fontFamily: MONO, color: '#8c714a',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(109).setAlpha(0);
   }
 
@@ -1070,7 +1098,7 @@ export class GameScene extends Phaser.Scene {
     this.overlayGfx.clear();
     this.overlayGfx.fillStyle(0x000000, 0.7);
     this.overlayGfx.fillRect(0, 0, W, H);
-    this.centerBig.setText('CONNECTING...').setColor('#336655').setAlpha(1);
+    this.centerBig.setText('CONNECTING...').setColor('#b89562').setAlpha(1);
     this.centerSub.setAlpha(0);
     this.centerHint.setAlpha(0);
   }
@@ -1081,13 +1109,13 @@ export class GameScene extends Phaser.Scene {
     const H = this.scale.height;
 
     this.hudPanelGfx.clear();
-    this.hudPanelGfx.fillStyle(0x010812, 0.82);
+    this.hudPanelGfx.fillStyle(C.PANEL, 0.84);
     this.hudPanelGfx.fillRect(10, 10, 190, 78);
-    this.hudPanelGfx.lineStyle(1, 0x00ff88, 0.18);
+    this.hudPanelGfx.lineStyle(1, C.TEXT_WARM, 0.20);
     this.hudPanelGfx.strokeRect(10, 10, 190, 78);
-    this.hudPanelGfx.fillStyle(0x010812, 0.82);
+    this.hudPanelGfx.fillStyle(C.PANEL, 0.84);
     this.hudPanelGfx.fillRect(W - 170, 10, 158, 40);
-    this.hudPanelGfx.lineStyle(1, 0x334455, 0.30);
+    this.hudPanelGfx.lineStyle(1, C.TEXT_MUTED, 0.34);
     this.hudPanelGfx.strokeRect(W - 170, 10, 158, 40);
 
     this.hudHpBarGfx.clear();
@@ -1135,10 +1163,10 @@ export class GameScene extends Phaser.Scene {
       this.overlayGfx.fillRect(0, 0, W, H);
 
       const blink = Math.sin(time * 0.0038) > 0;
-      this.centerBig.setAlpha(1).setColor('#00ff88').setText('TANK ARENA');
+      this.centerBig.setAlpha(1).setColor('#f2cf8f').setText('TANK ARENA');
       this.centerSub.setAlpha(1).setText(
         this.myPlayerId ? 'PRESS [ENTER] TO START' : 'WAITING FOR SERVER...',
-      ).setColor(blink ? '#ffffff' : '#556677');
+      ).setColor(blink ? '#ffffff' : '#8c714a');
       this.centerHint.setAlpha(0.7).setText('W A S D  ·  MOUSE AIM  ·  CLICK SHOOT');
       this.hudStatusText.setText('');
     } else if (state.status === 'playing') {
