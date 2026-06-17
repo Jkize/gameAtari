@@ -14,6 +14,7 @@ export interface Player {
   speed: number;
   hp: number;
   maxHp: number;
+  bodyAngle: number;
   aimAngle: number;
   color: number;
   input: PlayerInput;
@@ -32,6 +33,7 @@ export interface PlayerPublicState {
   radius: number;
   hp: number;
   maxHp: number;
+  bodyAngle: number;
   aimAngle: number;
   color: number;
   dashCooldownMs: number;

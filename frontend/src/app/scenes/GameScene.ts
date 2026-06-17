@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { socketManager } from '../network/socket';
 import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType } from '../types/game-state.types';
 import { PlayerInput } from '../types/input.types';
-import { ensureTankSvgTextures, TANK_TURRET_ORIGIN_X } from '../rendering/tank-svg-textures';
+import { ensureTankSvgTextures, TANK_BODY_ROTATION_OFFSET, TANK_TURRET_ORIGIN_X, TANK_TURRET_ROTATION_OFFSET } from '../rendering/tank-svg-textures';
 import type { Socket } from 'socket.io-client';
 
 // ── Colour palette ────────────────────────────────────────────────────────────
@@ -858,7 +858,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const { x, y, radius: r, aimAngle: a, color } = p;
+    const { x, y, radius: r, bodyAngle, aimAngle: a, color } = p;
     const pulse     = isLocal ? (0.85 + 0.15 * Math.sin(time * 0.004)) : 1;
 
     this.glowGfx.fillStyle(color, 0.055 * pulse);
@@ -879,7 +879,7 @@ export class GameScene extends Phaser.Scene {
     this.mainGfx.fillStyle(0x000000, 0.30);
     this.mainGfx.fillEllipse(x + 4, y + 5, r * 2.2, r * 1.8);
 
-    const textureKeys = ensureTankSvgTextures(this);
+    const textureKeys = ensureTankSvgTextures(this, color);
     if (!textureKeys) return;
 
     let sprites = this.playerTankSprites.get(p.id);
@@ -899,18 +899,20 @@ export class GameScene extends Phaser.Scene {
     const turretScale = (r * 1.62) / sprites.turret.width;
     sprites.body
       .setVisible(true)
+      .setTexture(textureKeys.body)
       .setPosition(x, y)
       .setScale(bodyScale)
-      .setRotation(0)
+      .setRotation(bodyAngle + TANK_BODY_ROTATION_OFFSET)
       .setAlpha(1)
-      .setTint(color);
+      .clearTint();
     sprites.turret
       .setVisible(true)
+      .setTexture(textureKeys.turret)
       .setPosition(x, y)
       .setScale(turretScale)
-      .setRotation(a)
+      .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
       .setAlpha(1)
-      .setTint(color);
+      .clearTint();
 
     const ca = Math.cos(a);
     const sa = Math.sin(a);

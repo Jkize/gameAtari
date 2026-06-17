@@ -27,6 +27,7 @@ export interface PlayerPublicState {
   radius: number;
   hp: number;
   maxHp: number;
+  bodyAngle: number;
   aimAngle: number;
   color: number;
   dashCooldownMs: number;

@@ -9,7 +9,7 @@ const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
 const DASH_DURATION = 300; // ms
 const DASH_COOLDOWN = 8000; // ms
-const PLAYER_RADIUS  = 20;
+const PLAYER_RADIUS  = 28;
 const PLAYER_HP      = 100;
 const SHOT_COOLDOWN  = 400;  // ms
 const BULLET_SPEED   = 500;  // px/sec
@@ -76,6 +76,7 @@ export class GameService {
       speed: PLAYER_SPEED,
       hp: PLAYER_HP,
       maxHp: PLAYER_HP,
+      bodyAngle: -Math.PI / 2,
       aimAngle: 0,
       color: PLAYER_COLORS[colorIndex],
       input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false },
@@ -133,6 +134,7 @@ export class GameService {
     if (len > 0) {
       moveX /= len;
       moveY /= len;
+      player.bodyAngle = Math.atan2(moveY, moveX);
     }
 
     const speed = now < player.dashUntil ? player.speed * DASH_MULTIPLIER : player.speed;

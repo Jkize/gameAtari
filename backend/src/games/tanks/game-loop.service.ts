@@ -148,6 +148,7 @@ export class GameLoopService implements OnModuleDestroy {
       radius: p.radius,
       hp: p.hp,
       maxHp: p.maxHp,
+      bodyAngle: p.bodyAngle,
       aimAngle: p.aimAngle,
       color: p.color,
       dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
