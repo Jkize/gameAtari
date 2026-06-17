@@ -19,6 +19,9 @@ export class TankGame extends Phaser.Game {
         antialias: true,
         pixelArt: false,
       },
+      fps: {
+        target: 60,
+      },
     });
   }
 }

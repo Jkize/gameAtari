@@ -119,7 +119,7 @@ export class GameScene extends Phaser.Scene {
                     S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key;
                     SHIFT: Phaser.Input.Keyboard.Key; ENTER: Phaser.Input.Keyboard.Key; };
   private lastInputSend = 0;
-  private readonly INPUT_HZ = 1000 / 30;
+  private readonly INPUT_HZ = 1000 / 60;
   private pendingDash = false;
 
   // Per-player name labels (world space, depth 10)

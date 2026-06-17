@@ -5,15 +5,19 @@ import { MapService } from './map.service';
 import { CollisionService } from './collision.service';
 import { BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
+import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
 
-const TICK_RATE = 30;
+const TICK_RATE = 60;
 const TICK_INTERVAL = 1000 / TICK_RATE;
+const WATCHER_BROADCAST_RATE = 30;
+const WATCHER_BROADCAST_INTERVAL = 1000 / WATCHER_BROADCAST_RATE;
 
 @Injectable()
 export class GameLoopService implements OnModuleDestroy {
   private server: Server;
   private loopTimer: NodeJS.Timeout | null = null;
   private lastTickTime = 0;
+  private lastWatcherBroadcastTime = 0;
 
   constructor(
     private readonly gameService: GameService,
@@ -32,6 +36,7 @@ export class GameLoopService implements OnModuleDestroy {
     }
     this.gameService.status = 'playing';
     this.lastTickTime = Date.now();
+    this.lastWatcherBroadcastTime = 0;
     this.loopTimer = setInterval(() => this.tick(), TICK_INTERVAL);
   }
 
@@ -134,10 +139,16 @@ export class GameLoopService implements OnModuleDestroy {
     }
 
     // --- Broadcast ---
-    this.server.emit('gameState', this.buildState());
+    const state = this.buildState();
+    this.server.to(PLAYER_ROOM).emit('gameState', state);
+
+    if (now - this.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL) {
+      this.lastWatcherBroadcastTime = now;
+      this.server.to(WATCHER_ROOM).emit('gameState', state);
+    }
   }
 
-  private buildState(): GameState {
+  buildState(): GameState {
     const { map, players, bullets, status } = this.gameService;
     const now = Date.now();
 
