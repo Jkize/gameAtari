@@ -8,6 +8,7 @@ import { WeaponLaserService } from './weapons/weapon-laser.service';
 import { WeaponGrenadeService } from './weapons/weapon-grenade.service';
 import { BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
+import { ActivePowerUp, ActivePowerUpPublicState } from './types/power-up.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
 
 const TICK_RATE = 60;
@@ -17,7 +18,7 @@ const WATCHER_BROADCAST_INTERVAL = 1000 / WATCHER_BROADCAST_RATE;
 
 @Injectable()
 export class GameLoopService implements OnModuleDestroy {
-  private server: Server;
+  private server!: Server;
   private loopTimer: NodeJS.Timeout | null = null;
   private lastTickTime = 0;
   private lastWatcherBroadcastTime = 0;
@@ -57,15 +58,63 @@ export class GameLoopService implements OnModuleDestroy {
     this.stop();
   }
 
+  buildState(): GameState {
+    const { map, players, bullets, status } = this.gameService;
+    const now = Date.now();
+
+    const publicPlayers: PlayerPublicState[] = [...players.values()].map(p => ({
+      id: p.id,
+      x: p.x,
+      y: p.y,
+      radius: p.radius,
+      hp: p.hp,
+      maxHp: p.maxHp,
+      bodyAngle: p.bodyAngle,
+      aimAngle: p.aimAngle,
+      color: p.color,
+      dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
+      weapon: this.weaponService.getPublicState(p, now),
+      activePowerUp: this.buildActivePowerUpState(p.activePowerUp, now),
+      dashing: now < p.dashUntil,
+      alive: p.alive,
+    }));
+
+    const publicBullets: BulletPublicState[] = bullets.map(b => ({
+      id: b.id,
+      ownerId: b.ownerId,
+      kind: b.kind,
+      x: b.x,
+      y: b.y,
+      endX: b.endX,
+      endY: b.endY,
+      bendX: b.bendX,
+      bendY: b.bendY,
+      radius: b.radius,
+      explosionRadius: b.explosionRadius,
+      pierceMetalRemaining: b.pierceMetalRemaining,
+    }));
+
+    return { status, map: map!, players: publicPlayers, bullets: publicBullets };
+  }
+
   private tick(): void {
     const now = Date.now();
     const deltaTime = (now - this.lastTickTime) / 1000;
     this.lastTickTime = now;
 
+    const { map } = this.gameService;
+    if (!map) return;
+
+    this.processPlayers(deltaTime, now);
+    this.processBullets(deltaTime);
+    this.checkWinCondition();
+    this.broadcastState(now);
+  }
+
+  private processPlayers(deltaTime: number, now: number): void {
     const { players, bullets, map } = this.gameService;
     if (!map) return;
 
-    // --- Players ---
     for (const player of players.values()) {
       if (!player.alive) continue;
 
@@ -95,8 +144,12 @@ export class GameLoopService implements OnModuleDestroy {
 
       this.gameService.tryShoot(player, now);
     }
+  }
 
-    // --- Bullets ---
+  private processBullets(deltaTime: number): void {
+    const { players, bullets, map } = this.gameService;
+    if (!map) return;
+
     const dead = new Set<string>();
 
     for (const bullet of bullets) {
@@ -174,15 +227,19 @@ export class GameLoopService implements OnModuleDestroy {
     }
 
     this.gameService.bullets = bullets.filter(b => !dead.has(b.id));
+  }
 
-    // --- Win condition ---
+  private checkWinCondition(): void {
+    const { players } = this.gameService;
     const alive = [...players.values()].filter(p => p.alive);
+
     if (players.size > 1 && alive.length <= 1) {
       this.gameService.status = 'finished';
       this.stop();
     }
+  }
 
-    // --- Broadcast ---
+  private broadcastState(now: number): void {
     const state = this.buildState();
     this.server.to(PLAYER_ROOM).emit('gameState', state);
 
@@ -192,57 +249,21 @@ export class GameLoopService implements OnModuleDestroy {
     }
   }
 
-  buildState(): GameState {
-    const { map, players, bullets, status } = this.gameService;
-    const now = Date.now();
+  private buildActivePowerUpState(
+    activePowerUp: ActivePowerUp | undefined,
+    now: number,
+  ): ActivePowerUpPublicState | undefined {
+    if (!activePowerUp) return undefined;
 
-    const publicPlayers: PlayerPublicState[] = [...players.values()].map(p => ({
-      id: p.id,
-      x: p.x,
-      y: p.y,
-      radius: p.radius,
-      hp: p.hp,
-      maxHp: p.maxHp,
-      bodyAngle: p.bodyAngle,
-      aimAngle: p.aimAngle,
-      color: p.color,
-      dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
-      weapon: this.weaponService.getPublicState(p, now),
-      activePowerUp: p.activePowerUp && p.activePowerUp.expiresAt > now
-        ? {
-            type: p.activePowerUp.type,
-            name: p.activePowerUp.name,
-            remainingMs: p.activePowerUp.expiresAt - now,
-            shotsRemaining: p.activePowerUp.shotsRemaining,
-            chargeMs: p.activePowerUp.chargeStartedAt ? now - p.activePowerUp.chargeStartedAt : undefined,
-          }
-        : p.activePowerUp && !p.activePowerUp.expiresAt
-          ? {
-              type: p.activePowerUp.type,
-              name: p.activePowerUp.name,
-              shotsRemaining: p.activePowerUp.shotsRemaining,
-              chargeMs: p.activePowerUp.chargeStartedAt ? now - p.activePowerUp.chargeStartedAt : undefined,
-            }
-        : undefined,
-      dashing: now < p.dashUntil,
-      alive: p.alive,
-    }));
+    const { expiresAt, chargeStartedAt } = activePowerUp;
+    if (expiresAt !== undefined && expiresAt <= now) return undefined;
 
-    const publicBullets: BulletPublicState[] = bullets.map(b => ({
-      id: b.id,
-      ownerId: b.ownerId,
-      kind: b.kind,
-      x: b.x,
-      y: b.y,
-      endX: b.endX,
-      endY: b.endY,
-      bendX: b.bendX,
-      bendY: b.bendY,
-      radius: b.radius,
-      explosionRadius: b.explosionRadius,
-      pierceMetalRemaining: b.pierceMetalRemaining,
-    }));
-
-    return { status, map: map!, players: publicPlayers, bullets: publicBullets };
+    return {
+      type: activePowerUp.type,
+      name: activePowerUp.name,
+      remainingMs: expiresAt !== undefined ? expiresAt - now : undefined,
+      shotsRemaining: activePowerUp.shotsRemaining,
+      chargeMs: chargeStartedAt ? now - chargeStartedAt : undefined,
+    };
   }
 }
