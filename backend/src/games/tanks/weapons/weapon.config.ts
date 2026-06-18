@@ -7,15 +7,15 @@ export const DEFAULT_WEAPON_STATS: WeaponStats = {
   reloadDurationMs: 1400,
   maxActiveBullets: 5,
   bulletSpeed: 600,
-  bulletDamage: 34,
+  bulletDamage: 20,
   bulletRadius: 4,
   bulletLifetimeMs: 3000,
 };
 
 export const POWER_UP_DEFINITIONS = {
-  triple_shot: { name: 'TRIPLE SHOT', durationMs: 20_000 },
-  shotgun: { name: 'SHOTGUN', durationMs: 30_000 },
-  grenade: { name: 'GRENADE SHOT', durationMs: 30_000 },
+  triple_shot: { name: 'TRIPLE SHOT', durationMs: 12_000 },
+  shotgun: { name: 'SHOTGUN', durationMs: 12_000 },
+  grenade: { name: 'GRENADE SHOT', durationMs: 8_000 },
   laser: { name: 'LASER READY', durationMs: undefined },
 } as const satisfies Partial<Record<PowerUpType, { name: string; durationMs?: number }>>;
 

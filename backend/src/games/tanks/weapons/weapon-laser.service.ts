@@ -86,7 +86,7 @@ export class WeaponLaserService {
 
     const damage = Math.max(1, Math.ceil(LASER_CONFIG.damagePerSecond * deltaTime));
     for (const player of players.values()) {
-      if (!player.alive || player.id === bullet.ownerId) continue;
+      if (!player.alive) continue;
       if (segments.some(segment => this.beamVsPlayer(
         segment.x,
         segment.y,

@@ -1328,7 +1328,7 @@ export class GameScene extends Phaser.Scene {
       this.overlayGfx.fillStyle(0x000000, 0.72);
       this.overlayGfx.fillRect(0, 0, W, H);
 
-      const survivors  = state.players;
+      const survivors  = state.players.filter(p => p.alive);
       const isWinner   = survivors.some(p => p.id === this.myPlayerId);
       const label      = isWinner ? 'VICTORY!' : 'GAME OVER';
       const labelColor = isWinner ? '#00ff88' : '#ff4444';
@@ -1339,7 +1339,7 @@ export class GameScene extends Phaser.Scene {
         const tag = wId === this.myPlayerId ? 'YOU WIN' : `WINNER: ${wId.slice(0, 8)}`;
         this.centerSub.setAlpha(1).setText(tag);
       } else {
-        this.centerSub.setAlpha(0);
+        this.centerSub.setAlpha(1).setText('NO SURVIVORS');
       }
       this.centerHint.setAlpha(0.6).setText('PRESS [ENTER] TO PLAY AGAIN');
       this.hudStatusText.setText('');

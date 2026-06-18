@@ -14,7 +14,7 @@ export class WeaponGrenadeService {
     const radiusSq = radius * radius;
 
     for (const player of players.values()) {
-      if (!player.alive || player.id === bullet.ownerId) continue;
+      if (!player.alive) continue;
       const dx = player.x - bullet.x;
       const dy = player.y - bullet.y;
       const distSq = dx * dx + dy * dy;

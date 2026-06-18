@@ -57,7 +57,7 @@ export class CollisionService {
   }
 
   bulletVsPlayer(bullet: Bullet, player: Player): boolean {
-    if (!player.alive || bullet.ownerId === player.id) return false;
+    if (!player.alive) return false;
     const dx = bullet.x - player.x;
     const dy = bullet.y - player.y;
     const minDist = bullet.radius + player.radius;
