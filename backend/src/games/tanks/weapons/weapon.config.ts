@@ -1,5 +1,5 @@
-import { PowerUpType } from './types/power-up.types';
-import { WeaponStats } from './types/weapon.types';
+import { PowerUpType } from '../types/power-up.types';
+import { WeaponStats } from '../types/weapon.types';
 
 export const DEFAULT_WEAPON_STATS: WeaponStats = {
   magazineSize: 6,
@@ -16,7 +16,8 @@ export const POWER_UP_DEFINITIONS = {
   triple_shot: { name: 'TRIPLE SHOT', durationMs: 20_000 },
   shotgun: { name: 'SHOTGUN', durationMs: 30_000 },
   grenade: { name: 'GRENADE SHOT', durationMs: 30_000 },
-} as const satisfies Partial<Record<PowerUpType, { name: string; durationMs: number }>>;
+  laser: { name: 'LASER READY', durationMs: undefined },
+} as const satisfies Partial<Record<PowerUpType, { name: string; durationMs?: number }>>;
 
 export const TRIPLE_SHOT_CONFIG = {
   spreadAngles: [-0.16, 0, 0.16],
@@ -45,7 +46,7 @@ export const SHOTGUN_CONFIG = {
 } as const;
 
 export const GRENADE_CONFIG = {
-  // maxDistance: 760,
+  maxDistance: undefined,
   explosionRadius: 100,
   obstacleDamage: 68,
   projectileStats: {
@@ -59,5 +60,26 @@ export const GRENADE_CONFIG = {
     fireCooldownMs: 850,
     reloadDurationMs: 1700,
     maxActiveBullets: 3,
+  },
+} as const;
+
+export const LASER_CONFIG = {
+  shots: 2,
+  durationMs: 1000,
+  maxDistance: 1200,
+  recoilSpeedMultiplier: 1.85,
+  metalPierces: 2,
+  damagePerSecond: 120,
+  projectileStats: {
+    bulletSpeed: 0,
+    bulletDamage: 120,
+    bulletRadius: 7,
+    bulletLifetimeMs: 1000,
+  },
+  stats: {
+    magazineSize: 2,
+    fireCooldownMs: 1050,
+    reloadDurationMs: 0,
+    maxActiveBullets: 1,
   },
 } as const;

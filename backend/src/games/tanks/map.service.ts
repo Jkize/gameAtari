@@ -212,6 +212,7 @@ export class MapService {
       this.power('triple_shot', 800, 520),
       this.power('shotgun', 730, 650),
       this.power('grenade', 870, 650),
+      this.power('laser', 800, 720),
     ];
   }
 }

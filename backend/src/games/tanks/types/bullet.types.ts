@@ -1,4 +1,4 @@
-export type BulletKind = 'standard' | 'grenade';
+export type BulletKind = 'standard' | 'grenade' | 'laser';
 
 export interface Bullet {
   id: string;
@@ -8,6 +8,10 @@ export interface Bullet {
   y: number;
   startX?: number;
   startY?: number;
+  endX?: number;
+  endY?: number;
+  bendX?: number;
+  bendY?: number;
   dirX: number;
   dirY: number;
   speed: number;
@@ -17,4 +21,6 @@ export interface Bullet {
   maxDistance?: number;
   explosionRadius?: number;
   obstacleDamage?: number;
+  pierceMetalRemaining?: number;
+  piercedObstacleIds?: string[];
 }

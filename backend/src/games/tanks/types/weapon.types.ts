@@ -13,6 +13,7 @@ export interface WeaponState {
   ammo: number;
   lastFiredAt: number;
   reloadsAt: number;
+  triggerHeld?: boolean;
 }
 
 export type WeaponStatKey = keyof WeaponStats;

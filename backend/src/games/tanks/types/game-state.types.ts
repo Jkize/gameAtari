@@ -9,8 +9,13 @@ export interface BulletPublicState {
   kind?: string;
   x: number;
   y: number;
+  endX?: number;
+  endY?: number;
+  bendX?: number;
+  bendY?: number;
   radius: number;
   explosionRadius?: number;
+  pierceMetalRemaining?: number;
 }
 
 export interface GameState {

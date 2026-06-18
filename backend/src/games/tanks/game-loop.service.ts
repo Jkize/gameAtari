@@ -3,11 +3,12 @@ import { Server } from 'socket.io';
 import { GameService } from './game.service';
 import { MapService } from './map.service';
 import { CollisionService } from './collision.service';
-import { WeaponService } from './weapon.service';
+import { WeaponService } from './weapons/weapon.service';
+import { WeaponLaserService } from './weapons/weapon-laser.service';
+import { WeaponGrenadeService } from './weapons/weapon-grenade.service';
 import { BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
-import { Bullet } from './types/bullet.types';
 
 const TICK_RATE = 60;
 const TICK_INTERVAL = 1000 / TICK_RATE;
@@ -26,6 +27,8 @@ export class GameLoopService implements OnModuleDestroy {
     private readonly mapService: MapService,
     private readonly collisionService: CollisionService,
     private readonly weaponService: WeaponService,
+    private readonly weaponLaserService: WeaponLaserService,
+    private readonly weaponGrenadeService: WeaponGrenadeService,
   ) {}
 
   setServer(server: Server): void {
@@ -68,13 +71,20 @@ export class GameLoopService implements OnModuleDestroy {
 
       const previousX = player.x;
       const previousY = player.y;
+      const isFiringLaser = bullets.some(bullet => bullet.ownerId === player.id && bullet.kind === 'laser');
 
-      this.gameService.movePlayer(player, deltaTime, now);
-      this.collisionService.clampPlayerToBounds(player, map.width, map.height);
+      if (isFiringLaser) {
+        player.aimAngle = player.input.aimAngle;
+      } else {
+        this.gameService.movePlayer(player, deltaTime, now);
+        this.collisionService.clampPlayerToBounds(player, map.width, map.height);
+      }
 
-      for (const obs of map.obstacles) {
-        if (obs.type === 'bush') continue;
-        this.collisionService.resolvePlayerVsObstacle(player, obs, previousX, previousY);
+      if (!isFiringLaser) {
+        for (const obs of map.obstacles) {
+          if (obs.type === 'bush') continue;
+          this.collisionService.resolvePlayerVsObstacle(player, obs, previousX, previousY);
+        }
       }
 
       for (let i = map.powerUps.length - 1; i >= 0; i--) {
@@ -90,6 +100,13 @@ export class GameLoopService implements OnModuleDestroy {
     const dead = new Set<string>();
 
     for (const bullet of bullets) {
+      if (bullet.kind === 'laser') {
+        if (!this.weaponLaserService.processBeam(bullet, deltaTime)) {
+          dead.add(bullet.id);
+        }
+        continue;
+      }
+
       const previousX = bullet.x;
       const previousY = bullet.y;
 
@@ -107,7 +124,7 @@ export class GameLoopService implements OnModuleDestroy {
         reachedMaxDistance ||
         this.collisionService.isBulletOutOfBounds(bullet, map.width, map.height)
       ) {
-        if (bullet.kind === 'grenade') this.explodeGrenade(bullet);
+        if (bullet.kind === 'grenade') this.weaponGrenadeService.explode(bullet);
         dead.add(bullet.id);
         continue;
       }
@@ -124,7 +141,7 @@ export class GameLoopService implements OnModuleDestroy {
         }
 
         if (bullet.kind === 'grenade') {
-          this.explodeGrenade(bullet);
+          this.weaponGrenadeService.explode(bullet);
           dead.add(bullet.id);
           absorbed = true;
           break;
@@ -147,7 +164,7 @@ export class GameLoopService implements OnModuleDestroy {
       for (const player of players.values()) {
         if (!this.collisionService.bulletVsPlayer(bullet, player)) continue;
         if (bullet.kind === 'grenade') {
-          this.explodeGrenade(bullet);
+          this.weaponGrenadeService.explode(bullet);
         } else {
           this.gameService.damagePlayer(player, bullet.damage);
         }
@@ -196,7 +213,16 @@ export class GameLoopService implements OnModuleDestroy {
             type: p.activePowerUp.type,
             name: p.activePowerUp.name,
             remainingMs: p.activePowerUp.expiresAt - now,
+            shotsRemaining: p.activePowerUp.shotsRemaining,
+            chargeMs: p.activePowerUp.chargeStartedAt ? now - p.activePowerUp.chargeStartedAt : undefined,
           }
+        : p.activePowerUp && !p.activePowerUp.expiresAt
+          ? {
+              type: p.activePowerUp.type,
+              name: p.activePowerUp.name,
+              shotsRemaining: p.activePowerUp.shotsRemaining,
+              chargeMs: p.activePowerUp.chargeStartedAt ? now - p.activePowerUp.chargeStartedAt : undefined,
+            }
         : undefined,
       dashing: now < p.dashUntil,
       alive: p.alive,
@@ -208,43 +234,15 @@ export class GameLoopService implements OnModuleDestroy {
       kind: b.kind,
       x: b.x,
       y: b.y,
+      endX: b.endX,
+      endY: b.endY,
+      bendX: b.bendX,
+      bendY: b.bendY,
       radius: b.radius,
       explosionRadius: b.explosionRadius,
+      pierceMetalRemaining: b.pierceMetalRemaining,
     }));
 
     return { status, map: map!, players: publicPlayers, bullets: publicBullets };
-  }
-
-  private explodeGrenade(bullet: Bullet): void {
-    const { players, map } = this.gameService;
-    if (!map) return;
-
-    const radius = bullet.explosionRadius ?? 120;
-    const radiusSq = radius * radius;
-
-    for (const player of players.values()) {
-      if (!player.alive || player.id === bullet.ownerId) continue;
-      const dx = player.x - bullet.x;
-      const dy = player.y - bullet.y;
-      const distSq = dx * dx + dy * dy;
-      if (distSq > radiusSq) continue;
-
-      const falloff = 1 - Math.sqrt(distSq) / radius;
-      this.gameService.damagePlayer(player, Math.ceil(bullet.damage * (0.45 + falloff * 0.55)));
-    }
-
-    for (let i = map.obstacles.length - 1; i >= 0; i--) {
-      const obs = map.obstacles[i];
-      if (!obs.destructible) continue;
-
-      const closestX = Math.max(obs.x - obs.width / 2, Math.min(bullet.x, obs.x + obs.width / 2));
-      const closestY = Math.max(obs.y - obs.height / 2, Math.min(bullet.y, obs.y + obs.height / 2));
-      const dx = bullet.x - closestX;
-      const dy = bullet.y - closestY;
-      if (dx * dx + dy * dy > radiusSq) continue;
-
-      obs.hp -= bullet.obstacleDamage ?? bullet.damage;
-      if (obs.hp <= 0) map.obstacles.splice(i, 1);
-    }
   }
 }

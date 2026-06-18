@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { Bullet } from './types/bullet.types';
-import { Player } from './types/player.types';
-import { PlayerWeapon, WeaponPublicState, WeaponStats } from './types/weapon.types';
+import { Bullet } from '../types/bullet.types';
+import { Player } from '../types/player.types';
+import { PlayerWeapon, WeaponPublicState, WeaponStats } from '../types/weapon.types';
 import {
   DEFAULT_WEAPON_STATS,
   GRENADE_CONFIG,
+  LASER_CONFIG,
   POWER_UP_DEFINITIONS,
   SHOTGUN_CONFIG,
   TRIPLE_SHOT_CONFIG,
@@ -28,6 +29,10 @@ export class WeaponService {
   tryShoot(player: Player, activeBullets: Bullet[], now: number): Bullet[] {
     const weapon = player.weapon;
     this.clearExpiredPowerUp(player, now);
+
+    if (player.activePowerUp?.type === 'laser') {
+      return this.tryShootLaser(player, activeBullets, now);
+    }
 
     const stats = this.getPowerAdjustedStats(player, this.getStats(weapon, now));
     const state = weapon.state;
@@ -66,7 +71,8 @@ export class WeaponService {
     player.activePowerUp = {
       type,
       name: definition.name,
-      expiresAt: now + definition.durationMs,
+      expiresAt: definition.durationMs ? now + definition.durationMs : undefined,
+      shotsRemaining: type === 'laser' ? LASER_CONFIG.shots : undefined,
     };
 
     const stats = this.getPowerAdjustedStats(player, player.weapon.baseStats);
@@ -137,9 +143,67 @@ export class WeaponService {
           ...stats,
           ...GRENADE_CONFIG.stats,
         };
+      case 'laser':
+        return {
+          ...stats,
+          ...LASER_CONFIG.stats,
+        };
       default:
         return stats;
     }
+  }
+
+  private tryShootLaser(player: Player, activeBullets: Bullet[], now: number): Bullet[] {
+    const powerUp = player.activePowerUp;
+    if (!powerUp || powerUp.type !== 'laser') return [];
+
+    const stats = this.getPowerAdjustedStats(player, this.getStats(player.weapon, now));
+    const state = player.weapon.state;
+    const shotsRemaining = powerUp.shotsRemaining ?? 0;
+
+    const wasHoldingTrigger = state.triggerHeld === true;
+    state.triggerHeld = player.input.shoot;
+
+    if (!player.input.shoot) return [];
+    if (wasHoldingTrigger) return [];
+
+    if (shotsRemaining <= 0) {
+      player.activePowerUp = undefined;
+      return [];
+    }
+
+    if (now - state.lastFiredAt < stats.fireCooldownMs) return [];
+
+    const ownerBulletCount = activeBullets.filter(bullet => bullet.ownerId === player.id).length;
+    if (ownerBulletCount >= stats.maxActiveBullets) return [];
+
+    const bullet = this.createBullet(
+      player,
+      {
+        ...stats,
+        ...LASER_CONFIG.projectileStats,
+      },
+      player.input.aimAngle,
+      LASER_CONFIG.maxDistance,
+      'laser',
+    );
+
+    bullet.endX = bullet.x + bullet.dirX * LASER_CONFIG.maxDistance;
+    bullet.endY = bullet.y + bullet.dirY * LASER_CONFIG.maxDistance;
+    bullet.pierceMetalRemaining = LASER_CONFIG.metalPierces;
+    bullet.obstacleDamage = LASER_CONFIG.damagePerSecond;
+    bullet.piercedObstacleIds = [];
+
+    powerUp.shotsRemaining = shotsRemaining - 1;
+    state.lastFiredAt = now;
+    state.ammo = powerUp.shotsRemaining;
+
+    if (powerUp.shotsRemaining <= 0) {
+      player.activePowerUp = undefined;
+      state.ammo = player.weapon.baseStats.magazineSize;
+    }
+
+    return [bullet];
   }
 
   private createBullet(
@@ -174,7 +238,7 @@ export class WeaponService {
   }
 
   private clearExpiredPowerUp(player: Player, now: number): void {
-    if (player.activePowerUp && player.activePowerUp.expiresAt <= now) {
+    if (player.activePowerUp?.expiresAt && player.activePowerUp.expiresAt <= now) {
       player.activePowerUp = undefined;
     }
   }

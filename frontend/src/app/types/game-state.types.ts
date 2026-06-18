@@ -41,7 +41,9 @@ export interface PlayerPublicState {
 export interface ActivePowerUpPublicState {
   type: PowerUpType;
   name: string;
-  remainingMs: number;
+  remainingMs?: number;
+  shotsRemaining?: number;
+  chargeMs?: number;
 }
 
 export interface WeaponPublicState {
@@ -57,8 +59,13 @@ export interface BulletPublicState {
   kind?: string;
   x: number;
   y: number;
+  endX?: number;
+  endY?: number;
+  bendX?: number;
+  bendY?: number;
   radius: number;
   explosionRadius?: number;
+  pierceMetalRemaining?: number;
 }
 
 export interface PowerUpSpawn {

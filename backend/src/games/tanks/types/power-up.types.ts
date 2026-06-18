@@ -24,7 +24,9 @@ export interface PowerUpDefinition {
 export interface ActivePowerUp {
   type: PowerUpType;
   name: string;
-  expiresAt: number;
+  expiresAt?: number;
+  shotsRemaining?: number;
+  chargeStartedAt?: number;
 }
 
 export interface PowerUpSpawn {
@@ -39,5 +41,7 @@ export interface PowerUpSpawn {
 export interface ActivePowerUpPublicState {
   type: PowerUpType;
   name: string;
-  remainingMs: number;
+  remainingMs?: number;
+  shotsRemaining?: number;
+  chargeMs?: number;
 }

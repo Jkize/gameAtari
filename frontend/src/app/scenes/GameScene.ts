@@ -877,7 +877,7 @@ export class GameScene extends Phaser.Scene {
         if (pos) {
           if (pos.kind === 'grenade') {
             this.spawnGrenadeExplosion(pos.x, pos.y, pos.explosionRadius);
-          } else {
+          } else if (pos.kind !== 'laser') {
             this.spawnSpark(pos.x, pos.y);
           }
         }
@@ -1085,8 +1085,44 @@ export class GameScene extends Phaser.Scene {
     const flicker = 0.85 + 0.15 * Math.sin(time * 0.012);
     this.gameState.bullets.forEach(b => {
       const r = b.radius;
-      const core = b.kind === 'grenade' ? 0x8fff5a : C.BULLET;
-      const glow = b.kind === 'grenade' ? 0x42ff66 : C.BULLET_GLOW;
+      const core = b.kind === 'grenade' ? 0x8fff5a : b.kind === 'laser' ? 0xff0030 : C.BULLET;
+      const glow = b.kind === 'grenade' ? 0x42ff66 : b.kind === 'laser' ? 0xff174f : C.BULLET_GLOW;
+      if (b.kind === 'laser') {
+        const endX = b.endX ?? b.x;
+        const endY = b.endY ?? b.y;
+        const bendX = b.bendX;
+        const bendY = b.bendY;
+        const pulse = 0.8 + 0.2 * Math.sin(time * 0.05);
+        const drawBeam = (width: number, color: number, alpha: number, layer: Phaser.GameObjects.Graphics) => {
+          layer.lineStyle(width, color, alpha);
+          if (bendX !== undefined && bendY !== undefined) {
+            layer.lineBetween(b.x, b.y, bendX, bendY);
+            layer.lineBetween(bendX, bendY, endX, endY);
+          } else {
+            layer.lineBetween(b.x, b.y, endX, endY);
+          }
+        };
+
+        drawBeam(32, glow, 0.20 * pulse, this.glowGfx);
+        drawBeam(20, 0xff0030, 0.42 * pulse, this.glowGfx);
+        drawBeam(10, 0xff5a78, 0.88, this.glowGfx);
+        drawBeam(5, core, 1, this.mainGfx);
+        drawBeam(2, 0xffffff, 1, this.mainGfx);
+
+        if (bendX !== undefined && bendY !== undefined) {
+          this.glowGfx.fillStyle(0xff0030, 0.55 * pulse);
+          this.glowGfx.fillCircle(bendX, bendY, b.radius * 5);
+          this.mainGfx.fillStyle(0xffffff, 0.95);
+          this.mainGfx.fillCircle(bendX, bendY, b.radius * 0.75);
+        }
+
+        this.glowGfx.fillStyle(0xff0030, 0.60 * pulse);
+        this.glowGfx.fillCircle(endX, endY, b.radius * 4.5);
+        this.mainGfx.fillStyle(0xffffff, 0.95);
+        this.mainGfx.fillCircle(endX, endY, b.radius * 0.85);
+        return;
+      }
+
       this.glowGfx.fillStyle(glow, 0.18 * flicker);
       this.glowGfx.fillCircle(b.x, b.y, r * 4);
       this.glowGfx.fillStyle(core, 0.40 * flicker);
@@ -1252,9 +1288,7 @@ export class GameScene extends Phaser.Scene {
       this.hudAmmoText.setText(ammoLabel)
         .setColor(me.weapon.reloadMs > 0 ? '#ffcc00' : '#f2cf8f');
 
-      const powerLabel = me.activePowerUp
-        ? `${me.activePowerUp.name} ${(me.activePowerUp.remainingMs / 1000).toFixed(0)}s`
-        : 'POWER ---';
+      const powerLabel = this.getPowerHudLabel(me);
       this.hudPowerText.setText(powerLabel)
         .setColor(me.activePowerUp ? colorToCss(POWER_UP_COLOR[me.activePowerUp.type]) : '#8c714a');
     } else if (this.myPlayerId) {
@@ -1310,6 +1344,23 @@ export class GameScene extends Phaser.Scene {
       this.centerHint.setAlpha(0.6).setText('PRESS [ENTER] TO PLAY AGAIN');
       this.hudStatusText.setText('');
     }
+  }
+
+  private getPowerHudLabel(player: PlayerPublicState): string {
+    const power = player.activePowerUp;
+    if (!power) return 'POWER ---';
+
+    if (power.type === 'laser') {
+      const shots = power.shotsRemaining ?? 0;
+      if (power.chargeMs !== undefined) {
+        return `LASER CHARGE ${(power.chargeMs / 1000).toFixed(1)}s`;
+      }
+      return `LASER READY ${shots} SHOTS`;
+    }
+
+    return power.remainingMs !== undefined
+      ? `${power.name} ${(power.remainingMs / 1000).toFixed(0)}s`
+      : power.name;
   }
 
   // ── Particle effects ──────────────────────────────────────────────────────

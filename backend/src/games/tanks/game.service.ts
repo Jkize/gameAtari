@@ -3,7 +3,7 @@ import { Player, PlayerInput } from './types/player.types';
 import { Bullet } from './types/bullet.types';
 import { GameMap } from './types/map.types';
 import { GameStatus } from './types/game-state.types';
-import { WeaponService } from './weapon.service';
+import { WeaponService } from './weapons/weapon.service';
 import { PowerUpSpawn } from './types/power-up.types';
 
 const PLAYER_SPEED   = 200;  // px/sec
