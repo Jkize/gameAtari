@@ -3,6 +3,7 @@ import { Server } from 'socket.io';
 import { GameService } from './game.service';
 import { MapService } from './map.service';
 import { CollisionService } from './collision.service';
+import { WeaponService } from './weapon.service';
 import { BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
@@ -23,6 +24,7 @@ export class GameLoopService implements OnModuleDestroy {
     private readonly gameService: GameService,
     private readonly mapService: MapService,
     private readonly collisionService: CollisionService,
+    private readonly weaponService: WeaponService,
   ) {}
 
   setServer(server: Server): void {
@@ -163,6 +165,7 @@ export class GameLoopService implements OnModuleDestroy {
       aimAngle: p.aimAngle,
       color: p.color,
       dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
+      weapon: this.weaponService.getPublicState(p.weapon, now),
       dashing: now < p.dashUntil,
       alive: p.alive,
     }));

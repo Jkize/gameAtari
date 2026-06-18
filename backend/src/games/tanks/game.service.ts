@@ -1,22 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { Player, PlayerInput } from './types/player.types';
 import { Bullet } from './types/bullet.types';
 import { GameMap } from './types/map.types';
 import { GameStatus } from './types/game-state.types';
+import { WeaponService } from './weapon.service';
 
 const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
 const DASH_DURATION = 300; // ms
-const DASH_COOLDOWN = 8000; // ms
+const DASH_COOLDOWN = 5000; // ms
 const PLAYER_RADIUS  = 28;
 const PLAYER_HP      = 100;
-const SHOT_COOLDOWN  = 400;  // ms
-const BULLET_SPEED   = 500;  // px/sec
-const BULLET_DAMAGE  = 34;
-const BULLET_RADIUS  = 6;
-const BULLET_LIFETIME = 3000; // ms
-
 export const PLAYER_COLORS = [
   0x00ff88, // neon green
   0xff3b30, // red
@@ -61,6 +55,8 @@ export class GameService {
   status: GameStatus = 'waiting';
   private usedColorIndices = new Set<number>();
 
+  constructor(private readonly weaponService: WeaponService) {}
+
   addPlayer(socketId: string): Player {
     const existing = this.players.get(socketId);
     if (existing) return existing;
@@ -80,8 +76,7 @@ export class GameService {
       aimAngle: 0,
       color: PLAYER_COLORS[colorIndex],
       input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false },
-      lastShotAt: 0,
-      shotCooldown: SHOT_COOLDOWN,
+      weapon: this.weaponService.createDefaultWeapon(),
       lastDashAt: -DASH_COOLDOWN,
       dashUntil: 0,
       dashCooldown: DASH_COOLDOWN,
@@ -144,25 +139,8 @@ export class GameService {
   }
 
   tryShoot(player: Player, now: number): void {
-    if (!player.input.shoot) return;
-    if (now - player.lastShotAt < player.shotCooldown) return;
-
-    player.lastShotAt = now;
-    const angle = player.input.aimAngle;
-    const offset = player.radius + BULLET_RADIUS + 2;
-
-    this.bullets.push({
-      id: uuidv4(),
-      ownerId: player.id,
-      x: player.x + Math.cos(angle) * offset,
-      y: player.y + Math.sin(angle) * offset,
-      dirX: Math.cos(angle),
-      dirY: Math.sin(angle),
-      speed: BULLET_SPEED,
-      damage: BULLET_DAMAGE,
-      radius: BULLET_RADIUS,
-      lifeTime: BULLET_LIFETIME,
-    });
+    const bullet = this.weaponService.tryShoot(player, this.bullets, now);
+    if (bullet) this.bullets.push(bullet);
   }
 
   damagePlayer(player: Player, amount: number): void {

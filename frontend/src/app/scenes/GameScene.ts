@@ -108,6 +108,7 @@ export class GameScene extends Phaser.Scene {
   private hudHpBarGfx!: Phaser.GameObjects.Graphics;
   private hudHpText!: Phaser.GameObjects.Text;
   private hudDashText!: Phaser.GameObjects.Text;
+  private hudAmmoText!: Phaser.GameObjects.Text;
   private hudPlayerCountText!: Phaser.GameObjects.Text;
   private hudTitleText!: Phaser.GameObjects.Text;
   private hudStatusText!: Phaser.GameObjects.Text;
@@ -1068,6 +1069,10 @@ export class GameScene extends Phaser.Scene {
       fontSize: '11px', fontFamily: MONO, color: '#00ddff',
     }).setScrollFactor(0).setDepth(101);
 
+    this.hudAmmoText = this.add.text(20, 74, 'AMMO ---', {
+      fontSize: '11px', fontFamily: MONO, color: '#f2cf8f',
+    }).setScrollFactor(0).setDepth(101);
+
     this.hudPlayerCountText = this.add.text(W - 16, 18, 'PLAYERS: -', {
       fontSize: '12px', fontFamily: MONO, color: '#8c714a',
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(101);
@@ -1110,9 +1115,9 @@ export class GameScene extends Phaser.Scene {
 
     this.hudPanelGfx.clear();
     this.hudPanelGfx.fillStyle(C.PANEL, 0.84);
-    this.hudPanelGfx.fillRect(10, 10, 190, 78);
+    this.hudPanelGfx.fillRect(10, 10, 190, 96);
     this.hudPanelGfx.lineStyle(1, C.TEXT_WARM, 0.20);
-    this.hudPanelGfx.strokeRect(10, 10, 190, 78);
+    this.hudPanelGfx.strokeRect(10, 10, 190, 96);
     this.hudPanelGfx.fillStyle(C.PANEL, 0.84);
     this.hudPanelGfx.fillRect(W - 170, 10, 158, 40);
     this.hudPanelGfx.lineStyle(1, C.TEXT_MUTED, 0.34);
@@ -1147,12 +1152,21 @@ export class GameScene extends Phaser.Scene {
           : `DASH ${dashSeconds.toFixed(1)}s`;
       this.hudDashText.setText(dashLabel)
         .setColor(me.dashCooldownMs <= 0 || me.dashing ? '#00ddff' : '#557766');
+
+      const reloadSeconds = me.weapon.reloadMs / 1000;
+      const ammoLabel = me.weapon.reloadMs > 0
+        ? `RELOAD ${reloadSeconds.toFixed(1)}s`
+        : `AMMO ${me.weapon.ammo}/${me.weapon.magazineSize}`;
+      this.hudAmmoText.setText(ammoLabel)
+        .setColor(me.weapon.reloadMs > 0 ? '#ffcc00' : '#f2cf8f');
     } else if (this.myPlayerId) {
       this.hudHpText.setText('HP  DEAD').setColor('#ff2244');
       this.hudDashText.setText('DASH ---').setColor('#334455');
+      this.hudAmmoText.setText('AMMO ---').setColor('#8c714a');
     } else {
       this.hudHpText.setText('CONNECTING...').setColor('#334455');
       this.hudDashText.setText('DASH ---').setColor('#334455');
+      this.hudAmmoText.setText('AMMO ---').setColor('#8c714a');
     }
 
     this.hudPlayerCountText.setText(`PLAYERS: ${state.players.length}`);

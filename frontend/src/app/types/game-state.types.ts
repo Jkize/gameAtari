@@ -31,8 +31,16 @@ export interface PlayerPublicState {
   aimAngle: number;
   color: number;
   dashCooldownMs: number;
+  weapon: WeaponPublicState;
   dashing: boolean;
   alive: boolean;
+}
+
+export interface WeaponPublicState {
+  ammo: number;
+  magazineSize: number;
+  reloadMs: number;
+  fireCooldownMs: number;
 }
 
 export interface BulletPublicState {

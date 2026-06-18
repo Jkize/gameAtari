@@ -1,3 +1,5 @@
+import { PlayerWeapon, WeaponPublicState } from './weapon.types';
+
 export interface PlayerInput {
   moveX: number;
   moveY: number;
@@ -18,8 +20,7 @@ export interface Player {
   aimAngle: number;
   color: number;
   input: PlayerInput;
-  lastShotAt: number;
-  shotCooldown: number;
+  weapon: PlayerWeapon;
   lastDashAt: number;
   dashUntil: number;
   dashCooldown: number;
@@ -37,6 +38,7 @@ export interface PlayerPublicState {
   aimAngle: number;
   color: number;
   dashCooldownMs: number;
+  weapon: WeaponPublicState;
   dashing: boolean;
   alive: boolean;
 }
