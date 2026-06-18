@@ -1,11 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { GameMap, Obstacle, ObstacleType } from './types/map.types';
+import { PowerUpSpawn, PowerUpType } from './types/power-up.types';
 
 const MAP_WIDTH = 1600;
 const MAP_HEIGHT = 1200;
 
 const TILE = 64;
+const POWER_UP_RADIUS = 20;
+
+const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {
+  triple_shot: 'power_triple_shot',
+  shotgun: 'power_shotgun',
+  grenade: 'power_grenade',
+  laser: 'power_laser',
+};
 
 const OBSTACLE_HP: Record<ObstacleType, number> = {
   bush: 34,
@@ -38,6 +47,7 @@ export class MapService {
       width: MAP_WIDTH,
       height: MAP_HEIGHT,
       obstacles: this.buildPredefinedObstacles(),
+      powerUps: this.buildDefaultPowerUps(),
     };
   }
 
@@ -184,5 +194,24 @@ export class MapService {
     add('mirror', MAP_WIDTH - 620, 300, 18, 130);
 
     return obstacles;
+  }
+
+  private power(type: PowerUpType, x: number, y: number): PowerUpSpawn {
+    return {
+      id: uuidv4(),
+      type,
+      assetId: POWER_UP_ASSET_ID[type],
+      x,
+      y,
+      radius: POWER_UP_RADIUS,
+    };
+  }
+
+  private buildDefaultPowerUps(): PowerUpSpawn[] {
+    return [
+      this.power('triple_shot', 800, 520),
+      this.power('shotgun', 730, 650),
+      this.power('grenade', 870, 650),
+    ];
   }
 }

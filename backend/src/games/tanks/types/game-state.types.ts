@@ -6,9 +6,11 @@ export type GameStatus = 'waiting' | 'playing' | 'finished';
 export interface BulletPublicState {
   id: string;
   ownerId: string;
+  kind?: string;
   x: number;
   y: number;
   radius: number;
+  explosionRadius?: number;
 }
 
 export interface GameState {

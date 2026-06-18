@@ -1,3 +1,4 @@
+export type PowerUpType = 'triple_shot' | 'shotgun' | 'grenade' | 'laser';
 export type ObstacleType = 'bush' | 'wood' | 'rock' | 'steel' | 'mirror';
 export type ObstacleAssetId =
   | 'bush_01'
@@ -32,8 +33,15 @@ export interface PlayerPublicState {
   color: number;
   dashCooldownMs: number;
   weapon: WeaponPublicState;
+  activePowerUp?: ActivePowerUpPublicState;
   dashing: boolean;
   alive: boolean;
+}
+
+export interface ActivePowerUpPublicState {
+  type: PowerUpType;
+  name: string;
+  remainingMs: number;
 }
 
 export interface WeaponPublicState {
@@ -46,6 +54,17 @@ export interface WeaponPublicState {
 export interface BulletPublicState {
   id: string;
   ownerId: string;
+  kind?: string;
+  x: number;
+  y: number;
+  radius: number;
+  explosionRadius?: number;
+}
+
+export interface PowerUpSpawn {
+  id: string;
+  type: PowerUpType;
+  assetId: string;
   x: number;
   y: number;
   radius: number;
@@ -55,6 +74,7 @@ export interface GameMap {
   width: number;
   height: number;
   obstacles: Obstacle[];
+  powerUps: PowerUpSpawn[];
 }
 
 export interface GameState {

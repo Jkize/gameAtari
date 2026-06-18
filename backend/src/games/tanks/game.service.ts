@@ -4,6 +4,7 @@ import { Bullet } from './types/bullet.types';
 import { GameMap } from './types/map.types';
 import { GameStatus } from './types/game-state.types';
 import { WeaponService } from './weapon.service';
+import { PowerUpSpawn } from './types/power-up.types';
 
 const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
@@ -77,6 +78,7 @@ export class GameService {
       color: PLAYER_COLORS[colorIndex],
       input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false },
       weapon: this.weaponService.createDefaultWeapon(),
+      activePowerUp: undefined,
       lastDashAt: -DASH_COOLDOWN,
       dashUntil: 0,
       dashCooldown: DASH_COOLDOWN,
@@ -139,8 +141,18 @@ export class GameService {
   }
 
   tryShoot(player: Player, now: number): void {
-    const bullet = this.weaponService.tryShoot(player, this.bullets, now);
-    if (bullet) this.bullets.push(bullet);
+    const bullets = this.weaponService.tryShoot(player, this.bullets, now);
+    this.bullets.push(...bullets);
+  }
+
+  tryPickupPowerUp(player: Player, powerUp: PowerUpSpawn, now: number): boolean {
+    const dx = player.x - powerUp.x;
+    const dy = player.y - powerUp.y;
+    const minDist = player.radius + powerUp.radius;
+    if (dx * dx + dy * dy > minDist * minDist) return false;
+
+    this.weaponService.applyPowerUp(player, powerUp.type, now);
+    return true;
   }
 
   damagePlayer(player: Player, amount: number): void {

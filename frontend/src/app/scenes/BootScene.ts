@@ -12,6 +12,10 @@ export class BootScene extends Phaser.Scene {
     this.load.image('obstacle-rock_block_01', 'assets/obstacle/rock_block_01.png');
     this.load.image('obstacle-steel_block_01', 'assets/obstacle/steel_block_01.png');
     this.load.image('obstacle-mirror_panel_01', 'assets/obstacle/mirror_panel_01.png');
+    this.load.image('weapon-power_triple_shot', 'assets/weapon/power_triple_shot_96.png');
+    this.load.image('weapon-power_shotgun', 'assets/weapon/power_shotgun_96.png');
+    this.load.image('weapon-power_grenade', 'assets/weapon/power_grenade_96.png');
+    this.load.image('weapon-power_laser', 'assets/weapon/power_laser_96.png');
   }
 
   create(): void {

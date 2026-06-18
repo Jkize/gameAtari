@@ -1,3 +1,4 @@
+import { ActivePowerUp, ActivePowerUpPublicState } from './power-up.types';
 import { PlayerWeapon, WeaponPublicState } from './weapon.types';
 
 export interface PlayerInput {
@@ -21,6 +22,7 @@ export interface Player {
   color: number;
   input: PlayerInput;
   weapon: PlayerWeapon;
+  activePowerUp?: ActivePowerUp;
   lastDashAt: number;
   dashUntil: number;
   dashCooldown: number;
@@ -39,6 +41,7 @@ export interface PlayerPublicState {
   color: number;
   dashCooldownMs: number;
   weapon: WeaponPublicState;
+  activePowerUp?: ActivePowerUpPublicState;
   dashing: boolean;
   alive: boolean;
 }

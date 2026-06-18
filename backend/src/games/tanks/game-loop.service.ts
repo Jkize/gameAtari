@@ -7,6 +7,7 @@ import { WeaponService } from './weapon.service';
 import { BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
+import { Bullet } from './types/bullet.types';
 
 const TICK_RATE = 60;
 const TICK_INTERVAL = 1000 / TICK_RATE;
@@ -76,6 +77,12 @@ export class GameLoopService implements OnModuleDestroy {
         this.collisionService.resolvePlayerVsObstacle(player, obs, previousX, previousY);
       }
 
+      for (let i = map.powerUps.length - 1; i >= 0; i--) {
+        if (this.gameService.tryPickupPowerUp(player, map.powerUps[i], now)) {
+          map.powerUps.splice(i, 1);
+        }
+      }
+
       this.gameService.tryShoot(player, now);
     }
 
@@ -90,10 +97,17 @@ export class GameLoopService implements OnModuleDestroy {
       bullet.y += bullet.dirY * bullet.speed * deltaTime;
       bullet.lifeTime -= deltaTime * 1000;
 
+      const reachedMaxDistance = bullet.maxDistance !== undefined &&
+        bullet.startX !== undefined &&
+        bullet.startY !== undefined &&
+        (bullet.x - bullet.startX) ** 2 + (bullet.y - bullet.startY) ** 2 >= bullet.maxDistance ** 2;
+
       if (
         bullet.lifeTime <= 0 ||
+        reachedMaxDistance ||
         this.collisionService.isBulletOutOfBounds(bullet, map.width, map.height)
       ) {
+        if (bullet.kind === 'grenade') this.explodeGrenade(bullet);
         dead.add(bullet.id);
         continue;
       }
@@ -106,6 +120,13 @@ export class GameLoopService implements OnModuleDestroy {
 
         if (obs.type === 'mirror') {
           this.collisionService.reflectBulletFromObstacle(bullet, obs, previousX, previousY);
+          break;
+        }
+
+        if (bullet.kind === 'grenade') {
+          this.explodeGrenade(bullet);
+          dead.add(bullet.id);
+          absorbed = true;
           break;
         }
 
@@ -125,7 +146,11 @@ export class GameLoopService implements OnModuleDestroy {
       // Bullet vs players
       for (const player of players.values()) {
         if (!this.collisionService.bulletVsPlayer(bullet, player)) continue;
-        this.gameService.damagePlayer(player, bullet.damage);
+        if (bullet.kind === 'grenade') {
+          this.explodeGrenade(bullet);
+        } else {
+          this.gameService.damagePlayer(player, bullet.damage);
+        }
         dead.add(bullet.id);
         break;
       }
@@ -165,7 +190,14 @@ export class GameLoopService implements OnModuleDestroy {
       aimAngle: p.aimAngle,
       color: p.color,
       dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
-      weapon: this.weaponService.getPublicState(p.weapon, now),
+      weapon: this.weaponService.getPublicState(p, now),
+      activePowerUp: p.activePowerUp && p.activePowerUp.expiresAt > now
+        ? {
+            type: p.activePowerUp.type,
+            name: p.activePowerUp.name,
+            remainingMs: p.activePowerUp.expiresAt - now,
+          }
+        : undefined,
       dashing: now < p.dashUntil,
       alive: p.alive,
     }));
@@ -173,11 +205,46 @@ export class GameLoopService implements OnModuleDestroy {
     const publicBullets: BulletPublicState[] = bullets.map(b => ({
       id: b.id,
       ownerId: b.ownerId,
+      kind: b.kind,
       x: b.x,
       y: b.y,
       radius: b.radius,
+      explosionRadius: b.explosionRadius,
     }));
 
     return { status, map: map!, players: publicPlayers, bullets: publicBullets };
+  }
+
+  private explodeGrenade(bullet: Bullet): void {
+    const { players, map } = this.gameService;
+    if (!map) return;
+
+    const radius = bullet.explosionRadius ?? 120;
+    const radiusSq = radius * radius;
+
+    for (const player of players.values()) {
+      if (!player.alive || player.id === bullet.ownerId) continue;
+      const dx = player.x - bullet.x;
+      const dy = player.y - bullet.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > radiusSq) continue;
+
+      const falloff = 1 - Math.sqrt(distSq) / radius;
+      this.gameService.damagePlayer(player, Math.ceil(bullet.damage * (0.45 + falloff * 0.55)));
+    }
+
+    for (let i = map.obstacles.length - 1; i >= 0; i--) {
+      const obs = map.obstacles[i];
+      if (!obs.destructible) continue;
+
+      const closestX = Math.max(obs.x - obs.width / 2, Math.min(bullet.x, obs.x + obs.width / 2));
+      const closestY = Math.max(obs.y - obs.height / 2, Math.min(bullet.y, obs.y + obs.height / 2));
+      const dx = bullet.x - closestX;
+      const dy = bullet.y - closestY;
+      if (dx * dx + dy * dy > radiusSq) continue;
+
+      obs.hp -= bullet.obstacleDamage ?? bullet.damage;
+      if (obs.hp <= 0) map.obstacles.splice(i, 1);
+    }
   }
 }

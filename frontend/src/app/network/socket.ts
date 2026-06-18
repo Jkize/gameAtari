@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = `http://${window.location.hostname}:3000`;
 
 class SocketManager {
   private socket: Socket | null = null;

@@ -1,3 +1,5 @@
+import { PowerUpSpawn } from './power-up.types';
+
 export type ObstacleType = 'bush' | 'wood' | 'rock' | 'steel' | 'mirror';
 export type ObstacleAssetId =
   | 'bush_01'
@@ -23,4 +25,5 @@ export interface GameMap {
   width: number;
   height: number;
   obstacles: Obstacle[];
+  powerUps: PowerUpSpawn[];
 }

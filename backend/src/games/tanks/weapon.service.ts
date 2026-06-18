@@ -3,17 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { Bullet } from './types/bullet.types';
 import { Player } from './types/player.types';
 import { PlayerWeapon, WeaponPublicState, WeaponStats } from './types/weapon.types';
-
-const DEFAULT_WEAPON_STATS: WeaponStats = {
-  magazineSize: 6,
-  fireCooldownMs: 300,
-  reloadDurationMs: 1400,
-  maxActiveBullets: 5,
-  bulletSpeed: 600,
-  bulletDamage: 34,
-  bulletRadius: 4,
-  bulletLifetimeMs: 3000,
-};
+import {
+  DEFAULT_WEAPON_STATS,
+  GRENADE_CONFIG,
+  POWER_UP_DEFINITIONS,
+  SHOTGUN_CONFIG,
+  TRIPLE_SHOT_CONFIG,
+} from './weapon.config';
 
 @Injectable()
 export class WeaponService {
@@ -29,24 +25,29 @@ export class WeaponService {
     };
   }
 
-  tryShoot(player: Player, activeBullets: Bullet[], now: number): Bullet | null {
+  tryShoot(player: Player, activeBullets: Bullet[], now: number): Bullet[] {
     const weapon = player.weapon;
-    const stats = this.getStats(weapon, now);
+    this.clearExpiredPowerUp(player, now);
+
+    const stats = this.getPowerAdjustedStats(player, this.getStats(weapon, now));
     const state = weapon.state;
 
     this.finishReloadIfReady(weapon, stats, now);
 
-    if (!player.input.shoot) return null;
-    if (state.reloadsAt > now) return null;
-    if (now - state.lastFiredAt < stats.fireCooldownMs) return null;
+    if (!player.input.shoot) return [];
+    if (state.reloadsAt > now) return [];
+    if (now - state.lastFiredAt < stats.fireCooldownMs) return [];
 
     const ownerBulletCount = activeBullets.filter(bullet => bullet.ownerId === player.id).length;
-    if (ownerBulletCount >= stats.maxActiveBullets) return null;
+    if (ownerBulletCount >= stats.maxActiveBullets) return [];
 
     if (state.ammo <= 0) {
       this.startReload(weapon, stats, now);
-      return null;
+      return [];
     }
+
+    const bullets = this.createShotPattern(player, stats);
+    if (ownerBulletCount + bullets.length > stats.maxActiveBullets) return [];
 
     state.ammo -= 1;
     state.lastFiredAt = now;
@@ -55,33 +56,131 @@ export class WeaponService {
       this.startReload(weapon, stats, now);
     }
 
-    const angle = player.input.aimAngle;
+    return bullets;
+  }
+
+  applyPowerUp(player: Player, type: string, now: number): void {
+    if (!this.isSupportedPowerUp(type)) return;
+
+    const definition = POWER_UP_DEFINITIONS[type];
+    player.activePowerUp = {
+      type,
+      name: definition.name,
+      expiresAt: now + definition.durationMs,
+    };
+
+    const stats = this.getPowerAdjustedStats(player, player.weapon.baseStats);
+    player.weapon.state.reloadsAt = 0;
+    player.weapon.state.ammo = stats.magazineSize;
+  }
+
+  getPublicState(player: Player, now: number): WeaponPublicState {
+    this.clearExpiredPowerUp(player, now);
+
+    const stats = this.getPowerAdjustedStats(player, this.getStats(player.weapon, now));
+    this.finishReloadIfReady(player.weapon, stats, now);
+
+    return {
+      ammo: Math.min(player.weapon.state.ammo, stats.magazineSize),
+      magazineSize: stats.magazineSize,
+      reloadMs: Math.max(0, player.weapon.state.reloadsAt - now),
+      fireCooldownMs: Math.max(0, stats.fireCooldownMs - (now - player.weapon.state.lastFiredAt)),
+    };
+  }
+
+  private createShotPattern(player: Player, stats: WeaponStats): Bullet[] {
+    switch (player.activePowerUp?.type) {
+      case 'triple_shot':
+        return TRIPLE_SHOT_CONFIG.spreadAngles.map(spread =>
+          this.createBullet(player, stats, player.input.aimAngle + spread),
+        );
+      case 'shotgun':
+        return SHOTGUN_CONFIG.spreadAngles.map(spread => this.createBullet(
+          player,
+          {
+            ...stats,
+            ...SHOTGUN_CONFIG.projectileStats,
+          },
+          player.input.aimAngle + spread,
+          SHOTGUN_CONFIG.maxDistance,
+        ));
+      case 'grenade':
+        return [this.createBullet(
+          player,
+          {
+            ...stats,
+            ...GRENADE_CONFIG.projectileStats,
+          },
+          player.input.aimAngle,
+          GRENADE_CONFIG.maxDistance,
+          'grenade',
+        )];
+      default:
+        return [this.createBullet(player, stats, player.input.aimAngle)];
+    }
+  }
+
+  private getPowerAdjustedStats(player: Player, stats: WeaponStats): WeaponStats {
+    switch (player.activePowerUp?.type) {
+      case 'triple_shot':
+        return {
+          ...stats,
+          ...TRIPLE_SHOT_CONFIG.stats,
+        };
+      case 'shotgun':
+        return {
+          ...stats,
+          ...SHOTGUN_CONFIG.stats,
+        };
+      case 'grenade':
+        return {
+          ...stats,
+          ...GRENADE_CONFIG.stats,
+        };
+      default:
+        return stats;
+    }
+  }
+
+  private createBullet(
+    player: Player,
+    stats: WeaponStats,
+    angle: number,
+    maxDistance?: number,
+    kind?: Bullet['kind'],
+  ): Bullet {
     const offset = player.radius + stats.bulletRadius + 2;
+    const x = player.x + Math.cos(angle) * offset;
+    const y = player.y + Math.sin(angle) * offset;
 
     return {
       id: uuidv4(),
       ownerId: player.id,
-      x: player.x + Math.cos(angle) * offset,
-      y: player.y + Math.sin(angle) * offset,
+      kind,
+      x,
+      y,
+      startX: x,
+      startY: y,
       dirX: Math.cos(angle),
       dirY: Math.sin(angle),
       speed: stats.bulletSpeed,
       damage: stats.bulletDamage,
       radius: stats.bulletRadius,
       lifeTime: stats.bulletLifetimeMs,
+      maxDistance,
+      explosionRadius: kind === 'grenade' ? GRENADE_CONFIG.explosionRadius : undefined,
+      obstacleDamage: kind === 'grenade' ? GRENADE_CONFIG.obstacleDamage : undefined,
     };
   }
 
-  getPublicState(weapon: PlayerWeapon, now: number): WeaponPublicState {
-    const stats = this.getStats(weapon, now);
-    this.finishReloadIfReady(weapon, stats, now);
+  private clearExpiredPowerUp(player: Player, now: number): void {
+    if (player.activePowerUp && player.activePowerUp.expiresAt <= now) {
+      player.activePowerUp = undefined;
+    }
+  }
 
-    return {
-      ammo: weapon.state.ammo,
-      magazineSize: stats.magazineSize,
-      reloadMs: Math.max(0, weapon.state.reloadsAt - now),
-      fireCooldownMs: Math.max(0, stats.fireCooldownMs - (now - weapon.state.lastFiredAt)),
-    };
+  private isSupportedPowerUp(type: string): type is keyof typeof POWER_UP_DEFINITIONS {
+    return type in POWER_UP_DEFINITIONS;
   }
 
   private getStats(weapon: PlayerWeapon, now: number): WeaponStats {

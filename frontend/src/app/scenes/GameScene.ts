@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { socketManager } from '../network/socket';
-import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType } from '../types/game-state.types';
+import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType, PowerUpSpawn, PowerUpType } from '../types/game-state.types';
 import { PlayerInput } from '../types/input.types';
 import { ensureTankSvgTextures, TANK_BODY_ROTATION_OFFSET, TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y, TANK_TURRET_ROTATION_OFFSET } from '../rendering/tank-svg-textures';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
@@ -51,6 +51,13 @@ const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
   mirror: 'mirror_panel_01',
 };
 
+const POWER_UP_COLOR: Record<PowerUpType, number> = {
+  triple_shot: 0xffee00,
+  shotgun: 0xff7a2f,
+  grenade: 0x8fff5a,
+  laser: 0x45e8ff,
+};
+
 const MONO = 'Share Tech Mono, Courier New, monospace';
 const BODY_TURN_STEP = 0.1;
 const PLAYER_LABEL_OFFSET = 1.5;
@@ -99,6 +106,7 @@ export class GameScene extends Phaser.Scene {
 
   // Static obstacle render objects (one per obstacle, depth 2)
   private obsGfx: Map<string, Phaser.GameObjects.GameObject> = new Map();
+  private powerUpGfx: Map<string, Phaser.GameObjects.Image> = new Map();
 
   // Camera follow target (invisible rectangle that we move each frame)
   private camTarget!: Phaser.GameObjects.Rectangle;
@@ -109,6 +117,7 @@ export class GameScene extends Phaser.Scene {
   private hudHpText!: Phaser.GameObjects.Text;
   private hudDashText!: Phaser.GameObjects.Text;
   private hudAmmoText!: Phaser.GameObjects.Text;
+  private hudPowerText!: Phaser.GameObjects.Text;
   private hudPlayerCountText!: Phaser.GameObjects.Text;
   private hudTitleText!: Phaser.GameObjects.Text;
   private hudStatusText!: Phaser.GameObjects.Text;
@@ -135,10 +144,11 @@ export class GameScene extends Phaser.Scene {
   private playerMaxHp: Map<string, number> = new Map();
   private playerLastHp: Map<string, number> = new Map();
   private playerLastPos: Map<string, { x: number; y: number }> = new Map();
-  private bulletLastPos: Map<string, { x: number; y: number }> = new Map();
+  private bulletLastPos: Map<string, { x: number; y: number; kind?: string; explosionRadius?: number }> = new Map();
   private prevPlayerIds: Set<string> = new Set();
   private prevBulletIds: Set<string> = new Set();
   private prevObsIds:    Set<string> = new Set();
+  private prevPowerUpIds: Set<string> = new Set();
 
   constructor() {
     super({ key: 'GameScene' });
@@ -176,6 +186,7 @@ export class GameScene extends Phaser.Scene {
     this.playerUiGfx.clear();
 
     this.drawObstacleGlows();
+    this.drawPowerUps(time);
     this.drawPlayers(time);
     this.drawBullets(time);
 
@@ -249,6 +260,9 @@ export class GameScene extends Phaser.Scene {
     this.obsGfx.forEach(gfx => gfx.destroy());
     this.obsGfx.clear();
 
+    this.powerUpGfx.forEach(gfx => gfx.destroy());
+    this.powerUpGfx.clear();
+
     this.playerNameTexts.forEach(txt => txt.destroy());
     this.playerNameTexts.clear();
 
@@ -265,6 +279,7 @@ export class GameScene extends Phaser.Scene {
     this.prevPlayerIds.clear();
     this.prevBulletIds.clear();
     this.prevObsIds.clear();
+    this.prevPowerUpIds.clear();
   }
 
   private drawBackground(): void {
@@ -404,6 +419,47 @@ export class GameScene extends Phaser.Scene {
   private getObstacleTextureKey(obs: Obstacle): string | null {
     const assetId = obs.assetId ?? OBSTACLE_ASSET_BY_TYPE[obs.type];
     return assetId ? `obstacle-${assetId}` : null;
+  }
+
+  private createPowerUpGfx(powerUp: PowerUpSpawn): Phaser.GameObjects.Image {
+    const textureKey = `weapon-${powerUp.assetId}`;
+    const image = this.add.image(
+      powerUp.x,
+      powerUp.y,
+      this.textures.exists(textureKey) ? textureKey : 'particle',
+    )
+      .setOrigin(0.5)
+      .setDisplaySize(powerUp.radius * 2.15, powerUp.radius * 2.15)
+      .setDepth(9);
+
+    if (!this.textures.exists(textureKey)) {
+      image.setTint(POWER_UP_COLOR[powerUp.type]);
+    }
+
+    return image;
+  }
+
+  private drawPowerUps(time: number): void {
+    if (!this.gameState) return;
+
+    this.gameState.map.powerUps.forEach(powerUp => {
+      const icon = this.powerUpGfx.get(powerUp.id);
+      const color = POWER_UP_COLOR[powerUp.type];
+      const bob = Math.sin(time * 0.004 + hashString(powerUp.id) * 0.01) * 6;
+      const pulse = 1 + Math.sin(time * 0.006) * 0.06;
+
+      this.glowGfx.fillStyle(color, 0.16);
+      this.glowGfx.fillCircle(powerUp.x, powerUp.y + bob, powerUp.radius * 1.7);
+      this.glowGfx.lineStyle(2, color, 0.55);
+      this.glowGfx.strokeCircle(powerUp.x, powerUp.y + bob, powerUp.radius * 1.25);
+
+      if (icon) {
+        icon
+          .setPosition(powerUp.x, powerUp.y + bob)
+          .setDisplaySize(powerUp.radius * 2.15 * pulse, powerUp.radius * 2.15 * pulse)
+          .setAlpha(0.95);
+      }
+    });
   }
 
   // ── Obstacle draw methods ─────────────────────────────────────────────────
@@ -795,6 +851,7 @@ export class GameScene extends Phaser.Scene {
     const curPlayers  = new Set(s.players.map(p => p.id));
     const curBullets  = new Set(s.bullets.map(b => b.id));
     const curObs      = new Set(s.map.obstacles.map(o => o.id));
+    const curPowerUps = new Set(s.map.powerUps.map(p => p.id));
 
     this.prevPlayerIds.forEach(id => {
       if (!curPlayers.has(id)) {
@@ -817,7 +874,13 @@ export class GameScene extends Phaser.Scene {
     this.prevBulletIds.forEach(id => {
       if (!curBullets.has(id)) {
         const pos = this.bulletLastPos.get(id);
-        if (pos) this.spawnSpark(pos.x, pos.y);
+        if (pos) {
+          if (pos.kind === 'grenade') {
+            this.spawnGrenadeExplosion(pos.x, pos.y, pos.explosionRadius);
+          } else {
+            this.spawnSpark(pos.x, pos.y);
+          }
+        }
         this.bulletLastPos.delete(id);
       }
     });
@@ -829,9 +892,26 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
+    this.prevPowerUpIds.forEach(id => {
+      if (!curPowerUps.has(id)) {
+        const gfx = this.powerUpGfx.get(id);
+        if (gfx) {
+          this.spawnPowerPickupBurst(gfx.x, gfx.y);
+          gfx.destroy();
+          this.powerUpGfx.delete(id);
+        }
+      }
+    });
+
     s.map.obstacles.forEach(obs => {
       if (!this.obsGfx.has(obs.id)) {
         this.obsGfx.set(obs.id, this.createObstacleGfx(obs));
+      }
+    });
+
+    s.map.powerUps.forEach(powerUp => {
+      if (!this.powerUpGfx.has(powerUp.id)) {
+        this.powerUpGfx.set(powerUp.id, this.createPowerUpGfx(powerUp));
       }
     });
 
@@ -854,11 +934,17 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    s.bullets.forEach(b => this.bulletLastPos.set(b.id, { x: b.x, y: b.y }));
+    s.bullets.forEach(b => this.bulletLastPos.set(b.id, {
+      x: b.x,
+      y: b.y,
+      kind: b.kind,
+      explosionRadius: b.explosionRadius,
+    }));
 
     this.prevPlayerIds  = curPlayers;
     this.prevBulletIds  = curBullets;
     this.prevObsIds     = curObs;
+    this.prevPowerUpIds = curPowerUps;
   }
 
   // ── Player rendering ──────────────────────────────────────────────────────
@@ -999,11 +1085,13 @@ export class GameScene extends Phaser.Scene {
     const flicker = 0.85 + 0.15 * Math.sin(time * 0.012);
     this.gameState.bullets.forEach(b => {
       const r = b.radius;
-      this.glowGfx.fillStyle(C.BULLET_GLOW, 0.18 * flicker);
+      const core = b.kind === 'grenade' ? 0x8fff5a : C.BULLET;
+      const glow = b.kind === 'grenade' ? 0x42ff66 : C.BULLET_GLOW;
+      this.glowGfx.fillStyle(glow, 0.18 * flicker);
       this.glowGfx.fillCircle(b.x, b.y, r * 4);
-      this.glowGfx.fillStyle(C.BULLET, 0.40 * flicker);
+      this.glowGfx.fillStyle(core, 0.40 * flicker);
       this.glowGfx.fillCircle(b.x, b.y, r * 2.2);
-      this.mainGfx.fillStyle(C.BULLET, 1);
+      this.mainGfx.fillStyle(core, 1);
       this.mainGfx.fillCircle(b.x, b.y, r);
       this.mainGfx.fillStyle(0xffffff, 0.92);
       this.mainGfx.fillCircle(b.x, b.y, r * 0.42);
@@ -1073,6 +1161,10 @@ export class GameScene extends Phaser.Scene {
       fontSize: '11px', fontFamily: MONO, color: '#f2cf8f',
     }).setScrollFactor(0).setDepth(101);
 
+    this.hudPowerText = this.add.text(20, 90, 'POWER ---', {
+      fontSize: '11px', fontFamily: MONO, color: '#ffee00',
+    }).setScrollFactor(0).setDepth(101);
+
     this.hudPlayerCountText = this.add.text(W - 16, 18, 'PLAYERS: -', {
       fontSize: '12px', fontFamily: MONO, color: '#8c714a',
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(101);
@@ -1115,9 +1207,9 @@ export class GameScene extends Phaser.Scene {
 
     this.hudPanelGfx.clear();
     this.hudPanelGfx.fillStyle(C.PANEL, 0.84);
-    this.hudPanelGfx.fillRect(10, 10, 190, 96);
+    this.hudPanelGfx.fillRect(10, 10, 220, 116);
     this.hudPanelGfx.lineStyle(1, C.TEXT_WARM, 0.20);
-    this.hudPanelGfx.strokeRect(10, 10, 190, 96);
+    this.hudPanelGfx.strokeRect(10, 10, 220, 116);
     this.hudPanelGfx.fillStyle(C.PANEL, 0.84);
     this.hudPanelGfx.fillRect(W - 170, 10, 158, 40);
     this.hudPanelGfx.lineStyle(1, C.TEXT_MUTED, 0.34);
@@ -1159,14 +1251,22 @@ export class GameScene extends Phaser.Scene {
         : `AMMO ${me.weapon.ammo}/${me.weapon.magazineSize}`;
       this.hudAmmoText.setText(ammoLabel)
         .setColor(me.weapon.reloadMs > 0 ? '#ffcc00' : '#f2cf8f');
+
+      const powerLabel = me.activePowerUp
+        ? `${me.activePowerUp.name} ${(me.activePowerUp.remainingMs / 1000).toFixed(0)}s`
+        : 'POWER ---';
+      this.hudPowerText.setText(powerLabel)
+        .setColor(me.activePowerUp ? colorToCss(POWER_UP_COLOR[me.activePowerUp.type]) : '#8c714a');
     } else if (this.myPlayerId) {
       this.hudHpText.setText('HP  DEAD').setColor('#ff2244');
       this.hudDashText.setText('DASH ---').setColor('#334455');
       this.hudAmmoText.setText('AMMO ---').setColor('#8c714a');
+      this.hudPowerText.setText('POWER ---').setColor('#8c714a');
     } else {
       this.hudHpText.setText('CONNECTING...').setColor('#334455');
       this.hudDashText.setText('DASH ---').setColor('#334455');
       this.hudAmmoText.setText('AMMO ---').setColor('#8c714a');
+      this.hudPowerText.setText('POWER ---').setColor('#8c714a');
     }
 
     this.hudPlayerCountText.setText(`PLAYERS: ${state.players.length}`);
@@ -1246,5 +1346,61 @@ export class GameScene extends Phaser.Scene {
     });
     em.explode(8);
     this.time.delayedCall(400, () => { if (em?.scene) em.destroy(); });
+  }
+
+  private spawnGrenadeExplosion(x: number, y: number, explosionRadius = 120): void {
+    const ring = this.add.graphics().setDepth(11).setBlendMode(Phaser.BlendModes.ADD);
+    const flash = this.add.graphics().setDepth(10).setBlendMode(Phaser.BlendModes.ADD);
+    const state = { radius: 16, alpha: 0.9 };
+
+    this.tweens.add({
+      targets: state,
+      radius: explosionRadius,
+      alpha: 0,
+      duration: 360,
+      ease: 'Quad.out',
+      onUpdate: () => {
+        ring.clear();
+        ring.lineStyle(5, 0xffee66, state.alpha);
+        ring.strokeCircle(x, y, state.radius);
+        ring.lineStyle(2, 0xff6a00, state.alpha * 0.8);
+        ring.strokeCircle(x, y, state.radius * 0.72);
+
+        flash.clear();
+        flash.fillStyle(0xffaa22, state.alpha * 0.16);
+        flash.fillCircle(x, y, state.radius * 0.78);
+      },
+      onComplete: () => {
+        ring.destroy();
+        flash.destroy();
+      },
+    });
+
+    const em = this.add.particles(x, y, 'particle', {
+      speed: { min: 70, max: 360 },
+      scale: { start: 1.6, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: 520,
+      blendMode: 'ADD',
+      tint: [0xffee66, 0xff9900, 0xff4422, 0xffffff],
+      emitting: false,
+    });
+    em.explode(34);
+    this.cameras.main.shake(140, 0.0045);
+    this.time.delayedCall(760, () => { if (em?.scene) em.destroy(); });
+  }
+
+  private spawnPowerPickupBurst(x: number, y: number): void {
+    const em = this.add.particles(x, y, 'particle', {
+      speed: { min: 45, max: 180 },
+      scale: { start: 1.0, end: 0 },
+      alpha: { start: 0.95, end: 0 },
+      lifespan: 420,
+      blendMode: 'ADD',
+      tint: [0xffee00, 0x8fff5a, 0xff7a2f, 0xffffff],
+      emitting: false,
+    });
+    em.explode(14);
+    this.time.delayedCall(620, () => { if (em?.scene) em.destroy(); });
   }
 }
