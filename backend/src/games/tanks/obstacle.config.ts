@@ -46,7 +46,7 @@ export const OBSTACLE_DEFINITIONS = {
   wood: {
     hp: 68,
     destructible: true,
-    assetId: 'wood_barricade_01',
+    assetId: 'wood_barricade',
   },
   rock: {
     hp: 102,

@@ -19,7 +19,7 @@ export type ObstacleAssetId =
   | 'decoration_12_clover_patch'
   | 'decoration_13_dry_grass_mix'
   | 'decoration_14_vine_swirl'
-  | 'wood_barricade_01'
+  | 'wood_barricade'
   | 'rock_block'
   | 'steel_block_01'
   | 'mirror_panel_01';

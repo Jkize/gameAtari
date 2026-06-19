@@ -4,6 +4,7 @@ import { GameService } from '../game.service';
 import { LASER_CONFIG } from './weapon.config';
 import { Bullet } from '../types/bullet.types';
 import { Obstacle } from '../types/map.types';
+import { applyObstacleDamage } from '../obstacle.config';
 
 interface LaserSegment {
   x: number;
@@ -59,8 +60,9 @@ export class WeaponLaserService {
     const maxDistance = bullet.maxDistance ?? LASER_CONFIG.maxDistance;
     bullet.bendX = undefined;
     bullet.bendY = undefined;
+    const damage = Math.max(1, Math.ceil(LASER_CONFIG.damagePerSecond * deltaTime));
 
-    const firstSegment = this.processSegment(bullet, bullet.x, bullet.y, dirX, dirY, maxDistance);
+    const firstSegment = this.processSegment(bullet, bullet.x, bullet.y, dirX, dirY, maxDistance, damage);
     bullet.endX = firstSegment.endX;
     bullet.endY = firstSegment.endY;
 
@@ -74,6 +76,7 @@ export class WeaponLaserService {
         firstSegment.reflection.dirX,
         firstSegment.reflection.dirY,
         remainingDistance,
+        damage,
         firstSegment.reflection.mirrorId,
       );
 
@@ -84,7 +87,6 @@ export class WeaponLaserService {
       segments.push(reflectedSegment);
     }
 
-    const damage = Math.max(1, Math.ceil(LASER_CONFIG.damagePerSecond * deltaTime));
     for (const player of players.values()) {
       if (!player.alive) continue;
       if (segments.some(segment => this.beamVsPlayer(
@@ -110,6 +112,7 @@ export class WeaponLaserService {
     dirX: number,
     dirY: number,
     maxDistance: number,
+    damage: number,
     ignoredObstacleId?: string,
   ): LaserSegment {
     const map = this.gameService.map!;
@@ -129,6 +132,12 @@ export class WeaponLaserService {
 
       if (hitDistance > beamEndDistance) break;
 
+      if (obs.type === 'bush') {
+        const currentIndex = map.obstacles.findIndex(current => current.id === obs.id);
+        if (currentIndex !== -1) map.obstacles.splice(currentIndex, 1);
+        continue;
+      }
+
       if (obs.type === 'mirror') {
         beamEndDistance = hitDistance;
         reflection = {
@@ -146,9 +155,18 @@ export class WeaponLaserService {
         }
 
         bullet.pierceMetalRemaining = (bullet.pierceMetalRemaining ?? 0) - 1;
-        const currentIndex = map.obstacles.findIndex(current => current.id === obs.id);
-        if (currentIndex !== -1) map.obstacles.splice(currentIndex, 1);
         continue;
+      }
+
+      if (!obs.destructible) {
+        beamEndDistance = hitDistance;
+        break;
+      }
+
+      applyObstacleDamage(obs, damage);
+      if (obs.hp > 0) {
+        beamEndDistance = hitDistance;
+        break;
       }
 
       const currentIndex = map.obstacles.findIndex(current => current.id === obs.id);

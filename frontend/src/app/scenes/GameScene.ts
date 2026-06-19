@@ -47,7 +47,7 @@ const OBS: Record<string, { fill: number; glow: number }> = {
 const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
   bush: 'bush_01_rounded_dense',
   decoration: 'decoration_01_spiky_organic',
-  wood: 'wood_barricade_01',
+  wood: 'wood_barricade',
   rock: 'rock_block',
   steel: 'steel_block_01',
   mirror: 'mirror_panel_01',
@@ -428,20 +428,24 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getObstacleTextureKey(obs: Obstacle): string | null {
+    if (obs.type === 'wood') {
+      return `obstacle-${this.getDamageVariant('wood_barricade', obs)}`;
+    }
+
     if (obs.type === 'rock') {
-      return `obstacle-${this.getRockAssetVariant(obs)}`;
+      return `obstacle-${this.getDamageVariant('rock_block', obs)}`;
     }
 
     const assetId = obs.assetId ?? OBSTACLE_ASSET_BY_TYPE[obs.type];
     return assetId ? `obstacle-${assetId}` : null;
   }
 
-  private getRockAssetVariant(obs: Obstacle): string {
+  private getDamageVariant(baseAssetId: 'rock_block' | 'wood_barricade', obs: Obstacle): string {
     const healthRatio = obs.healthRatio ?? (obs.maxHp > 0 ? obs.hp / obs.maxHp : 1);
 
-    if (healthRatio > 0.66) return 'rock_block_1';
-    if (healthRatio > 0.33) return 'rock_block_2';
-    return 'rock_block_3';
+    if (healthRatio > 0.66) return `${baseAssetId}_1`;
+    if (healthRatio > 0.33) return `${baseAssetId}_2`;
+    return `${baseAssetId}_3`;
   }
 
   private createPowerUpGfx(powerUp: PowerUpSpawn): Phaser.GameObjects.Image {
@@ -851,10 +855,6 @@ export class GameScene extends Phaser.Scene {
         case 'steel':
           this.glowGfx.lineStyle(5, 0x2255cc, 0.14);
           this.glowGfx.strokeRect(ox - 1, oy - 1, obs.width + 2, obs.height + 2);
-          break;
-        case 'wood':
-          this.glowGfx.lineStyle(2, 0x884422, 0.06);
-          this.glowGfx.strokeRect(ox, oy, obs.width, obs.height);
           break;
       }
     });

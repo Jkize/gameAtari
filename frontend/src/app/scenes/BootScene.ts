@@ -22,6 +22,9 @@ const OBSTACLE_SVG_ASSETS = [
   ['obstacle-decoration_12_clover_patch', 'assets/obstacle/decoration/decoration_12_clover_patch.svg'],
   ['obstacle-decoration_13_dry_grass_mix', 'assets/obstacle/decoration/decoration_13_dry_grass_mix.svg'],
   ['obstacle-decoration_14_vine_swirl', 'assets/obstacle/decoration/decoration_14_vine_swirl.svg'],
+  ['obstacle-wood_barricade_1', 'assets/obstacle/wood_barricade_1.svg'],
+  ['obstacle-wood_barricade_2', 'assets/obstacle/wood_barricade_2.svg'],
+  ['obstacle-wood_barricade_3', 'assets/obstacle/wood_barricade_3.svg'],
   ['obstacle-rock_block_1', 'assets/obstacle/rock_block_1.svg'],
   ['obstacle-rock_block_2', 'assets/obstacle/rock_block_2.svg'],
   ['obstacle-rock_block_3', 'assets/obstacle/rock_block_3.svg'],
@@ -37,7 +40,6 @@ export class BootScene extends Phaser.Scene {
       this.load.svg(key, path, OBSTACLE_SVG_TEXTURE_SIZE);
     });
 
-    this.load.image('obstacle-wood_barricade_01', 'assets/obstacle/wood_barricade_01.png');
     this.load.image('obstacle-steel_block_01', 'assets/obstacle/steel_block_01.png');
     this.load.image('obstacle-mirror_panel_01', 'assets/obstacle/mirror_panel_01.png');
     this.load.image('weapon-power_triple_shot', 'assets/weapon/power_triple_shot_96.png');

@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="256" height="256">
   <defs>
-    <!-- COLORS -->
     <linearGradient id="baseDark" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#7d848d"/>
       <stop offset="0.45" stop-color="#4e555e"/>
@@ -22,28 +21,23 @@
       <feDisplacementMap in="SourceGraphic" scale="1.2"/>
     </filter>
 
-    <!-- DAMAGE MASK: white = visible, black = transparent hole -->
     <mask id="damageMask1">
       <rect width="128" height="128" fill="white"/>
 
-      <!-- edge chips -->
-      <circle cx="14" cy="28" r="8" fill="black"/>
-      <circle cx="111" cy="30" r="7" fill="black"/>
-      <circle cx="103" cy="106" r="8" fill="black"/>
+      <!-- jagged transparent broken pieces -->
+      <path d="M3 18 L15 7 L28 7 L21 18 L29 27 L14 30 L5 25 Z" fill="black"/>
+      <path d="M101 7 L119 14 L124 31 L111 27 L103 38 L98 22 Z" fill="black"/>
+      <path d="M106 92 L123 86 L123 111 L108 119 L99 106 Z" fill="black"/>
+      <path d="M18 106 L32 99 L42 110 L30 123 L12 119 Z" fill="black"/>
 
-      <!-- bullet damage holes -->
-      <circle cx="38" cy="52" r="5" fill="black"/>
-      <ellipse cx="78" cy="66" rx="6" ry="5" fill="black"/>
-      <circle cx="55" cy="95" r="5" fill="black"/>
-
-      <!-- chipped transparent cracks -->
-      <path d="M84 83 L92 87 L89 96 L81 92 Z" fill="black"/>
-      <path d="M26 86 L35 83 L38 91 L28 94 Z" fill="black"/>
+      <!-- internal jagged cracks/chipped gaps -->
+      <path d="M36 49 L49 43 L60 51 L51 58 L39 57 Z" fill="black"/>
+      <path d="M75 64 L91 60 L98 72 L84 79 L72 73 Z" fill="black"/>
+      <path d="M49 88 L62 84 L72 95 L60 105 L47 99 Z" fill="black"/>
     </mask>
   </defs>
 
   <g mask="url(#damageMask1)">
-    <!-- MAIN ROCK -->
     <path
       d="M5 14
          C15 4, 34 2, 52 6
@@ -56,7 +50,6 @@
       fill="url(#baseDark)"
     />
 
-    <!-- TOP FACE -->
     <path
       d="M11 16
          C25 8, 43 8, 55 12
@@ -70,7 +63,6 @@
       opacity="0.95"
     />
 
-    <!-- LOWER / SIDE SHADE -->
     <path
       d="M5 67
          C22 78, 42 83, 56 76
@@ -83,37 +75,34 @@
       opacity="0.78"
     />
 
-    <!-- LIGHT VEINS -->
-    <path d="M24 30 L43 49 L34 65 L53 85" fill="none" stroke="#d7dde3" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
-    <path d="M72 28 L92 41 L109 61" fill="none" stroke="#cfd5db" stroke-width="2.7" stroke-linecap="round" opacity="0.36"/>
-    <path d="M21 61 L41 56 L59 65" fill="none" stroke="#e0e5ea" stroke-width="2.2" stroke-linecap="round" opacity="0.28"/>
+    <!-- dark exposed broken faces -->
+    <path d="M35 49 L49 42 L61 51 L51 59 L38 58 Z" fill="#12161a" opacity="0.65"/>
+    <path d="M74 64 L91 59 L99 72 L84 80 L71 74 Z" fill="#111418" opacity="0.68"/>
+    <path d="M48 88 L62 83 L73 95 L60 106 L46 100 Z" fill="#111418" opacity="0.64"/>
 
-    <!-- ORANGE / RUST ACCENTS -->
-    <path d="M82 54 C89 48, 101 50, 106 57 C101 66, 91 70, 82 66 C78 63, 78 58, 82 54Z" fill="#b56f34" opacity="0.58"/>
-    <path d="M43 92 C50 87, 60 89, 65 96 C60 104, 49 105, 43 100 C39 97, 40 94, 43 92Z" fill="#8d5829" opacity="0.42"/>
+    <!-- original veins -->
+    <path d="M24 30 L43 49 L34 65 L53 85" fill="none" stroke="#d7dde3" stroke-width="3" stroke-linecap="round" opacity="0.42"/>
+    <path d="M72 28 L92 41 L109 61" fill="none" stroke="#cfd5db" stroke-width="2.7" stroke-linecap="round" opacity="0.32"/>
+    <path d="M21 61 L41 56 L59 65" fill="none" stroke="#e0e5ea" stroke-width="2.2" stroke-linecap="round" opacity="0.24"/>
 
-    <!-- ORIGINAL CRACKS -->
-    <path d="M35 45 L54 39 L72 48" fill="none" stroke="#2a2f34" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-    <path d="M74 75 L86 84 L81 103" fill="none" stroke="#22262b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
-    <path d="M16 95 L35 86 L45 98" fill="none" stroke="#1d2024" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+    <!-- mineral patches -->
+    <path d="M82 54 C89 48, 101 50, 106 57 C101 66, 91 70, 82 66 C78 63, 78 58, 82 54Z" fill="#b56f34" opacity="0.5"/>
+    <path d="M43 92 C50 87, 60 89, 65 96 C60 104, 49 105, 43 100 C39 97, 40 94, 43 92Z" fill="#8d5829" opacity="0.38"/>
 
-    <!-- EXTRA DAMAGE CRACKS -->
-    <path d="M33 53 L45 58 L42 69" fill="none" stroke="#111418" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
-    <path d="M72 63 L84 69 L80 79 L89 86" fill="none" stroke="#111418" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
-    <path d="M49 88 L57 95 L54 106" fill="none" stroke="#111418" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
+    <!-- stronger cracks -->
+    <path d="M35 45 L54 39 L72 48" fill="none" stroke="#111418" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
+    <path d="M74 75 L86 84 L81 103" fill="none" stroke="#111418" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.76"/>
+    <path d="M16 95 L35 86 L45 98" fill="none" stroke="#111418" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
 
-    <!-- IMPACT RINGS -->
-    <circle cx="38" cy="52" r="7" fill="none" stroke="#1a1e23" stroke-width="2" opacity="0.45"/>
-    <ellipse cx="78" cy="66" rx="8" ry="7" fill="none" stroke="#1a1e23" stroke-width="2" opacity="0.45"/>
-    <circle cx="55" cy="95" r="7" fill="none" stroke="#1a1e23" stroke-width="2" opacity="0.42"/>
+    <path d="M32 51 L47 59 L43 72" fill="none" stroke="#0d1013" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <path d="M70 61 L86 70 L79 84 L92 95" fill="none" stroke="#0d1013" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <path d="M49 87 L62 97 L56 112" fill="none" stroke="#0d1013" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
 
-    <!-- SMALL TEXTURE DOTS -->
-    <circle cx="27" cy="47" r="2.8" fill="#2d3137" opacity="0.35"/>
-    <circle cx="64" cy="25" r="2.3" fill="#d7dde3" opacity="0.25"/>
-    <circle cx="95" cy="78" r="3" fill="#16191d" opacity="0.35"/>
-    <circle cx="56" cy="100" r="3.2" fill="#8b939b" opacity="0.25"/>
+    <!-- small angular texture -->
+    <path d="M27 47 L32 45 L35 50 L29 53 Z" fill="#2d3137" opacity="0.32"/>
+    <path d="M63 24 L68 22 L71 27 L65 29 Z" fill="#d7dde3" opacity="0.22"/>
+    <path d="M94 78 L100 76 L102 82 L96 85 Z" fill="#16191d" opacity="0.32"/>
 
-    <!-- EDGE HIGHLIGHT -->
     <path
       d="M10 16
          C24 5, 45 7, 56 11
@@ -122,7 +111,7 @@
       stroke="#eef3f7"
       stroke-width="2.5"
       stroke-linecap="round"
-      opacity="0.25"
+      opacity="0.2"
     />
   </g>
 </svg>

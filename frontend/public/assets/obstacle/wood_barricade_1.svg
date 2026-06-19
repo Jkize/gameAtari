@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="256" height="256">
+  <defs>
+    <linearGradient id="frameWood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9c6437"/>
+      <stop offset="0.5" stop-color="#6f4324"/>
+      <stop offset="1" stop-color="#3f2414"/>
+    </linearGradient>
+
+    <linearGradient id="plankLight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d79a5c"/>
+      <stop offset="0.5" stop-color="#bf7d45"/>
+      <stop offset="1" stop-color="#9c6235"/>
+    </linearGradient>
+
+    <linearGradient id="plankMid" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c9884f"/>
+      <stop offset="0.55" stop-color="#ad6d3d"/>
+      <stop offset="1" stop-color="#8a5430"/>
+    </linearGradient>
+
+    <linearGradient id="plankDark" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a15e36"/>
+      <stop offset="0.5" stop-color="#7c4529"/>
+      <stop offset="1" stop-color="#5b311f"/>
+    </linearGradient>
+
+    <linearGradient id="metalBolt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#aeb4bb"/>
+      <stop offset="0.45" stop-color="#666d75"/>
+      <stop offset="1" stop-color="#2b2f35"/>
+    </linearGradient>
+  </defs>
+
+  <!-- OUTER FRAME -->
+  <rect x="4" y="4" width="120" height="120" rx="10" ry="10" fill="url(#frameWood)"/>
+
+  <!-- INNER BACK -->
+  <rect x="12" y="12" width="104" height="104" rx="6" ry="6" fill="#4f2d1a"/>
+
+  <!-- SIDE POSTS -->
+  <rect x="12" y="12" width="12" height="104" rx="4" fill="#b57a45"/>
+  <rect x="104" y="12" width="12" height="104" rx="4" fill="#b57a45"/>
+
+  <!-- TOP / BOTTOM BARS -->
+  <rect x="12" y="12" width="104" height="10" rx="4" fill="#8f5a31"/>
+  <rect x="12" y="106" width="104" height="10" rx="4" fill="#8f5a31"/>
+
+  <!-- PLANK 1 -->
+  <path d="M24 24 L102 24 Q108 24 108 29 L108 43 Q108 48 102 48 L37 48 L30 52 L24 48 Q20 47 20 43 L20 29 Q20 24 24 24Z" fill="url(#plankLight)"/>
+
+  <!-- PLANK 2 -->
+  <path d="M24 50 L102 50 Q108 50 108 55 L108 69 Q108 74 102 74 L74 74 L67 78 L60 74 L24 74 Q20 74 20 69 L20 55 Q20 50 24 50Z" fill="url(#plankDark)"/>
+
+  <!-- PLANK 3 -->
+  <path d="M24 76 L102 76 Q108 76 108 81 L108 95 Q108 100 102 100 L43 100 L35 104 L28 100 L24 100 Q20 100 20 95 L20 81 Q20 76 24 76Z" fill="url(#plankMid)"/>
+
+  <!-- BOTTOM PLANK -->
+  <path d="M20 104 L108 104 Q112 104 112 108 L112 114 Q112 118 108 118 L20 118 Q16 118 16 114 L16 108 Q16 104 20 104Z" fill="#c88b4f"/>
+
+  <!-- CHIPS -->
+  <path d="M30 24 L40 24 L33 29 Z" fill="#6e4024" opacity="0.85"/>
+  <path d="M90 48 L104 48 L96 54 Z" fill="#5f3520" opacity="0.82"/>
+  <path d="M58 74 L69 74 L61 80 Z" fill="#58311d" opacity="0.8"/>
+  <path d="M35 100 L45 100 L39 105 Z" fill="#5d351f" opacity="0.78"/>
+
+  <!-- WOOD GRAIN -->
+  <path d="M28 31 C40 29, 54 33, 70 30 C83 28, 95 31, 102 30" fill="none" stroke="#9b6338" stroke-width="1.7" opacity="0.45" stroke-linecap="round"/>
+  <path d="M26 39 C42 38, 58 40, 78 39 C89 38, 98 40, 103 39" fill="none" stroke="#8d5932" stroke-width="1.6" opacity="0.38" stroke-linecap="round"/>
+
+  <path d="M26 57 C40 55, 55 58, 73 57 C88 56, 96 58, 104 57" fill="none" stroke="#6d3d24" stroke-width="1.8" opacity="0.4" stroke-linecap="round"/>
+  <path d="M28 65 C38 64, 48 67, 64 65 C82 63, 95 66, 103 64" fill="none" stroke="#5f3520" stroke-width="1.6" opacity="0.35" stroke-linecap="round"/>
+
+  <path d="M26 83 C42 82, 58 84, 73 83 C87 82, 96 84, 103 83" fill="none" stroke="#8b5731" stroke-width="1.7" opacity="0.38" stroke-linecap="round"/>
+  <path d="M29 91 C44 90, 59 93, 77 91 C90 89, 99 92, 103 91" fill="none" stroke="#7b4b2b" stroke-width="1.6" opacity="0.3" stroke-linecap="round"/>
+
+  <!-- SMALL CRACKS -->
+  <path d="M74 24 L84 31 L80 37" fill="none" stroke="#6b3e23" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+  <path d="M63 68 L72 64 L76 59" fill="none" stroke="#4f2c1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  <path d="M34 98 L45 94 L51 96" fill="none" stroke="#5a3320" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.58"/>
+
+  <!-- BOLTS -->
+  <g>
+    <circle cx="26" cy="37" r="4.3" fill="url(#metalBolt)"/><circle cx="26" cy="37" r="2" fill="#4b5158"/>
+    <circle cx="102" cy="37" r="4.3" fill="url(#metalBolt)"/><circle cx="102" cy="37" r="2" fill="#4b5158"/>
+
+    <circle cx="26" cy="63" r="4.3" fill="url(#metalBolt)"/><circle cx="26" cy="63" r="2" fill="#4b5158"/>
+    <circle cx="102" cy="63" r="4.3" fill="url(#metalBolt)"/><circle cx="102" cy="63" r="2" fill="#4b5158"/>
+
+    <circle cx="26" cy="89" r="4.3" fill="url(#metalBolt)"/><circle cx="26" cy="89" r="2" fill="#4b5158"/>
+    <circle cx="102" cy="89" r="4.3" fill="url(#metalBolt)"/><circle cx="102" cy="89" r="2" fill="#4b5158"/>
+  </g>
+
+  <!-- SHADOW SEAMS -->
+  <path d="M24 49 L104 49" stroke="#3d2214" stroke-width="2.2" opacity="0.45"/>
+  <path d="M24 75 L104 75" stroke="#3d2214" stroke-width="2.2" opacity="0.45"/>
+  <path d="M16 104 L112 104" stroke="#3d2214" stroke-width="2.2" opacity="0.4"/>
+
+  <!-- HIGHLIGHTS -->
+  <path d="M15 14 L15 110" fill="none" stroke="#d29b64" stroke-width="1.8" opacity="0.28" stroke-linecap="round"/>
+  <path d="M25 16 L103 16" fill="none" stroke="#c98d56" stroke-width="1.7" opacity="0.25" stroke-linecap="round"/>
+</svg>
