@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
+  <defs>
+    <!-- MAIN COLORS - change these first if you want -->
+    <linearGradient id="leafLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5fc447"/>
+      <stop offset="0.6" stop-color="#338f32"/>
+      <stop offset="1" stop-color="#1d6428"/>
+    </linearGradient>
+
+    <linearGradient id="leafMid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#43a93d"/>
+      <stop offset="1" stop-color="#176120"/>
+    </linearGradient>
+
+    <linearGradient id="leafDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#236f2c"/>
+      <stop offset="1" stop-color="#0f3d19"/>
+    </linearGradient>
+
+    <filter id="softShadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="1" stdDeviation="0.35" flood-color="#071b0b" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <!-- Base body -->
+    <rect x="5" y="5" width="54" height="54" rx="2.4" fill="#123f1b"/>
+
+    <!-- Outer rounded border -->
+    <g opacity="1">
+      <!-- Top border -->
+      <circle cx="7" cy="7" r="5" fill="url(#leafDark)"/>
+      <circle cx="13" cy="5.5" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="20" cy="5.8" r="5.4" fill="url(#leafLight)"/>
+      <circle cx="27" cy="5.3" r="5.1" fill="url(#leafMid)"/>
+      <circle cx="34" cy="5.7" r="5.5" fill="url(#leafLight)"/>
+      <circle cx="41" cy="5.4" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="48" cy="5.8" r="5.4" fill="url(#leafLight)"/>
+      <circle cx="57" cy="7" r="5" fill="url(#leafDark)"/>
+
+      <!-- Bottom border -->
+      <circle cx="7" cy="57" r="5" fill="url(#leafDark)"/>
+      <circle cx="13" cy="58.5" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="20" cy="58.2" r="5.4" fill="url(#leafLight)"/>
+      <circle cx="27" cy="58.7" r="5.1" fill="url(#leafMid)"/>
+      <circle cx="34" cy="58.3" r="5.5" fill="url(#leafLight)"/>
+      <circle cx="41" cy="58.6" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="48" cy="58.2" r="5.4" fill="url(#leafLight)"/>
+      <circle cx="57" cy="57" r="5" fill="url(#leafDark)"/>
+
+      <!-- Left border -->
+      <circle cx="5.5" cy="13" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="5.8" cy="20" r="5.4" fill="url(#leafLight)"/>
+      <circle cx="5.3" cy="27" r="5.1" fill="url(#leafMid)"/>
+      <circle cx="5.7" cy="34" r="5.5" fill="url(#leafLight)"/>
+      <circle cx="5.4" cy="41" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="5.8" cy="48" r="5.4" fill="url(#leafDark)"/>
+
+      <!-- Right border -->
+      <circle cx="58.5" cy="13" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="58.2" cy="20" r="5.4" fill="url(#leafLight)"/>
+      <circle cx="58.7" cy="27" r="5.1" fill="url(#leafMid)"/>
+      <circle cx="58.3" cy="34" r="5.5" fill="url(#leafLight)"/>
+      <circle cx="58.6" cy="41" r="5.2" fill="url(#leafMid)"/>
+      <circle cx="58.2" cy="48" r="5.4" fill="url(#leafDark)"/>
+    </g>
+
+    <!-- Interior dense foliage -->
+    <g opacity="0.98">
+      <circle cx="14" cy="14" r="6.2" fill="url(#leafLight)"/>
+      <circle cx="23" cy="13" r="6.6" fill="url(#leafMid)"/>
+      <circle cx="33" cy="14" r="7.2" fill="url(#leafLight)"/>
+      <circle cx="43" cy="13" r="6.4" fill="url(#leafMid)"/>
+      <circle cx="51" cy="15" r="6.1" fill="url(#leafLight)"/>
+
+      <circle cx="12" cy="24" r="6.7" fill="url(#leafMid)"/>
+      <circle cx="22" cy="23" r="7.3" fill="url(#leafLight)"/>
+      <circle cx="32" cy="24" r="7.8" fill="url(#leafMid)"/>
+      <circle cx="43" cy="23" r="7.1" fill="url(#leafLight)"/>
+      <circle cx="52" cy="25" r="6.5" fill="url(#leafDark)"/>
+
+      <circle cx="13" cy="35" r="7" fill="url(#leafLight)"/>
+      <circle cx="23" cy="35" r="7.7" fill="url(#leafMid)"/>
+      <circle cx="33" cy="34" r="8.2" fill="url(#leafLight)"/>
+      <circle cx="44" cy="35" r="7.5" fill="url(#leafMid)"/>
+      <circle cx="52" cy="36" r="6.6" fill="url(#leafLight)"/>
+
+      <circle cx="12" cy="47" r="6.5" fill="url(#leafDark)"/>
+      <circle cx="22" cy="48" r="7.2" fill="url(#leafLight)"/>
+      <circle cx="32" cy="47" r="7.6" fill="url(#leafMid)"/>
+      <circle cx="43" cy="48" r="7.1" fill="url(#leafLight)"/>
+      <circle cx="52" cy="47" r="6.3" fill="url(#leafDark)"/>
+    </g>
+
+    <!-- Extra small round leaves -->
+    <g opacity="0.9">
+      <circle cx="9" cy="9" r="3.1" fill="#2f8d34"/>
+      <circle cx="17" cy="10" r="3.3" fill="#3fa83d"/>
+      <circle cx="29" cy="9" r="3.2" fill="#2d8530"/>
+      <circle cx="38" cy="10" r="3.4" fill="#4db348"/>
+      <circle cx="55" cy="10" r="3.2" fill="#2d802f"/>
+
+      <circle cx="9" cy="31" r="3.4" fill="#3fa83d"/>
+      <circle cx="17" cy="29" r="3.5" fill="#65bf45"/>
+      <circle cx="28" cy="30" r="3.7" fill="#2a7d2c"/>
+      <circle cx="38" cy="29" r="3.5" fill="#52b545"/>
+      <circle cx="55" cy="31" r="3.4" fill="#2e7d30"/>
+
+      <circle cx="9" cy="55" r="3.2" fill="#2b7e2d"/>
+      <circle cx="18" cy="54" r="3.4" fill="#42a23a"/>
+      <circle cx="29" cy="55" r="3.2" fill="#318b34"/>
+      <circle cx="39" cy="54" r="3.5" fill="#4eb346"/>
+      <circle cx="55" cy="55" r="3.2" fill="#237129"/>
+    </g>
+
+    <!-- Dark curved shadows -->
+    <g fill="none" stroke="#0f3718" stroke-width="1.5" stroke-linecap="round" opacity="0.38">
+      <path d="M11 18c3-2 6-2 9 0"/>
+      <path d="M26 19c3-2 7-2 10 0"/>
+      <path d="M41 18c3-2 6-2 9 0"/>
+      <path d="M10 38c3-2 6-2 9 0"/>
+      <path d="M25 39c3-2 7-2 10 0"/>
+      <path d="M40 39c3-2 6-2 9 0"/>
+      <path d="M18 52c3-2 7-2 10 0"/>
+      <path d="M36 52c3-2 7-2 10 0"/>
+    </g>
+
+    <!-- Light highlight dots -->
+    <g fill="#c9e85a" opacity="0.9">
+      <circle cx="13" cy="11" r="1.1"/>
+      <circle cx="23" cy="9" r="1"/>
+      <circle cx="35" cy="10" r="1.1"/>
+      <circle cx="49" cy="11" r="1"/>
+      <circle cx="10" cy="21" r="1"/>
+      <circle cx="20" cy="23" r="1"/>
+      <circle cx="31" cy="21" r="1.1"/>
+      <circle cx="45" cy="24" r="1"/>
+      <circle cx="55" cy="21" r="1"/>
+      <circle cx="13" cy="34" r="1"/>
+      <circle cx="25" cy="32" r="1.1"/>
+      <circle cx="37" cy="34" r="1"/>
+      <circle cx="50" cy="32" r="1.1"/>
+      <circle cx="11" cy="48" r="1"/>
+      <circle cx="22" cy="50" r="1"/>
+      <circle cx="34" cy="48" r="1.1"/>
+      <circle cx="46" cy="50" r="1"/>
+      <circle cx="55" cy="47" r="1"/>
+    </g>
+
+    <!-- Flowers -->
+    <g>
+      <circle cx="18" cy="19" r="1.25" fill="#f5aa18"/>
+      <circle cx="15.9" cy="19" r="1.45" fill="#ffef71"/>
+      <circle cx="20.1" cy="19" r="1.45" fill="#ffef71"/>
+      <circle cx="18" cy="16.9" r="1.45" fill="#ffef71"/>
+      <circle cx="18" cy="21.1" r="1.45" fill="#ffef71"/>
+    </g>
+
+    <g>
+      <circle cx="42" cy="20" r="1.1" fill="#ec2f72"/>
+      <circle cx="40.1" cy="20" r="1.35" fill="#ff72ad"/>
+      <circle cx="43.9" cy="20" r="1.35" fill="#ff72ad"/>
+      <circle cx="42" cy="18.1" r="1.35" fill="#ff72ad"/>
+      <circle cx="42" cy="21.9" r="1.35" fill="#ff72ad"/>
+    </g>
+
+    <g>
+      <circle cx="29" cy="36" r="1.1" fill="#7a4cf0"/>
+      <circle cx="27.1" cy="36" r="1.35" fill="#bf8cff"/>
+      <circle cx="30.9" cy="36" r="1.35" fill="#bf8cff"/>
+      <circle cx="29" cy="34.1" r="1.35" fill="#bf8cff"/>
+      <circle cx="29" cy="37.9" r="1.35" fill="#bf8cff"/>
+    </g>
+
+    <g>
+      <circle cx="47" cy="44" r="1.05" fill="#e92f45"/>
+      <circle cx="45.2" cy="44" r="1.25" fill="#ff5c69"/>
+      <circle cx="48.8" cy="44" r="1.25" fill="#ff5c69"/>
+      <circle cx="47" cy="42.2" r="1.25" fill="#ff5c69"/>
+      <circle cx="47" cy="45.8" r="1.25" fill="#ff5c69"/>
+    </g>
+
+    <g>
+      <circle cx="16" cy="49" r="1" fill="#f4a617"/>
+      <circle cx="14.3" cy="49" r="1.15" fill="#ffe66b"/>
+      <circle cx="17.7" cy="49" r="1.15" fill="#ffe66b"/>
+      <circle cx="16" cy="47.3" r="1.15" fill="#ffe66b"/>
+      <circle cx="16" cy="50.7" r="1.15" fill="#ffe66b"/>
+    </g>
+
+    <g>
+      <circle cx="34" cy="52" r="0.9" fill="#e72c75"/>
+      <circle cx="32.5" cy="52" r="1.05" fill="#ff83bd"/>
+      <circle cx="35.5" cy="52" r="1.05" fill="#ff83bd"/>
+      <circle cx="34" cy="50.5" r="1.05" fill="#ff83bd"/>
+      <circle cx="34" cy="53.5" r="1.05" fill="#ff83bd"/>
+    </g>
+  </g>
+</svg>

@@ -2,11 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { GameMap, Obstacle, ObstacleType } from './types/map.types';
 import { PowerUpSpawn, PowerUpType } from './types/power-up.types';
+import {
+  BUSH_OBSTACLE_ASSET_IDS,
+  DECORATION_OBSTACLE_ASSET_IDS,
+  DEFAULT_OBSTACLE_SIZE,
+  OBSTACLE_DEFINITIONS,
+} from './obstacle.config';
 
 const MAP_WIDTH = 1600;
 const MAP_HEIGHT = 1200;
 
-const TILE = 64;
 const POWER_UP_RADIUS = 20;
 
 const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {
@@ -14,30 +19,6 @@ const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {
   shotgun: 'power_shotgun',
   grenade: 'power_grenade',
   laser: 'power_laser',
-};
-
-const OBSTACLE_HP: Record<ObstacleType, number> = {
-  bush: 34,
-  wood: 68,
-  rock: 102,
-  steel: 9999,
-  mirror: 9999, 
-};
-
-const OBSTACLE_DESTRUCTIBLE: Record<ObstacleType, boolean> = {
-  bush: true,
-  wood: true,
-  rock: true,
-  steel: false,
-  mirror: false,
-};
-
-const OBSTACLE_ASSET_ID: Record<ObstacleType, Obstacle['assetId']> = {
-  bush: 'bush_01',
-  wood: 'wood_barricade_01',
-  rock: 'rock_block_01',
-  steel: 'steel_block_01',
-  mirror: 'mirror_panel_01',
 };
 
 @Injectable()
@@ -55,49 +36,56 @@ export class MapService {
     type: ObstacleType,
     x: number,
     y: number,
-    w = TILE,
-    h = TILE,
+    w = DEFAULT_OBSTACLE_SIZE,
+    h = DEFAULT_OBSTACLE_SIZE,
+    assetId?: Obstacle['assetId'],
   ): Obstacle {
+    const definition = OBSTACLE_DEFINITIONS[type];
+
     return {
       id: uuidv4(),
       type,
-      assetId: OBSTACLE_ASSET_ID[type],
+      assetId: assetId ?? definition.assetId,
       x,
       y,
       width: w,
       height: h,
-      hp: OBSTACLE_HP[type],
-      destructible: OBSTACLE_DESTRUCTIBLE[type],
+      hp: definition.hp,
+      destructible: definition.destructible,
     };
   }
 
   private buildPredefinedObstacles(): Obstacle[] {
     const obstacles: Obstacle[] = [];
     const usedPositions = new Set<string>();
+    const bushCoverSize = 70;
+    const bushGap = -5;
+    const bushPatchGap = bushCoverSize + bushGap;
 
     const add = (
       type: ObstacleType,
       x: number,
       y: number,
-      w = TILE,
-      h = TILE,
+      w = DEFAULT_OBSTACLE_SIZE,
+      h = DEFAULT_OBSTACLE_SIZE,
+      assetId?: Obstacle['assetId'],
     ) => {
-      const key = `${type}-${x}-${y}-${w}-${h}`;
+      const key = `${type}-${x}-${y}-${w}-${h}-${assetId ?? ''}`;
 
       if (usedPositions.has(key)) {
         return;
       }
 
       usedPositions.add(key);
-      obstacles.push(this.obs(type, x, y, w, h));
+      obstacles.push(this.obs(type, x, y, w, h, assetId));
     };
 
     const addSymmetric = (
       type: ObstacleType,
       x: number,
       y: number,
-      w = TILE,
-      h = TILE,
+      w = DEFAULT_OBSTACLE_SIZE,
+      h = DEFAULT_OBSTACLE_SIZE,
     ) => {
       const mirroredX = MAP_WIDTH - x;
       const mirroredY = MAP_HEIGHT - y;
@@ -114,8 +102,8 @@ export class MapService {
       y: number,
       count: number,
       gap = 80,
-      w = TILE,
-      h = TILE,
+      w = DEFAULT_OBSTACLE_SIZE,
+      h = DEFAULT_OBSTACLE_SIZE,
     ) => {
       for (let i = 0; i < count; i++) {
         add(type, startX + i * gap, y, w, h);
@@ -128,8 +116,8 @@ export class MapService {
       startY: number,
       count: number,
       gap = 80,
-      w = TILE,
-      h = TILE,
+      w = DEFAULT_OBSTACLE_SIZE,
+      h = DEFAULT_OBSTACLE_SIZE,
     ) => {
       for (let i = 0; i < count; i++) {
         add(type, x, startY + i * gap, w, h);
@@ -137,22 +125,37 @@ export class MapService {
     };
 
     const addBushPair = (x: number, y: number, horizontal = true) => {
-      const gap = 72;
       if (horizontal) {
-        add('bush', x - gap / 2, y);
-        add('bush', x + gap / 2, y);
+        add('bush', x - bushPatchGap / 2, y, bushCoverSize, bushCoverSize);
+        add('bush', x + bushPatchGap / 2, y, bushCoverSize, bushCoverSize);
       } else {
-        add('bush', x, y - gap / 2);
-        add('bush', x, y + gap / 2);
+        add('bush', x, y - bushPatchGap / 2, bushCoverSize, bushCoverSize);
+        add('bush', x, y + bushPatchGap / 2, bushCoverSize, bushCoverSize);
       }
     };
 
     const addBushQuad = (x: number, y: number) => {
-      const gap = 72;
-      add('bush', x - gap / 2, y - gap / 2);
-      add('bush', x + gap / 2, y - gap / 2);
-      add('bush', x - gap / 2, y + gap / 2);
-      add('bush', x + gap / 2, y + gap / 2);
+      add('bush', x - bushPatchGap / 2, y - bushPatchGap / 2, bushCoverSize, bushCoverSize);
+      add('bush', x + bushPatchGap / 2, y - bushPatchGap / 2, bushCoverSize, bushCoverSize);
+      add('bush', x - bushPatchGap / 2, y + bushPatchGap / 2, bushCoverSize, bushCoverSize);
+      add('bush', x + bushPatchGap / 2, y + bushPatchGap / 2, bushCoverSize, bushCoverSize);
+    };
+
+    const addAssetPreview = () => {
+      const columns = 9;
+      const gap = bushPatchGap;
+      const startX = MAP_WIDTH / 2 - ((columns - 1) * gap) / 2;
+      const startY = MAP_HEIGHT - 154;
+      const previewAssets = [
+        ...BUSH_OBSTACLE_ASSET_IDS.map(assetId => ({ type: 'bush' as const, assetId })),
+        ...DECORATION_OBSTACLE_ASSET_IDS.map(assetId => ({ type: 'decoration' as const, assetId })),
+      ];
+
+      previewAssets.forEach(({ type, assetId }, index) => {
+        const x = startX + (index % columns) * gap;
+        const y = startY + Math.floor(index / columns) * gap;
+        add(type, x, y, bushCoverSize, bushCoverSize, assetId);
+      });
     };
 
     /*
@@ -172,6 +175,9 @@ export class MapService {
 
     // A light central screen: cover to hide in, not a wall to get stuck on.
     addBushPair(800, 600, true);
+
+    // Temporary visual preview: bush cover and visual decorations packed at the bottom.
+    addAssetPreview();
 
     // Defensive rock triplets. They read like cover lines but leave wide lanes.
     addHorizontalLine('rock', 360, 430, 3, 92);

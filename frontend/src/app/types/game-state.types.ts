@@ -1,7 +1,24 @@
 export type PowerUpType = 'triple_shot' | 'shotgun' | 'grenade' | 'laser';
-export type ObstacleType = 'bush' | 'wood' | 'rock' | 'steel' | 'mirror';
+export type ObstacleType = 'bush' | 'decoration' | 'wood' | 'rock' | 'steel' | 'mirror';
 export type ObstacleAssetId =
-  | 'bush_01'
+  | 'bush_01_rounded_dense'
+  | 'bush_02_irregular_leafy'
+  | 'bush_03_compact_arcade'
+  | 'bush_04_wide_low'
+  | 'decoration_01_spiky_organic'
+  | 'decoration_02_two_lobed'
+  | 'decoration_03_pink_yellow_flowers'
+  | 'decoration_04_grass_blue_flowers'
+  | 'decoration_05_wild_red_flowers'
+  | 'decoration_06_sharp_grass_pink_yellow'
+  | 'decoration_07_leafy_blue_flower'
+  | 'decoration_08_tall_grass_wildflowers'
+  | 'decoration_09_cactus_flowers'
+  | 'decoration_10_reed_patch_orange'
+  | 'decoration_11_fern_star'
+  | 'decoration_12_clover_patch'
+  | 'decoration_13_dry_grass_mix'
+  | 'decoration_14_vine_swirl'
   | 'wood_barricade_01'
   | 'rock_block_01'
   | 'steel_block_01'

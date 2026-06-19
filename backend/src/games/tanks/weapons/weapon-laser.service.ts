@@ -44,7 +44,7 @@ export class WeaponLaserService {
     this.collisionService.clampPlayerToBounds(owner, map.width, map.height);
 
     for (const obs of map.obstacles) {
-      if (obs.type === 'bush') continue;
+      if (obs.type === 'bush' || obs.type === 'decoration') continue;
       this.collisionService.resolvePlayerVsObstacle(owner, obs, previousOwnerX, previousOwnerY);
     }
 
@@ -118,6 +118,7 @@ export class WeaponLaserService {
 
     const hits = map.obstacles
       .filter(obs => obs.id !== ignoredObstacleId)
+      .filter(obs => obs.type !== 'decoration')
       .map(obs => ({ obs, t: this.getObstacleHitT(x, y, dirX, dirY, bullet.radius, obs, maxDistance) }))
       .filter(hit => hit.t !== null)
       .sort((a, b) => (a.t ?? 0) - (b.t ?? 0));

@@ -37,6 +37,7 @@ function colorToCss(color: number): string {
 
 const OBS: Record<string, { fill: number; glow: number }> = {
   bush:   { fill: 0x16451f, glow: 0x33cc33 },
+  decoration: { fill: 0x2f7d32, glow: 0x77aa33 },
   wood:   { fill: 0x4a2508, glow: 0xcc6622 },
   rock:   { fill: 0x30303a, glow: 0x8888aa },
   steel:  { fill: 0x1a2438, glow: 0x3366ff },
@@ -44,12 +45,14 @@ const OBS: Record<string, { fill: number; glow: number }> = {
 };
 
 const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
-  bush: 'bush_01',
+  bush: 'bush_01_rounded_dense',
+  decoration: 'decoration_01_spiky_organic',
   wood: 'wood_barricade_01',
   rock: 'rock_block_01',
   steel: 'steel_block_01',
   mirror: 'mirror_panel_01',
 };
+const BUSH_COVER_DEPTH = 8.5;
 
 const POWER_UP_COLOR: Record<PowerUpType, number> = {
   triple_shot: 0xffee00,
@@ -102,6 +105,8 @@ export class GameScene extends Phaser.Scene {
   private bgGfx!: Phaser.GameObjects.Graphics;    // static background (depth 0)
   private glowGfx!: Phaser.GameObjects.Graphics;  // ADD blend – all glows (depth 4)
   private mainGfx!: Phaser.GameObjects.Graphics;  // NORMAL – bodies, HP bars (depth 5)
+  private bulletGlowGfx!: Phaser.GameObjects.Graphics;
+  private bulletGfx!: Phaser.GameObjects.Graphics;
   private playerUiGfx!: Phaser.GameObjects.Graphics;
 
   // Static obstacle render objects (one per obstacle, depth 2)
@@ -159,6 +164,8 @@ export class GameScene extends Phaser.Scene {
     this.bgGfx   = this.add.graphics().setDepth(0);
     this.glowGfx = this.add.graphics().setDepth(4).setBlendMode(Phaser.BlendModes.ADD);
     this.mainGfx = this.add.graphics().setDepth(5);
+    this.bulletGlowGfx = this.add.graphics().setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
+    this.bulletGfx = this.add.graphics().setDepth(9.2);
     this.playerUiGfx = this.add.graphics().setDepth(8);
 
     this.camTarget = this.add.rectangle(800, 600, 1, 1, 0x000000, 0).setDepth(-1);
@@ -183,6 +190,8 @@ export class GameScene extends Phaser.Scene {
 
     this.glowGfx.clear();
     this.mainGfx.clear();
+    this.bulletGlowGfx.clear();
+    this.bulletGfx.clear();
     this.playerUiGfx.clear();
 
     this.drawObstacleGlows();
@@ -394,14 +403,15 @@ export class GameScene extends Phaser.Scene {
       return this.add.image(obs.x, obs.y, textureKey)
         .setOrigin(0.5)
         .setDisplaySize(obs.width, obs.height)
-        .setDepth(obs.type === 'bush' ? 6 : 2);
+        .setDepth(obs.type === 'bush' ? BUSH_COVER_DEPTH : 2);
     }
 
-    const gfx = this.add.graphics().setDepth(obs.type === 'bush' ? 6 : 2);
+    const gfx = this.add.graphics().setDepth(obs.type === 'bush' ? BUSH_COVER_DEPTH : 2);
     const rng = seededRandom(hashString(obs.id));
 
     switch (obs.type) {
       case 'bush':   this.drawBushObstacle(gfx, obs, rng);   break;
+      case 'decoration': this.drawBushObstacle(gfx, obs, rng); break;
       case 'wood':   this.drawWoodObstacle(gfx, obs, rng);   break;
       case 'rock':   this.drawRockObstacle(gfx, obs, rng);   break;
       case 'steel':  this.drawSteelObstacle(gfx, obs, rng);  break;
@@ -809,10 +819,8 @@ export class GameScene extends Phaser.Scene {
       const oy = obs.y - obs.height / 2;
       switch (obs.type) {
         case 'bush':
-          this.glowGfx.fillStyle(0x22aa22, 0.04);
-          this.glowGfx.fillRect(ox - 2, oy - 2, obs.width + 4, obs.height + 4);
-          this.glowGfx.lineStyle(4, 0x44cc44, 0.08);
-          this.glowGfx.strokeRect(ox - 2, oy - 2, obs.width + 4, obs.height + 4);
+          this.glowGfx.fillStyle(0x77aa33, 0.08);
+          this.glowGfx.fillEllipse(obs.x, obs.y + obs.height * 0.2, obs.width * 0.8, obs.height * 0.28);
           break;
         case 'mirror':
           // Wide electric bloom – multiple layered strokes
@@ -952,8 +960,11 @@ export class GameScene extends Phaser.Scene {
     if (!this.gameState) return;
     this.gameState.players.forEach(p => {
       const isLocal = p.id === this.myPlayerId;
+      const hiddenByBush = this.isPlayerInBush(p);
       this.drawTank(p, isLocal, time);
-      this.drawHpBar(p);
+      if (!hiddenByBush) {
+        this.drawHpBar(p);
+      }
 
       const txt = this.playerNameTexts.get(p.id);
       if (txt) {
@@ -961,8 +972,22 @@ export class GameScene extends Phaser.Scene {
         const label = isLocal ? nameLabel : `${nameLabel}\n${p.hp}hp`;
         txt.setText(label);
         txt.setPosition(p.x, p.y - p.radius * PLAYER_LABEL_OFFSET);
-        txt.setVisible(p.alive);
+        txt.setVisible(p.alive && !hiddenByBush);
       }
+    });
+  }
+
+  private isPlayerInBush(p: PlayerPublicState): boolean {
+    if (!this.gameState || !p.alive) return false;
+
+    return this.gameState.map.obstacles.some(obs => {
+      if (obs.type !== 'bush') return false;
+
+      const halfW = obs.width / 2;
+      const halfH = obs.height / 2;
+      const closestX = Phaser.Math.Clamp(p.x, obs.x - halfW, obs.x + halfW);
+      const closestY = Phaser.Math.Clamp(p.y, obs.y - halfH, obs.y + halfH);
+      return Phaser.Math.Distance.Between(p.x, p.y, closestX, closestY) <= p.radius * 0.75;
     });
   }
 
@@ -1103,34 +1128,34 @@ export class GameScene extends Phaser.Scene {
           }
         };
 
-        drawBeam(32, glow, 0.20 * pulse, this.glowGfx);
-        drawBeam(20, 0xff0030, 0.42 * pulse, this.glowGfx);
-        drawBeam(10, 0xff5a78, 0.88, this.glowGfx);
-        drawBeam(5, core, 1, this.mainGfx);
-        drawBeam(2, 0xffffff, 1, this.mainGfx);
+        drawBeam(32, glow, 0.20 * pulse, this.bulletGlowGfx);
+        drawBeam(20, 0xff0030, 0.42 * pulse, this.bulletGlowGfx);
+        drawBeam(10, 0xff5a78, 0.88, this.bulletGlowGfx);
+        drawBeam(5, core, 1, this.bulletGfx);
+        drawBeam(2, 0xffffff, 1, this.bulletGfx);
 
         if (bendX !== undefined && bendY !== undefined) {
-          this.glowGfx.fillStyle(0xff0030, 0.55 * pulse);
-          this.glowGfx.fillCircle(bendX, bendY, b.radius * 5);
-          this.mainGfx.fillStyle(0xffffff, 0.95);
-          this.mainGfx.fillCircle(bendX, bendY, b.radius * 0.75);
+          this.bulletGlowGfx.fillStyle(0xff0030, 0.55 * pulse);
+          this.bulletGlowGfx.fillCircle(bendX, bendY, b.radius * 5);
+          this.bulletGfx.fillStyle(0xffffff, 0.95);
+          this.bulletGfx.fillCircle(bendX, bendY, b.radius * 0.75);
         }
 
-        this.glowGfx.fillStyle(0xff0030, 0.60 * pulse);
-        this.glowGfx.fillCircle(endX, endY, b.radius * 4.5);
-        this.mainGfx.fillStyle(0xffffff, 0.95);
-        this.mainGfx.fillCircle(endX, endY, b.radius * 0.85);
+        this.bulletGlowGfx.fillStyle(0xff0030, 0.60 * pulse);
+        this.bulletGlowGfx.fillCircle(endX, endY, b.radius * 4.5);
+        this.bulletGfx.fillStyle(0xffffff, 0.95);
+        this.bulletGfx.fillCircle(endX, endY, b.radius * 0.85);
         return;
       }
 
-      this.glowGfx.fillStyle(glow, 0.18 * flicker);
-      this.glowGfx.fillCircle(b.x, b.y, r * 4);
-      this.glowGfx.fillStyle(core, 0.40 * flicker);
-      this.glowGfx.fillCircle(b.x, b.y, r * 2.2);
-      this.mainGfx.fillStyle(core, 1);
-      this.mainGfx.fillCircle(b.x, b.y, r);
-      this.mainGfx.fillStyle(0xffffff, 0.92);
-      this.mainGfx.fillCircle(b.x, b.y, r * 0.42);
+      this.bulletGlowGfx.fillStyle(glow, 0.18 * flicker);
+      this.bulletGlowGfx.fillCircle(b.x, b.y, r * 4);
+      this.bulletGlowGfx.fillStyle(core, 0.40 * flicker);
+      this.bulletGlowGfx.fillCircle(b.x, b.y, r * 2.2);
+      this.bulletGfx.fillStyle(core, 1);
+      this.bulletGfx.fillCircle(b.x, b.y, r);
+      this.bulletGfx.fillStyle(0xffffff, 0.92);
+      this.bulletGfx.fillCircle(b.x, b.y, r * 0.42);
     });
   }
 

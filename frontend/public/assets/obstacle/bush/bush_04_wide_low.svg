@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
+  <defs>
+    <linearGradient id="starBushLeafLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#63c84e"/>
+      <stop offset="0.6" stop-color="#358f35"/>
+      <stop offset="1" stop-color="#1d6428"/>
+    </linearGradient>
+
+    <linearGradient id="starBushLeafMid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#43a93d"/>
+      <stop offset="1" stop-color="#176120"/>
+    </linearGradient>
+
+    <linearGradient id="starBushLeafDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#236f2c"/>
+      <stop offset="1" stop-color="#0f3d19"/>
+    </linearGradient>
+
+    <filter id="starBushSoftShadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="1" stdDeviation="0.35" flood-color="#071b0b" flood-opacity="0.35"/>
+    </filter>
+
+    <symbol id="starSmall" viewBox="0 0 10 10">
+      <path d="M5 0.7L6.1 3.7L9.3 3.7L6.7 5.6L7.7 8.8L5 6.9L2.3 8.8L3.3 5.6L0.7 3.7L3.9 3.7Z"/>
+    </symbol>
+
+    <symbol id="starSpark" viewBox="0 0 10 10">
+      <path d="M5 0.8L5.9 4.1L9.2 5L5.9 5.9L5 9.2L4.1 5.9L0.8 5L4.1 4.1Z"/>
+    </symbol>
+  </defs>
+
+  <g filter="url(#starBushSoftShadow)">
+    <!-- Base body -->
+    <rect x="5" y="5" width="54" height="54" rx="2.4" fill="#123f1b"/>
+
+    <!-- Outer rounded border -->
+    <g opacity="1">
+      <circle cx="7" cy="7" r="5" fill="url(#starBushLeafDark)"/>
+      <circle cx="13" cy="5.5" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="20" cy="5.8" r="5.4" fill="url(#starBushLeafLight)"/>
+      <circle cx="27" cy="5.3" r="5.1" fill="url(#starBushLeafMid)"/>
+      <circle cx="34" cy="5.7" r="5.5" fill="url(#starBushLeafLight)"/>
+      <circle cx="41" cy="5.4" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="48" cy="5.8" r="5.4" fill="url(#starBushLeafLight)"/>
+      <circle cx="57" cy="7" r="5" fill="url(#starBushLeafDark)"/>
+
+      <circle cx="7" cy="57" r="5" fill="url(#starBushLeafDark)"/>
+      <circle cx="13" cy="58.5" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="20" cy="58.2" r="5.4" fill="url(#starBushLeafLight)"/>
+      <circle cx="27" cy="58.7" r="5.1" fill="url(#starBushLeafMid)"/>
+      <circle cx="34" cy="58.3" r="5.5" fill="url(#starBushLeafLight)"/>
+      <circle cx="41" cy="58.6" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="48" cy="58.2" r="5.4" fill="url(#starBushLeafLight)"/>
+      <circle cx="57" cy="57" r="5" fill="url(#starBushLeafDark)"/>
+
+      <circle cx="5.5" cy="13" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="5.8" cy="20" r="5.4" fill="url(#starBushLeafLight)"/>
+      <circle cx="5.3" cy="27" r="5.1" fill="url(#starBushLeafMid)"/>
+      <circle cx="5.7" cy="34" r="5.5" fill="url(#starBushLeafLight)"/>
+      <circle cx="5.4" cy="41" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="5.8" cy="48" r="5.4" fill="url(#starBushLeafDark)"/>
+
+      <circle cx="58.5" cy="13" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="58.2" cy="20" r="5.4" fill="url(#starBushLeafLight)"/>
+      <circle cx="58.7" cy="27" r="5.1" fill="url(#starBushLeafMid)"/>
+      <circle cx="58.3" cy="34" r="5.5" fill="url(#starBushLeafLight)"/>
+      <circle cx="58.6" cy="41" r="5.2" fill="url(#starBushLeafMid)"/>
+      <circle cx="58.2" cy="48" r="5.4" fill="url(#starBushLeafDark)"/>
+    </g>
+
+    <!-- Interior dense foliage -->
+    <g opacity="0.98">
+      <circle cx="14" cy="14" r="6.2" fill="url(#starBushLeafLight)"/>
+      <circle cx="23" cy="13" r="6.6" fill="url(#starBushLeafMid)"/>
+      <circle cx="33" cy="14" r="7.2" fill="url(#starBushLeafLight)"/>
+      <circle cx="43" cy="13" r="6.4" fill="url(#starBushLeafMid)"/>
+      <circle cx="51" cy="15" r="6.1" fill="url(#starBushLeafLight)"/>
+
+      <circle cx="12" cy="24" r="6.7" fill="url(#starBushLeafMid)"/>
+      <circle cx="22" cy="23" r="7.3" fill="url(#starBushLeafLight)"/>
+      <circle cx="32" cy="24" r="7.8" fill="url(#starBushLeafMid)"/>
+      <circle cx="43" cy="23" r="7.1" fill="url(#starBushLeafLight)"/>
+      <circle cx="52" cy="25" r="6.5" fill="url(#starBushLeafDark)"/>
+
+      <circle cx="13" cy="35" r="7" fill="url(#starBushLeafLight)"/>
+      <circle cx="23" cy="35" r="7.7" fill="url(#starBushLeafMid)"/>
+      <circle cx="33" cy="34" r="8.2" fill="url(#starBushLeafLight)"/>
+      <circle cx="44" cy="35" r="7.5" fill="url(#starBushLeafMid)"/>
+      <circle cx="52" cy="36" r="6.6" fill="url(#starBushLeafLight)"/>
+
+      <circle cx="12" cy="47" r="6.5" fill="url(#starBushLeafDark)"/>
+      <circle cx="22" cy="48" r="7.2" fill="url(#starBushLeafLight)"/>
+      <circle cx="32" cy="47" r="7.6" fill="url(#starBushLeafMid)"/>
+      <circle cx="43" cy="48" r="7.1" fill="url(#starBushLeafLight)"/>
+      <circle cx="52" cy="47" r="6.3" fill="url(#starBushLeafDark)"/>
+    </g>
+
+    <!-- Extra small round leaves -->
+    <g opacity="0.9">
+      <circle cx="9" cy="9" r="3.1" fill="#2f8d34"/>
+      <circle cx="17" cy="10" r="3.3" fill="#3fa83d"/>
+      <circle cx="29" cy="9" r="3.2" fill="#2d8530"/>
+      <circle cx="38" cy="10" r="3.4" fill="#4db348"/>
+      <circle cx="55" cy="10" r="3.2" fill="#2d802f"/>
+
+      <circle cx="9" cy="31" r="3.4" fill="#3fa83d"/>
+      <circle cx="17" cy="29" r="3.5" fill="#65bf45"/>
+      <circle cx="28" cy="30" r="3.7" fill="#2a7d2c"/>
+      <circle cx="38" cy="29" r="3.5" fill="#52b545"/>
+      <circle cx="55" cy="31" r="3.4" fill="#2e7d30"/>
+
+      <circle cx="9" cy="55" r="3.2" fill="#2b7e2d"/>
+      <circle cx="18" cy="54" r="3.4" fill="#42a23a"/>
+      <circle cx="29" cy="55" r="3.2" fill="#318b34"/>
+      <circle cx="39" cy="54" r="3.5" fill="#4eb346"/>
+      <circle cx="55" cy="55" r="3.2" fill="#237129"/>
+    </g>
+
+    <!-- Dark curved shadows -->
+    <g fill="none" stroke="#0f3718" stroke-width="1.5" stroke-linecap="round" opacity="0.38">
+      <path d="M11 18c3-2 6-2 9 0"/>
+      <path d="M26 19c3-2 7-2 10 0"/>
+      <path d="M41 18c3-2 6-2 9 0"/>
+      <path d="M10 38c3-2 6-2 9 0"/>
+      <path d="M25 39c3-2 7-2 10 0"/>
+      <path d="M40 39c3-2 6-2 9 0"/>
+      <path d="M18 52c3-2 7-2 10 0"/>
+      <path d="M36 52c3-2 7-2 10 0"/>
+    </g>
+
+    <!-- Light highlight dots -->
+    <g fill="#c9e85a" opacity="0.85">
+      <circle cx="13" cy="11" r="1"/>
+      <circle cx="23" cy="9" r="0.95"/>
+      <circle cx="35" cy="10" r="1"/>
+      <circle cx="49" cy="11" r="0.95"/>
+      <circle cx="10" cy="21" r="0.95"/>
+      <circle cx="20" cy="23" r="0.95"/>
+      <circle cx="31" cy="21" r="1"/>
+      <circle cx="45" cy="24" r="0.95"/>
+      <circle cx="55" cy="21" r="0.95"/>
+      <circle cx="13" cy="34" r="0.95"/>
+      <circle cx="25" cy="32" r="1"/>
+      <circle cx="37" cy="34" r="0.95"/>
+      <circle cx="50" cy="32" r="1"/>
+      <circle cx="11" cy="48" r="0.95"/>
+      <circle cx="22" cy="50" r="0.95"/>
+      <circle cx="34" cy="48" r="1"/>
+      <circle cx="46" cy="50" r="0.95"/>
+      <circle cx="55" cy="47" r="0.95"/>
+    </g>
+
+    <!-- BIGGER STARS -->
+    <g>
+      <!-- Big golden star -->
+      <use href="#starSmall" x="12.5" y="12.5" width="9.5" height="9.5" fill="#ffd84a"/>
+      <use href="#starSmall" x="13.7" y="13.7" width="7" height="7" fill="#fff07a" opacity="0.75"/>
+
+      <!-- Purple star -->
+      <use href="#starSmall" x="38" y="14.5" width="8.8" height="8.8" fill="#b77cff"/>
+      <use href="#starSpark" x="41" y="17.5" width="2.8" height="2.8" fill="#f0dcff"/>
+
+      <!-- Blue sparkle star -->
+      <use href="#starSpark" x="23.5" y="26.5" width="8.5" height="8.5" fill="#7fb5ff"/>
+      <use href="#starSpark" x="26.2" y="29.2" width="2.8" height="2.8" fill="#d9ecff"/>
+
+      <!-- Pink star -->
+      <use href="#starSmall" x="43.5" y="37.5" width="8.8" height="8.8" fill="#ff78b5"/>
+      <use href="#starSmall" x="44.7" y="38.7" width="6.5" height="6.5" fill="#ffc0dd" opacity="0.65"/>
+
+      <!-- Orange star -->
+      <use href="#starSmall" x="13.5" y="41.5" width="8.2" height="8.2" fill="#ffb347"/>
+      <use href="#starSpark" x="16.1" y="44.1" width="2.6" height="2.6" fill="#fff0a1"/>
+
+      <!-- Cyan star -->
+      <use href="#starSpark" x="32.5" y="45.5" width="7.5" height="7.5" fill="#77fff0"/>
+      <use href="#starSpark" x="35" y="48" width="2.5" height="2.5" fill="#e8fffb"/>
+
+      <!-- Medium extra stars -->
+      <use href="#starSpark" x="47.5" y="25.5" width="5.2" height="5.2" fill="#fff27a"/>
+      <use href="#starSpark" x="9.5" y="27.5" width="4.8" height="4.8" fill="#d8a6ff"/>
+      <use href="#starSpark" x="30.5" y="13.5" width="5" height="5" fill="#fff6a3"/>
+      <use href="#starSpark" x="37.5" y="29.5" width="4.8" height="4.8" fill="#a9ff9c"/>
+    </g>
+  </g>
+</svg>

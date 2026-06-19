@@ -131,7 +131,7 @@ export class GameLoopService implements OnModuleDestroy {
 
       if (!isFiringLaser) {
         for (const obs of map.obstacles) {
-          if (obs.type === 'bush') continue;
+          if (obs.type === 'bush' || obs.type === 'decoration') continue;
           this.collisionService.resolvePlayerVsObstacle(player, obs, previousX, previousY);
         }
       }
@@ -186,6 +186,8 @@ export class GameLoopService implements OnModuleDestroy {
       let absorbed = false;
       for (let i = map.obstacles.length - 1; i >= 0; i--) {
         const obs = map.obstacles[i];
+        if (obs.type === 'decoration') continue;
+        if (obs.type === 'bush' && bullet.kind !== 'grenade') continue;
         if (!this.collisionService.bulletVsObstacleAlongPath(bullet, obs, previousX, previousY)) continue;
 
         if (obs.type === 'mirror') {
