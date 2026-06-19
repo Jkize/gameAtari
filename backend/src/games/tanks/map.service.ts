@@ -51,6 +51,8 @@ export class MapService {
       width: w,
       height: h,
       hp: definition.hp,
+      maxHp: definition.hp,
+      healthRatio: 1,
       destructible: definition.destructible,
     };
   }
@@ -180,8 +182,8 @@ export class MapService {
     addAssetPreview();
 
     // Defensive rock triplets. They read like cover lines but leave wide lanes.
-    addHorizontalLine('rock', 360, 430, 3, 92);
-    addHorizontalLine('rock', MAP_WIDTH - 544, 770, 3, 92);
+    addHorizontalLine('rock', 360, 430, 3, DEFAULT_OBSTACLE_SIZE);
+    addHorizontalLine('rock', MAP_WIDTH - 544, 770, 3, DEFAULT_OBSTACLE_SIZE);
 
     // Wood barricade triplets on the side lanes.
     addHorizontalLine('wood', 260, 610, 3, 88);

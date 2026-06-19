@@ -21,7 +21,7 @@ export type ObstacleAssetId =
   | 'decoration_13_dry_grass_mix'
   | 'decoration_14_vine_swirl'
   | 'wood_barricade_01'
-  | 'rock_block_01'
+  | 'rock_block'
   | 'steel_block_01'
   | 'mirror_panel_01';
 
@@ -35,6 +35,8 @@ export interface Obstacle {
   width: number;
   height: number;
   hp: number;
+  maxHp: number;
+  healthRatio: number;
   destructible: boolean;
 }
 

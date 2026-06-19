@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GameService } from '../game.service';
 import { Bullet } from '../types/bullet.types';
+import { applyObstacleDamage } from '../obstacle.config';
 
 @Injectable()
 export class WeaponGrenadeService {
@@ -34,7 +35,7 @@ export class WeaponGrenadeService {
       const dy = bullet.y - closestY;
       if (dx * dx + dy * dy > radiusSq) continue;
 
-      obs.hp -= bullet.obstacleDamage ?? bullet.damage;
+      applyObstacleDamage(obs, bullet.obstacleDamage ?? bullet.damage);
       if (obs.hp <= 0) map.obstacles.splice(i, 1);
     }
   }

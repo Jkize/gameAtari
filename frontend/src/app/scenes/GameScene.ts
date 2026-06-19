@@ -48,7 +48,7 @@ const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
   bush: 'bush_01_rounded_dense',
   decoration: 'decoration_01_spiky_organic',
   wood: 'wood_barricade_01',
-  rock: 'rock_block_01',
+  rock: 'rock_block',
   steel: 'steel_block_01',
   mirror: 'mirror_panel_01',
 };
@@ -111,6 +111,7 @@ export class GameScene extends Phaser.Scene {
 
   // Static obstacle render objects (one per obstacle, depth 2)
   private obsGfx: Map<string, Phaser.GameObjects.GameObject> = new Map();
+  private obsTextureKeys: Map<string, string | null> = new Map();
   private powerUpGfx: Map<string, Phaser.GameObjects.Image> = new Map();
 
   // Camera follow target (invisible rectangle that we move each frame)
@@ -427,8 +428,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getObstacleTextureKey(obs: Obstacle): string | null {
+    if (obs.type === 'rock') {
+      return `obstacle-${this.getRockAssetVariant(obs)}`;
+    }
+
     const assetId = obs.assetId ?? OBSTACLE_ASSET_BY_TYPE[obs.type];
     return assetId ? `obstacle-${assetId}` : null;
+  }
+
+  private getRockAssetVariant(obs: Obstacle): string {
+    const healthRatio = obs.healthRatio ?? (obs.maxHp > 0 ? obs.hp / obs.maxHp : 1);
+
+    if (healthRatio > 0.66) return 'rock_block_1';
+    if (healthRatio > 0.33) return 'rock_block_2';
+    return 'rock_block_3';
   }
 
   private createPowerUpGfx(powerUp: PowerUpSpawn): Phaser.GameObjects.Image {
@@ -843,10 +856,6 @@ export class GameScene extends Phaser.Scene {
           this.glowGfx.lineStyle(2, 0x884422, 0.06);
           this.glowGfx.strokeRect(ox, oy, obs.width, obs.height);
           break;
-        case 'rock':
-          this.glowGfx.lineStyle(2, 0x505060, 0.06);
-          this.glowGfx.strokeRect(ox, oy, obs.width, obs.height);
-          break;
       }
     });
   }
@@ -897,6 +906,7 @@ export class GameScene extends Phaser.Scene {
       if (!curObs.has(id)) {
         const gfx = this.obsGfx.get(id);
         if (gfx) { gfx.destroy(); this.obsGfx.delete(id); }
+        this.obsTextureKeys.delete(id);
       }
     });
 
@@ -912,8 +922,15 @@ export class GameScene extends Phaser.Scene {
     });
 
     s.map.obstacles.forEach(obs => {
+      const textureKey = this.getObstacleTextureKey(obs);
       if (!this.obsGfx.has(obs.id)) {
         this.obsGfx.set(obs.id, this.createObstacleGfx(obs));
+        this.obsTextureKeys.set(obs.id, textureKey);
+      } else if (this.obsTextureKeys.get(obs.id) !== textureKey) {
+        const gfx = this.obsGfx.get(obs.id);
+        if (gfx) gfx.destroy();
+        this.obsGfx.set(obs.id, this.createObstacleGfx(obs));
+        this.obsTextureKeys.set(obs.id, textureKey);
       }
     });
 

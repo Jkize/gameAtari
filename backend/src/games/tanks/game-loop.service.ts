@@ -10,6 +10,7 @@ import { BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
 import { ActivePowerUp, ActivePowerUpPublicState } from './types/power-up.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
+import { applyObstacleDamage } from './obstacle.config';
 
 const TICK_RATE = 60;
 const TICK_INTERVAL = 1000 / TICK_RATE;
@@ -205,7 +206,7 @@ export class GameLoopService implements OnModuleDestroy {
         dead.add(bullet.id);
 
         if (obs.destructible) {
-          obs.hp -= bullet.damage;
+          applyObstacleDamage(obs, bullet.damage);
           if (obs.hp <= 0) map.obstacles.splice(i, 1);
         }
 

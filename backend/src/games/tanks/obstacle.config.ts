@@ -51,7 +51,7 @@ export const OBSTACLE_DEFINITIONS = {
   rock: {
     hp: 102,
     destructible: true,
-    assetId: 'rock_block_01',
+    assetId: 'rock_block',
   },
   steel: {
     hp: 9999,
@@ -64,3 +64,13 @@ export const OBSTACLE_DEFINITIONS = {
     assetId: 'mirror_panel_01',
   },
 } as const satisfies Record<ObstacleType, ObstacleDefinition>;
+
+export function getObstacleHealthRatio(obstacle: Pick<Obstacle, 'hp' | 'maxHp'>): number {
+  if (obstacle.maxHp <= 0) return 0;
+  return Math.max(0, Math.min(1, obstacle.hp / obstacle.maxHp));
+}
+
+export function applyObstacleDamage(obstacle: Obstacle, damage: number): void {
+  obstacle.hp = Math.max(0, obstacle.hp - damage);
+  obstacle.healthRatio = getObstacleHealthRatio(obstacle);
+}

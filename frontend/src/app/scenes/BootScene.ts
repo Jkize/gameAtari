@@ -1,32 +1,43 @@
 import Phaser from 'phaser';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 
+const OBSTACLE_SVG_TEXTURE_SIZE = { width: 64, height: 64 } as const;
+
+const OBSTACLE_SVG_ASSETS = [
+  ['obstacle-bush_01_rounded_dense', 'assets/obstacle/bush/bush_01_rounded_dense.svg'],
+  ['obstacle-bush_02_irregular_leafy', 'assets/obstacle/bush/bush_02_irregular_leafy.svg'],
+  ['obstacle-bush_03_compact_arcade', 'assets/obstacle/bush/bush_03_compact_arcade.svg'],
+  ['obstacle-bush_04_wide_low', 'assets/obstacle/bush/bush_04_wide_low.svg'],
+  ['obstacle-decoration_01_spiky_organic', 'assets/obstacle/decoration/decoration_01_spiky_organic.svg'],
+  ['obstacle-decoration_02_two_lobed', 'assets/obstacle/decoration/decoration_02_two_lobed.svg'],
+  ['obstacle-decoration_03_pink_yellow_flowers', 'assets/obstacle/decoration/decoration_03_pink_yellow_flowers.svg'],
+  ['obstacle-decoration_04_grass_blue_flowers', 'assets/obstacle/decoration/decoration_04_grass_blue_flowers.svg'],
+  ['obstacle-decoration_05_wild_red_flowers', 'assets/obstacle/decoration/decoration_05_wild_red_flowers.svg'],
+  ['obstacle-decoration_06_sharp_grass_pink_yellow', 'assets/obstacle/decoration/decoration_06_sharp_grass_pink_yellow.svg'],
+  ['obstacle-decoration_07_leafy_blue_flower', 'assets/obstacle/decoration/decoration_07_leafy_blue_flower.svg'],
+  ['obstacle-decoration_08_tall_grass_wildflowers', 'assets/obstacle/decoration/decoration_08_tall_grass_wildflowers.svg'],
+  ['obstacle-decoration_09_cactus_flowers', 'assets/obstacle/decoration/decoration_09_cactus_flowers.svg'],
+  ['obstacle-decoration_10_reed_patch_orange', 'assets/obstacle/decoration/decoration_10_reed_patch_orange.svg'],
+  ['obstacle-decoration_11_fern_star', 'assets/obstacle/decoration/decoration_11_fern_star.svg'],
+  ['obstacle-decoration_12_clover_patch', 'assets/obstacle/decoration/decoration_12_clover_patch.svg'],
+  ['obstacle-decoration_13_dry_grass_mix', 'assets/obstacle/decoration/decoration_13_dry_grass_mix.svg'],
+  ['obstacle-decoration_14_vine_swirl', 'assets/obstacle/decoration/decoration_14_vine_swirl.svg'],
+  ['obstacle-rock_block_1', 'assets/obstacle/rock_block_1.svg'],
+  ['obstacle-rock_block_2', 'assets/obstacle/rock_block_2.svg'],
+  ['obstacle-rock_block_3', 'assets/obstacle/rock_block_3.svg'],
+] as const;
+
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' });
   }
 
   preload(): void {
-    this.load.svg('obstacle-bush_01_rounded_dense', 'assets/obstacle/bush/bush_01_rounded_dense.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-bush_02_irregular_leafy', 'assets/obstacle/bush/bush_02_irregular_leafy.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-bush_03_compact_arcade', 'assets/obstacle/bush/bush_03_compact_arcade.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-bush_04_wide_low', 'assets/obstacle/bush/bush_04_wide_low.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_01_spiky_organic', 'assets/obstacle/decoration/decoration_01_spiky_organic.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_02_two_lobed', 'assets/obstacle/decoration/decoration_02_two_lobed.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_03_pink_yellow_flowers', 'assets/obstacle/decoration/decoration_03_pink_yellow_flowers.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_04_grass_blue_flowers', 'assets/obstacle/decoration/decoration_04_grass_blue_flowers.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_05_wild_red_flowers', 'assets/obstacle/decoration/decoration_05_wild_red_flowers.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_06_sharp_grass_pink_yellow', 'assets/obstacle/decoration/decoration_06_sharp_grass_pink_yellow.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_07_leafy_blue_flower', 'assets/obstacle/decoration/decoration_07_leafy_blue_flower.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_08_tall_grass_wildflowers', 'assets/obstacle/decoration/decoration_08_tall_grass_wildflowers.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_09_cactus_flowers', 'assets/obstacle/decoration/decoration_09_cactus_flowers.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_10_reed_patch_orange', 'assets/obstacle/decoration/decoration_10_reed_patch_orange.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_11_fern_star', 'assets/obstacle/decoration/decoration_11_fern_star.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_12_clover_patch', 'assets/obstacle/decoration/decoration_12_clover_patch.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_13_dry_grass_mix', 'assets/obstacle/decoration/decoration_13_dry_grass_mix.svg', { width: 64, height: 64 });
-    this.load.svg('obstacle-decoration_14_vine_swirl', 'assets/obstacle/decoration/decoration_14_vine_swirl.svg', { width: 64, height: 64 });
+    OBSTACLE_SVG_ASSETS.forEach(([key, path]) => {
+      this.load.svg(key, path, OBSTACLE_SVG_TEXTURE_SIZE);
+    });
+
     this.load.image('obstacle-wood_barricade_01', 'assets/obstacle/wood_barricade_01.png');
-    this.load.image('obstacle-rock_block_01', 'assets/obstacle/rock_block_01.png');
     this.load.image('obstacle-steel_block_01', 'assets/obstacle/steel_block_01.png');
     this.load.image('obstacle-mirror_panel_01', 'assets/obstacle/mirror_panel_01.png');
     this.load.image('weapon-power_triple_shot', 'assets/weapon/power_triple_shot_96.png');
