@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="trackGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#26272b"/>
+      <stop offset="45%" stop-color="#15161a"/>
+      <stop offset="100%" stop-color="#08090b"/>
+    </linearGradient>
+    <linearGradient id="trackPlate" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#36383d"/>
+      <stop offset="50%" stop-color="#1b1d21"/>
+      <stop offset="100%" stop-color="#0b0c0e"/>
+    </linearGradient>
+    <linearGradient id="hurtArmor" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="38%" stop-color="var(--tank-color)"/>
+      <stop offset="72%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </linearGradient>
+    <radialGradient id="scorch" cx="56%" cy="43%" r="46%">
+      <stop offset="0%" stop-color="#080808" stop-opacity=".74"/>
+      <stop offset="52%" stop-color="#17120f" stop-opacity=".46"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)" stop-opacity=".08"/>
+    </radialGradient>
+    <linearGradient id="darkSteel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#393c42"/>
+      <stop offset="50%" stop-color="#202329"/>
+      <stop offset="100%" stop-color="#101318"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#000" flood-opacity="0.38"/>
+    </filter>
+    <style>
+      :root {
+        --tank-color: #db3a2c;
+        --tank-highlight: color-mix(in srgb, var(--tank-color), white 28%);
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 52%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 38%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 66%);
+        --tank-outline: color-mix(in srgb, var(--tank-color), black 90%);
+      }
+      .line { stroke:var(--tank-outline); stroke-width:4.5; stroke-linejoin:round; }
+      .fine { stroke:var(--tank-outline); stroke-width:2.4; stroke-linejoin:round; }
+      .bolt { fill:var(--tank-outline); }
+      .scratch { stroke:var(--tank-soft-highlight); stroke-opacity:.55; stroke-width:2.7; stroke-linecap:round; }
+      .gash { stroke:#070707; stroke-width:5.8; stroke-linecap:round; opacity:.72; }
+      .hot { stroke:#ff7a18; stroke-width:2.2; stroke-linecap:round; opacity:.36; }
+      .ash { fill:#060607; opacity:.42; }
+    </style>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="74" y="62" width="78" height="388" rx="22" fill="url(#trackGrad)" class="line"/>
+    <rect x="360" y="62" width="78" height="388" rx="22" fill="url(#trackGrad)" class="line"/>
+    <g fill="url(#trackPlate)">
+      <rect x="84" y="74" width="58" height="28" rx="6"/>
+      <rect x="84" y="111" width="58" height="28" rx="6"/>
+      <rect x="84" y="148" width="58" height="28" rx="6"/>
+      <rect x="84" y="185" width="58" height="28" rx="6"/>
+      <rect x="84" y="222" width="58" height="28" rx="6"/>
+      <rect x="84" y="259" width="58" height="28" rx="6"/>
+      <rect x="84" y="296" width="58" height="28" rx="6"/>
+      <rect x="84" y="333" width="58" height="28" rx="6"/>
+      <rect x="84" y="370" width="58" height="28" rx="6"/>
+      <rect x="370" y="74" width="58" height="28" rx="6"/>
+      <rect x="370" y="111" width="58" height="28" rx="6"/>
+      <rect x="370" y="148" width="58" height="28" rx="6"/>
+      <rect x="370" y="185" width="58" height="28" rx="6"/>
+      <rect x="370" y="222" width="58" height="28" rx="6"/>
+      <rect x="370" y="259" width="58" height="28" rx="6"/>
+      <rect x="370" y="296" width="58" height="28" rx="6"/>
+      <rect x="370" y="333" width="58" height="28" rx="6"/>
+      <rect x="370" y="370" width="58" height="28" rx="6"/>
+    </g>
+
+    <path d="M182 58 L330 58 L364 100 L364 416 L328 454 L184 454 L148 416 L148 100 Z" fill="#0b0c0f" opacity=".84"/>
+    <path d="M178 52 L334 52 L382 110 L382 406 L330 458 L182 458 L130 406 L130 110 Z" fill="url(#hurtArmor)" class="line"/>
+    <path d="M194 72 L318 72 L354 114 L354 394 L320 430 L192 430 L158 394 L158 114 Z" fill="#15161a" class="fine"/>
+    <path d="M130 110 L178 78 L194 104 L194 370 L160 410 L130 406 Z" fill="var(--tank-shadow)" class="line"/>
+    <path d="M382 110 L334 78 L318 104 L318 370 L352 410 L382 406 Z" fill="var(--tank-shadow)" class="line"/>
+    <path d="M188 72 L324 72 L348 100 L348 144 L164 144 L164 100 Z" fill="var(--tank-color)" class="line"/>
+    <path d="M178 360 L334 360 L360 390 L340 438 L172 438 L152 390 Z" fill="var(--tank-shadow)" class="line"/>
+    <rect x="184" y="152" width="144" height="174" rx="12" fill="url(#hurtArmor)" class="line"/>
+    <rect x="204" y="176" width="104" height="126" rx="10" fill="url(#darkSteel)" class="fine"/>
+    <rect x="170" y="372" width="172" height="44" rx="10" fill="var(--tank-deep-shadow)" class="line"/>
+
+    <path d="M174 106 L337 95 L360 131 L344 183 L170 178 L152 134 Z" fill="url(#scorch)"/>
+    <path d="M196 252 L326 236 L336 306 L207 322 Z" fill="url(#scorch)" opacity=".82"/>
+    <path d="M147 336 L199 316 L192 386 L154 396 Z" class="ash"/>
+    <path d="M318 91 L363 118 L333 143 Z" class="ash"/>
+    <path d="M292 359 L344 377 L327 425 L281 404 Z" class="ash"/>
+
+    <g class="bolt">
+      <circle cx="164" cy="105" r="3.4"/><circle cx="347" cy="105" r="3.4"/>
+      <circle cx="164" cy="382" r="3.4"/><circle cx="347" cy="382" r="3.4"/>
+      <circle cx="206" cy="86" r="3.4"/><circle cx="306" cy="86" r="3.4"/>
+      <circle cx="208" cy="190" r="3.2"/><circle cx="304" cy="286" r="3.2"/>
+    </g>
+
+    <path d="M194 72 L318 72" stroke="var(--tank-soft-highlight)" stroke-opacity=".42" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M162 145 L162 380" stroke="var(--tank-highlight)" stroke-opacity=".18" stroke-width="4" stroke-linecap="round"/>
+    <path d="M186 374 L324 374" stroke="var(--tank-soft-highlight)" stroke-opacity=".22" stroke-width="4" stroke-linecap="round"/>
+
+    <path d="M197 128 l58 36" class="gash"/>
+    <path d="M321 145 l-38 35" class="gash"/>
+    <path d="M211 291 l68 -24" class="gash"/>
+    <path d="M301 385 l30 18" class="gash"/>
+    <path d="M209 135 l34 21" class="hot"/>
+    <path d="M307 153 l-20 18" class="hot"/>
+    <path d="M235 285 l35 -12" class="hot"/>
+    <path d="M226 116 l14 -8" class="scratch"/>
+    <path d="M206 354 l16 -7" class="scratch"/>
+  </g>
+</svg>

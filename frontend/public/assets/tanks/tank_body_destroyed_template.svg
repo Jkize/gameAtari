@@ -6,14 +6,15 @@
       <stop offset="100%" stop-color="#050607"/>
     </linearGradient>
     <linearGradient id="scorchedArmor" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0%" stop-color="var(--tank-shadow)"/>
-      <stop offset="45%" stop-color="#1c1c1d"/>
-      <stop offset="100%" stop-color="#070707"/>
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="36%" stop-color="var(--tank-color)"/>
+      <stop offset="76%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
     </linearGradient>
     <radialGradient id="blastMark" cx="50%" cy="46%" r="48%">
-      <stop offset="0%" stop-color="#050505"/>
-      <stop offset="52%" stop-color="#121212"/>
-      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+      <stop offset="0%" stop-color="#100b09"/>
+      <stop offset="52%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-color)"/>
     </radialGradient>
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#000" flood-opacity="0.45"/>
@@ -22,17 +23,17 @@
       :root {
         --tank-color: #db3a2c;
         --tank-highlight: color-mix(in srgb, var(--tank-color), white 24%);
-        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 46%);
-        --tank-shadow: color-mix(in srgb, var(--tank-color), black 46%);
-        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 78%);
-        --tank-outline: #050505;
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 42%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 36%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 60%);
+        --tank-outline: color-mix(in srgb, var(--tank-color), black 94%);
       }
       .line { stroke:var(--tank-outline); stroke-width:5; stroke-linejoin:round; }
       .fine { stroke:#050505; stroke-width:2.4; stroke-linejoin:round; }
-      .ash { fill:#0b0b0c; opacity:.72; }
+      .ash { fill:#0b0b0c; opacity:.48; }
       .ember { fill:#ff6a18; opacity:.72; }
-      .scar { stroke:#050505; stroke-width:7; stroke-linecap:round; opacity:.82; }
-      .hot-scar { stroke:#ff8a1f; stroke-width:2.6; stroke-linecap:round; opacity:.5; }
+      .scar { stroke:#050505; stroke-width:7; stroke-linecap:round; opacity:.66; }
+      .hot-scar { stroke:#ff8a1f; stroke-width:2.6; stroke-linecap:round; opacity:.52; }
     </style>
   </defs>
 
@@ -60,16 +61,16 @@
 
     <path d="M178 54 L334 61 L377 116 L365 402 L329 457 L183 451 L126 399 L139 109 Z" fill="url(#scorchedArmor)" class="line"/>
     <path d="M195 82 L318 80 L347 123 L340 381 L313 419 L196 425 L165 386 L164 125 Z" fill="#151516" class="fine"/>
-    <path d="M151 116 L188 91 L205 120 L194 370 L160 409 L127 397 Z" fill="var(--tank-deep-shadow)" class="line"/>
-    <path d="M362 116 L326 89 L307 119 L320 369 L353 411 L378 397 Z" fill="var(--tank-deep-shadow)" class="line"/>
+    <path d="M151 116 L188 91 L205 120 L194 370 L160 409 L127 397 Z" fill="var(--tank-shadow)" class="line"/>
+    <path d="M362 116 L326 89 L307 119 L320 369 L353 411 L378 397 Z" fill="var(--tank-shadow)" class="line"/>
 
-    <path d="M190 145 L330 151 L326 317 L184 326 Z" fill="url(#blastMark)" class="line"/>
-    <path d="M223 177 L283 154 L322 192 L308 260 L260 299 L205 270 L185 218 Z" fill="#050505" opacity=".88"/>
-    <path d="M229 202 L267 184 L294 207 L286 248 L258 271 L222 254 L210 221 Z" fill="#16120e" opacity=".8"/>
+    <path d="M190 145 L330 151 L326 317 L184 326 Z" fill="url(#blastMark)" class="line" opacity=".55"/>
+    <path d="M223 177 L283 154 L322 192 L308 260 L260 299 L205 270 L185 218 Z" fill="#050505" opacity=".42"/>
+    <path d="M229 202 L267 184 L294 207 L286 248 L258 271 L222 254 L210 221 Z" fill="var(--tank-shadow)" opacity=".42"/>
 
-    <path d="M179 355 L336 363 L350 392 L331 436 L176 432 L156 391 Z" fill="#14100d" class="line"/>
-    <path d="M193 373 L231 389 L212 416 L171 405 Z" fill="#060606"/>
-    <path d="M281 376 L327 372 L339 398 L306 420 Z" fill="#060606"/>
+    <path d="M179 355 L336 363 L350 392 L331 436 L176 432 L156 391 Z" fill="var(--tank-deep-shadow)" class="line"/>
+    <path d="M193 373 L231 389 L212 416 L171 405 Z" fill="#060606" opacity=".58"/>
+    <path d="M281 376 L327 372 L339 398 L306 420 Z" fill="#060606" opacity=".58"/>
 
     <g class="ash">
       <path d="M138 99 L174 117 L153 138 Z"/>

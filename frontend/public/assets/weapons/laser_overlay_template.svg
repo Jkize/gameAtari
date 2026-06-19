@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 712" width="512" height="712">
+  <defs>
+    <linearGradient id="weaponRed" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="45%" stop-color="var(--tank-color)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </linearGradient>
+    <linearGradient id="laserCore" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#dffcff"/>
+      <stop offset="45%" stop-color="#45e8ff"/>
+      <stop offset="100%" stop-color="#0576ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#000" flood-opacity=".34"/>
+    </filter>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      :root {
+        --tank-color: #e54637;
+        --tank-highlight: color-mix(in srgb, var(--tank-color), white 38%);
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 64%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 28%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 58%);
+        --tank-outline: color-mix(in srgb, var(--tank-color), black 86%);
+      }
+      .line { stroke:var(--tank-outline); stroke-width:4; stroke-linejoin:round; }
+      .fine { stroke:var(--tank-outline); stroke-width:2.2; stroke-linejoin:round; }
+      .shine { stroke:var(--tank-soft-highlight); stroke-opacity:.5; stroke-width:3.2; stroke-linecap:round; }
+    </style>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <g transform="translate(256 330)">
+      <rect x="46" y="-10" width="58" height="72" rx="18" fill="url(#weaponRed)" class="line"/>
+      <rect x="53" y="48" width="44" height="148" rx="14" fill="url(#weaponRed)" class="line"/>
+      <rect x="46" y="176" width="58" height="38" rx="14" fill="#252932" class="line"/>
+      <rect x="58" y="202" width="34" height="44" rx="12" fill="url(#weaponRed)" class="line"/>
+      <circle cx="75" cy="245" r="15" fill="#07090d" class="fine"/>
+
+      <rect x="64" y="76" width="22" height="90" rx="9" fill="url(#laserCore)" filter="url(#glow)" opacity=".92"/>
+      <circle cx="75" cy="247" r="8" fill="#45e8ff" filter="url(#glow)"/>
+      <path d="M58 70 h-24 q-24 0 -34 24" fill="none" stroke="#343943" stroke-width="9" stroke-linecap="round"/>
+      <path d="M90 76 v84" class="shine"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 712" width="512" height="712">
+  <defs>
+    <radialGradient id="criticalTurret" cx="44%" cy="34%" r="78%">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="34%" stop-color="var(--tank-color)"/>
+      <stop offset="72%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </radialGradient>
+    <linearGradient id="criticalBarrel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="48%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </linearGradient>
+    <radialGradient id="blast" cx="50%" cy="34%" r="50%">
+      <stop offset="0%" stop-color="#120c0a"/>
+      <stop offset="54%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-color)"/>
+    </radialGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="13" flood-color="#000" flood-opacity="0.43"/>
+    </filter>
+    <style>
+      :root {
+        --tank-color: #e54637;
+        --tank-highlight: color-mix(in srgb, var(--tank-color), white 32%);
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 50%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 30%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 52%);
+        --tank-outline: color-mix(in srgb, var(--tank-color), black 92%);
+      }
+      .line { stroke:var(--tank-outline); stroke-width:5; stroke-linejoin:round; }
+      .fine { stroke:#050505; stroke-width:2.5; stroke-linejoin:round; }
+      .scar { stroke:#050505; stroke-width:6.2; stroke-linecap:round; opacity:.58; }
+      .hot { stroke:#ff9a28; stroke-width:2.5; stroke-linecap:round; opacity:.58; }
+      .ember { fill:#ff6a18; opacity:.76; }
+      .ash { fill:#060606; opacity:.32; }
+    </style>
+  </defs>
+
+  <g filter="url(#shadow)" transform="rotate(-6 256 256)">
+    <g transform="translate(256 330) rotate(4)">
+      <path d="M-34 -14 L34 -12 L31 42 L18 184 L-18 181 L-31 42 Z" fill="url(#criticalBarrel)" class="line"/>
+      <path d="M-25 174 L27 180 L20 276 L-1 299 L-29 278 Z" fill="var(--tank-deep-shadow)" class="line"/>
+      <path d="M-29 276 L29 282 L21 318 L-2 330 L-28 314 Z" fill="var(--tank-shadow)" class="line"/>
+      <circle cx="-2" cy="302" r="13" fill="#030303" class="fine"/>
+      <path d="M-14 50 l31 45" class="scar"/>
+      <path d="M9 130 l-22 31" class="scar"/>
+      <path d="M-5 58 l18 27" class="hot"/>
+    </g>
+
+    <ellipse cx="256" cy="407" rx="126" ry="30" fill="#000" opacity=".3"/>
+    <path d="M151 142 L208 95 L310 104 L361 139 L382 235 L340 299 L258 323 L169 303 L124 237 Z" fill="url(#criticalTurret)" class="line"/>
+    <path d="M174 162 L216 127 L296 129 L337 161 L352 229 L322 274 L258 295 L188 278 L158 232 Z" fill="#1b1d22" class="fine"/>
+    <path d="M188 140 L323 143 L347 169 L323 203 L188 205 L164 171 Z" fill="var(--tank-deep-shadow)" class="fine"/>
+    <path d="M205 207 L306 204 L319 250 L257 282 L191 251 Z" fill="#181b20" class="fine"/>
+    <path d="M171 142 L332 145 L353 184 L320 245 L194 239 L154 196 Z" fill="url(#blast)" opacity=".42"/>
+
+    <path d="M211 132 L300 133 L330 164 L314 222 L256 244 L198 224 L181 166 Z" fill="#1d2026" class="line"/>
+    <path d="M229 157 L285 158 L301 188 L284 221 L255 232 L226 218 L213 187 Z" fill="#2d3038" class="fine"/>
+    <circle cx="256" cy="190" r="18" fill="#4b4f58" class="fine"/>
+    <path d="M229 61 L283 58 L296 91 L290 130 L219 134 L214 90 Z" fill="var(--tank-deep-shadow)" class="line"/>
+    <path d="M240 70 L271 68 L280 91 L276 120 L232 123 L229 91 Z" fill="#0a0a0b" class="fine"/>
+
+    <path d="M235 169 l41 41" class="scar"/>
+    <path d="M276 166 l-39 47" class="scar"/>
+    <path d="M166 187 l49 -36" class="scar"/>
+    <path d="M319 145 l-33 37" class="scar"/>
+    <path d="M178 255 l54 18" class="scar"/>
+    <path d="M305 259 l31 -30" class="scar"/>
+    <path d="M244 180 l21 21" class="hot"/>
+    <path d="M185 182 l27 -19" class="hot"/>
+    <path d="M298 159 l-18 21" class="hot"/>
+    <path d="M199 262 l27 8" class="hot"/>
+
+    <path d="M134 231 L176 253 L152 285 Z" class="ash"/>
+    <path d="M330 120 L366 144 L332 168 Z" class="ash"/>
+    <path d="M213 96 L246 83 L234 120 Z" class="ash"/>
+
+    <circle cx="234" cy="211" r="4" class="ember"/>
+    <circle cx="284" cy="232" r="3.5" class="ember"/>
+    <circle cx="331" cy="223" r="2.8" class="ember"/>
+    <circle cx="226" cy="102" r="2.8" class="ember"/>
+  </g>
+</svg>

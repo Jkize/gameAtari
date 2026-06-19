@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="wreckedTrack" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#25272c"/>
+      <stop offset="48%" stop-color="#101114"/>
+      <stop offset="100%" stop-color="#040405"/>
+    </linearGradient>
+    <linearGradient id="criticalArmor" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="34%" stop-color="var(--tank-color)"/>
+      <stop offset="72%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </linearGradient>
+    <radialGradient id="blast" cx="48%" cy="45%" r="54%">
+      <stop offset="0%" stop-color="#120c0a"/>
+      <stop offset="48%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-color)"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="13" flood-color="#000" flood-opacity="0.44"/>
+    </filter>
+    <style>
+      :root {
+        --tank-color: #db3a2c;
+        --tank-highlight: color-mix(in srgb, var(--tank-color), white 32%);
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 50%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 30%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 52%);
+        --tank-outline: color-mix(in srgb, var(--tank-color), black 92%);
+      }
+      .line { stroke:var(--tank-outline); stroke-width:5; stroke-linejoin:round; }
+      .fine { stroke:#050505; stroke-width:2.5; stroke-linejoin:round; }
+      .scar { stroke:#050505; stroke-width:6.2; stroke-linecap:round; opacity:.58; }
+      .hot { stroke:#ff9a28; stroke-width:2.5; stroke-linecap:round; opacity:.58; }
+      .ember { fill:#ff6a18; opacity:.76; }
+      .ash { fill:#060606; opacity:.32; }
+    </style>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <ellipse cx="258" cy="430" rx="178" ry="37" fill="#000" opacity=".34"/>
+
+    <path d="M80 72 L151 63 L157 111 L144 443 L79 428 Z" fill="url(#wreckedTrack)" class="line"/>
+    <path d="M361 66 L433 83 L423 430 L359 448 L348 111 Z" fill="url(#wreckedTrack)" class="line"/>
+    <g fill="#08090b" opacity=".92">
+      <rect x="87" y="90" width="52" height="25" rx="5" transform="rotate(-6 113 102)"/>
+      <rect x="88" y="137" width="49" height="25" rx="5" transform="rotate(5 112 149)"/>
+      <rect x="85" y="187" width="53" height="25" rx="5"/>
+      <rect x="88" y="238" width="48" height="25" rx="5" transform="rotate(7 112 250)"/>
+      <rect x="83" y="296" width="53" height="25" rx="5" transform="rotate(-5 109 308)"/>
+      <rect x="84" y="356" width="50" height="25" rx="5"/>
+      <rect x="372" y="91" width="50" height="25" rx="5" transform="rotate(6 397 103)"/>
+      <rect x="371" y="146" width="52" height="25" rx="5" transform="rotate(-5 397 158)"/>
+      <rect x="374" y="207" width="45" height="25" rx="5" transform="rotate(8 396 219)"/>
+      <rect x="371" y="273" width="51" height="25" rx="5"/>
+      <rect x="374" y="335" width="47" height="25" rx="5" transform="rotate(-7 397 347)"/>
+    </g>
+
+    <path d="M178 54 L334 61 L378 116 L366 402 L329 457 L183 451 L126 399 L139 109 Z" fill="url(#criticalArmor)" class="line"/>
+    <path d="M195 82 L318 80 L347 123 L340 381 L313 419 L196 425 L165 386 L164 125 Z" fill="#121314" class="fine"/>
+    <path d="M151 116 L188 91 L205 120 L194 370 L160 409 L127 397 Z" fill="var(--tank-deep-shadow)" class="line"/>
+    <path d="M362 116 L326 89 L307 119 L320 369 L353 411 L378 397 Z" fill="var(--tank-deep-shadow)" class="line"/>
+
+    <path d="M188 144 L331 151 L326 318 L184 327 Z" fill="url(#blast)" class="line" opacity=".45"/>
+    <path d="M222 176 L282 154 L322 194 L308 260 L260 299 L204 270 L185 218 Z" fill="#050505" opacity=".28"/>
+    <path d="M229 202 L268 184 L294 207 L286 248 L258 271 L222 254 L210 221 Z" fill="var(--tank-shadow)" opacity=".34"/>
+    <path d="M179 355 L336 363 L350 392 L331 436 L176 432 L156 391 Z" fill="var(--tank-shadow)" class="line"/>
+
+    <path d="M139 99 L176 118 L153 139 Z" class="ash"/>
+    <path d="M336 76 L371 119 L332 112 Z" class="ash"/>
+    <path d="M141 401 L186 430 L129 428 Z" class="ash"/>
+    <path d="M354 391 L382 405 L342 437 Z" class="ash"/>
+    <path d="M293 314 L337 333 L306 352 Z" class="ash"/>
+    <path d="M199 373 L231 390 L212 416 L171 405 Z" fill="#050505" opacity=".45"/>
+    <path d="M281 376 L327 372 L339 398 L306 420 Z" fill="#050505" opacity=".45"/>
+
+    <path d="M167 139 l52 37" class="scar"/>
+    <path d="M331 151 l-42 36" class="scar"/>
+    <path d="M183 310 l70 -28" class="scar"/>
+    <path d="M263 102 l39 41" class="scar"/>
+    <path d="M204 389 l83 13" class="scar"/>
+    <path d="M314 246 l34 31" class="scar"/>
+    <path d="M179 149 l33 23" class="hot"/>
+    <path d="M300 162 l-24 20" class="hot"/>
+    <path d="M226 292 l36 -14" class="hot"/>
+    <path d="M217 394 l43 7" class="hot"/>
+
+    <circle cx="235" cy="212" r="4" class="ember"/>
+    <circle cx="283" cy="238" r="3.5" class="ember"/>
+    <circle cx="211" cy="378" r="3" class="ember"/>
+    <circle cx="318" cy="344" r="2.8" class="ember"/>
+  </g>
+</svg>

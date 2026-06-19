@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 712" width="512" height="712">
+  <defs>
+    <radialGradient id="turretHurt" cx="40%" cy="28%" r="76%">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="36%" stop-color="var(--tank-color)"/>
+      <stop offset="74%" stop-color="var(--tank-shadow)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </radialGradient>
+    <linearGradient id="barrelHurt" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="45%" stop-color="var(--tank-color)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </linearGradient>
+    <linearGradient id="darkSteel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#41444b"/>
+      <stop offset="45%" stop-color="#24272e"/>
+      <stop offset="100%" stop-color="#12151a"/>
+    </linearGradient>
+    <radialGradient id="scorch" cx="53%" cy="36%" r="48%">
+      <stop offset="0%" stop-color="#050505" stop-opacity=".72"/>
+      <stop offset="58%" stop-color="#17110e" stop-opacity=".42"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)" stop-opacity=".04"/>
+    </radialGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#000" flood-opacity="0.36"/>
+    </filter>
+    <style>
+      :root {
+        --tank-color: #e54637;
+        --tank-highlight: color-mix(in srgb, var(--tank-color), white 28%);
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 52%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 38%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 66%);
+        --tank-outline: color-mix(in srgb, var(--tank-color), black 90%);
+      }
+      .line { stroke:var(--tank-outline); stroke-width:4.5; stroke-linejoin:round; }
+      .fine { stroke:var(--tank-outline); stroke-width:2.4; stroke-linejoin:round; }
+      .scratch { stroke:var(--tank-soft-highlight); stroke-opacity:.45; stroke-width:2.4; stroke-linecap:round; }
+      .gash { stroke:#070707; stroke-width:5.8; stroke-linecap:round; opacity:.72; }
+      .hot { stroke:#ff7a18; stroke-width:2.1; stroke-linecap:round; opacity:.36; }
+      .ash { fill:#060607; opacity:.44; }
+    </style>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <g transform="translate(256 330)">
+      <rect x="-34" y="-14" width="68" height="58" rx="20" fill="url(#barrelHurt)" class="line"/>
+      <rect x="-31" y="38" width="62" height="146" rx="18" fill="url(#barrelHurt)" class="line"/>
+      <rect x="-36" y="168" width="72" height="28" rx="12" fill="var(--tank-shadow)" class="line"/>
+      <rect x="-24" y="190" width="48" height="100" rx="15" fill="url(#barrelHurt)" class="line"/>
+      <rect x="-29" y="276" width="58" height="42" rx="15" fill="#252830" class="line"/>
+      <circle cx="0" cy="298" r="16" fill="#08090c" class="fine"/>
+      <path d="M-9 92 v74" stroke="var(--tank-highlight)" stroke-opacity=".16" stroke-width="5"/>
+      <path d="M-14 84 l26 33" class="gash"/>
+      <path d="M-9 90 l16 21" class="hot"/>
+    </g>
+
+    <path d="M138 136 L198 90 L314 90 L374 136 L398 240 L350 308 L256 334 L162 308 L114 240 Z" fill="url(#turretHurt)" class="line"/>
+    <path d="M166 156 L210 118 L302 118 L346 156 L366 234 L330 286 L256 308 L182 286 L146 234 Z" fill="#15161a" class="fine"/>
+    <path d="M180 136 L332 136 L360 168 L332 210 L180 210 L152 168 Z" fill="var(--tank-color)" class="fine"/>
+    <path d="M198 210 L314 210 L330 258 L256 294 L182 258 Z" fill="url(#darkSteel)" class="fine"/>
+    <path d="M159 145 L346 150 L360 199 L325 247 L190 239 L147 196 Z" fill="url(#scorch)"/>
+
+    <path d="M206 126 L306 126 L340 162 L322 226 L256 252 L190 226 L172 162 Z" fill="url(#darkSteel)" class="line"/>
+    <polygon points="256,146 288,160 298,194 280,226 256,236 232,226 214,194 224,160" fill="#5f636c" class="fine"/>
+    <circle cx="256" cy="191" r="20" fill="#777b84" class="fine"/>
+    <circle cx="256" cy="191" r="6" fill="#3d4149"/>
+
+    <path d="M229 58 L283 58 L296 90 L296 134 L216 134 L216 90 Z" fill="url(#turretHurt)" class="line"/>
+    <path d="M240 66 L272 66 L282 90 L282 125 L230 125 L230 90 Z" fill="var(--tank-shadow)" class="fine"/>
+    <rect x="242" y="76" width="28" height="38" rx="6" fill="#171a20" class="fine"/>
+
+    <path d="M188 139 L321 139" stroke="var(--tank-soft-highlight)" stroke-opacity=".36" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M218 125 L294 125" stroke="var(--tank-soft-highlight)" stroke-opacity=".32" stroke-width="3.8" stroke-linecap="round"/>
+    <path d="M175 220 q81 18 162 0" stroke="var(--tank-highlight)" stroke-opacity=".1" stroke-width="4" fill="none"/>
+
+    <path d="M202 143 l45 34" class="gash"/>
+    <path d="M315 151 l-36 39" class="gash"/>
+    <path d="M207 255 l53 -18" class="gash"/>
+    <path d="M231 106 l27 -12" class="gash"/>
+    <path d="M212 151 l27 20" class="hot"/>
+    <path d="M302 164 l-20 21" class="hot"/>
+    <path d="M226 250 l28 -10" class="hot"/>
+    <path d="M207 145 l12 -6" class="scratch"/>
+    <path d="M290 262 l11 7" class="scratch"/>
+    <path d="M332 230 L363 250 L329 267 Z" class="ash"/>
+    <path d="M148 209 L185 229 L160 255 Z" class="ash"/>
+  </g>
+</svg>

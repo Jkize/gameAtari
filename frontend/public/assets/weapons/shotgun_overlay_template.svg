@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 712" width="512" height="712">
+  <defs>
+    <linearGradient id="weaponRed" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="var(--tank-highlight)"/>
+      <stop offset="45%" stop-color="var(--tank-color)"/>
+      <stop offset="100%" stop-color="var(--tank-deep-shadow)"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#585c66"/>
+      <stop offset="58%" stop-color="#252a33"/>
+      <stop offset="100%" stop-color="#07090d"/>
+    </linearGradient>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#000" flood-opacity=".34"/>
+    </filter>
+    <style>
+      :root {
+        --tank-color: #e54637;
+        --tank-highlight: color-mix(in srgb, var(--tank-color), white 38%);
+        --tank-soft-highlight: color-mix(in srgb, var(--tank-color), white 64%);
+        --tank-shadow: color-mix(in srgb, var(--tank-color), black 28%);
+        --tank-deep-shadow: color-mix(in srgb, var(--tank-color), black 58%);
+        --tank-outline: color-mix(in srgb, var(--tank-color), black 86%);
+      }
+      .line { stroke:var(--tank-outline); stroke-width:4; stroke-linejoin:round; }
+      .fine { stroke:var(--tank-outline); stroke-width:2.2; stroke-linejoin:round; }
+      .shine { stroke:var(--tank-soft-highlight); stroke-opacity:.48; stroke-width:3; stroke-linecap:round; }
+    </style>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <g transform="translate(256 330)">
+      <path d="M-78 12 h156 l24 44 -24 48 H-78 l-24 -48 Z" fill="url(#weaponRed)" class="line"/>
+      <rect x="-93" y="76" width="34" height="158" rx="12" fill="url(#weaponRed)" class="line"/>
+      <rect x="-51" y="86" width="34" height="168" rx="12" fill="url(#weaponRed)" class="line"/>
+      <rect x="17" y="86" width="34" height="168" rx="12" fill="url(#weaponRed)" class="line"/>
+      <rect x="59" y="76" width="34" height="158" rx="12" fill="url(#weaponRed)" class="line"/>
+
+      <rect x="-99" y="221" width="46" height="38" rx="13" fill="url(#steel)" class="line"/>
+      <rect x="-57" y="241" width="46" height="38" rx="13" fill="url(#steel)" class="line"/>
+      <rect x="11" y="241" width="46" height="38" rx="13" fill="url(#steel)" class="line"/>
+      <rect x="53" y="221" width="46" height="38" rx="13" fill="url(#steel)" class="line"/>
+
+      <circle cx="-76" cy="241" r="10" fill="#080a0d" class="fine"/>
+      <circle cx="-34" cy="261" r="10" fill="#080a0d" class="fine"/>
+      <circle cx="34" cy="261" r="10" fill="#080a0d" class="fine"/>
+      <circle cx="76" cy="241" r="10" fill="#080a0d" class="fine"/>
+
+      <path d="M-80 103 v96" class="shine"/>
+      <path d="M-38 113 v105" class="shine"/>
+      <path d="M30 113 v105" class="shine"/>
+      <path d="M72 103 v96" class="shine"/>
+    </g>
+  </g>
+</svg>

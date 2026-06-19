@@ -3,6 +3,7 @@ import { socketManager } from '../network/socket';
 import { GameState, PlayerPublicState, BulletPublicState, Obstacle, ObstacleAssetId, ObstacleType, PowerUpSpawn, PowerUpType } from '../types/game-state.types';
 import { PlayerInput } from '../types/input.types';
 import { ensureTankSvgTextures, TANK_BODY_ROTATION_OFFSET, TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y, TANK_TURRET_ROTATION_OFFSET } from '../rendering/tank-svg-textures';
+import { ensureWeaponOverlayTexture } from '../rendering/weapon-svg-textures';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 import type { Socket } from 'socket.io-client';
 
@@ -69,6 +70,7 @@ const TANK_TURRET_SCALE = 3;
 interface TankSprites {
   body: Phaser.GameObjects.Image;
   turret: Phaser.GameObjects.Image;
+  weapon?: Phaser.GameObjects.Image;
 }
 
 // ── Seeded random helpers ─────────────────────────────────────────────────────
@@ -279,6 +281,7 @@ export class GameScene extends Phaser.Scene {
     this.playerTankSprites.forEach(tank => {
       tank.body.destroy();
       tank.turret.destroy();
+      tank.weapon?.destroy();
     });
     this.playerTankSprites.clear();
 
@@ -883,6 +886,7 @@ export class GameScene extends Phaser.Scene {
         if (tank) {
           tank.body.destroy();
           tank.turret.destroy();
+          tank.weapon?.destroy();
           this.playerTankSprites.delete(id);
         }
       }
@@ -1022,12 +1026,27 @@ export class GameScene extends Phaser.Scene {
         turret: this.add.image(x, y, textureKeys.turret)
           .setOrigin(TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y)
           .setDepth(7),
+        weapon: this.add.image(x, y, textureKeys.turret)
+          .setOrigin(TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y)
+          .setDepth(8)
+          .setVisible(false),
       };
       this.playerTankSprites.set(p.id, sprites);
     }
 
     const bodyScale = (r * 2.7) / sprites.body.width;
     const turretScale = (r * TANK_TURRET_SCALE) / sprites.turret.width;
+    const hpFrac = Phaser.Math.Clamp(p.hp / (p.maxHp || 1), 0, 1);
+    const activeBodyTexture = hpFrac <= 0.35
+      ? textureKeys.criticalBody
+      : hpFrac <= 0.7
+        ? textureKeys.hurtBody
+        : textureKeys.body;
+    const activeTurretTexture = hpFrac <= 0.35
+      ? textureKeys.criticalTurret
+      : hpFrac <= 0.7
+        ? textureKeys.hurtTurret
+        : textureKeys.turret;
 
     if (!p.alive) {
       this.mainGfx.fillStyle(0x000000, 0.42);
@@ -1049,6 +1068,7 @@ export class GameScene extends Phaser.Scene {
         .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
         .setAlpha(0.72)
         .setTint(0x777777);
+      sprites.weapon?.setVisible(false);
 
       return;
     }
@@ -1075,7 +1095,7 @@ export class GameScene extends Phaser.Scene {
 
     sprites.body
       .setVisible(true)
-      .setTexture(textureKeys.body)
+      .setTexture(activeBodyTexture)
       .setPosition(x, y)
       .setScale(bodyScale)
       .setAlpha(1)
@@ -1089,12 +1109,31 @@ export class GameScene extends Phaser.Scene {
     );
     sprites.turret
       .setVisible(true)
-      .setTexture(textureKeys.turret)
+      .setTexture(activeTurretTexture)
       .setPosition(x, y)
       .setScale(turretScale)
       .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
       .setAlpha(1)
       .clearTint();
+
+    const powerType = p.activePowerUp?.type;
+    if (powerType) {
+      const weaponTexture = ensureWeaponOverlayTexture(this, powerType, color);
+      if (weaponTexture) {
+        sprites.weapon
+          ?.setVisible(true)
+          .setTexture(weaponTexture)
+          .setPosition(x, y)
+          .setScale(turretScale)
+          .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
+          .setAlpha(1)
+          .clearTint();
+      } else {
+        sprites.weapon?.setVisible(false);
+      }
+    } else {
+      sprites.weapon?.setVisible(false);
+    }
 
   }
 
