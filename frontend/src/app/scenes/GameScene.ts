@@ -64,6 +64,9 @@ const POWER_UP_COLOR: Record<PowerUpType, number> = {
 const POWER_UP_ICON_SCALE = 3.4;
 const POWER_UP_GLOW_SCALE = 1.75;
 const POWER_UP_RING_SCALE = 1.35;
+const HIT_REVEAL_MS = 1000;
+const HIT_REVEAL_BLINK_MS = 125;
+const REVEALED_TANK_DEPTH = BUSH_COVER_DEPTH + 1;
 
 const MONO = 'Share Tech Mono, Courier New, monospace';
 const BODY_TURN_STEP = 0.1;
@@ -155,6 +158,7 @@ export class GameScene extends Phaser.Scene {
   private playerMaxHp: Map<string, number> = new Map();
   private playerLastHp: Map<string, number> = new Map();
   private playerLastPos: Map<string, { x: number; y: number }> = new Map();
+  private playerRevealUntil: Map<string, number> = new Map();
   private bulletLastPos: Map<string, { x: number; y: number; kind?: string; explosionRadius?: number }> = new Map();
   private prevPlayerIds: Set<string> = new Set();
   private prevBulletIds: Set<string> = new Set();
@@ -172,7 +176,7 @@ export class GameScene extends Phaser.Scene {
     this.mainGfx = this.add.graphics().setDepth(5);
     this.bulletGlowGfx = this.add.graphics().setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
     this.bulletGfx = this.add.graphics().setDepth(9.2);
-    this.playerUiGfx = this.add.graphics().setDepth(8);
+    this.playerUiGfx = this.add.graphics().setDepth(REVEALED_TANK_DEPTH + 0.6);
 
     this.camTarget = this.add.rectangle(800, 600, 1, 1, 0x000000, 0).setDepth(-1);
     this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
@@ -234,6 +238,7 @@ export class GameScene extends Phaser.Scene {
       this.playerMaxHp.delete(data.playerId);
       this.playerLastHp.delete(data.playerId);
       this.playerLastPos.delete(data.playerId);
+      this.playerRevealUntil.delete(data.playerId);
     });
 
     this.socket.on('connect', () => {
@@ -291,6 +296,7 @@ export class GameScene extends Phaser.Scene {
     this.playerMaxHp.clear();
     this.playerLastHp.clear();
     this.playerLastPos.clear();
+    this.playerRevealUntil.clear();
     this.bulletLastPos.clear();
     this.prevPlayerIds.clear();
     this.prevBulletIds.clear();
@@ -886,6 +892,7 @@ export class GameScene extends Phaser.Scene {
         this.playerMaxHp.delete(id);
         this.playerLastHp.delete(id);
         this.playerLastPos.delete(id);
+        this.playerRevealUntil.delete(id);
         const txt = this.playerNameTexts.get(id);
         if (txt) { txt.destroy(); this.playerNameTexts.delete(id); }
         const tank = this.playerTankSprites.get(id);
@@ -953,8 +960,11 @@ export class GameScene extends Phaser.Scene {
     s.players.forEach(p => {
       if (!this.playerMaxHp.has(p.id)) this.playerMaxHp.set(p.id, p.hp);
       const prev = this.playerLastHp.get(p.id);
-      if (prev !== undefined && p.hp < prev && p.id === this.myPlayerId) {
-        this.cameras.main.shake(220, 0.009);
+      if (prev !== undefined && p.hp < prev) {
+        this.playerRevealUntil.set(p.id, this.time.now + HIT_REVEAL_MS);
+        if (p.id === this.myPlayerId) {
+          this.cameras.main.shake(220, 0.009);
+        }
       }
       this.playerLastHp.set(p.id, p.hp);
       this.playerLastPos.set(p.id, { x: p.x, y: p.y });
@@ -988,8 +998,10 @@ export class GameScene extends Phaser.Scene {
     this.gameState.players.forEach(p => {
       const isLocal = p.id === this.myPlayerId;
       const hiddenByBush = this.isPlayerInBush(p);
+      const revealAlpha = hiddenByBush ? this.getHitRevealAlpha(p.id, time) : undefined;
+      const isRevealed = revealAlpha !== undefined;
       this.drawTank(p, isLocal, time);
-      if (!hiddenByBush) {
+      if (!hiddenByBush || isRevealed) {
         this.drawHpBar(p);
       }
 
@@ -999,9 +1011,22 @@ export class GameScene extends Phaser.Scene {
         const label = isLocal ? nameLabel : `${nameLabel}\n${p.hp}hp`;
         txt.setText(label);
         txt.setPosition(p.x, p.y - p.radius * PLAYER_LABEL_OFFSET);
-        txt.setVisible(p.alive && !hiddenByBush);
+        txt.setVisible(p.alive && (!hiddenByBush || isRevealed));
+        txt.setAlpha(revealAlpha ?? 1);
       }
     });
+  }
+
+  private getHitRevealAlpha(playerId: string, time: number): number | undefined {
+    const revealUntil = this.playerRevealUntil.get(playerId);
+    if (revealUntil === undefined) return undefined;
+
+    if (time >= revealUntil) {
+      this.playerRevealUntil.delete(playerId);
+      return undefined;
+    }
+
+    return Math.floor(time / HIT_REVEAL_BLINK_MS) % 2 === 0 ? 1 : 0.34;
   }
 
   private isPlayerInBush(p: PlayerPublicState): boolean {
@@ -1043,6 +1068,10 @@ export class GameScene extends Phaser.Scene {
     const bodyScale = (r * 2.7) / sprites.body.width;
     const turretScale = (r * TANK_TURRET_SCALE) / sprites.turret.width;
     const hpFrac = Phaser.Math.Clamp(p.hp / (p.maxHp || 1), 0, 1);
+    const revealAlpha = this.isPlayerInBush(p) ? this.getHitRevealAlpha(p.id, time) : undefined;
+    const bodyDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH : 5;
+    const turretDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.2 : 7;
+    const weaponDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.4 : 8;
     const activeBodyTexture = hpFrac <= 0.35
       ? textureKeys.criticalBody
       : hpFrac <= 0.7
@@ -1062,17 +1091,19 @@ export class GameScene extends Phaser.Scene {
         .setVisible(true)
         .setTexture(textureKeys.destroyedBody)
         .setPosition(x, y)
+        .setDepth(bodyDepth)
         .setScale(bodyScale)
         .setRotation(bodyAngle + TANK_BODY_ROTATION_OFFSET)
-        .setAlpha(0.78)
+        .setAlpha((revealAlpha ?? 1) * 0.78)
         .setTint(0x777777);
       sprites.turret
         .setVisible(true)
         .setTexture(textureKeys.destroyedTurret)
         .setPosition(x, y)
+        .setDepth(turretDepth)
         .setScale(turretScale)
         .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
-        .setAlpha(0.72)
+        .setAlpha((revealAlpha ?? 1) * 0.72)
         .setTint(0x777777);
       sprites.weapon?.setVisible(false);
 
@@ -1103,8 +1134,9 @@ export class GameScene extends Phaser.Scene {
       .setVisible(true)
       .setTexture(activeBodyTexture)
       .setPosition(x, y)
+      .setDepth(bodyDepth)
       .setScale(bodyScale)
-      .setAlpha(1)
+      .setAlpha(revealAlpha ?? 1)
       .clearTint();
     sprites.body.setRotation(
       Phaser.Math.Angle.RotateTo(
@@ -1117,9 +1149,10 @@ export class GameScene extends Phaser.Scene {
       .setVisible(true)
       .setTexture(activeTurretTexture)
       .setPosition(x, y)
+      .setDepth(turretDepth)
       .setScale(turretScale)
       .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
-      .setAlpha(1)
+      .setAlpha(revealAlpha ?? 1)
       .clearTint();
 
     const powerType = p.activePowerUp?.type;
@@ -1130,9 +1163,10 @@ export class GameScene extends Phaser.Scene {
           ?.setVisible(true)
           .setTexture(weaponTexture)
           .setPosition(x, y)
+          .setDepth(weaponDepth)
           .setScale(turretScale)
           .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
-          .setAlpha(1)
+          .setAlpha(revealAlpha ?? 1)
           .clearTint();
       } else {
         sprites.weapon?.setVisible(false);
