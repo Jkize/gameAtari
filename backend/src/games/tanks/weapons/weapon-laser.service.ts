@@ -4,7 +4,7 @@ import { GameService } from '../game.service';
 import { LASER_CONFIG } from './weapon.config';
 import { Bullet } from '../types/bullet.types';
 import { Obstacle } from '../types/map.types';
-import { applyObstacleDamage } from '../obstacle.config';
+import { applyObstacleDamage, isSoftCoverObstacle } from '../obstacle.config';
 
 interface LaserSegment {
   x: number;
@@ -45,7 +45,7 @@ export class WeaponLaserService {
     this.collisionService.clampPlayerToBounds(owner, map.width, map.height);
 
     for (const obs of map.obstacles) {
-      if (obs.type === 'bush' || obs.type === 'decoration') continue;
+      if (isSoftCoverObstacle(obs)) continue;
       this.collisionService.resolvePlayerVsObstacle(owner, obs, previousOwnerX, previousOwnerY);
     }
 

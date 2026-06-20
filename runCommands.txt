@@ -1,0 +1,6 @@
+Visual code: 
+Press Ctrl+Shift+P
+Run Tasks: Run Task
+Choose tank arena: debug
+
+Terminal: .\run-debug.bat

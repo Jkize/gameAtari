@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GameService } from '../game.service';
 import { Bullet } from '../types/bullet.types';
-import { applyObstacleDamage } from '../obstacle.config';
+import { applyObstacleDamage, isSoftCoverObstacle } from '../obstacle.config';
 
 @Injectable()
 export class WeaponGrenadeService {
@@ -27,6 +27,7 @@ export class WeaponGrenadeService {
 
     for (let i = map.obstacles.length - 1; i >= 0; i--) {
       const obs = map.obstacles[i];
+      if (isSoftCoverObstacle(obs)) continue;
       if (!obs.destructible) continue;
 
       const closestX = Math.max(obs.x - obs.width / 2, Math.min(bullet.x, obs.x + obs.width / 2));

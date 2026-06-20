@@ -56,11 +56,14 @@ const OBSTACLE_ASSET_BY_TYPE: Record<ObstacleType, ObstacleAssetId> = {
 const BUSH_COVER_DEPTH = 8.5;
 
 const POWER_UP_COLOR: Record<PowerUpType, number> = {
-  triple_shot: 0xffee00,
-  shotgun: 0xff7a2f,
-  grenade: 0x8fff5a,
-  laser: 0x45e8ff,
+  triple_shot: 0x10ff85,
+  shotgun: 0x10ff85,
+  grenade: 0xffb000,
+  laser: 0xff31ed,
 };
+const POWER_UP_ICON_SCALE = 3.4;
+const POWER_UP_GLOW_SCALE = 1.75;
+const POWER_UP_RING_SCALE = 1.35;
 
 const MONO = 'Share Tech Mono, Courier New, monospace';
 const BODY_TURN_STEP = 0.1;
@@ -459,7 +462,7 @@ export class GameScene extends Phaser.Scene {
       this.textures.exists(textureKey) ? textureKey : 'particle',
     )
       .setOrigin(0.5)
-      .setDisplaySize(powerUp.radius * 2.15, powerUp.radius * 2.15)
+      .setDisplaySize(powerUp.radius * POWER_UP_ICON_SCALE, powerUp.radius * POWER_UP_ICON_SCALE)
       .setDepth(9);
 
     if (!this.textures.exists(textureKey)) {
@@ -479,14 +482,17 @@ export class GameScene extends Phaser.Scene {
       const pulse = 1 + Math.sin(time * 0.006) * 0.06;
 
       this.glowGfx.fillStyle(color, 0.16);
-      this.glowGfx.fillCircle(powerUp.x, powerUp.y + bob, powerUp.radius * 1.7);
+      this.glowGfx.fillCircle(powerUp.x, powerUp.y + bob, powerUp.radius * POWER_UP_GLOW_SCALE);
       this.glowGfx.lineStyle(2, color, 0.55);
-      this.glowGfx.strokeCircle(powerUp.x, powerUp.y + bob, powerUp.radius * 1.25);
+      this.glowGfx.strokeCircle(powerUp.x, powerUp.y + bob, powerUp.radius * POWER_UP_RING_SCALE);
 
       if (icon) {
         icon
           .setPosition(powerUp.x, powerUp.y + bob)
-          .setDisplaySize(powerUp.radius * 2.15 * pulse, powerUp.radius * 2.15 * pulse)
+          .setDisplaySize(
+            powerUp.radius * POWER_UP_ICON_SCALE * pulse,
+            powerUp.radius * POWER_UP_ICON_SCALE * pulse,
+          )
           .setAlpha(0.95);
       }
     });

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title desc">
+  <title id="title">Triple shot power-up</title>
+  <desc id="desc">Neon green triple shot weapon pickup icon with three arrow projectiles inside glowing target rings.</desc>
+  <defs>
+    <radialGradient id="coreGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0d2a1d" stop-opacity="0.9" />
+      <stop offset="62%" stop-color="#0d2a1d" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#020604" stop-opacity="0.2" />
+    </radialGradient>
+
+    <filter id="wideGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="18" result="blur" />
+      <feColorMatrix
+        in="blur"
+        type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 1
+                0 0 0 0 0.46
+                0 0 0 0.9 0"
+        result="greenBlur"
+      />
+      <feMerge>
+        <feMergeNode in="greenBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="lineGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <linearGradient id="projectileFill" x1="171" y1="0" x2="328" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#12ff98" />
+      <stop offset="64%" stop-color="#12ff85" />
+      <stop offset="100%" stop-color="#10e874" />
+    </linearGradient>
+
+    <g id="projectile">
+      <path
+        d="M 172 233 L 299 233 L 328 251 L 301 269 L 172 269 Z"
+        fill="url(#projectileFill)"
+        stroke="#7cffc4"
+        stroke-width="1"
+      />
+      <path d="M 174 251 L 295 251" fill="none" stroke="#b8ffdf" stroke-width="4" stroke-linecap="square" />
+    </g>
+  </defs>
+
+  <circle cx="250" cy="250" r="166" fill="none" stroke="#0fff88" stroke-width="22" opacity="0.72" filter="url(#wideGlow)" />
+  <circle cx="250" cy="250" r="137" fill="url(#coreGradient)" opacity="0.96" />
+
+  <g fill="none" stroke-linecap="square">
+    <circle cx="250" cy="250" r="166" stroke="#00ff84" stroke-width="8" filter="url(#lineGlow)" />
+    <circle cx="250" cy="250" r="137" stroke="#e9fff4" stroke-width="2" opacity="0.96" />
+  </g>
+
+  <g stroke="#14ff91" stroke-width="4" stroke-linecap="square" filter="url(#lineGlow)">
+    <path d="M 250 46 L 250 73" />
+    <path d="M 250 427 L 250 454" />
+    <path d="M 46 250 L 73 250" />
+    <path d="M 427 250 L 454 250" />
+    <path d="M 105.8 105.8 L 124.9 124.9" />
+    <path d="M 375.1 375.1 L 394.2 394.2" />
+    <path d="M 394.2 105.8 L 375.1 124.9" />
+    <path d="M 124.9 375.1 L 105.8 394.2" />
+  </g>
+
+  <g filter="url(#lineGlow)">
+    <use href="#projectile" transform="rotate(-5 250 250) translate(0 -67)" />
+    <use href="#projectile" />
+    <use href="#projectile" transform="rotate(5 250 250) translate(0 67)" />
+  </g>
+</svg>

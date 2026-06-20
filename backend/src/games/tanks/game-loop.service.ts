@@ -10,7 +10,7 @@ import { BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
 import { ActivePowerUp, ActivePowerUpPublicState } from './types/power-up.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
-import { applyObstacleDamage } from './obstacle.config';
+import { applyObstacleDamage, isSoftCoverObstacle } from './obstacle.config';
 
 const TICK_RATE = 60;
 const TICK_INTERVAL = 1000 / TICK_RATE;
@@ -132,7 +132,7 @@ export class GameLoopService implements OnModuleDestroy {
 
       if (!isFiringLaser) {
         for (const obs of map.obstacles) {
-          if (obs.type === 'bush' || obs.type === 'decoration') continue;
+          if (isSoftCoverObstacle(obs)) continue;
           this.collisionService.resolvePlayerVsObstacle(player, obs, previousX, previousY);
         }
       }
@@ -187,8 +187,7 @@ export class GameLoopService implements OnModuleDestroy {
       let absorbed = false;
       for (let i = map.obstacles.length - 1; i >= 0; i--) {
         const obs = map.obstacles[i];
-        if (obs.type === 'decoration') continue;
-        if (obs.type === 'bush' && bullet.kind !== 'grenade') continue;
+        if (isSoftCoverObstacle(obs)) continue;
         if (!this.collisionService.bulletVsObstacleAlongPath(bullet, obs, previousX, previousY)) continue;
 
         if (obs.type === 'mirror') {

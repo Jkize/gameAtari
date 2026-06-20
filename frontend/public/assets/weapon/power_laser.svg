@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title desc">
+  <title id="title">Laser power-up</title>
+  <desc id="desc">Neon magenta laser weapon pickup icon with a horizontal emitter and bright circular energy core inside glowing target rings.</desc>
+  <defs>
+    <radialGradient id="coreGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#271023" stop-opacity="0.95" />
+      <stop offset="66%" stop-color="#271023" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#050205" stop-opacity="0.18" />
+    </radialGradient>
+
+    <filter id="wideGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="18" result="blur" />
+      <feColorMatrix
+        in="blur"
+        type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 0.08
+                0 0 0 0 0.92
+                0 0 0 0.9 0"
+        result="pinkBlur"
+      />
+      <feMerge>
+        <feMergeNode in="pinkBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="lineGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <circle cx="250" cy="250" r="166" fill="none" stroke="#ff31ed" stroke-width="22" opacity="0.72" filter="url(#wideGlow)" />
+  <circle cx="250" cy="250" r="137" fill="url(#coreGradient)" opacity="0.96" />
+
+  <g fill="none" stroke-linecap="square">
+    <circle cx="250" cy="250" r="166" stroke="#ff31ed" stroke-width="8" filter="url(#lineGlow)" />
+    <circle cx="250" cy="250" r="137" stroke="#ffe8fd" stroke-width="2" opacity="0.95" />
+  </g>
+
+  <g stroke="#ff38ee" stroke-width="4" stroke-linecap="square" filter="url(#lineGlow)">
+    <path d="M 250 46 L 250 73" />
+    <path d="M 250 427 L 250 454" />
+    <path d="M 46 250 L 73 250" />
+    <path d="M 427 250 L 454 250" />
+    <path d="M 105.8 105.8 L 124.9 124.9" />
+    <path d="M 375.1 375.1 L 394.2 394.2" />
+    <path d="M 394.2 105.8 L 375.1 124.9" />
+    <path d="M 124.9 375.1 L 105.8 394.2" />
+  </g>
+
+  <g filter="url(#lineGlow)">
+    <path d="M 110 219 L 181 219 C 193 190 218 170 250 170 C 282 170 307 190 319 219 L 390 219 C 402 219 411 228 411 240 L 411 260 C 411 272 402 281 390 281 L 319 281 C 307 310 282 330 250 330 C 218 330 193 310 181 281 L 110 281 C 98 281 89 272 89 260 L 89 240 C 89 228 98 219 110 219 Z"
+      fill="none" stroke="#190014" stroke-width="16" stroke-linejoin="round" opacity="0.96" />
+    <circle cx="250" cy="250" r="85" fill="none" stroke="#190014" stroke-width="13" opacity="0.96" />
+    <path d="M 110 219 L 181 219 C 193 190 218 170 250 170 C 282 170 307 190 319 219 L 390 219 C 402 219 411 228 411 240 L 411 260 C 411 272 402 281 390 281 L 319 281 C 307 310 282 330 250 330 C 218 330 193 310 181 281 L 110 281 C 98 281 89 272 89 260 L 89 240 C 89 228 98 219 110 219 Z"
+      fill="#ff35e7" stroke="#fff0fd" stroke-width="4" />
+    <circle cx="250" cy="250" r="80" fill="#ff35e7" stroke="#fff0fd" stroke-width="5" />
+    <circle cx="250" cy="250" r="30" fill="#fff3fd" stroke="#5a004f" stroke-width="6" />
+    <path d="M 129 237 L 172 237 L 150 250 L 172 263 L 129 263 Z" fill="#4a0644" stroke="#fff0fd" stroke-width="3" />
+    <path d="M 371 237 L 328 237 L 350 250 L 328 263 L 371 263 Z" fill="#4a0644" stroke="#fff0fd" stroke-width="3" />
+    <path d="M 96 250 L 172 250 M 328 250 L 404 250" stroke="#fff7fe" stroke-width="6" opacity="0.8" />
+    <path d="M 115 250 L 167 250 M 333 250 L 385 250" stroke="#190014" stroke-width="3" opacity="0.75" />
+  </g>
+</svg>

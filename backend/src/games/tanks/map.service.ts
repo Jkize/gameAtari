@@ -12,7 +12,7 @@ import {
 const MAP_WIDTH = 1600;
 const MAP_HEIGHT = 1200;
 
-const POWER_UP_RADIUS = 20;
+const POWER_UP_RADIUS = 18;
 
 const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {
   triple_shot: 'power_triple_shot',

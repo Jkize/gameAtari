@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 
 const OBSTACLE_SVG_TEXTURE_SIZE = { width: 64, height: 64 } as const;
+const WEAPON_SVG_TEXTURE_SIZE = { width: 96, height: 96 } as const;
 
 const OBSTACLE_SVG_ASSETS = [
   ['obstacle-bush_01_rounded_dense', 'assets/obstacle/bush/bush_01_rounded_dense.svg'],
@@ -42,10 +43,10 @@ export class BootScene extends Phaser.Scene {
 
     this.load.image('obstacle-steel_block_01', 'assets/obstacle/steel_block_01.png');
     this.load.image('obstacle-mirror_panel_01', 'assets/obstacle/mirror_panel_01.png');
-    this.load.image('weapon-power_triple_shot', 'assets/weapon/power_triple_shot_96.png');
-    this.load.image('weapon-power_shotgun', 'assets/weapon/power_shotgun_96.png');
-    this.load.image('weapon-power_grenade', 'assets/weapon/power_grenade_96.png');
-    this.load.image('weapon-power_laser', 'assets/weapon/power_laser_96.png');
+    this.load.svg('weapon-power_triple_shot', 'assets/weapon/power_triple_shot.svg', WEAPON_SVG_TEXTURE_SIZE);
+    this.load.svg('weapon-power_shotgun', 'assets/weapon/power_shotgun.svg', WEAPON_SVG_TEXTURE_SIZE);
+    this.load.svg('weapon-power_grenade', 'assets/weapon/power_grenade.svg', WEAPON_SVG_TEXTURE_SIZE);
+    this.load.svg('weapon-power_laser', 'assets/weapon/power_laser.svg', WEAPON_SVG_TEXTURE_SIZE);
   }
 
   create(): void {
