@@ -70,7 +70,7 @@ export class PlayerRenderer {
   }
 
   recordPlayerState(player: PlayerPublicState, revealUntil?: number): void {
-    if (!this.playerMaxHp.has(player.id)) this.playerMaxHp.set(player.id, player.hp);
+    this.playerMaxHp.set(player.id, player.maxHp || player.hp);
     if (revealUntil !== undefined) this.playerRevealUntil.set(player.id, revealUntil);
 
     if (!this.playerNameTexts.has(player.id)) {
@@ -266,7 +266,7 @@ export class PlayerRenderer {
 
   private drawHpBar(p: PlayerPublicState): void {
     if (!p.alive) return;
-    const maxHp = this.playerMaxHp.get(p.id) ?? p.hp;
+    const maxHp = p.maxHp || this.playerMaxHp.get(p.id) || p.hp;
     const frac = Math.max(0, p.hp / (maxHp || 1));
     const r = p.radius;
     const bW = r * 2.6;

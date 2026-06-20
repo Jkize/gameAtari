@@ -67,7 +67,7 @@ export class GameScene extends Phaser.Scene {
 
     this.followLocalPlayer();
     this.inputController.sendInput(time);
-    this.hudRenderer.update(state, this.myPlayerId, this.playerRenderer.playerMaxHp, time);
+    this.hudRenderer.update(state, this.myPlayerId, time);
   }
 
   private createHelpers(): void {

@@ -81,7 +81,7 @@ export class HudRenderer {
     this.centerHint.setAlpha(0);
   }
 
-  update(state: GameState, myPlayerId: string, playerMaxHp: Map<string, number>, time: number): void {
+  update(state: GameState, myPlayerId: string, time: number): void {
     const W = this.scene.scale.width;
     const H = this.scene.scale.height;
 
@@ -98,7 +98,7 @@ export class HudRenderer {
     this.hudHpBarGfx.clear();
     const me = state.players.find(p => p.id === myPlayerId);
     if (me) {
-      this.updateLocalPlayerHud(me, playerMaxHp);
+      this.updateLocalPlayerHud(me);
     } else if (myPlayerId) {
       this.hudHpText.setText('HP  DEAD').setColor('#ff2244');
       this.hudDashText.setText('DASH ---').setColor('#334455');
@@ -115,8 +115,8 @@ export class HudRenderer {
     this.updateOverlay(state, myPlayerId, me, time, W, H);
   }
 
-  private updateLocalPlayerHud(me: PlayerPublicState, playerMaxHp: Map<string, number>): void {
-    const maxHp = playerMaxHp.get(me.id) ?? me.hp;
+  private updateLocalPlayerHud(me: PlayerPublicState): void {
+    const maxHp = me.maxHp || me.hp;
     const frac = Math.max(0, me.hp / (maxHp || 1));
     const bx = 20;
     const by = 43;
