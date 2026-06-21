@@ -34,7 +34,13 @@ export class WeaponLaserService {
     bullet.lifeTime -= deltaTime * 1000;
     if (bullet.lifeTime <= 0) return false;
 
-    const angle = owner.input.aimAngle;
+    const angle = this.rotateTowardAngle(
+      Math.atan2(bullet.dirY, bullet.dirX),
+      owner.input.aimAngle,
+      LASER_CONFIG.turnRateRadPerSecond * deltaTime,
+    );
+    owner.aimAngle = angle;
+
     const dirX = Math.cos(angle);
     const dirY = Math.sin(angle);
     const previousOwnerX = owner.x;
@@ -103,6 +109,16 @@ export class WeaponLaserService {
     }
 
     return true;
+  }
+
+  private rotateTowardAngle(current: number, target: number, maxStep: number): number {
+    const diff = this.normalizeAngle(target - current);
+    if (Math.abs(diff) <= maxStep) return target;
+    return current + Math.sign(diff) * maxStep;
+  }
+
+  private normalizeAngle(angle: number): number {
+    return Math.atan2(Math.sin(angle), Math.cos(angle));
   }
 
   private processSegment(

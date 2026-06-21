@@ -126,9 +126,7 @@ export class GameLoopService implements OnModuleDestroy {
       const previousY = player.y;
       const isFiringLaser = bullets.some(bullet => bullet.ownerId === player.id && bullet.kind === 'laser');
 
-      if (isFiringLaser) {
-        player.aimAngle = player.input.aimAngle;
-      } else {
+      if (!isFiringLaser) {
         this.gameService.movePlayer(player, deltaTime, now);
         this.collisionService.clampPlayerToBounds(player, map.width, map.height);
       }

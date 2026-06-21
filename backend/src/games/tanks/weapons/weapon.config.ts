@@ -65,8 +65,9 @@ export const GRENADE_CONFIG = {
 
 export const LASER_CONFIG = {
   shots: 2,
-  durationMs: 1000,
+  durationMs: 2000,
   maxDistance: 1200,
+  turnRateRadPerSecond: 2.4,
   recoilSpeedMultiplier: 1.85,
   metalPierces: 2,
   damagePerSecond: 120,
@@ -74,7 +75,7 @@ export const LASER_CONFIG = {
     bulletSpeed: 0,
     bulletDamage: 120,
     bulletRadius: 7,
-    bulletLifetimeMs: 1000,
+    bulletLifetimeMs: 2000,
   },
   stats: {
     magazineSize: 2,
