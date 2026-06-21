@@ -85,6 +85,9 @@ export interface BulletPublicState {
   radius: number;
   explosionRadius?: number;
   pierceMetalRemaining?: number;
+  reflectCount?: number;
+  reflectX?: number;
+  reflectY?: number;
 }
 
 export interface PowerUpSpawn {

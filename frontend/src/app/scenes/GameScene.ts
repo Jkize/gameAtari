@@ -3,6 +3,7 @@ import type { Socket } from 'socket.io-client';
 import { socketManager } from '../network/socket';
 import { GameState } from '../types/game-state.types';
 import { ArenaBackgroundRenderer } from './game-scene/arena-background-renderer';
+import { AudioManager } from './game-scene/audio-manager';
 import { BulletRenderer } from './game-scene/bullet-renderer';
 import { EffectSpawner } from './game-scene/effect-spawner';
 import { clearDynamicLayers, createGameSceneLayers, GameSceneLayers } from './game-scene/game-scene-layers';
@@ -30,6 +31,7 @@ export class GameScene extends Phaser.Scene {
   private hudRenderer!: HudRenderer;
   private inputController!: InputController;
   private effectSpawner!: EffectSpawner;
+  private audioManager!: AudioManager;
   private stateChangeTracker!: StateChangeTracker;
 
   constructor() {
@@ -73,6 +75,7 @@ export class GameScene extends Phaser.Scene {
   private createHelpers(): void {
     this.backgroundRenderer = new ArenaBackgroundRenderer(this.layers.bgGfx);
     this.effectSpawner = new EffectSpawner(this);
+    this.audioManager = new AudioManager(this);
     this.obstacleRenderer = new ObstacleRenderer(this, this.layers);
     this.powerUpRenderer = new PowerUpRenderer(this, this.layers);
     this.playerRenderer = new PlayerRenderer(this, this.layers);
@@ -89,6 +92,7 @@ export class GameScene extends Phaser.Scene {
       this.obstacleRenderer,
       this.powerUpRenderer,
       this.playerRenderer,
+      this.audioManager,
     );
   }
 

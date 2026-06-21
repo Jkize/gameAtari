@@ -4,6 +4,25 @@ import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 const OBSTACLE_SVG_TEXTURE_SIZE = { width: 64, height: 64 } as const;
 const WEAPON_SVG_TEXTURE_SIZE = { width: 96, height: 96 } as const;
 
+const SOUND_ASSETS = [
+  ['weapon-standard-fire', 'assets/sounds/weapon_standard_fire.ogg'],
+  ['weapon-triple-shot-fire', 'assets/sounds/weapon_triple_shot_fire.ogg'],
+  ['weapon-shotgun-fire', 'assets/sounds/weapon_shotgun_fire.ogg'],
+  ['weapon-grenade-launch', 'assets/sounds/weapon_grenade_launch.ogg'],
+  ['weapon-grenade-explode', 'assets/sounds/weapon_grenade_explode.ogg'],
+  ['weapon-laser-fire', 'assets/sounds/weapon_laser_fire.ogg'],
+  ['weapon-laser-reflect-mirror', 'assets/sounds/weapon_laser_reflect_mirror.ogg'],
+  ['bullet-hit-spark', 'assets/sounds/bullet_hit_spark.ogg'],
+  ['bullet-hit-wood', 'assets/sounds/bullet_hit_wood.ogg'],
+  ['bullet-hit-rock', 'assets/sounds/bullet_hit_rock.ogg'],
+  ['bullet-hit-steel', 'assets/sounds/bullet_hit_steel.ogg'],
+  ['bullet-mirror-ricochet', 'assets/sounds/bullet_mirror_ricochet.ogg'],
+  ['weapon-reload-start', 'assets/sounds/weapon_reload_start.ogg'],
+  ['weapon-reload-complete', 'assets/sounds/weapon_reload_complete.ogg'],
+  ['powerup-pickup-weapon', 'assets/sounds/powerup_pickup_weapon.ogg'],
+  ['player-dash', 'assets/sounds/dash.ogg'],
+] as const;
+
 const OBSTACLE_SVG_ASSETS = [
   ['obstacle-bush_01_rounded_dense', 'assets/obstacle/bush/bush_01_rounded_dense.svg'],
   ['obstacle-bush_02_irregular_leafy', 'assets/obstacle/bush/bush_02_irregular_leafy.svg'],
@@ -47,6 +66,10 @@ export class BootScene extends Phaser.Scene {
     this.load.svg('weapon-power_shotgun', 'assets/weapon/power_shotgun.svg', WEAPON_SVG_TEXTURE_SIZE);
     this.load.svg('weapon-power_grenade', 'assets/weapon/power_grenade.svg', WEAPON_SVG_TEXTURE_SIZE);
     this.load.svg('weapon-power_laser', 'assets/weapon/power_laser.svg', WEAPON_SVG_TEXTURE_SIZE);
+
+    SOUND_ASSETS.forEach(([key, path]) => {
+      this.load.audio(key, path);
+    });
   }
 
   create(): void {

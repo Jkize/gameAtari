@@ -23,4 +23,7 @@ export interface Bullet {
   obstacleDamage?: number;
   pierceMetalRemaining?: number;
   piercedObstacleIds?: string[];
+  reflectCount?: number;
+  reflectX?: number;
+  reflectY?: number;
 }

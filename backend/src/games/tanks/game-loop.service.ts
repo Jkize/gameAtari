@@ -93,6 +93,9 @@ export class GameLoopService implements OnModuleDestroy {
       radius: b.radius,
       explosionRadius: b.explosionRadius,
       pierceMetalRemaining: b.pierceMetalRemaining,
+      reflectCount: b.reflectCount,
+      reflectX: b.reflectX,
+      reflectY: b.reflectY,
     }));
 
     return { status, map: map!, players: publicPlayers, bullets: publicBullets };
@@ -192,6 +195,9 @@ export class GameLoopService implements OnModuleDestroy {
 
         if (obs.type === 'mirror') {
           this.collisionService.reflectBulletFromObstacle(bullet, obs, previousX, previousY);
+          bullet.reflectCount = (bullet.reflectCount ?? 0) + 1;
+          bullet.reflectX = bullet.x;
+          bullet.reflectY = bullet.y;
           break;
         }
 
