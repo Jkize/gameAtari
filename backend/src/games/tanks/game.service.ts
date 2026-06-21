@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Player, PlayerInput } from './types/player.types';
 import { Bullet } from './types/bullet.types';
 import { GameMap } from './types/map.types';
-import { GameStatus } from './types/game-state.types';
+import { BulletImpactPublicState, GameStatus } from './types/game-state.types';
 import { WeaponService } from './weapons/weapon.service';
 import { PowerUpSpawn } from './types/power-up.types';
 
@@ -52,6 +52,7 @@ const SPAWN_POINTS = [
 export class GameService {
   players = new Map<string, Player>();
   bullets: Bullet[] = [];
+  impactEvents: BulletImpactPublicState[] = [];
   map: GameMap | null = null;
   status: GameStatus = 'waiting';
   private usedColorIndices = new Set<number>();
@@ -164,6 +165,7 @@ export class GameService {
   reset(): void {
     this.players.clear();
     this.bullets = [];
+    this.impactEvents = [];
     this.map = null;
     this.status = 'waiting';
     this.usedColorIndices.clear();

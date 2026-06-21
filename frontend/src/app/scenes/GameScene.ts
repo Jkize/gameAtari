@@ -102,7 +102,7 @@ export class GameScene extends Phaser.Scene {
     this.socket.on('gameJoined', (data: { playerId: string; map: GameState['map']; status: GameState['status'] }) => {
       this.resetRoundRenderState();
       this.myPlayerId = data.playerId;
-      this.gameState = { status: data.status, map: data.map, players: [], bullets: [] };
+      this.gameState = { status: data.status, map: data.map, players: [], bullets: [], impactEvents: [] };
       this.mapW = data.map.width;
       this.mapH = data.map.height;
       this.backgroundRenderer.draw(this.mapW, this.mapH);

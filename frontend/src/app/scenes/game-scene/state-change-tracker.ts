@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
-import { BulletPublicState, GameState, Obstacle } from '../../types/game-state.types';
+import { BulletImpactPublicState, BulletPublicState, GameState } from '../../types/game-state.types';
 import { HIT_REVEAL_MS } from './game-scene.constants';
 import { EffectSpawner } from './effect-spawner';
 import { ObstacleRenderer } from './obstacle-renderer';
 import { PlayerRenderer } from './player-renderer';
 import { PowerUpRenderer } from './power-up-renderer';
-import { AudioManager, BulletImpactSound, SoundPoint, WeaponFireSound } from './audio-manager';
+import { AudioManager, SoundPoint, WeaponFireSound } from './audio-manager';
 
 type LastBulletPos = {
   x: number;
@@ -32,7 +32,6 @@ export class StateChangeTracker {
   private prevBulletIds: Set<string> = new Set();
   private prevObsIds: Set<string> = new Set();
   private prevPowerUpIds: Set<string> = new Set();
-  private obstacleLastState: Map<string, Obstacle> = new Map();
   private hasStateSnapshot = false;
 
   constructor(
@@ -54,7 +53,6 @@ export class StateChangeTracker {
     this.prevBulletIds.clear();
     this.prevObsIds.clear();
     this.prevPowerUpIds.clear();
-    this.obstacleLastState.clear();
     this.hasStateSnapshot = false;
   }
 
@@ -78,8 +76,11 @@ export class StateChangeTracker {
       this.playNewBulletSounds(state.bullets, localPlayer, myPlayerId);
       this.playBulletReflectionSounds(state.bullets, localPlayer);
       this.playLaserReflectionSounds(state.bullets, localPlayer);
+      this.playBulletImpactEvents(state.impactEvents ?? [], localPlayer);
       this.playReloadSounds(state, myPlayerId);
     }
+
+    const handledImpactBulletIds = new Set((state.impactEvents ?? []).map(event => event.bulletId));
 
     this.prevPlayerIds.forEach(id => {
       if (!curPlayers.has(id)) {
@@ -98,11 +99,11 @@ export class StateChangeTracker {
           if (pos.kind === 'grenade') {
             this.effects.spawnGrenadeExplosion(pos.x, pos.y, pos.explosionRadius);
             if (localPlayer) this.audioManager.playGrenadeExplosion(pos, localPlayer);
-          } else if (pos.kind !== 'laser') {
+          } else if (pos.kind !== 'laser' && !handledImpactBulletIds.has(id)) {
             this.effects.spawnSpark(pos.x, pos.y);
             if (localPlayer) {
               this.audioManager.playBulletImpact(
-                this.getBulletImpactSound(pos),
+                'spark',
                 pos,
                 localPlayer,
               );
@@ -158,8 +159,14 @@ export class StateChangeTracker {
     this.prevBulletIds = curBullets;
     this.prevObsIds = curObs;
     this.prevPowerUpIds = curPowerUps;
-    this.obstacleLastState = new Map(state.map.obstacles.map(obs => [obs.id, obs]));
     this.hasStateSnapshot = true;
+  }
+
+  private playBulletImpactEvents(events: BulletImpactPublicState[], listener: SoundPoint): void {
+    events.forEach(event => {
+      this.effects.spawnSpark(event.x, event.y);
+      this.audioManager.playBulletImpact(event.material, event, listener);
+    });
   }
 
   private playNewBulletSounds(
@@ -261,28 +268,6 @@ export class StateChangeTracker {
     if (count >= 3) return 'triple_shot';
     if (count >= 1) return 'standard';
     return undefined;
-  }
-
-  private getBulletImpactSound(pos: SoundPoint): BulletImpactSound {
-    const obstacle = [...this.obstacleLastState.values()].find(obs =>
-      pos.x >= obs.x - obs.width / 2 - 8 &&
-      pos.x <= obs.x + obs.width / 2 + 8 &&
-      pos.y >= obs.y - obs.height / 2 - 8 &&
-      pos.y <= obs.y + obs.height / 2 + 8,
-    );
-
-    switch (obstacle?.type) {
-      case 'wood':
-        return 'wood';
-      case 'rock':
-        return 'rock';
-      case 'steel':
-        return 'steel';
-      case 'mirror':
-        return 'mirror';
-      default:
-        return 'spark';
-    }
   }
 
   private recordBullet(b: BulletPublicState): void {

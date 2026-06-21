@@ -1,5 +1,6 @@
 export type PowerUpType = 'triple_shot' | 'shotgun' | 'grenade' | 'laser';
 export type ObstacleType = 'bush' | 'decoration' | 'wood' | 'rock' | 'steel' | 'mirror';
+export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror';
 export type ObstacleAssetId =
   | 'bush_01_rounded_dense'
   | 'bush_02_irregular_leafy'
@@ -90,6 +91,14 @@ export interface BulletPublicState {
   reflectY?: number;
 }
 
+export interface BulletImpactPublicState {
+  id: string;
+  bulletId: string;
+  material: BulletImpactMaterial;
+  x: number;
+  y: number;
+}
+
 export interface PowerUpSpawn {
   id: string;
   type: PowerUpType;
@@ -111,4 +120,5 @@ export interface GameState {
   map: GameMap;
   players: PlayerPublicState[];
   bullets: BulletPublicState[];
+  impactEvents: BulletImpactPublicState[];
 }

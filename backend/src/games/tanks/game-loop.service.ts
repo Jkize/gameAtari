@@ -6,9 +6,10 @@ import { CollisionService } from './collision.service';
 import { WeaponService } from './weapons/weapon.service';
 import { WeaponLaserService } from './weapons/weapon-laser.service';
 import { WeaponGrenadeService } from './weapons/weapon-grenade.service';
-import { BulletPublicState, GameState } from './types/game-state.types';
+import { BulletImpactMaterial, BulletPublicState, GameState } from './types/game-state.types';
 import { PlayerPublicState } from './types/player.types';
 import { ActivePowerUp, ActivePowerUpPublicState } from './types/power-up.types';
+import { ObstacleType } from './types/map.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
 import { applyObstacleDamage, isSoftCoverObstacle } from './obstacle.config';
 
@@ -16,6 +17,12 @@ const TICK_RATE = 60;
 const TICK_INTERVAL = 1000 / TICK_RATE;
 const WATCHER_BROADCAST_RATE = 30;
 const WATCHER_BROADCAST_INTERVAL = 1000 / WATCHER_BROADCAST_RATE;
+const OBSTACLE_IMPACT_MATERIAL: Partial<Record<ObstacleType, BulletImpactMaterial>> = {
+  wood: 'wood',
+  rock: 'rock',
+  steel: 'steel',
+  mirror: 'mirror',
+};
 
 @Injectable()
 export class GameLoopService implements OnModuleDestroy {
@@ -60,7 +67,7 @@ export class GameLoopService implements OnModuleDestroy {
   }
 
   buildState(): GameState {
-    const { map, players, bullets, status } = this.gameService;
+    const { map, players, bullets, status, impactEvents } = this.gameService;
     const now = Date.now();
 
     const publicPlayers: PlayerPublicState[] = [...players.values()].map(p => ({
@@ -98,7 +105,13 @@ export class GameLoopService implements OnModuleDestroy {
       reflectY: b.reflectY,
     }));
 
-    return { status, map: map!, players: publicPlayers, bullets: publicBullets };
+    return {
+      status,
+      map: map!,
+      players: publicPlayers,
+      bullets: publicBullets,
+      impactEvents: [...impactEvents],
+    };
   }
 
   private tick(): void {
@@ -180,6 +193,7 @@ export class GameLoopService implements OnModuleDestroy {
         this.collisionService.isBulletOutOfBounds(bullet, map.width, map.height)
       ) {
         if (bullet.kind === 'grenade') this.weaponGrenadeService.explode(bullet);
+        else this.recordBulletImpact(bullet, 'spark');
         dead.add(bullet.id);
         continue;
       }
@@ -206,6 +220,7 @@ export class GameLoopService implements OnModuleDestroy {
           break;
         }
 
+        this.recordBulletImpact(bullet, this.getObstacleImpactMaterial(obs.type));
         dead.add(bullet.id);
 
         if (obs.destructible) {
@@ -226,6 +241,7 @@ export class GameLoopService implements OnModuleDestroy {
           this.weaponGrenadeService.explode(bullet);
         } else {
           this.gameService.damagePlayer(player, bullet.damage);
+          this.recordBulletImpact(bullet, 'spark');
         }
         dead.add(bullet.id);
         break;
@@ -253,6 +269,25 @@ export class GameLoopService implements OnModuleDestroy {
       this.lastWatcherBroadcastTime = now;
       this.server.to(WATCHER_ROOM).emit('gameState', state);
     }
+
+    this.gameService.impactEvents = [];
+  }
+
+  private recordBulletImpact(
+    bullet: { id: string; x: number; y: number },
+    material: BulletImpactMaterial,
+  ): void {
+    this.gameService.impactEvents.push({
+      id: `${bullet.id}:${this.gameService.impactEvents.length}`,
+      bulletId: bullet.id,
+      material,
+      x: bullet.x,
+      y: bullet.y,
+    });
+  }
+
+  private getObstacleImpactMaterial(type: ObstacleType): BulletImpactMaterial {
+    return OBSTACLE_IMPACT_MATERIAL[type] ?? 'spark';
   }
 
   private buildActivePowerUpState(
