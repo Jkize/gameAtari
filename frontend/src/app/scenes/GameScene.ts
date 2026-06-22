@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { Socket } from 'socket.io-client';
+import { GAME_VIEW_HEIGHT } from '../game/viewport.config';
 import { socketManager } from '../network/socket';
 import { GameState } from '../types/game-state.types';
 import { ArenaBackgroundRenderer } from './game-scene/arena-background-renderer';
@@ -7,7 +8,7 @@ import { AudioManager } from './game-scene/audio-manager';
 import { BulletRenderer } from './game-scene/bullet-renderer';
 import { EffectSpawner } from './game-scene/effect-spawner';
 import { clearDynamicLayers, createGameSceneLayers, GameSceneLayers } from './game-scene/game-scene-layers';
-import { HudRenderer } from './game-scene/hud-renderer';
+import { GameHudRenderer } from './game-scene/game-hud-renderer';
 import { InputController } from './game-scene/input-controller';
 import { ObstacleRenderer } from './game-scene/obstacle-renderer';
 import { PlayerRenderer } from './game-scene/player-renderer';
@@ -28,7 +29,7 @@ export class GameScene extends Phaser.Scene {
   private powerUpRenderer!: PowerUpRenderer;
   private playerRenderer!: PlayerRenderer;
   private bulletRenderer!: BulletRenderer;
-  private hudRenderer!: HudRenderer;
+  private hudRenderer!: GameHudRenderer;
   private inputController!: InputController;
   private effectSpawner!: EffectSpawner;
   private audioManager!: AudioManager;
@@ -40,6 +41,7 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.layers = createGameSceneLayers(this);
+    this.cameras.main.setViewport(0, 0, this.scale.width, GAME_VIEW_HEIGHT);
     this.camTarget = this.add.rectangle(800, 600, 1, 1, 0x000000, 0).setDepth(-1);
     this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
 
@@ -80,7 +82,7 @@ export class GameScene extends Phaser.Scene {
     this.powerUpRenderer = new PowerUpRenderer(this, this.layers);
     this.playerRenderer = new PlayerRenderer(this, this.layers);
     this.bulletRenderer = new BulletRenderer(this.layers);
-    this.hudRenderer = new HudRenderer(this);
+    this.hudRenderer = new GameHudRenderer(this);
     this.inputController = new InputController(this, {
       getGameState: () => this.gameState,
       getMyPlayerId: () => this.myPlayerId,
@@ -107,6 +109,7 @@ export class GameScene extends Phaser.Scene {
       this.mapH = data.map.height;
       this.backgroundRenderer.draw(this.mapW, this.mapH);
       this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
+      this.cameras.main.setViewport(0, 0, this.scale.width, GAME_VIEW_HEIGHT);
     });
 
     this.socket.on('gameState', (state: GameState) => {

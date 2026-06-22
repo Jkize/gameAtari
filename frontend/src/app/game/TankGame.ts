@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BootScene } from '../scenes/BootScene';
 import { GameScene } from '../scenes/GameScene';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
+import { CANVAS_HEIGHT, GAME_VIEW_WIDTH } from './viewport.config';
 
 export class TankGame extends Phaser.Game {
   constructor(parent: HTMLElement) {
@@ -13,8 +14,8 @@ export class TankGame extends Phaser.Game {
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: 1280,
-        height: 720,
+        width: GAME_VIEW_WIDTH,
+        height: CANVAS_HEIGHT,
       },
       render: {
         antialias: true,
