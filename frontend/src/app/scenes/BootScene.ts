@@ -3,7 +3,10 @@ import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 
 const OBSTACLE_SVG_TEXTURE_SIZE = { width: 64, height: 64 } as const;
 const WEAPON_SVG_TEXTURE_SIZE = { width: 96, height: 96 } as const;
-const HUD_BOTTOM_PANEL_TEXTURE_SIZE = { width: 1280, height: 110 } as const;
+const HUD_ICON_SVG_TEXTURE_SIZE = { width: 96, height: 96 } as const;
+// Matches hud-bottom-panel.svg and the final HUD display rect ratio:
+// 1280 x (50 * 100 / 70) => 17.92:1.
+const HUD_BOTTOM_PANEL_TEXTURE_SIZE = { width: 1792, height: 100 } as const;
 
 const SOUND_ASSETS = [
   ['weapon-standard-fire', 'assets/sounds/weapon_standard_fire.ogg'],
@@ -67,6 +70,7 @@ export class BootScene extends Phaser.Scene {
     this.load.svg('weapon-power_shotgun', 'assets/weapon/power_shotgun.svg', WEAPON_SVG_TEXTURE_SIZE);
     this.load.svg('weapon-power_grenade', 'assets/weapon/power_grenade.svg', WEAPON_SVG_TEXTURE_SIZE);
     this.load.svg('weapon-power_laser', 'assets/weapon/power_laser.svg', WEAPON_SVG_TEXTURE_SIZE);
+    this.load.svg('hud-dash', 'assets/power/dash.svg', HUD_ICON_SVG_TEXTURE_SIZE);
     this.load.svg('hud-bottom-panel', 'assets/hud/hud-bottom-panel.svg', HUD_BOTTOM_PANEL_TEXTURE_SIZE);
 
     SOUND_ASSETS.forEach(([key, path]) => {

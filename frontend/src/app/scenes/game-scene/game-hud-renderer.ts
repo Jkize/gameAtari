@@ -9,12 +9,17 @@ interface SlotState {
   keyLabel: string;
   name: string;
   iconKey?: string;
+  iconScale?: number;
+  iconYOffsetRatio?: number;
+  hideLabelBand?: boolean;
   fallbackIcon: string;
   color: number;
   cooldownMs: number;
   cooldownTotalMs: number;
   disabled: boolean;
   counter?: string;
+  nameColor?: string;
+  nameFontSize?: number;
 }
 
 const HUD_DEPTH = 1000;
@@ -255,8 +260,12 @@ export class GameHudRenderer {
 
     return [
       {
-        keyLabel: 'SHIFT',
-        name: 'DASH',
+        keyLabel: '',
+        name: '',
+        iconKey: 'hud-dash',
+        iconScale: 0.96,
+        iconYOffsetRatio: 0,
+        hideLabelBand: true,
         fallbackIcon: '>>',
         color: 0x00dfff,
         cooldownMs: player?.dashCooldownMs ?? 0,
@@ -306,14 +315,18 @@ export class GameHudRenderer {
     this.bottomGfx.fillStyle(slot.color, pulse);
     this.bottomGfx.fillCircle(cx, cy - size * 0.08, size * 0.34);
     const labelBandH = Math.max(22, size * 0.34);
-    this.bottomGfx.fillStyle(0x000000, 0.44);
-    this.bottomGfx.fillRoundedRect(x + 4, y + size - labelBandH - 3, size - 8, labelBandH, 5);
+    if (!slot.hideLabelBand) {
+      this.bottomGfx.fillStyle(0x000000, 0.44);
+      this.bottomGfx.fillRoundedRect(x + 4, y + size - labelBandH - 3, size - 8, labelBandH, 5);
+    }
 
     const image = this.iconImages[index];
+    const iconScale = slot.iconScale ?? 0.52;
+    const iconYOffsetRatio = slot.iconYOffsetRatio ?? 0.1;
     image
       .setVisible(iconExists)
-      .setPosition(cx, cy - size * 0.1)
-      .setDisplaySize(size * 0.52, size * 0.52)
+      .setPosition(cx, cy - size * iconYOffsetRatio)
+      .setDisplaySize(size * iconScale, size * iconScale)
       .setAlpha(slot.disabled || slot.cooldownMs > 0 ? 0.42 : 0.92);
     if (slot.iconKey && iconExists) image.setTexture(slot.iconKey);
 
@@ -330,12 +343,14 @@ export class GameHudRenderer {
       .setText(slot.keyLabel)
       .setFontSize(size < 68 ? 12 : 15)
       .setPosition(cx, y + size - labelBandH + 4)
-      .setColor(slot.disabled ? '#52656b' : '#ffd98a');
+      .setColor(slot.disabled ? '#52656b' : '#ffd98a')
+      .setAlpha(slot.keyLabel && !slot.hideLabelBand ? 1 : 0);
     this.nameTexts[index]
       .setText(slot.name)
-      .setFontSize(size < 68 ? 8 : 10)
+      .setFontSize(slot.nameFontSize ?? (size < 68 ? 8 : 10))
       .setPosition(cx, y + size - 7)
-      .setColor(slot.disabled ? '#41555d' : '#bdefff');
+      .setColor(slot.disabled ? '#41555d' : (slot.nameColor ?? '#bdefff'))
+      .setAlpha(slot.name && !slot.hideLabelBand ? 1 : 0);
 
     if (slot.cooldownMs > 0 && slot.cooldownTotalMs > 0) {
       const progress = Phaser.Math.Clamp(slot.cooldownMs / slot.cooldownTotalMs, 0, 1);

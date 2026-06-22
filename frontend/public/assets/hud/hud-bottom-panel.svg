@@ -1,15 +1,19 @@
 <svg
   class="tank-hud"
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 900 100"
-  width="900"
+  viewBox="0 0 1792 100"
+  width="1792"
   height="100"
-  preserveAspectRatio="none"
 >
   <!--
     HUD bottom panel coordinate guide
 
-    ViewBox is 900 x 100 logical units.
+    ViewBox is 1792 x 100 logical units.
+    This 17.92:1 ratio matches the Phaser display rect produced by
+    game-hud-renderer.ts: 1280 x (50 * 100 / 70) = 1280 x 71.43.
+    Keep BootScene's HUD_BOTTOM_PANEL_TEXTURE_SIZE at this same ratio so
+    the SVG, loaded texture, and rendered image all scale uniformly.
+
     - y=0..30: upper trapezoid / raised lip that overlaps the game area.
     - y=30..100: lower rectangle area reserved by HUD_HEIGHT in Phaser.
 
@@ -19,8 +23,8 @@
     Keep those values aligned with this SVG if you change the y proportions.
 
     Main trapezoid width:
-    - top edge: x=302 to x=598 in several paths.
-    - lower shoulder: x=284 to x=616 at y=30.
+    - top edge: x=601.32 to x=1190.68 in several paths.
+    - lower shoulder: x=565.48 to x=1226.52 at y=30.
     To widen the raised middle, decrease left x values and increase right x values
     consistently in the base, grid, neon line, center platform, bevel, and shadow paths.
   -->
@@ -128,13 +132,13 @@
     - lower rectangle from y=30 to y=100
 
     Key edit points:
-    - L302 0 L598 0 = top width of raised middle.
-    - L284 30 and L616 30 = lower shoulder points.
+    - L601.32 0 L1190.68 0 = top width of raised middle.
+    - L565.48 30 and L1226.52 30 = lower shoulder points.
     - y=30 controls where the rectangle begins.
   -->
   <path
     filter="url(#softShadow)"
-    d="M0 30 L284 30 L302 0 L598 0 L616 30 L900 30 L900 100 L0 100 Z"
+    d="M0 30 L565.48 30 L601.32 0 L1190.68 0 L1226.52 30 L1792 30 L1792 100 L0 100 Z"
     fill="url(#panelBg)"
   />
 
@@ -142,10 +146,10 @@
     Central raised platform.
     This darker raised shape sits under the ability slots.
     Keep its top edge slightly inside the main top edge:
-    main top is x=302..598, center platform top is x=310..590.
+    main top is x=601.32..1190.68, center platform top is x=617.24..1174.76.
   -->
   <path
-    d="M292 30 L310 0 L590 0 L608 30 L594 46 L306 46 Z"
+    d="M581.40 30 L617.24 0 L1174.76 0 L1210.60 30 L1182.72 46 L609.28 46 Z"
     fill="url(#centerBg)"
     opacity="0.98"
   />
@@ -153,7 +157,7 @@
   <!-- Same silhouette as main base, but filled with subtle tech grid pattern. -->
   <path
     class="hud-grid"
-    d="M0 30 L284 30 L302 0 L598 0 L616 30 L900 30 L900 100 L0 100 Z"
+    d="M0 30 L565.48 30 L601.32 0 L1190.68 0 L1226.52 30 L1792 30 L1792 100 L0 100 Z"
   />
 
   <!--
@@ -162,18 +166,18 @@
   -->
   <path
     class="hud-neon-line"
-    d="M0 30 L284 30 L302 0 L598 0 L616 30 L900 30"
+    d="M0 30 L565.48 30 L601.32 0 L1190.68 0 L1226.52 30 L1792 30"
   />
 
   <!-- Secondary inner cyan-dark line, offset slightly downward/inward. -->
   <path
     class="hud-inner-line"
-    d="M8 36 L287 36 L305 6 L595 6 L613 36 L892 36"
+    d="M15.93 36 L571.45 36 L607.29 6 L1184.71 6 L1220.55 36 L1776.07 36"
   />
 
   <!-- Thin bottom accent line segments near the lower edge. -->
   <path
-    d="M0 98 L210 98 L220 100 M680 100 L690 98 L900 98"
+    d="M0 98 L418.13 98 L438.04 100 M1353.96 100 L1373.87 98 L1792 98"
     fill="none"
     stroke="var(--hud-cyan)"
     stroke-width="1"
@@ -185,7 +189,7 @@
     Delete this whole path if you do not want the V in the center.
   -->
   <path
-    d="M440 0 L450 8 L460 0 Z"
+    d="M876.09 0 L896 8 L915.91 0 Z"
     fill="#07131a"
     stroke="var(--hud-cyan)"
     stroke-width="2"
@@ -194,27 +198,27 @@
   />
 
   <!-- Decorative horizontal cyan scan-line accents. -->
-  <rect x="18" y="72" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
-  <rect x="702" y="72" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
-  <rect x="300" y="86" width="300" height="1.5" fill="url(#cyanLine)" opacity="0.25"/>
+  <rect x="35.84" y="72" width="358.40" height="2" fill="url(#cyanLine)" opacity="0.45"/>
+  <rect x="1397.76" y="72" width="358.40" height="2" fill="url(#cyanLine)" opacity="0.45"/>
+  <rect x="597.33" y="86" width="597.33" height="1.5" fill="url(#cyanLine)" opacity="0.25"/>
 
   <!--
     Side bevel detail strokes and center platform bottom edge.
     Keep these aligned with main trapezoid sides if you edit x/y geometry.
   -->
-  <path d="M284 30 L302 0" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
-  <path d="M616 30 L598 0" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
-  <path d="M306 46 L594 46" stroke="#073544" stroke-width="2" opacity="0.85"/>
+  <path d="M565.48 30 L601.32 0" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
+  <path d="M1226.52 30 L1190.68 0" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
+  <path d="M609.28 46 L1182.72 46" stroke="#073544" stroke-width="2" opacity="0.85"/>
 
   <!-- Dark side vignettes that make the outer bevels feel recessed. -->
-  <path class="hud-shadow-fill" d="M0 30 L284 30 L302 0 L310 0 L296 44 L0 44 Z"/>
-  <path class="hud-shadow-fill" d="M900 30 L616 30 L598 0 L590 0 L604 44 L900 44 Z"/>
+  <path class="hud-shadow-fill" d="M0 30 L565.48 30 L601.32 0 L617.24 0 L589.37 44 L0 44 Z"/>
+  <path class="hud-shadow-fill" d="M1792 30 L1226.52 30 L1190.68 0 L1174.76 0 L1202.63 44 L1792 44 Z"/>
 
   <!-- Small tech dots / screw-like accents. -->
   <g opacity="0.55">
-    <circle cx="302" cy="28" r="2" fill="var(--hud-cyan)"/>
-    <circle cx="598" cy="28" r="2" fill="var(--hud-cyan)"/>
-    <circle cx="36" cy="92" r="1.4" fill="#0bcfe6"/>
-    <circle cx="864" cy="92" r="1.4" fill="#0bcfe6"/>
-  </g>
+    <circle cx="601.32" cy="28" r="2" fill="var(--hud-cyan)"/>
+    <circle cx="1190.68" cy="28" r="2" fill="var(--hud-cyan)"/>
+    <circle cx="71.68" cy="92" r="1.4" fill="#0bcfe6"/>
+    <circle cx="1720.32" cy="92" r="1.4" fill="#0bcfe6"/>
+d  </g>
 </svg>
