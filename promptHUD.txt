@@ -1,0 +1,114 @@
+I want to improve the HUD architecture and design of my Phaser 2D top-down multiplayer tank arena game.
+
+Current problem:
+The game canvas is responsive, but the bottom HUD feels like a separate floating box and does not adapt naturally with the game. I want the HUD to feel integrated into the game frame, similar to League of Legends, but without covering the playable area.
+
+Main objective:
+Increase the canvas height slightly and reserve a dedicated bottom area inside the canvas for the HUD. The gameplay/world area should remain above, and the HUD should live inside a fixed bottom control bar. The HUD must not overlap tanks, obstacles, bullets, power-ups, bushes, rocks, or any gameplay element.
+
+Architecture:
+Use a canvas layout like this:
+
+- Upper area: playable game world
+- Lower area: HUD/control bar
+
+Example:
+If the current game world height is 900px, increase the total canvas height to around 1020px or 1040px.
+The game world should still use the original height.
+The new extra bottom space should be used only for the HUD.
+
+Do not place the HUD as an external HTML div.
+Do not make the HUD float over the map.
+The HUD must be rendered inside Phaser, in the reserved bottom canvas area.
+
+Design style:
+Use the “Clean Modern HUD” style from option 2.
+The HUD should look like a compact modern MOBA-style ability bar:
+- dark semi-transparent base panel
+- clean geometric shape
+- thin neon cyan borders
+- subtle glow
+- minimal text
+- readable icons
+- polished sci-fi arcade look
+- visually attached to the bottom edge of the game frame
+
+Bottom HUD layout:
+Place the HUD centered horizontally in the reserved bottom area.
+
+The HUD should contain:
+
+1. Dash slot
+- Key label: SHIFT
+- Ability name: DASH
+- Use a placeholder dash icon for now, such as double arrows “>>”
+- Reserve space so I can replace it later with an SVG icon
+- If dash is ready, show the icon clearly
+- If dash is on cooldown, show a dark radial cooldown overlay and a countdown number in the center
+
+2. Main weapon slot
+- Key label: M1
+- Shows the current weapon SVG icon
+- Examples: cannon, shotgun, grenade, triple shot, laser
+- Use the icon as the main visual element
+- If the weapon has cooldown, show a circular/radial dark overlay with the remaining seconds in the center
+- When ready, the icon should be fully visible and have a subtle cyan glow
+
+3. Active power slot
+- Key label: E
+- Shows the current active power SVG icon
+- If no power is active, show a dim disabled empty state
+- If a temporary power is active, show a radial cooldown overlay with a large countdown number
+- If the power is ammo-based, such as laser, show remaining shots instead of seconds
+- Active powers should have a soft colored glow depending on the power type
+
+4. Ammo display
+- Place ammo to the right of the ability slots
+- Show small bullet/capsule indicators
+- Also show text like 3/6
+- Make it readable and close to the weapon/power slots
+- Do not make the ammo display too separated from the ability bar
+
+Cooldown effect:
+Implement a MOBA-style cooldown effect similar to League of Legends:
+- A circular/radial dark overlay appears over the ability icon
+- The overlay gradually disappears as the cooldown progresses
+- A large number is shown in the center of the icon
+- When cooldown reaches zero, the overlay disappears
+- The icon briefly flashes or pulses with a subtle glow to indicate it is ready again
+
+Responsive behavior:
+The HUD must be responsive based on the canvas size.
+
+Avoid hardcoded positions like fixed x = 500 or y = 850.
+Instead, calculate positions using:
+- scale.width
+- scale.height
+- centerX = scale.width / 2
+- hudAreaY based on the bottom reserved area
+
+The bottom HUD should always remain centered and inside the reserved bottom canvas space.
+The ability slots should scale or adjust slightly if the screen is smaller.
+The HUD should never go outside the visible canvas.
+
+Suggested constants:
+- HUD_HEIGHT around 120px to 150px
+- Ability slot size around 60px to 70px
+- Small gap between slots: 10px to 14px
+- Bottom panel width around 420px to 560px depending on screen width
+- Panel should not be too tall or too wide
+
+Top-left HUD:
+Keep the HP panel in the top-left of the playable area.
+Make it compact and minimal:
+- HP 100
+- green horizontal HP bar
+Do not show dash, ammo, powers, or cooldown text in the top-left anymore.
+
+Important:
+The gameplay area must remain clean.
+The HUD should not cover any map element.
+The bottom HUD should feel like part of the game frame, not like a debug panel or a floating web box.
+
+Final desired result:
+A responsive Phaser HUD inside the canvas, with the game world above and a reserved bottom control bar below. The design should follow option 2: clean modern, compact, MOBA-inspired, dark panel, neon cyan borders, radial cooldown overlays, centered ability icons, and readable ammo display.

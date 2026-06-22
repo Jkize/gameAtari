@@ -32,6 +32,7 @@ export class StateChangeTracker {
   private prevBulletIds: Set<string> = new Set();
   private prevObsIds: Set<string> = new Set();
   private prevPowerUpIds: Set<string> = new Set();
+  private playedImpactEventIds: Set<string> = new Set();
   private hasStateSnapshot = false;
 
   constructor(
@@ -53,6 +54,7 @@ export class StateChangeTracker {
     this.prevBulletIds.clear();
     this.prevObsIds.clear();
     this.prevPowerUpIds.clear();
+    this.playedImpactEventIds.clear();
     this.hasStateSnapshot = false;
   }
 
@@ -164,6 +166,8 @@ export class StateChangeTracker {
 
   private playBulletImpactEvents(events: BulletImpactPublicState[], listener: SoundPoint): void {
     events.forEach(event => {
+      if (this.playedImpactEventIds.has(event.id)) return;
+      this.playedImpactEventIds.add(event.id);
       this.effects.spawnSpark(event.x, event.y);
       this.audioManager.playBulletImpact(event.material, event, listener);
     });

@@ -18,10 +18,11 @@ export class WeaponGrenadeService {
       if (!player.alive) continue;
       const dx = player.x - bullet.x;
       const dy = player.y - bullet.y;
-      const distSq = dx * dx + dy * dy;
-      if (distSq > radiusSq) continue;
+      const centerDistance = Math.sqrt(dx * dx + dy * dy);
+      const edgeDistance = Math.max(0, centerDistance - player.radius);
+      if (edgeDistance > radius) continue;
 
-      const falloff = 1 - Math.sqrt(distSq) / radius;
+      const falloff = 1 - edgeDistance / radius;
       this.gameService.damagePlayer(player, Math.ceil(bullet.damage * (0.45 + falloff * 0.55)));
     }
 
