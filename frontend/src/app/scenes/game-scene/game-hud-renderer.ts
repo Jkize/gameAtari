@@ -41,6 +41,7 @@ export class GameHudRenderer {
   private cooldownGfx!: Phaser.GameObjects.Graphics;
   private ammoGfx!: Phaser.GameObjects.Graphics;
   private overlayGfx!: Phaser.GameObjects.Graphics;
+  private bottomPanelImage!: Phaser.GameObjects.Image;
 
   private hpText!: Phaser.GameObjects.Text;
   private playersText!: Phaser.GameObjects.Text;
@@ -66,7 +67,11 @@ export class GameHudRenderer {
 
     this.frameGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH).setScrollFactor(0));
     this.topGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 1).setScrollFactor(0));
-    this.bottomGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 2).setScrollFactor(0));
+    this.bottomPanelImage = this.add(this.scene.add.image(W / 2, H, 'hud-bottom-panel')
+      .setOrigin(0.5, 1)
+      .setDepth(HUD_DEPTH + 2)
+      .setScrollFactor(0));
+    this.bottomGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 3).setScrollFactor(0));
     this.cooldownGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 5).setScrollFactor(0));
     this.ammoGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 4).setScrollFactor(0));
     this.overlayGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 8).setScrollFactor(0));
@@ -214,26 +219,26 @@ export class GameHudRenderer {
 
   private drawBottomHud(player: PlayerPublicState | undefined, time: number): void {
     const W = this.scene.scale.width;
-    const panelW = Phaser.Math.Clamp(W * 0.48, 480, 600);
-    const overhang = Phaser.Math.Clamp(HUD_HEIGHT * 0.46, 24, 42);
-    const panelH = HUD_HEIGHT + overhang;
+    const panelW = W;
+    const panelH = HUD_HEIGHT + Math.min(24, HUD_HEIGHT * 0.18);
     const panelX = (W - panelW) / 2;
-    const panelY = GAME_VIEW_HEIGHT - overhang;
-    const slotSize = Phaser.Math.Clamp(HUD_HEIGHT * 0.74, 44, 60);
-    const gap = Phaser.Math.Clamp(HUD_HEIGHT * 0.18, 10, 15);
+    const slotSize = Phaser.Math.Clamp(HUD_HEIGHT * 0.72, 62, 76);
+    const gap = Phaser.Math.Clamp(HUD_HEIGHT * 0.14, 12, 18);
     const slotsWidth = slotSize * 3 + gap * 2;
-    const ammoWidth = Phaser.Math.Clamp(HUD_HEIGHT * 1.22, 74, 112);
+    const ammoWidth = Phaser.Math.Clamp(HUD_HEIGHT * 1.05, 88, 124);
     const contentWidth = slotsWidth + gap + ammoWidth;
     const startX = panelX + (panelW - contentWidth) / 2;
-    const slotY = GAME_VIEW_HEIGHT + (HUD_HEIGHT - slotSize) / 2;
+    const slotY = GAME_VIEW_HEIGHT + (HUD_HEIGHT - slotSize) / 2 + 4;
     const cy = slotY + slotSize / 2;
 
     this.bottomGfx.clear();
     this.cooldownGfx.clear();
     this.ammoGfx.clear();
 
-    this.bottomGfx.fillStyle(0x02080d, 0.98);
-    this.drawConsolePanel(this.bottomGfx, panelX, panelY, panelW, panelH);
+    this.bottomPanelImage
+      .setVisible(this.scene.textures.exists('hud-bottom-panel'))
+      .setPosition(W / 2, GAME_VIEW_HEIGHT + HUD_HEIGHT)
+      .setDisplaySize(panelW, panelH);
 
     const slots = this.getSlots(player);
     slots.forEach((slot, index) => {
@@ -295,7 +300,7 @@ export class GameHudRenderer {
 
     this.triggerReadyPulse(`slot-${index}`, ready, cx, cy, size, slot.color);
 
-    const radius = Math.max(7, size * 0.16);
+    const radius = Math.max(10, size * 0.18);
     this.bottomGfx.fillStyle(slot.disabled ? 0x061018 : 0x071522, slot.disabled ? 0.82 : 0.98);
     this.bottomGfx.fillRoundedRect(x, y, size, size, radius);
     this.bottomGfx.lineStyle(1, 0x8bf6ff, slot.disabled ? 0.18 : 0.32);
@@ -304,7 +309,7 @@ export class GameHudRenderer {
     this.bottomGfx.strokeRoundedRect(x + 3, y + 3, size - 6, size - 6, Math.max(5, radius - 2));
     this.bottomGfx.fillStyle(slot.color, pulse);
     this.bottomGfx.fillCircle(cx, cy - 6, size * 0.36);
-    const labelBandH = Math.max(18, size * 0.38);
+    const labelBandH = Math.max(22, size * 0.36);
     this.bottomGfx.fillStyle(0x000000, 0.44);
     this.bottomGfx.fillRoundedRect(x + 4, y + size - labelBandH - 3, size - 8, labelBandH, 5);
 
@@ -321,18 +326,18 @@ export class GameHudRenderer {
 
     this.centerTexts[index]
       .setText(centerText)
-      .setFontSize(size < 50 ? 22 : size < 60 ? 26 : 30)
+      .setFontSize(size < 68 ? 30 : 34)
       .setPosition(cx, cy - 6)
       .setColor(slot.disabled ? '#3b5660' : '#dffcff')
       .setAlpha(centerText ? 1 : 0);
     this.keyTexts[index]
       .setText(slot.keyLabel)
-      .setFontSize(size < 50 ? 9 : size < 60 ? 11 : 13)
+      .setFontSize(size < 68 ? 12 : 14)
       .setPosition(cx, y + size - labelBandH + 3)
       .setColor(slot.disabled ? '#52656b' : '#ffd98a');
     this.nameTexts[index]
       .setText(slot.name)
-      .setFontSize(size < 50 ? 7 : 8)
+      .setFontSize(size < 68 ? 8 : 9)
       .setPosition(cx, y + size - 6)
       .setColor(slot.disabled ? '#41555d' : '#bdefff');
 
@@ -350,9 +355,9 @@ export class GameHudRenderer {
   private drawAmmo(player: PlayerPublicState | undefined, x: number, cy: number, width: number): void {
     const ammo = player?.weapon.ammo ?? 0;
     const maxAmmo = Math.max(player?.weapon.magazineSize ?? 6, 1);
-    const capsuleGap = Phaser.Math.Clamp(HUD_HEIGHT * 0.07, 4, 6);
-    const capsuleW = Phaser.Math.Clamp(HUD_HEIGHT * 0.09, 5, 7);
-    const capsuleH = Phaser.Math.Clamp(HUD_HEIGHT * 0.26, 14, 18);
+    const capsuleGap = Phaser.Math.Clamp(HUD_HEIGHT * 0.055, 4, 7);
+    const capsuleW = Phaser.Math.Clamp(HUD_HEIGHT * 0.075, 6, 9);
+    const capsuleH = Phaser.Math.Clamp(HUD_HEIGHT * 0.22, 16, 24);
     const totalW = maxAmmo * capsuleW + (maxAmmo - 1) * capsuleGap;
     const startX = x + (width - totalW) / 2;
 
@@ -370,7 +375,7 @@ export class GameHudRenderer {
 
     this.ammoText
       .setText(`${ammo}/${maxAmmo}`)
-      .setFontSize(HUD_HEIGHT <= 60 ? 14 : 18)
+      .setFontSize(HUD_HEIGHT <= 70 ? 14 : 20)
       .setPosition(x + width / 2, cy + HUD_HEIGHT * 0.28);
   }
 
@@ -409,30 +414,36 @@ export class GameHudRenderer {
   }
 
   private drawConsolePanel(gfx: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number): void {
-    const notch = 42;
-    const points = [
-      new Phaser.Math.Vector2(x + notch, y + h),
-      new Phaser.Math.Vector2(x, y + h),
-      new Phaser.Math.Vector2(x + 44, y + 34),
-      new Phaser.Math.Vector2(x + 58, y + 18),
-      new Phaser.Math.Vector2(x + w / 2 - 26, y + 18),
-      new Phaser.Math.Vector2(x + w / 2, y + 36),
-      new Phaser.Math.Vector2(x + w / 2 + 26, y + 18),
-      new Phaser.Math.Vector2(x + w - 58, y + 18),
-      new Phaser.Math.Vector2(x + w - 44, y + 34),
-      new Phaser.Math.Vector2(x + w, y + h),
-      new Phaser.Math.Vector2(x + w - notch, y + h),
+    const mid = x + w / 2;
+    const topY = y + 10;
+    const barY = GAME_VIEW_HEIGHT;
+    const baseY = y + h;
+    const left = x + 52;
+    const right = x + w - 52;
+    const capPoints = [
+      new Phaser.Math.Vector2(left - 30, barY),
+      new Phaser.Math.Vector2(left, topY),
+      new Phaser.Math.Vector2(right, topY),
+      new Phaser.Math.Vector2(right + 30, barY),
     ];
 
-    gfx.fillStyle(0x02080d, 0.98);
-    gfx.fillPoints(points, true);
-    gfx.lineStyle(3, 0x00dfff, 0.78);
-    gfx.strokePoints(points, true);
-    gfx.lineStyle(1, 0xffb23e, 0.48);
-    gfx.lineBetween(x + 54, y + 23, x + w / 2 - 40, y + 23);
-    gfx.lineBetween(x + w / 2 + 40, y + 23, x + w - 54, y + 23);
-    gfx.lineStyle(2, 0x00dfff, 0.88);
-    gfx.strokeTriangle(x + w / 2 - 10, y + 10, x + w / 2 + 10, y + 10, x + w / 2, y + 32);
+    gfx.fillStyle(0x02080d, 0.94);
+    gfx.fillRoundedRect(left - 16, barY, right - left + 32, baseY - barY - 4, 8);
+    gfx.fillStyle(0x031018, 0.62);
+    gfx.fillRoundedRect(left + 22, barY + 7, right - left - 44, baseY - barY - 14, 8);
+
+    gfx.fillStyle(0x02080d, 0.86);
+    gfx.fillPoints(capPoints, true);
+    gfx.lineStyle(3, 0x00dfff, 0.82);
+    gfx.strokePoints(capPoints, false);
+
+    gfx.lineStyle(1, 0x00dfff, 0.26);
+    gfx.lineBetween(left + 18, barY + 6, right - 18, barY + 6);
+    gfx.lineStyle(1, 0xffb23e, 0.36);
+    gfx.lineBetween(left + 42, topY + 5, right - 42, topY + 5);
+
+    gfx.lineStyle(2, 0x00dfff, 0.9);
+    gfx.strokeTriangle(mid - 9, topY - 12, mid + 9, topY - 12, mid, topY + 8);
   }
 
   private drawCooldownWedge(cx: number, cy: number, radius: number, progress: number): void {

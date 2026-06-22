@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 14 900 96" width="900" height="96" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="panelBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#06131b" stop-opacity="0.96"/>
+      <stop offset="0.55" stop-color="#02080d" stop-opacity="0.98"/>
+      <stop offset="1" stop-color="#000408" stop-opacity="1"/>
+    </linearGradient>
+
+    <linearGradient id="centerBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#071d29" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#02070c" stop-opacity="1"/>
+    </linearGradient>
+
+    <linearGradient id="cyanLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00eaff" stop-opacity="0"/>
+      <stop offset="0.18" stop-color="#00eaff" stop-opacity="0.85"/>
+      <stop offset="0.5" stop-color="#00fff0" stop-opacity="1"/>
+      <stop offset="0.82" stop-color="#00eaff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#00eaff" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="cyanGlow" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softShadow" x="-10%" y="-20%" width="120%" height="150%">
+      <feDropShadow dx="0" dy="-2" stdDeviation="4" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+
+    <pattern id="techGrid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#0c2a37" stroke-width="0.8" opacity="0.28"/>
+    </pattern>
+  </defs>
+
+  <!-- Main lower HUD base. Transparent outside this shape. -->
+  <path filter="url(#softShadow)"
+        d="M0 62 L220 62 L245 25 L655 25 L680 62 L900 62 L900 110 L0 110 Z"
+        fill="url(#panelBg)"/>
+
+  <!-- Central raised platform -->
+  <path d="M230 62 L255 18 L645 18 L670 62 L650 78 L250 78 Z"
+        fill="url(#centerBg)" opacity="0.98"/>
+
+  <!-- Subtle grid inside panel -->
+  <path d="M0 62 L220 62 L245 25 L655 25 L680 62 L900 62 L900 110 L0 110 Z"
+        fill="url(#techGrid)" opacity="0.32"/>
+
+  <!-- Top neon outline -->
+  <path d="M0 62 L220 62 L245 25 L655 25 L680 62 L900 62"
+        fill="none" stroke="#00eaff" stroke-width="2" opacity="0.9" filter="url(#cyanGlow)"/>
+  <path d="M8 68 L224 68 L249 31 L651 31 L676 68 L892 68"
+        fill="none" stroke="#0a4d5f" stroke-width="1" opacity="0.9"/>
+
+  <!-- Bottom subtle outline -->
+  <path d="M0 108 L210 108 L220 110 M680 110 L690 108 L900 108"
+        fill="none" stroke="#00eaff" stroke-width="1" opacity="0.28"/>
+
+  <!-- Center small downward pointer / accent -->
+  <path d="M440 25 L450 41 L460 25 Z"
+        fill="#07131a" stroke="#00eaff" stroke-width="2" opacity="0.95" filter="url(#cyanGlow)"/>
+
+  <!-- Decorative cyan line segments -->
+  <rect x="18" y="83" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
+  <rect x="702" y="83" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
+  <rect x="300" y="94" width="300" height="1.5" fill="url(#cyanLine)" opacity="0.25"/>
+
+  <!-- Side bevel details -->
+  <path d="M222 62 L247 25" stroke="#00eaff" stroke-width="1.2" opacity="0.65"/>
+  <path d="M678 62 L653 25" stroke="#00eaff" stroke-width="1.2" opacity="0.65"/>
+  <path d="M246 77 L654 77" stroke="#073544" stroke-width="2" opacity="0.85"/>
+
+  <!-- Dark vignette strips for depth -->
+  <path d="M0 62 L220 62 L245 25 L255 18 L235 70 L0 70 Z" fill="#000000" opacity="0.20"/>
+  <path d="M900 62 L680 62 L655 25 L645 18 L665 70 L900 70 Z" fill="#000000" opacity="0.20"/>
+
+  <!-- Small screws / tech dots -->
+  <g opacity="0.55">
+    <circle cx="250" cy="57" r="2" fill="#00eaff"/>
+    <circle cx="650" cy="57" r="2" fill="#00eaff"/>
+    <circle cx="36" cy="96" r="1.4" fill="#0bcfe6"/>
+    <circle cx="864" cy="96" r="1.4" fill="#0bcfe6"/>
+  </g>
+</svg>
