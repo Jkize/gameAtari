@@ -273,20 +273,26 @@ export class GameHudRenderer {
         disabled: !player,
       },
       {
-        keyLabel: 'M1',
-        name: activePower?.name.toUpperCase() ?? 'CANNON',
-        iconKey: powerType ? `weapon-power_${powerType}` : undefined,
-        fallbackIcon: powerType ? '' : 'C',
+        keyLabel: '',
+        name: '',
+        iconKey: powerType ? `weapon-power_${powerType}` : 'hud-shot',
+        iconScale: 0.96,
+        iconYOffsetRatio: 0,
+        hideLabelBand: true,
+        fallbackIcon: '',
         color: powerColor,
         cooldownMs: weaponCooldown,
         cooldownTotalMs: weaponCooldownTotal,
         disabled: !player,
       },
       {
-        keyLabel: 'E',
-        name: activePower ? activePower.name.toUpperCase() : 'EMPTY',
+        keyLabel: '',
+        name: '',
         iconKey: powerType ? `weapon-power_${powerType}` : undefined,
-        fallbackIcon: activePower ? '' : '-',
+        iconScale: 0.96,
+        iconYOffsetRatio: 0,
+        hideLabelBand: true,
+        fallbackIcon: '',
         color: powerColor,
         cooldownMs: powerCooldown,
         cooldownTotalMs: activePower?.type === 'laser' ? Math.max(powerCooldown, 1) : DEFAULT_POWER_DURATION_MS,
@@ -358,7 +364,7 @@ export class GameHudRenderer {
       this.drawCooldownWedge(cx, cy - size * 0.08, size * 0.34, progress);
       this.cooldownGfx.lineStyle(3, slot.color, 0.78);
       this.cooldownGfx.beginPath();
-      this.cooldownGfx.arc(cx, cy - size * 0.08, size * 0.34, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - progress), false);
+      this.cooldownGfx.arc(cx, cy - size * 0.08, size * 0.34, -Math.PI / 2 + Math.PI * 2 * progress, Math.PI * 1.5, false);
       this.cooldownGfx.strokePath();
     }
   }
