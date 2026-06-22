@@ -1,12 +1,32 @@
 <svg
   class="tank-hud"
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 14 900 111"
+  viewBox="0 0 900 100"
   width="900"
-  height="111"
+  height="100"
   preserveAspectRatio="none"
 >
+  <!--
+    HUD bottom panel coordinate guide
+
+    ViewBox is 900 x 100 logical units.
+    - y=0..30: upper trapezoid / raised lip that overlaps the game area.
+    - y=30..100: lower rectangle area reserved by HUD_HEIGHT in Phaser.
+
+    Renderer contract:
+    - game-hud-renderer.ts uses HUD_SVG_TOTAL_UNITS = 100.
+    - game-hud-renderer.ts uses HUD_SVG_BOTTOM_RECT_UNITS = 70.
+    Keep those values aligned with this SVG if you change the y proportions.
+
+    Main trapezoid width:
+    - top edge: x=302 to x=598 in several paths.
+    - lower shoulder: x=284 to x=616 at y=30.
+    To widen the raised middle, decrease left x values and increase right x values
+    consistently in the base, grid, neon line, center platform, bevel, and shadow paths.
+  -->
+
   <defs>
+    <!-- CSS variables: central place to tune HUD colors and opacity. -->
     <style>
       .tank-hud {
         --hud-cyan: #00eaff;
@@ -28,6 +48,7 @@
         --hud-line-opacity: 0.9;
       }
 
+      /* Main glowing top outline style. Applied to the visible cyan silhouette. */
       .hud-neon-line {
         fill: none;
         stroke: var(--hud-cyan);
@@ -36,6 +57,7 @@
         filter: url(#cyanGlow);
       }
 
+      /* Secondary inner outline, darker and thinner than the neon line. */
       .hud-inner-line {
         fill: none;
         stroke: var(--hud-cyan-dark);
@@ -43,28 +65,33 @@
         opacity: 0.9;
       }
 
+      /* Subtle technical grid fill over the dark base. */
       .hud-grid {
         fill: url(#techGrid);
         opacity: var(--hud-grid-opacity);
       }
 
+      /* Dark vignette fills on side bevels for extra depth. */
       .hud-shadow-fill {
         fill: var(--hud-shadow);
         opacity: 0.2;
       }
     </style>
 
+    <!-- Dark vertical gradient for the main bottom HUD body. -->
     <linearGradient id="panelBg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="var(--hud-bg-top)" stop-opacity="0.96"/>
       <stop offset="0.55" stop-color="var(--hud-bg-mid)" stop-opacity="0.98"/>
       <stop offset="1" stop-color="var(--hud-bg-bottom)" stop-opacity="1"/>
     </linearGradient>
 
+    <!-- Slightly brighter center platform gradient behind the ability slots. -->
     <linearGradient id="centerBg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="var(--hud-center-top)" stop-opacity="0.96"/>
       <stop offset="1" stop-color="var(--hud-center-bottom)" stop-opacity="1"/>
     </linearGradient>
 
+    <!-- Fading cyan strips used for decorative horizontal light lines. -->
     <linearGradient id="cyanLine" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="var(--hud-cyan)" stop-opacity="0"/>
       <stop offset="0.18" stop-color="var(--hud-cyan)" stop-opacity="0.85"/>
@@ -73,6 +100,7 @@
       <stop offset="1" stop-color="var(--hud-cyan)" stop-opacity="0"/>
     </linearGradient>
 
+    <!-- Glow used by the top neon outline and center pointer. -->
     <filter id="cyanGlow" x="-30%" y="-60%" width="160%" height="220%">
       <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge>
@@ -81,52 +109,83 @@
       </feMerge>
     </filter>
 
+    <!-- Soft shadow so the HUD feels attached to the lower frame. -->
     <filter id="softShadow" x="-10%" y="-20%" width="120%" height="150%">
       <feDropShadow dx="0" dy="-2" stdDeviation="4" flood-color="var(--hud-shadow)" flood-opacity="0.8"/>
     </filter>
 
+    <!-- Low-opacity grid pattern clipped into the main HUD base. -->
     <pattern id="techGrid" width="32" height="32" patternUnits="userSpaceOnUse">
       <path d="M32 0H0V32" fill="none" stroke="var(--hud-grid-color)" stroke-width="0.8" opacity="0.28"/>
     </pattern>
   </defs>
 
+  <!--
+    Main lower HUD base.
+    This is the full visible silhouette:
+    - side lower bars across full width
+    - raised center trapezoid
+    - lower rectangle from y=30 to y=100
+
+    Key edit points:
+    - L302 0 L598 0 = top width of raised middle.
+    - L284 30 and L616 30 = lower shoulder points.
+    - y=30 controls where the rectangle begins.
+  -->
   <path
     filter="url(#softShadow)"
-    d="M0 58 L220 58 L245 32 L655 32 L680 58 L900 58 L900 125 L0 125 Z"
+    d="M0 30 L284 30 L302 0 L598 0 L616 30 L900 30 L900 100 L0 100 Z"
     fill="url(#panelBg)"
   />
 
+  <!--
+    Central raised platform.
+    This darker raised shape sits under the ability slots.
+    Keep its top edge slightly inside the main top edge:
+    main top is x=302..598, center platform top is x=310..590.
+  -->
   <path
-    d="M230 58 L255 24 L645 24 L670 58 L650 74 L250 74 Z"
+    d="M292 30 L310 0 L590 0 L608 30 L594 46 L306 46 Z"
     fill="url(#centerBg)"
     opacity="0.98"
   />
 
+  <!-- Same silhouette as main base, but filled with subtle tech grid pattern. -->
   <path
     class="hud-grid"
-    d="M0 58 L220 58 L245 32 L655 32 L680 58 L900 58 L900 125 L0 125 Z"
+    d="M0 30 L284 30 L302 0 L598 0 L616 30 L900 30 L900 100 L0 100 Z"
   />
 
+  <!--
+    Primary visible cyan top outline.
+    Change this together with the main base if you edit trapezoid width.
+  -->
   <path
     class="hud-neon-line"
-    d="M0 58 L220 58 L245 32 L655 32 L680 58 L900 58"
+    d="M0 30 L284 30 L302 0 L598 0 L616 30 L900 30"
   />
 
+  <!-- Secondary inner cyan-dark line, offset slightly downward/inward. -->
   <path
     class="hud-inner-line"
-    d="M8 64 L224 64 L249 38 L651 38 L676 64 L892 64"
+    d="M8 36 L287 36 L305 6 L595 6 L613 36 L892 36"
   />
 
+  <!-- Thin bottom accent line segments near the lower edge. -->
   <path
-    d="M0 123 L210 123 L220 125 M680 125 L690 123 L900 123"
+    d="M0 98 L210 98 L220 100 M680 100 L690 98 L900 98"
     fill="none"
     stroke="var(--hud-cyan)"
     stroke-width="1"
     opacity="0.28"
   />
 
+  <!--
+    Small center pointer / V accent.
+    Delete this whole path if you do not want the V in the center.
+  -->
   <path
-    d="M440 32 L450 46 L460 32 Z"
+    d="M440 0 L450 8 L460 0 Z"
     fill="#07131a"
     stroke="var(--hud-cyan)"
     stroke-width="2"
@@ -134,21 +193,28 @@
     filter="url(#cyanGlow)"
   />
 
-  <rect x="18" y="90" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
-  <rect x="702" y="90" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
-  <rect x="300" y="108" width="300" height="1.5" fill="url(#cyanLine)" opacity="0.25"/>
+  <!-- Decorative horizontal cyan scan-line accents. -->
+  <rect x="18" y="72" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
+  <rect x="702" y="72" width="180" height="2" fill="url(#cyanLine)" opacity="0.45"/>
+  <rect x="300" y="86" width="300" height="1.5" fill="url(#cyanLine)" opacity="0.25"/>
 
-  <path d="M222 58 L247 32" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
-  <path d="M678 58 L653 32" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
-  <path d="M246 74 L654 74" stroke="#073544" stroke-width="2" opacity="0.85"/>
+  <!--
+    Side bevel detail strokes and center platform bottom edge.
+    Keep these aligned with main trapezoid sides if you edit x/y geometry.
+  -->
+  <path d="M284 30 L302 0" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
+  <path d="M616 30 L598 0" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
+  <path d="M306 46 L594 46" stroke="#073544" stroke-width="2" opacity="0.85"/>
 
-  <path class="hud-shadow-fill" d="M0 58 L220 58 L245 32 L255 24 L235 70 L0 70 Z"/>
-  <path class="hud-shadow-fill" d="M900 58 L680 58 L655 32 L645 24 L665 70 L900 70 Z"/>
+  <!-- Dark side vignettes that make the outer bevels feel recessed. -->
+  <path class="hud-shadow-fill" d="M0 30 L284 30 L302 0 L310 0 L296 44 L0 44 Z"/>
+  <path class="hud-shadow-fill" d="M900 30 L616 30 L598 0 L590 0 L604 44 L900 44 Z"/>
 
+  <!-- Small tech dots / screw-like accents. -->
   <g opacity="0.55">
-    <circle cx="250" cy="54" r="2" fill="var(--hud-cyan)"/>
-    <circle cx="650" cy="54" r="2" fill="var(--hud-cyan)"/>
-    <circle cx="36" cy="104" r="1.4" fill="#0bcfe6"/>
-    <circle cx="864" cy="104" r="1.4" fill="#0bcfe6"/>
+    <circle cx="302" cy="28" r="2" fill="var(--hud-cyan)"/>
+    <circle cx="598" cy="28" r="2" fill="var(--hud-cyan)"/>
+    <circle cx="36" cy="92" r="1.4" fill="#0bcfe6"/>
+    <circle cx="864" cy="92" r="1.4" fill="#0bcfe6"/>
   </g>
 </svg>

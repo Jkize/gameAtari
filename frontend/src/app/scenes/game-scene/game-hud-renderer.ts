@@ -22,6 +22,10 @@ const DASH_COOLDOWN_MS = 5000;
 const FIRE_COOLDOWN_MS = 300;
 const RELOAD_COOLDOWN_MS = 1400;
 const DEFAULT_POWER_DURATION_MS = 15000;
+const HUD_SVG_TOTAL_UNITS = 100;
+const HUD_SVG_BOTTOM_RECT_UNITS = 70;
+const HUD_SLOT_HEIGHT_RATIO = 0.80;
+const HUD_SLOT_HORIZONTAL_GAP_RATIO = 0.5;
 
 const POWER_AURA_COLOR: Record<PowerUpType, number> = {
   triple_shot: 0x22e8ff,
@@ -182,16 +186,7 @@ export class GameHudRenderer {
   }
 
   private drawStaticFrame(): void {
-    const W = this.scene.scale.width;
-    const hudY = GAME_VIEW_HEIGHT;
-
     this.frameGfx.clear();
-    this.frameGfx.fillStyle(0x02080d, 0.96);
-    this.frameGfx.fillRect(0, hudY, W, HUD_HEIGHT);
-    this.frameGfx.lineStyle(2, 0x00dfff, 0.46);
-    this.frameGfx.lineBetween(0, hudY, W, hudY);
-    this.frameGfx.lineStyle(1, 0x7cf8ff, 0.12);
-    this.frameGfx.lineBetween(0, hudY + 4, W, hudY + 4);
   }
 
   private drawTopPanels(player: PlayerPublicState | undefined, hasPlayerId: boolean, players: number): void {
@@ -220,15 +215,16 @@ export class GameHudRenderer {
   private drawBottomHud(player: PlayerPublicState | undefined, time: number): void {
     const W = this.scene.scale.width;
     const panelW = W;
-    const panelH = HUD_HEIGHT + Math.min(24, HUD_HEIGHT * 0.18);
+    const panelH = HUD_HEIGHT * (HUD_SVG_TOTAL_UNITS / HUD_SVG_BOTTOM_RECT_UNITS);
     const panelX = (W - panelW) / 2;
-    const slotSize = Phaser.Math.Clamp(HUD_HEIGHT * 0.72, 62, 76);
-    const gap = Phaser.Math.Clamp(HUD_HEIGHT * 0.14, 12, 18);
+    const visualHudTop = GAME_VIEW_HEIGHT + HUD_HEIGHT - panelH;
+    const slotSize = panelH * HUD_SLOT_HEIGHT_RATIO;
+    const gap = Phaser.Math.Clamp(panelH * HUD_SLOT_HORIZONTAL_GAP_RATIO, 14, 24);
     const slotsWidth = slotSize * 3 + gap * 2;
-    const ammoWidth = Phaser.Math.Clamp(HUD_HEIGHT * 1.05, 88, 124);
+    const ammoWidth = Phaser.Math.Clamp(panelH * 1.05, 76, 112);
     const contentWidth = slotsWidth + gap + ammoWidth;
     const startX = panelX + (panelW - contentWidth) / 2;
-    const slotY = GAME_VIEW_HEIGHT + (HUD_HEIGHT - slotSize) / 2 + 4;
+    const slotY = visualHudTop + (panelH - slotSize) / 2;
     const cy = slotY + slotSize / 2;
 
     this.bottomGfx.clear();
@@ -246,7 +242,7 @@ export class GameHudRenderer {
       this.drawSlot(slot, index, x, slotY, slotSize, time);
     });
 
-    this.drawAmmo(player, startX + slotsWidth + gap, cy, ammoWidth);
+    this.drawAmmo(player, startX + slotsWidth + gap, cy, ammoWidth, panelH);
   }
 
   private getSlots(player: PlayerPublicState | undefined): SlotState[] {
@@ -308,16 +304,16 @@ export class GameHudRenderer {
     this.bottomGfx.lineStyle(2, slot.color, slot.disabled ? 0.18 : 0.66);
     this.bottomGfx.strokeRoundedRect(x + 3, y + 3, size - 6, size - 6, Math.max(5, radius - 2));
     this.bottomGfx.fillStyle(slot.color, pulse);
-    this.bottomGfx.fillCircle(cx, cy - 6, size * 0.36);
-    const labelBandH = Math.max(22, size * 0.36);
+    this.bottomGfx.fillCircle(cx, cy - size * 0.08, size * 0.34);
+    const labelBandH = Math.max(22, size * 0.34);
     this.bottomGfx.fillStyle(0x000000, 0.44);
     this.bottomGfx.fillRoundedRect(x + 4, y + size - labelBandH - 3, size - 8, labelBandH, 5);
 
     const image = this.iconImages[index];
     image
       .setVisible(iconExists)
-      .setPosition(cx, cy - 8)
-      .setDisplaySize(size * 0.54, size * 0.54)
+      .setPosition(cx, cy - size * 0.1)
+      .setDisplaySize(size * 0.52, size * 0.52)
       .setAlpha(slot.disabled || slot.cooldownMs > 0 ? 0.42 : 0.92);
     if (slot.iconKey && iconExists) image.setTexture(slot.iconKey);
 
@@ -326,43 +322,49 @@ export class GameHudRenderer {
 
     this.centerTexts[index]
       .setText(centerText)
-      .setFontSize(size < 68 ? 30 : 34)
-      .setPosition(cx, cy - 6)
+      .setFontSize(size < 68 ? 30 : 36)
+      .setPosition(cx, cy - size * 0.08)
       .setColor(slot.disabled ? '#3b5660' : '#dffcff')
       .setAlpha(centerText ? 1 : 0);
     this.keyTexts[index]
       .setText(slot.keyLabel)
-      .setFontSize(size < 68 ? 12 : 14)
-      .setPosition(cx, y + size - labelBandH + 3)
+      .setFontSize(size < 68 ? 12 : 15)
+      .setPosition(cx, y + size - labelBandH + 4)
       .setColor(slot.disabled ? '#52656b' : '#ffd98a');
     this.nameTexts[index]
       .setText(slot.name)
-      .setFontSize(size < 68 ? 8 : 9)
-      .setPosition(cx, y + size - 6)
+      .setFontSize(size < 68 ? 8 : 10)
+      .setPosition(cx, y + size - 7)
       .setColor(slot.disabled ? '#41555d' : '#bdefff');
 
     if (slot.cooldownMs > 0 && slot.cooldownTotalMs > 0) {
       const progress = Phaser.Math.Clamp(slot.cooldownMs / slot.cooldownTotalMs, 0, 1);
       this.cooldownGfx.fillStyle(0x000000, 0.64);
-      this.drawCooldownWedge(cx, cy - 6, size * 0.36, progress);
+      this.drawCooldownWedge(cx, cy - size * 0.08, size * 0.34, progress);
       this.cooldownGfx.lineStyle(3, slot.color, 0.78);
       this.cooldownGfx.beginPath();
-      this.cooldownGfx.arc(cx, cy - 6, size * 0.36, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - progress), false);
+      this.cooldownGfx.arc(cx, cy - size * 0.08, size * 0.34, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - progress), false);
       this.cooldownGfx.strokePath();
     }
   }
 
-  private drawAmmo(player: PlayerPublicState | undefined, x: number, cy: number, width: number): void {
+  private drawAmmo(
+    player: PlayerPublicState | undefined,
+    x: number,
+    cy: number,
+    width: number,
+    visualHudHeight: number,
+  ): void {
     const ammo = player?.weapon.ammo ?? 0;
     const maxAmmo = Math.max(player?.weapon.magazineSize ?? 6, 1);
-    const capsuleGap = Phaser.Math.Clamp(HUD_HEIGHT * 0.055, 4, 7);
-    const capsuleW = Phaser.Math.Clamp(HUD_HEIGHT * 0.075, 6, 9);
-    const capsuleH = Phaser.Math.Clamp(HUD_HEIGHT * 0.22, 16, 24);
+    const capsuleGap = Phaser.Math.Clamp(visualHudHeight * 0.055, 4, 7);
+    const capsuleW = Phaser.Math.Clamp(visualHudHeight * 0.075, 6, 9);
+    const capsuleH = Phaser.Math.Clamp(visualHudHeight * 0.22, 14, 22);
     const totalW = maxAmmo * capsuleW + (maxAmmo - 1) * capsuleGap;
     const startX = x + (width - totalW) / 2;
 
     this.ammoGfx.fillStyle(0x02080d, 0.62);
-    this.ammoGfx.fillRoundedRect(x, cy - HUD_HEIGHT * 0.32, width, HUD_HEIGHT * 0.64, 8);
+    this.ammoGfx.fillRoundedRect(x, cy - visualHudHeight * 0.23, width, visualHudHeight * 0.46, 8);
 
     for (let i = 0; i < maxAmmo; i++) {
       const filled = i < ammo;
@@ -375,8 +377,8 @@ export class GameHudRenderer {
 
     this.ammoText
       .setText(`${ammo}/${maxAmmo}`)
-      .setFontSize(HUD_HEIGHT <= 70 ? 14 : 20)
-      .setPosition(x + width / 2, cy + HUD_HEIGHT * 0.28);
+      .setFontSize(visualHudHeight <= 80 ? 15 : 18)
+      .setPosition(x + width / 2, cy + visualHudHeight * 0.24);
   }
 
   private drawAngledPanel(
