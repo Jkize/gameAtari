@@ -34,6 +34,9 @@ export class WeaponService {
       return this.tryShootLaser(player, activeBullets, now);
     }
 
+    const hasActiveLaserBeam = activeBullets.some(b => b.ownerId === player.id && b.kind === 'laser');
+    if (hasActiveLaserBeam) return [];
+
     const stats = this.getPowerAdjustedStats(player, this.getStats(weapon, now));
     const state = weapon.state;
 

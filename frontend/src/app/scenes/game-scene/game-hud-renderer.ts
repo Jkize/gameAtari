@@ -22,6 +22,7 @@ interface SlotState {
   nameFontSize?: number;
   shielding?: boolean;
   shieldRemainingMs?: number;
+  invertCooldown?: boolean;
 }
 
 const HUD_DEPTH = 1000;
@@ -324,6 +325,7 @@ export class GameHudRenderer {
         cooldownTotalMs: activePower?.type === 'laser' ? Math.max(powerCooldown, 1) : DEFAULT_POWER_DURATION_MS,
         disabled: !activePower,
         counter: activePower?.type === 'laser' ? `${activePower.shotsRemaining ?? 0}` : undefined,
+        invertCooldown: activePower?.type !== 'laser',
       },
     ];
   }
@@ -331,14 +333,18 @@ export class GameHudRenderer {
   private drawSlot(slot: SlotState, index: number, x: number, y: number, size: number, time: number): void {
     const cx = x + size / 2;
     const cy = y + size / 2;
-    const isShieldSlot = slot.shielding !== undefined;
-    const ready = isShieldSlot
-      ? !slot.disabled && !slot.shielding && slot.cooldownMs <= 0
-      : !slot.disabled && slot.cooldownMs <= 0;
     const iconExists = Boolean(slot.iconKey && this.scene.textures.exists(slot.iconKey));
-    const pulse = slot.shielding
-      ? 0.12 + Math.sin(time * 0.007) * 0.06
-      : (ready ? 0.14 + Math.sin(time * 0.005) * 0.05 : 0.03);
+
+    const isActivatable = slot.shielding !== undefined;
+    const { ready, pulse, iconAlpha } = isActivatable
+      ? this.drawActivatableSlotState(slot, x, y, cx, cy, size, time, this.shieldCountdownText)
+      : {
+          ready: !slot.disabled && slot.cooldownMs <= 0,
+          pulse: !slot.disabled && slot.cooldownMs <= 0
+            ? 0.14 + Math.sin(time * 0.005) * 0.05
+            : 0.03,
+          iconAlpha: slot.disabled || slot.cooldownMs > 0 ? 0.42 : 0.92,
+        };
 
     this.triggerReadyPulse(`slot-${index}`, ready, cx, cy, size, slot.color);
 
@@ -360,43 +366,12 @@ export class GameHudRenderer {
     const image = this.iconImages[index];
     const iconScale = slot.iconScale ?? 0.52;
     const iconYOffsetRatio = slot.iconYOffsetRatio ?? 0.1;
-    let iconAlpha: number;
-    if (isShieldSlot) {
-      if (slot.disabled) iconAlpha = 0.3;
-      else if (slot.shielding) iconAlpha = 1.0;
-      else if (slot.cooldownMs > 0) iconAlpha = 0.42;
-      else iconAlpha = 0.5;
-    } else {
-      iconAlpha = slot.disabled || slot.cooldownMs > 0 ? 0.42 : 0.92;
-    }
     image
       .setVisible(iconExists)
       .setPosition(cx, cy - size * iconYOffsetRatio)
       .setDisplaySize(size * iconScale, size * iconScale)
       .setAlpha(iconAlpha);
     if (slot.iconKey && iconExists) image.setTexture(slot.iconKey);
-
-    if (slot.shielding) {
-      const r1Alpha = 0.45 + 0.55 * Math.sin(time * 0.006);
-      const r2Alpha = 0.3 + 0.4 * Math.sin(time * 0.006 + 1.2);
-      this.cooldownGfx.lineStyle(2.5, slot.color, r1Alpha);
-      this.cooldownGfx.strokeCircle(cx, cy, size * 0.38);
-      this.cooldownGfx.lineStyle(1.5, slot.color, r2Alpha);
-      this.cooldownGfx.strokeCircle(cx, cy, size * 0.26);
-    }
-
-    if (isShieldSlot) {
-      if (slot.shielding && (slot.shieldRemainingMs ?? 0) > 0) {
-        const countStr = this.getCooldownText(slot.shieldRemainingMs ?? 0) ?? '';
-        this.shieldCountdownText
-          .setText(countStr)
-          .setFontSize(size < 68 ? 14 : 17)
-          .setPosition(x + size - 5, y + size - 5)
-          .setAlpha(0.9);
-      } else {
-        this.shieldCountdownText.setAlpha(0);
-      }
-    }
 
     const cooldownText = this.getCooldownText(slot.cooldownMs);
     const centerText = slot.counter ?? cooldownText ?? (iconExists ? '' : slot.fallbackIcon);
@@ -421,7 +396,8 @@ export class GameHudRenderer {
       .setAlpha(slot.name && !slot.hideLabelBand ? 1 : 0);
 
     if (slot.cooldownMs > 0 && slot.cooldownTotalMs > 0 && !slot.shielding) {
-      const progress = Phaser.Math.Clamp(slot.cooldownMs / slot.cooldownTotalMs, 0, 1);
+      const rawProgress = Phaser.Math.Clamp(slot.cooldownMs / slot.cooldownTotalMs, 0, 1);
+      const progress = slot.invertCooldown ? 1 - rawProgress : rawProgress;
       this.cooldownGfx.fillStyle(0x000000, 0.64);
       this.drawCooldownWedge(cx, cy, size * 0.34, progress);
       this.cooldownGfx.lineStyle(3, slot.color, 0.78);
@@ -429,6 +405,46 @@ export class GameHudRenderer {
       this.cooldownGfx.arc(cx, cy, size * 0.34, -Math.PI / 2 + Math.PI * 2 * progress, Math.PI * 1.5, false);
       this.cooldownGfx.strokePath();
     }
+  }
+
+  private drawActivatableSlotState(
+    slot: SlotState,
+    x: number, y: number, cx: number, cy: number,
+    size: number, time: number,
+    countdownText: Phaser.GameObjects.Text,
+  ): { ready: boolean; pulse: number; iconAlpha: number } {
+    const active = slot.shielding ?? false;
+    const ready = !slot.disabled && !active && slot.cooldownMs <= 0;
+    const pulse = active
+      ? 0.12 + Math.sin(time * 0.007) * 0.06
+      : (ready ? 0.14 + Math.sin(time * 0.005) * 0.05 : 0.03);
+
+    let iconAlpha: number;
+    if (slot.disabled) iconAlpha = 0.3;
+    else if (active) iconAlpha = 1.0;
+    else if (slot.cooldownMs > 0) iconAlpha = 0.42;
+    else iconAlpha = 0.5;
+
+    if (active) {
+      const r1Alpha = 0.45 + 0.55 * Math.sin(time * 0.006);
+      const r2Alpha = 0.3 + 0.4 * Math.sin(time * 0.006 + 1.2);
+      this.cooldownGfx.lineStyle(2.5, slot.color, r1Alpha);
+      this.cooldownGfx.strokeCircle(cx, cy, size * 0.38);
+      this.cooldownGfx.lineStyle(1.5, slot.color, r2Alpha);
+      this.cooldownGfx.strokeCircle(cx, cy, size * 0.26);
+    }
+
+    if (active && (slot.shieldRemainingMs ?? 0) > 0) {
+      countdownText
+        .setText(this.getCooldownText(slot.shieldRemainingMs ?? 0) ?? '')
+        .setFontSize(size < 68 ? 14 : 17)
+        .setPosition(x + size - 5, y + size - 5)
+        .setAlpha(0.9);
+    } else {
+      countdownText.setAlpha(0);
+    }
+
+    return { ready, pulse, iconAlpha };
   }
 
   private drawAmmo(
