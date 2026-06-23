@@ -4,4 +4,5 @@ export interface PlayerInput {
   aimAngle: number;
   shoot: boolean;
   dash: boolean;
+  reload: boolean;
 }

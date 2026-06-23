@@ -10,6 +10,7 @@ const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
 const DASH_DURATION = 300; // ms
 const DASH_COOLDOWN = 5000; // ms
+export const DESTROYED_BODY_TTL_MS = 10000;
 const PLAYER_RADIUS  = 28;
 const PLAYER_HP      = 100;
 export const PLAYER_COLORS = [
@@ -77,13 +78,14 @@ export class GameService {
       bodyAngle: -Math.PI / 2,
       aimAngle: 0,
       color: PLAYER_COLORS[colorIndex],
-      input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false },
+      input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false, reload: false },
       weapon: this.weaponService.createDefaultWeapon(),
       activePowerUp: undefined,
       lastDashAt: -DASH_COOLDOWN,
       dashUntil: 0,
       dashCooldown: DASH_COOLDOWN,
       alive: true,
+      destroyedAt: undefined,
     };
 
     this.players.set(socketId, player);
@@ -118,10 +120,16 @@ export class GameService {
     player.input.aimAngle = isFinite(Number(raw.aimAngle))  ? Number(raw.aimAngle) : player.aimAngle;
     player.input.shoot    = raw.shoot === true;
     player.input.dash     = raw.dash === true;
+    player.input.reload   = raw.reload === true;
 
+    const now = Date.now();
     if (player.input.dash) {
-      this.tryDash(player, Date.now());
+      this.tryDash(player, now);
       player.input.dash = false;
+    }
+    if (player.input.reload) {
+      this.weaponService.tryManualReload(player, now);
+      player.input.reload = false;
     }
   }
 
@@ -159,7 +167,13 @@ export class GameService {
   damagePlayer(player: Player, amount: number): void {
     if (!player.alive) return;
     player.hp = Math.max(0, player.hp - amount);
-    if (player.hp === 0) player.alive = false;
+    if (player.hp === 0) {
+      player.alive = false;
+      player.destroyedAt = Date.now();
+      player.input.shoot = false;
+      player.input.dash = false;
+      player.input.reload = false;
+    }
   }
 
   reset(): void {

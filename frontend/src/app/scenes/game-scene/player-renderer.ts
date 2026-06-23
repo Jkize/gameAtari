@@ -89,7 +89,7 @@ export class PlayerRenderer {
       const hiddenByBush = this.isPlayerInBush(p, map);
       const revealAlpha = hiddenByBush ? this.getHitRevealAlpha(p.id, time) : undefined;
       const isRevealed = revealAlpha !== undefined;
-      this.drawTank(p, map, isLocal, time);
+      this.drawTank(p, isLocal, time, revealAlpha);
       if (!hiddenByBush || isRevealed) {
         this.drawHpBar(p);
       }
@@ -132,7 +132,7 @@ export class PlayerRenderer {
     });
   }
 
-  private drawTank(p: PlayerPublicState, map: GameMap, isLocal: boolean, time: number): void {
+  private drawTank(p: PlayerPublicState, isLocal: boolean, time: number, revealAlpha: number | undefined): void {
     const { x, y, radius: r, bodyAngle, aimAngle: a, color } = p;
     const textureKeys = ensureTankSvgTextures(this.scene, color);
     if (!textureKeys) return;
@@ -157,7 +157,6 @@ export class PlayerRenderer {
     const bodyScale = (r * 2.7) / sprites.body.width;
     const turretScale = (r * TANK_TURRET_SCALE) / sprites.turret.width;
     const hpFrac = Phaser.Math.Clamp(p.hp / (p.maxHp || 1), 0, 1);
-    const revealAlpha = this.isPlayerInBush(p, map) ? this.getHitRevealAlpha(p.id, time) : undefined;
     const bodyDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH : 5;
     const turretDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.2 : 7;
     const weaponDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.4 : 8;
@@ -173,7 +172,9 @@ export class PlayerRenderer {
         : textureKeys.turret;
 
     if (!p.alive) {
-      this.layers.mainGfx.fillStyle(0x000000, 0.42);
+      const destroyedAlpha = Phaser.Math.Clamp(p.destroyedBodyAlpha ?? 1, 0, 1);
+
+      this.layers.mainGfx.fillStyle(0x000000, 0.42 * destroyedAlpha);
       this.layers.mainGfx.fillEllipse(x + 4, y + 6, r * 2.35, r * 1.9);
 
       sprites.body
@@ -183,7 +184,7 @@ export class PlayerRenderer {
         .setDepth(bodyDepth)
         .setScale(bodyScale)
         .setRotation(bodyAngle + TANK_BODY_ROTATION_OFFSET)
-        .setAlpha((revealAlpha ?? 1) * 0.78)
+        .setAlpha((revealAlpha ?? 1) * 0.78 * destroyedAlpha)
         .setTint(0x777777);
       sprites.turret
         .setVisible(true)
@@ -192,7 +193,7 @@ export class PlayerRenderer {
         .setDepth(turretDepth)
         .setScale(turretScale)
         .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
-        .setAlpha((revealAlpha ?? 1) * 0.72)
+        .setAlpha((revealAlpha ?? 1) * 0.72 * destroyedAlpha)
         .setTint(0x777777);
       sprites.weapon?.setVisible(false);
 

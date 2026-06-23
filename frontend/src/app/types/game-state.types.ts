@@ -56,6 +56,7 @@ export interface PlayerPublicState {
   activePowerUp?: ActivePowerUpPublicState;
   dashing: boolean;
   alive: boolean;
+  destroyedBodyAlpha?: number;
 }
 
 export interface ActivePowerUpPublicState {

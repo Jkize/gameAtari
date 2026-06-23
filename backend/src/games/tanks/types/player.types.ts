@@ -7,6 +7,7 @@ export interface PlayerInput {
   aimAngle: number;
   shoot: boolean;
   dash: boolean;
+  reload: boolean;
 }
 
 export interface Player {
@@ -27,6 +28,7 @@ export interface Player {
   dashUntil: number;
   dashCooldown: number;
   alive: boolean;
+  destroyedAt?: number;
 }
 
 export interface PlayerPublicState {
@@ -44,4 +46,5 @@ export interface PlayerPublicState {
   activePowerUp?: ActivePowerUpPublicState;
   dashing: boolean;
   alive: boolean;
+  destroyedBodyAlpha?: number;
 }

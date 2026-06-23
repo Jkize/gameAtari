@@ -87,9 +87,12 @@ export class StateChangeTracker {
     this.prevPlayerIds.forEach(id => {
       if (!curPlayers.has(id)) {
         const pos = this.playerLastPos.get(id);
-        if (pos) this.effects.spawnExplosion(pos.x, pos.y, true);
+        const lastHp = this.playerLastHp.get(id);
+        if (pos && (lastHp === undefined || lastHp > 0)) this.effects.spawnExplosion(pos.x, pos.y, true);
         this.playerLastHp.delete(id);
         this.playerLastPos.delete(id);
+        this.playerLastReloadMs.delete(id);
+        this.playerLastDashing.delete(id);
         this.playerRenderer.remove(id);
       }
     });
@@ -144,6 +147,9 @@ export class StateChangeTracker {
         if (p.id === myPlayerId) {
           this.scene.cameras.main.shake(220, 0.009);
         }
+      }
+      if (prev !== undefined && prev > 0 && p.hp <= 0) {
+        this.effects.spawnExplosion(p.x, p.y, true);
       }
       if (localPlayer && p.dashing && !this.playerLastDashing.get(p.id)) {
         this.audioManager.playDash(p, localPlayer, p.id === myPlayerId);

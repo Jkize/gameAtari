@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Server } from 'socket.io';
-import { GameService } from './game.service';
+import { DESTROYED_BODY_TTL_MS, GameService } from './game.service';
 import { MapService } from './map.service';
 import { CollisionService } from './collision.service';
 import { WeaponService } from './weapons/weapon.service';
@@ -70,22 +70,25 @@ export class GameLoopService implements OnModuleDestroy {
     const { map, players, bullets, status, impactEvents } = this.gameService;
     const now = Date.now();
 
-    const publicPlayers: PlayerPublicState[] = [...players.values()].map(p => ({
-      id: p.id,
-      x: p.x,
-      y: p.y,
-      radius: p.radius,
-      hp: p.hp,
-      maxHp: p.maxHp,
-      bodyAngle: p.bodyAngle,
-      aimAngle: p.aimAngle,
-      color: p.color,
-      dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
-      weapon: this.weaponService.getPublicState(p, now),
-      activePowerUp: this.buildActivePowerUpState(p.activePowerUp, now),
-      dashing: now < p.dashUntil,
-      alive: p.alive,
-    }));
+    const publicPlayers: PlayerPublicState[] = [...players.values()]
+      .filter(p => p.alive || this.isDestroyedBodyVisible(p.destroyedAt, now))
+      .map(p => ({
+        id: p.id,
+        x: p.x,
+        y: p.y,
+        radius: p.radius,
+        hp: p.hp,
+        maxHp: p.maxHp,
+        bodyAngle: p.bodyAngle,
+        aimAngle: p.aimAngle,
+        color: p.color,
+        dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
+        weapon: this.weaponService.getPublicState(p, now),
+        activePowerUp: this.buildActivePowerUpState(p.activePowerUp, now),
+        dashing: now < p.dashUntil,
+        alive: p.alive,
+        destroyedBodyAlpha: p.alive ? undefined : this.getDestroyedBodyAlpha(p.destroyedAt, now),
+      }));
 
     const publicBullets: BulletPublicState[] = bullets.map(b => ({
       id: b.id,
@@ -122,10 +125,17 @@ export class GameLoopService implements OnModuleDestroy {
     const { map } = this.gameService;
     if (!map) return;
 
-    this.processPlayers(deltaTime, now);
-    this.processBullets(deltaTime);
-    this.checkWinCondition();
+    if (this.gameService.status === 'playing') {
+      this.processPlayers(deltaTime, now);
+      this.processBullets(deltaTime);
+      this.checkWinCondition();
+    }
+
     this.broadcastState(now);
+
+    if (this.gameService.status === 'finished' && !this.hasVisibleDestroyedBodies(now)) {
+      this.stop();
+    }
   }
 
   private processPlayers(deltaTime: number, now: number): void {
@@ -257,8 +267,21 @@ export class GameLoopService implements OnModuleDestroy {
 
     if (players.size > 1 && alive.length <= 1) {
       this.gameService.status = 'finished';
-      this.stop();
     }
+  }
+
+  private isDestroyedBodyVisible(destroyedAt: number | undefined, now: number): boolean {
+    return destroyedAt !== undefined && now - destroyedAt < DESTROYED_BODY_TTL_MS;
+  }
+
+  private hasVisibleDestroyedBodies(now: number): boolean {
+    return [...this.gameService.players.values()].some(p => this.isDestroyedBodyVisible(p.destroyedAt, now));
+  }
+
+  private getDestroyedBodyAlpha(destroyedAt: number | undefined, now: number): number {
+    if (destroyedAt === undefined) return 0;
+    const remainingMs = Math.max(0, DESTROYED_BODY_TTL_MS - (now - destroyedAt));
+    return remainingMs / DESTROYED_BODY_TTL_MS;
   }
 
   private broadcastState(now: number): void {

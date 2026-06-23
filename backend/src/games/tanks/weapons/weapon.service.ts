@@ -270,6 +270,15 @@ export class WeaponService {
     return stats;
   }
 
+  tryManualReload(player: Player, now: number): void {
+    if (player.activePowerUp?.type === 'laser') return;
+    const weapon = player.weapon;
+    const stats = this.getPowerAdjustedStats(player, this.getStats(weapon, now));
+    if (weapon.state.reloadsAt > now) return;
+    if (weapon.state.ammo >= stats.magazineSize) return;
+    this.startReload(weapon, stats, now);
+  }
+
   private finishReloadIfReady(weapon: PlayerWeapon, stats: WeaponStats, now: number): void {
     if (weapon.state.reloadsAt === 0 || weapon.state.reloadsAt > now) return;
 
