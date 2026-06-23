@@ -7,6 +7,8 @@ const HUD_ICON_SVG_TEXTURE_SIZE = { width: 96, height: 96 } as const;
 // Matches hud-bottom-panel.svg and the final HUD display rect ratio:
 // 1280 x (50 * 100 / 70) => 17.92:1.
 const HUD_BOTTOM_PANEL_TEXTURE_SIZE = { width: 1792, height: 100 } as const;
+const HUD_HP_PANEL_TEXTURE_SIZE     = { width: 300,  height: 80  } as const;
+const HUD_PLAYERS_PANEL_TEXTURE_SIZE = { width: 220,  height: 60  } as const;
 
 const SOUND_ASSETS = [
   ['weapon-standard-fire', 'assets/sounds/weapon_standard_fire.ogg'],
@@ -73,7 +75,9 @@ export class BootScene extends Phaser.Scene {
     this.load.svg('hud-dash', 'assets/power/dash.svg', HUD_ICON_SVG_TEXTURE_SIZE);
     this.load.svg('hud-shot', 'assets/power/shot.svg', HUD_ICON_SVG_TEXTURE_SIZE);
     this.load.svg('hud-shield', 'assets/power/shield.svg', HUD_ICON_SVG_TEXTURE_SIZE);
-    this.load.svg('hud-bottom-panel', 'assets/hud/hud-bottom-panel.svg', HUD_BOTTOM_PANEL_TEXTURE_SIZE);
+    this.load.svg('hud-bottom-panel',  'assets/hud/hud-bottom-panel.svg',  HUD_BOTTOM_PANEL_TEXTURE_SIZE);
+    this.load.svg('hud-hp-panel',      'assets/hud/hud-hp-panel.svg',      HUD_HP_PANEL_TEXTURE_SIZE);
+    this.load.svg('hud-players-panel', 'assets/hud/hud-players-panel.svg', HUD_PLAYERS_PANEL_TEXTURE_SIZE);
 
     SOUND_ASSETS.forEach(([key, path]) => {
       this.load.audio(key, path);

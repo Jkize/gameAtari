@@ -1,0 +1,152 @@
+<svg
+  class="tank-hud"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 300 80"
+  width="300"
+  height="80"
+>
+  <!--
+    HP corner panel — top-left.
+    ViewBox 300 × 80. Sits at screen (0, 0) with no margin.
+    Pentagon: M0 0 L256 0 L296 40 L256 80 L0 80 Z
+    - Left (x=0) and top (y=0) edges are the screen corner.
+    - Angled right spike: shoulder at x=256, tip at (296, 40).
+
+    Renderer contract:
+    - Place at (0, 0) origin (0, 0), displaySize (300, 80).
+    - HP label text at screen (12, 14).
+    - HP bar rect at screen (12, 46) width 232 height 12.
+    Same CSS variables and design language as hud-bottom-panel.svg.
+  -->
+
+  <defs>
+    <style>
+      .tank-hud {
+        --hud-cyan: #00eaff;
+        --hud-cyan-strong: #00fff0;
+        --hud-cyan-dark: #0a4d5f;
+
+        --hud-bg-top: #06131b;
+        --hud-bg-mid: #02080d;
+        --hud-bg-bottom: #000408;
+
+        --hud-grid-color: #0c2a37;
+        --hud-shadow: #000000;
+
+        --hud-grid-opacity: 0.32;
+        --hud-line-opacity: 0.9;
+      }
+
+      .hud-neon-line {
+        fill: none;
+        stroke: var(--hud-cyan);
+        stroke-width: 2;
+        opacity: var(--hud-line-opacity);
+        filter: url(#cyanGlow);
+      }
+
+      .hud-inner-line {
+        fill: none;
+        stroke: var(--hud-cyan-dark);
+        stroke-width: 1;
+        opacity: 0.9;
+      }
+
+      .hud-grid {
+        fill: url(#techGrid);
+        opacity: var(--hud-grid-opacity);
+      }
+
+      .hud-shadow-fill {
+        fill: var(--hud-shadow);
+        opacity: 0.2;
+      }
+    </style>
+
+    <!-- Dark vertical gradient — same as bottom panel. -->
+    <linearGradient id="panelBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"    stop-color="var(--hud-bg-top)"    stop-opacity="0.96"/>
+      <stop offset="0.55" stop-color="var(--hud-bg-mid)"    stop-opacity="0.98"/>
+      <stop offset="1"    stop-color="var(--hud-bg-bottom)" stop-opacity="1"/>
+    </linearGradient>
+
+    <!-- Fading cyan strip for horizontal decorative lines. -->
+    <linearGradient id="cyanLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="var(--hud-cyan)"        stop-opacity="0"/>
+      <stop offset="0.18" stop-color="var(--hud-cyan)"        stop-opacity="0.85"/>
+      <stop offset="0.5"  stop-color="var(--hud-cyan-strong)" stop-opacity="1"/>
+      <stop offset="0.82" stop-color="var(--hud-cyan)"        stop-opacity="0.85"/>
+      <stop offset="1"    stop-color="var(--hud-cyan)"        stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Glow for the top neon outline. -->
+    <filter id="cyanGlow" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Drop shadow falls bottom-right since panel is at the top-left corner. -->
+    <filter id="softShadow" x="-5%" y="-5%" width="130%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="4" flood-color="var(--hud-shadow)" flood-opacity="0.8"/>
+    </filter>
+
+    <!-- Same low-opacity grid as the bottom panel. -->
+    <pattern id="techGrid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="var(--hud-grid-color)" stroke-width="0.8" opacity="0.28"/>
+    </pattern>
+  </defs>
+
+  <!-- Main panel base with drop shadow. -->
+  <path
+    filter="url(#softShadow)"
+    d="M0 0 L256 0 L296 40 L256 80 L0 80 Z"
+    fill="url(#panelBg)"
+  />
+
+  <!-- Tech grid overlay clipped to the same pentagon. -->
+  <path
+    class="hud-grid"
+    d="M0 0 L256 0 L296 40 L256 80 L0 80 Z"
+  />
+
+  <!-- Primary cyan neon outline. -->
+  <path
+    class="hud-neon-line"
+    d="M0 0 L256 0 L296 40 L256 80 L0 80 Z"
+  />
+
+  <!-- Secondary inner dark line, inset ~6 units. -->
+  <path
+    class="hud-inner-line"
+    d="M6 6 L254 6 L292 40 L254 74 L6 74 Z"
+  />
+
+  <!-- Subtle bottom accent — mirrors the bottom panel's lower edge kink. -->
+  <path
+    d="M0 78 L222 78 L242 80"
+    fill="none"
+    stroke="var(--hud-cyan)"
+    stroke-width="1"
+    opacity="0.28"
+  />
+
+  <!-- Bevel highlight strokes along the angled spike edges. -->
+  <path d="M256 0 L296 40"  stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
+  <path d="M296 40 L256 80" stroke="var(--hud-cyan)" stroke-width="1.2" opacity="0.65"/>
+
+  <!-- Decorative horizontal scan-line near the bottom of the panel. -->
+  <rect x="8" y="66" width="212" height="1.5" fill="url(#cyanLine)" opacity="0.40"/>
+
+  <!-- Dark vignette on the right bevel for depth. -->
+  <path class="hud-shadow-fill" d="M256 0 L296 40 L256 80 L262 74 L288 40 L262 6 Z"/>
+
+  <!-- Small tech dots at spike shoulder junctions. -->
+  <g opacity="0.55">
+    <circle cx="256" cy="4"  r="2"   fill="var(--hud-cyan)"/>
+    <circle cx="256" cy="76" r="2"   fill="var(--hud-cyan)"/>
+    <circle cx="8"   cy="72" r="1.4" fill="#0bcfe6"/>
+  </g>
+</svg>

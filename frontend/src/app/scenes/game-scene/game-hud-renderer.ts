@@ -56,6 +56,8 @@ export class GameHudRenderer {
   private ammoGfx!: Phaser.GameObjects.Graphics;
   private overlayGfx!: Phaser.GameObjects.Graphics;
   private bottomPanelImage!: Phaser.GameObjects.Image;
+  private hpPanelImage!: Phaser.GameObjects.Image;
+  private playersPanelImage!: Phaser.GameObjects.Image;
 
   private hpText!: Phaser.GameObjects.Text;
   private playersText!: Phaser.GameObjects.Text;
@@ -81,6 +83,16 @@ export class GameHudRenderer {
     this.uiCamera.setScroll(0, 0);
 
     this.frameGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH).setScrollFactor(0));
+    this.hpPanelImage = this.add(this.scene.add.image(0, 0, 'hud-hp-panel')
+      .setOrigin(0, 0)
+      .setDepth(HUD_DEPTH)
+      .setScrollFactor(0)
+      .setAlpha(0.8));
+    this.playersPanelImage = this.add(this.scene.add.image(W, 0, 'hud-players-panel')
+      .setOrigin(1, 0)
+      .setDepth(HUD_DEPTH)
+      .setScrollFactor(0)
+      .setAlpha(0.8));
     this.topGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 1).setScrollFactor(0));
     this.bottomPanelImage = this.add(this.scene.add.image(W / 2, H, 'hud-bottom-panel')
       .setOrigin(0.5, 1)
@@ -91,17 +103,17 @@ export class GameHudRenderer {
     this.ammoGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 4).setScrollFactor(0));
     this.overlayGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 8).setScrollFactor(0));
 
-    this.hpText = this.add(this.scene.add.text(42, 37, 'HP  ---', {
+    this.hpText = this.add(this.scene.add.text(8, 10, 'HP  ---', {
       fontSize: '13px',
       fontFamily: MONO,
       color: '#00ff66',
     }).setDepth(HUD_DEPTH + 3).setScrollFactor(0).setAlpha(0.82));
 
-    this.playersText = this.add(this.scene.add.text(W - 46, 40, 'PLAYERS: -', {
+    this.playersText = this.add(this.scene.add.text(W - 10, 21, 'PLAYERS: -', {
       fontSize: '12px',
       fontFamily: MONO,
       color: '#ffd98a',
-    }).setOrigin(1, 0).setDepth(HUD_DEPTH + 3).setScrollFactor(0).setAlpha(0.66));
+    }).setOrigin(1, 0.5).setDepth(HUD_DEPTH + 3).setScrollFactor(0).setAlpha(0.66));
 
     this.statusText = this.add(this.scene.add.text(W / 2, GAME_VIEW_HEIGHT - 16, '', {
       fontSize: '13px',
@@ -207,21 +219,25 @@ export class GameHudRenderer {
   }
 
   private drawTopPanels(player: PlayerPublicState | undefined, hasPlayerId: boolean, players: number): void {
-    const W = this.scene.scale.width;
     const hp = player?.hp ?? 0;
     const maxHp = player?.maxHp || 100;
     const hpFrac = Phaser.Math.Clamp(hp / maxHp, 0, 1);
 
+    this.hpPanelImage
+      .setVisible(this.scene.textures.exists('hud-hp-panel'))
+      .setDisplaySize(210, 56);
+    this.playersPanelImage
+      .setVisible(this.scene.textures.exists('hud-players-panel'))
+      .setDisplaySize(150, 42);
+
     this.topGfx.clear();
-    this.drawAngledPanel(this.topGfx, 28, 28, 198, 48, 'left', 0.76);
-    this.drawAngledPanel(this.topGfx, W - 174, 31, 140, 34, 'right', 0.52);
 
     this.topGfx.fillStyle(0x00130b, 1);
-    this.topGfx.fillRect(42, 61, 144, 8);
+    this.topGfx.fillRect(8, 32, 162, 8);
     this.topGfx.fillStyle(player ? C.HP_HIGH : 0x183022, 1);
-    this.topGfx.fillRect(42, 61, 144 * hpFrac, 8);
+    this.topGfx.fillRect(8, 32, 162 * hpFrac, 8);
     this.topGfx.lineStyle(1, 0x00ff66, 0.30);
-    this.topGfx.strokeRect(42, 61, 144, 8);
+    this.topGfx.strokeRect(8, 32, 162, 8);
 
     this.hpText
       .setText(player ? `HP  ${hp}` : hasPlayerId ? 'HP  DEAD' : 'HP  ---')
@@ -478,40 +494,6 @@ export class GameHudRenderer {
       .setText(`${ammo}/${maxAmmo}`)
       .setFontSize(visualHudHeight <= 80 ? 15 : 18)
       .setPosition(x + width / 2, cy + visualHudHeight * 0.24);
-  }
-
-  private drawAngledPanel(
-    gfx: Phaser.GameObjects.Graphics,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    side: 'left' | 'right',
-    alpha = 0.94,
-  ): void {
-    const cut = Math.min(24, w * 0.13, h * 0.55);
-    const points = side === 'left'
-      ? [
-        new Phaser.Math.Vector2(x, y),
-        new Phaser.Math.Vector2(x + w - cut, y),
-        new Phaser.Math.Vector2(x + w, y + h / 2),
-        new Phaser.Math.Vector2(x + w - cut, y + h),
-        new Phaser.Math.Vector2(x, y + h),
-      ]
-      : [
-        new Phaser.Math.Vector2(x + cut, y),
-        new Phaser.Math.Vector2(x + w, y),
-        new Phaser.Math.Vector2(x + w, y + h),
-        new Phaser.Math.Vector2(x + cut, y + h),
-        new Phaser.Math.Vector2(x, y + h / 2),
-      ];
-
-    gfx.fillStyle(0x02080d, alpha);
-    gfx.fillPoints(points, true);
-    gfx.lineStyle(2, 0x00dfff, alpha * 0.64);
-    gfx.strokePoints(points, true);
-    gfx.lineStyle(1, 0x7cf8ff, alpha * 0.14);
-    gfx.strokeRect(x + 5, y + 5, w - 10, h - 10);
   }
 
   private drawConsolePanel(gfx: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number): void {
