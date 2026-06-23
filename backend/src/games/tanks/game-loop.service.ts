@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Server } from 'socket.io';
-import { DESTROYED_BODY_TTL_MS, GameService } from './game.service';
+import { DESTROYED_BODY_TTL_MS, GameService, SHIELD_COOLDOWN_MS, SHIELD_HP } from './game.service';
 import { MapService } from './map.service';
 import { CollisionService } from './collision.service';
 import { WeaponService } from './weapons/weapon.service';
@@ -88,6 +88,10 @@ export class GameLoopService implements OnModuleDestroy {
         dashing: now < p.dashUntil,
         alive: p.alive,
         destroyedBodyAlpha: p.alive ? undefined : this.getDestroyedBodyAlpha(p.destroyedAt, now),
+        shielding: p.shieldHp > 0 && now < p.shieldUntil,
+        shieldHp: (p.shieldHp > 0 && now < p.shieldUntil) ? Math.max(0, p.shieldHp) : 0,
+        shieldMaxHp: SHIELD_HP,
+        shieldCooldownMs: Math.max(0, SHIELD_COOLDOWN_MS - (now - p.lastShieldAt)),
       }));
 
     const publicBullets: BulletPublicState[] = bullets.map(b => ({

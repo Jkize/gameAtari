@@ -5,4 +5,5 @@ export interface PlayerInput {
   shoot: boolean;
   dash: boolean;
   reload: boolean;
+  shield: boolean;
 }

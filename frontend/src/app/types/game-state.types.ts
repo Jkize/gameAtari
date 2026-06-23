@@ -57,6 +57,10 @@ export interface PlayerPublicState {
   dashing: boolean;
   alive: boolean;
   destroyedBodyAlpha?: number;
+  shielding: boolean;
+  shieldHp: number;
+  shieldMaxHp: number;
+  shieldCooldownMs: number;
 }
 
 export interface ActivePowerUpPublicState {

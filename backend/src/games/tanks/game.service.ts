@@ -11,6 +11,9 @@ const DASH_MULTIPLIER = 4;
 const DASH_DURATION = 300; // ms
 const DASH_COOLDOWN = 5000; // ms
 export const DESTROYED_BODY_TTL_MS = 10000;
+export const SHIELD_HP = 35;
+export const SHIELD_DURATION_MS = 3500;
+export const SHIELD_COOLDOWN_MS = 8000;
 const PLAYER_RADIUS  = 28;
 const PLAYER_HP      = 100;
 export const PLAYER_COLORS = [
@@ -78,12 +81,15 @@ export class GameService {
       bodyAngle: -Math.PI / 2,
       aimAngle: 0,
       color: PLAYER_COLORS[colorIndex],
-      input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false, reload: false },
+      input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false, reload: false, shield: false },
       weapon: this.weaponService.createDefaultWeapon(),
       activePowerUp: undefined,
       lastDashAt: -DASH_COOLDOWN,
       dashUntil: 0,
       dashCooldown: DASH_COOLDOWN,
+      shieldHp: 0,
+      shieldUntil: 0,
+      lastShieldAt: -SHIELD_COOLDOWN_MS,
       alive: true,
       destroyedAt: undefined,
     };
@@ -121,6 +127,7 @@ export class GameService {
     player.input.shoot    = raw.shoot === true;
     player.input.dash     = raw.dash === true;
     player.input.reload   = raw.reload === true;
+    player.input.shield   = raw.shield === true;
 
     const now = Date.now();
     if (player.input.dash) {
@@ -130,6 +137,10 @@ export class GameService {
     if (player.input.reload) {
       this.weaponService.tryManualReload(player, now);
       player.input.reload = false;
+    }
+    if (player.input.shield) {
+      this.tryShield(player, now);
+      player.input.shield = false;
     }
   }
 
@@ -166,13 +177,24 @@ export class GameService {
 
   damagePlayer(player: Player, amount: number): void {
     if (!player.alive) return;
+
+    const now = Date.now();
+    if (player.shieldHp > 0 && now < player.shieldUntil) {
+      const absorbed = Math.min(player.shieldHp, amount);
+      player.shieldHp -= absorbed;
+      amount -= absorbed;
+    }
+
+    if (amount <= 0) return;
+
     player.hp = Math.max(0, player.hp - amount);
     if (player.hp === 0) {
       player.alive = false;
-      player.destroyedAt = Date.now();
+      player.destroyedAt = now;
       player.input.shoot = false;
       player.input.dash = false;
       player.input.reload = false;
+      player.input.shield = false;
     }
   }
 
@@ -187,6 +209,14 @@ export class GameService {
 
   private clamp(val: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, val));
+  }
+
+  private tryShield(player: Player, now: number): void {
+    if (now < player.shieldUntil) return;
+    if (now - player.lastShieldAt < SHIELD_COOLDOWN_MS) return;
+    player.shieldUntil = now + SHIELD_DURATION_MS;
+    player.lastShieldAt = player.shieldUntil; // cooldown starts when shield ends
+    player.shieldHp = SHIELD_HP;
   }
 
   private tryDash(player: Player, now: number): void {

@@ -72,6 +72,7 @@ export class BootScene extends Phaser.Scene {
     this.load.svg('weapon-power_laser', 'assets/weapon/power_laser.svg', WEAPON_SVG_TEXTURE_SIZE);
     this.load.svg('hud-dash', 'assets/power/dash.svg', HUD_ICON_SVG_TEXTURE_SIZE);
     this.load.svg('hud-shot', 'assets/power/shot.svg', HUD_ICON_SVG_TEXTURE_SIZE);
+    this.load.svg('hud-shield', 'assets/power/shield.svg', HUD_ICON_SVG_TEXTURE_SIZE);
     this.load.svg('hud-bottom-panel', 'assets/hud/hud-bottom-panel.svg', HUD_BOTTOM_PANEL_TEXTURE_SIZE);
 
     SOUND_ASSETS.forEach(([key, path]) => {

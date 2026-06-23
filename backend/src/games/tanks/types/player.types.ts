@@ -8,6 +8,7 @@ export interface PlayerInput {
   shoot: boolean;
   dash: boolean;
   reload: boolean;
+  shield: boolean;
 }
 
 export interface Player {
@@ -27,6 +28,9 @@ export interface Player {
   lastDashAt: number;
   dashUntil: number;
   dashCooldown: number;
+  shieldHp: number;
+  shieldUntil: number;
+  lastShieldAt: number;
   alive: boolean;
   destroyedAt?: number;
 }
@@ -47,4 +51,8 @@ export interface PlayerPublicState {
   dashing: boolean;
   alive: boolean;
   destroyedBodyAlpha?: number;
+  shielding: boolean;
+  shieldHp: number;
+  shieldMaxHp: number;
+  shieldCooldownMs: number;
 }

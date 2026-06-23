@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="shieldClip">
+      <circle cx="256" cy="256" r="219"/>
+    </clipPath>
+
+    <radialGradient id="domeFill" cx="48%" cy="42%" r="62%">
+      <stop offset="0%" stop-color="var(--shield-hot)" stop-opacity="0.12"/>
+      <stop offset="52%" stop-color="var(--shield-color)" stop-opacity="0.08"/>
+      <stop offset="78%" stop-color="var(--shield-color)" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="var(--shield-deep)" stop-opacity="0.05"/>
+    </radialGradient>
+
+    <radialGradient id="rimFill" cx="50%" cy="50%" r="50%">
+      <stop offset="72%" stop-color="var(--shield-color)" stop-opacity="0"/>
+      <stop offset="84%" stop-color="var(--shield-color)" stop-opacity="0.38"/>
+      <stop offset="94%" stop-color="var(--shield-hot)" stop-opacity="0.94"/>
+      <stop offset="100%" stop-color="var(--shield-deep)" stop-opacity="0.28"/>
+    </radialGradient>
+
+    <linearGradient id="domeSweep" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="var(--shield-hot)" stop-opacity="0.34"/>
+      <stop offset="42%" stop-color="var(--shield-color)" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="var(--shield-deep)" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="rimGlow" x="-22%" y="-22%" width="144%" height="144%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="var(--shield-color)" flood-opacity="0.92"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="11" flood-color="var(--shield-color)" flood-opacity="0.42"/>
+    </filter>
+
+    <style>
+      :root {
+        --tank-color: #3ebcff;
+        --shield-color: var(--tank-color);
+        --shield-hot: color-mix(in srgb, var(--shield-color), white 34%);
+        --shield-soft: color-mix(in srgb, var(--shield-color), white 18%);
+        --shield-deep: color-mix(in srgb, var(--shield-color), black 58%);
+      }
+      .rim { fill:none; stroke:var(--shield-hot); stroke-linecap:round; }
+      .hex { fill:var(--shield-color); fill-opacity:.025; stroke:var(--shield-hot); stroke-opacity:.78; stroke-width:4.6; stroke-linejoin:round; }
+      .hex-weak { fill:none; stroke:var(--shield-soft); stroke-opacity:.5; stroke-width:3; stroke-linejoin:round; }
+      .panel-line { fill:none; stroke:var(--shield-hot); stroke-opacity:.62; stroke-width:3.6; stroke-linecap:round; stroke-linejoin:round; }
+      .crackle { fill:none; stroke:var(--shield-hot); stroke-opacity:.58; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; }
+    </style>
+  </defs>
+
+  <circle cx="256" cy="256" r="223" fill="url(#domeFill)"/>
+  <circle cx="256" cy="256" r="223" fill="url(#rimFill)" filter="url(#rimGlow)"/>
+
+  <g clip-path="url(#shieldClip)">
+    <ellipse cx="256" cy="230" rx="196" ry="148" fill="url(#domeSweep)" opacity="0.28"/>
+
+    <g opacity="0.92">
+      <polygon class="hex" points="256,62 314,96 314,164 256,198 198,164 198,96"/>
+      <polygon class="hex" points="151,123 209,157 209,225 151,259 93,225 93,157"/>
+      <polygon class="hex" points="361,123 419,157 419,225 361,259 303,225 303,157"/>
+      <polygon class="hex" points="256,184 314,218 314,286 256,320 198,286 198,218"/>
+      <polygon class="hex" points="151,245 209,279 209,347 151,381 93,347 93,279"/>
+      <polygon class="hex" points="361,245 419,279 419,347 361,381 303,347 303,279"/>
+      <polygon class="hex" points="256,306 314,340 314,408 256,442 198,408 198,340"/>
+    </g>
+
+    <g>
+      <polygon class="hex-weak" points="46,62 104,96 104,164 46,198 -12,164 -12,96"/>
+      <polygon class="hex-weak" points="466,62 524,96 524,164 466,198 408,164 408,96"/>
+      <polygon class="hex-weak" points="46,306 104,340 104,408 46,442 -12,408 -12,340"/>
+      <polygon class="hex-weak" points="466,306 524,340 524,408 466,442 408,408 408,340"/>
+      <polygon class="hex-weak" points="256,-60 314,-26 314,42 256,76 198,42 198,-26"/>
+      <polygon class="hex-weak" points="256,428 314,462 314,530 256,564 198,530 198,462"/>
+    </g>
+
+    <g opacity="0.85">
+      <path class="panel-line" d="M198 164 L314 218"/>
+      <path class="panel-line" d="M314 164 L198 218"/>
+      <path class="panel-line" d="M209 225 L303 279"/>
+      <path class="panel-line" d="M303 225 L209 279"/>
+      <path class="panel-line" d="M198 286 L314 340"/>
+      <path class="panel-line" d="M314 286 L198 340"/>
+      <path class="panel-line" d="M151 259 L256 320 L361 259"/>
+      <path class="panel-line" d="M151 245 L256 184 L361 245"/>
+    </g>
+
+    <path class="crackle" d="M118 189 l22 -12 18 10 23 -15"/>
+    <path class="crackle" d="M314 168 l26 -15 30 16 22 -12"/>
+    <path class="crackle" d="M193 279 l25 -14 20 13 24 -18"/>
+    <path class="crackle" d="M322 314 l20 -13 18 12 34 -18"/>
+    <path class="crackle" d="M205 366 l28 -16 24 12"/>
+  </g>
+
+  <circle cx="256" cy="256" r="205" class="rim" stroke-width="2.4" stroke-opacity="0.2"/>
+  <circle cx="256" cy="256" r="220" class="rim" stroke-width="6.4" stroke-opacity="0.72" filter="url(#rimGlow)"/>
+  <circle cx="256" cy="256" r="230" class="rim" stroke-width="2" stroke-opacity="0.4"/>
+
+  <path d="M91 162 C123 105 183 70 256 70 C330 70 390 106 421 164" class="rim" stroke-width="5.2" stroke-opacity="0.36"/>
+  <path d="M82 331 C118 403 185 442 256 442 C328 442 395 402 430 329" class="rim" stroke-width="4.8" stroke-opacity="0.28"/>
+</svg>

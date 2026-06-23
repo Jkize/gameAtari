@@ -19,11 +19,16 @@ import {
   TANK_TURRET_ROTATION_OFFSET,
 } from '../../rendering/tank-svg-textures';
 import { ensureWeaponOverlayTexture } from '../../rendering/weapon-svg-textures';
+import { ensureShieldSvgTexture } from '../../rendering/shield-svg-textures';
+
+const SHIELDED_TANK_ALPHA = 0.5;
+const SHIELDED_WEAPON_ALPHA = 0.5;
 
 interface TankSprites {
   body: Phaser.GameObjects.Image;
   turret: Phaser.GameObjects.Image;
   weapon?: Phaser.GameObjects.Image;
+  shield?: Phaser.GameObjects.Image;
 }
 
 export class PlayerRenderer {
@@ -45,6 +50,7 @@ export class PlayerRenderer {
       tank.body.destroy();
       tank.turret.destroy();
       tank.weapon?.destroy();
+      tank.shield?.destroy();
     });
     this.playerTankSprites.clear();
 
@@ -65,6 +71,7 @@ export class PlayerRenderer {
       tank.body.destroy();
       tank.turret.destroy();
       tank.weapon?.destroy();
+      tank.shield?.destroy();
       this.playerTankSprites.delete(id);
     }
   }
@@ -90,8 +97,14 @@ export class PlayerRenderer {
       const revealAlpha = hiddenByBush ? this.getHitRevealAlpha(p.id, time) : undefined;
       const isRevealed = revealAlpha !== undefined;
       this.drawTank(p, isLocal, time, revealAlpha);
+      if (p.alive && p.shielding) {
+        this.drawShield(p, time, revealAlpha);
+      } else {
+        this.hideShield(p.id);
+      }
       if (!hiddenByBush || isRevealed) {
         this.drawHpBar(p);
+        if (p.alive && p.shieldHp > 0) this.drawShieldBar(p);
       }
 
       const txt = this.playerNameTexts.get(p.id);
@@ -170,6 +183,8 @@ export class PlayerRenderer {
       : hpFrac <= 0.7
         ? textureKeys.hurtTurret
         : textureKeys.turret;
+    const tankAlpha = (revealAlpha ?? 1) * (p.shielding ? SHIELDED_TANK_ALPHA : 1);
+    const weaponAlpha = (revealAlpha ?? 1) * (p.shielding ? SHIELDED_WEAPON_ALPHA : 1);
 
     if (!p.alive) {
       const destroyedAlpha = Phaser.Math.Clamp(p.destroyedBodyAlpha ?? 1, 0, 1);
@@ -196,6 +211,7 @@ export class PlayerRenderer {
         .setAlpha((revealAlpha ?? 1) * 0.72 * destroyedAlpha)
         .setTint(0x777777);
       sprites.weapon?.setVisible(false);
+      sprites.shield?.setVisible(false);
 
       return;
     }
@@ -225,7 +241,7 @@ export class PlayerRenderer {
       .setPosition(x, y)
       .setDepth(bodyDepth)
       .setScale(bodyScale)
-      .setAlpha(revealAlpha ?? 1)
+      .setAlpha(tankAlpha)
       .clearTint();
     sprites.body.setRotation(
       Phaser.Math.Angle.RotateTo(
@@ -241,7 +257,7 @@ export class PlayerRenderer {
       .setDepth(turretDepth)
       .setScale(turretScale)
       .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
-      .setAlpha(revealAlpha ?? 1)
+      .setAlpha(tankAlpha)
       .clearTint();
 
     const powerType = p.activePowerUp?.type;
@@ -255,7 +271,7 @@ export class PlayerRenderer {
           .setDepth(weaponDepth)
           .setScale(turretScale)
           .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
-          .setAlpha(revealAlpha ?? 1)
+          .setAlpha(weaponAlpha)
           .clearTint();
       } else {
         sprites.weapon?.setVisible(false);
@@ -286,5 +302,57 @@ export class PlayerRenderer {
       this.layers.glowGfx.fillStyle(C.HP_LOW, 0.22);
       this.layers.glowGfx.fillRect(bx - 2, by - 2, bW + 4, bH + 4);
     }
+  }
+
+  private drawShieldBar(p: PlayerPublicState): void {
+    const frac = Phaser.Math.Clamp(p.shieldHp / (p.shieldMaxHp || 1), 0, 1);
+    const r = p.radius;
+    const bW = r * 2.6;
+    const bH = 4;
+    const bx = p.x - bW / 2;
+    const by = p.y - r * 1.5 + 7;
+
+    this.layers.playerUiGfx.fillStyle(0x0a0a0a, 0.85);
+    this.layers.playerUiGfx.fillRect(bx - 1, by - 1, bW + 2, bH + 2);
+    this.layers.playerUiGfx.fillStyle(p.color, 1);
+    this.layers.playerUiGfx.fillRect(bx, by, bW * frac, bH);
+  }
+
+  private hideShield(playerId: string): void {
+    this.playerTankSprites.get(playerId)?.shield?.setVisible(false);
+  }
+
+  private drawShield(p: PlayerPublicState, time: number, revealAlpha: number | undefined): void {
+    const { x, y, radius: r, color } = p;
+    const textureKey = ensureShieldSvgTexture(this.scene, color);
+    if (!textureKey) {
+      this.hideShield(p.id);
+      return;
+    }
+
+    const sprites = this.playerTankSprites.get(p.id);
+    if (!sprites) return;
+
+    const frac = Phaser.Math.Clamp(p.shieldHp / (p.shieldMaxHp || 1), 0, 1);
+    const shieldR = r * 1.65;
+    const pulse = 0.5 + 0.5 * Math.sin(time * 0.006);
+    const alpha = (revealAlpha ?? 1) * (0.62 + 0.28 * pulse) * frac;
+    const depth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.55 : 8.6;
+
+    if (!sprites.shield) {
+      sprites.shield = this.scene.add.image(x, y, textureKey)
+        .setOrigin(0.5)
+        .setBlendMode(Phaser.BlendModes.NORMAL);
+    }
+
+    sprites.shield
+      .setVisible(true)
+      .setTexture(textureKey)
+      .setPosition(x, y)
+      .setDepth(depth)
+      .setDisplaySize(shieldR * 2.22, shieldR * 2.22)
+      .setRotation(time * 0.00055)
+      .setAlpha(Math.min(0.96, alpha + 0.18))
+      .clearTint();
   }
 }

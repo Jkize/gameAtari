@@ -24,9 +24,11 @@ interface SlotState {
 
 const HUD_DEPTH = 1000;
 const DASH_COOLDOWN_MS = 5000;
+const SHIELD_COOLDOWN_MS = 8000;
 const FIRE_COOLDOWN_MS = 300;
 const RELOAD_COOLDOWN_MS = 1400;
 const DEFAULT_POWER_DURATION_MS = 15000;
+const SLOT_COUNT = 4;
 const HUD_SVG_TOTAL_UNITS = 100;
 const HUD_SVG_BOTTOM_RECT_UNITS = 70;
 const HUD_SLOT_HEIGHT_RATIO = 0.80;
@@ -129,7 +131,7 @@ export class GameHudRenderer {
       color: '#ffd98a',
     }).setOrigin(0.5).setDepth(HUD_DEPTH + 6).setScrollFactor(0));
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < SLOT_COUNT; i++) {
       this.iconImages.push(this.add(this.scene.add.image(0, 0, '__DEFAULT')
         .setVisible(false)
         .setDepth(HUD_DEPTH + 3)
@@ -225,7 +227,7 @@ export class GameHudRenderer {
     const visualHudTop = GAME_VIEW_HEIGHT + HUD_HEIGHT - panelH;
     const slotSize = panelH * HUD_SLOT_HEIGHT_RATIO;
     const gap = Phaser.Math.Clamp(panelH * HUD_SLOT_HORIZONTAL_GAP_RATIO, 14, 24);
-    const slotsWidth = slotSize * 3 + gap * 2;
+    const slotsWidth = slotSize * SLOT_COUNT + gap * (SLOT_COUNT - 1);
     const ammoWidth = Phaser.Math.Clamp(panelH * 1.05, 76, 112);
     const contentWidth = slotsWidth + gap + ammoWidth;
     const startX = panelX + (panelW - contentWidth) / 2;
@@ -271,6 +273,20 @@ export class GameHudRenderer {
         cooldownMs: player?.dashCooldownMs ?? 0,
         cooldownTotalMs: DASH_COOLDOWN_MS,
         disabled: !player,
+      },
+      {
+        keyLabel: '',
+        name: '',
+        iconKey: 'hud-shield',
+        iconScale: 0.96,
+        iconYOffsetRatio: 0,
+        hideLabelBand: true,
+        fallbackIcon: '',
+        color: 0x00ff88,
+        cooldownMs: player?.shielding ? 0 : (player?.shieldCooldownMs ?? 0),
+        cooldownTotalMs: SHIELD_COOLDOWN_MS,
+        disabled: !player,
+        counter: player?.shielding ? `${player.shieldHp}` : undefined,
       },
       {
         keyLabel: '',

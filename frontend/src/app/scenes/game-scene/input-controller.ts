@@ -18,11 +18,13 @@ export class InputController {
     SHIFT: Phaser.Input.Keyboard.Key;
     ENTER: Phaser.Input.Keyboard.Key;
     R: Phaser.Input.Keyboard.Key;
+    Q: Phaser.Input.Keyboard.Key;
   };
   private lastInputSend = 0;
   private readonly inputHz = 1000 / 60;
   private pendingDash = false;
   private pendingReload = false;
+  private pendingShield = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -39,6 +41,7 @@ export class InputController {
       SHIFT: kb.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
       ENTER: kb.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER),
       R: kb.addKey(Phaser.Input.Keyboard.KeyCodes.R),
+      Q: kb.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
     };
 
     kb.on('keydown-ENTER', () => {
@@ -57,6 +60,10 @@ export class InputController {
 
     kb.on('keydown-R', () => {
       this.pendingReload = true;
+    });
+
+    kb.on('keydown-Q', () => {
+      this.pendingShield = true;
     });
   }
 
@@ -90,9 +97,11 @@ export class InputController {
       shoot: this.scene.input.activePointer.isDown,
       dash: this.pendingDash,
       reload: this.pendingReload,
+      shield: this.pendingShield,
     };
     this.pendingDash = false;
     this.pendingReload = false;
+    this.pendingShield = false;
     this.state.getSocket().emit('playerInput', input);
   }
 }
