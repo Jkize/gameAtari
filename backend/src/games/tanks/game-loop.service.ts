@@ -92,6 +92,7 @@ export class GameLoopService implements OnModuleDestroy {
         shieldHp: (p.shieldHp > 0 && now < p.shieldUntil) ? Math.max(0, p.shieldHp) : 0,
         shieldMaxHp: SHIELD_HP,
         shieldCooldownMs: Math.max(0, SHIELD_COOLDOWN_MS - (now - p.lastShieldAt)),
+        shieldRemainingMs: (p.shieldHp > 0 && now < p.shieldUntil) ? Math.max(0, p.shieldUntil - now) : 0,
       }));
 
     const publicBullets: BulletPublicState[] = bullets.map(b => ({

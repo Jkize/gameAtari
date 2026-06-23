@@ -20,6 +20,8 @@ interface SlotState {
   counter?: string;
   nameColor?: string;
   nameFontSize?: number;
+  shielding?: boolean;
+  shieldRemainingMs?: number;
 }
 
 const HUD_DEPTH = 1000;
@@ -66,6 +68,7 @@ export class GameHudRenderer {
   private readonly keyTexts: Phaser.GameObjects.Text[] = [];
   private readonly nameTexts: Phaser.GameObjects.Text[] = [];
   private readonly centerTexts: Phaser.GameObjects.Text[] = [];
+  private shieldCountdownText!: Phaser.GameObjects.Text;
 
   constructor(private readonly scene: Phaser.Scene) {}
 
@@ -130,6 +133,12 @@ export class GameHudRenderer {
       fontFamily: MONO,
       color: '#ffd98a',
     }).setOrigin(0.5).setDepth(HUD_DEPTH + 6).setScrollFactor(0));
+
+    this.shieldCountdownText = this.add(this.scene.add.text(0, 0, '', {
+      fontSize: '11px',
+      fontFamily: MONO,
+      color: '#7fffb0',
+    }).setOrigin(1, 1).setDepth(HUD_DEPTH + 7).setScrollFactor(0).setAlpha(0));
 
     for (let i = 0; i < SLOT_COUNT; i++) {
       this.iconImages.push(this.add(this.scene.add.image(0, 0, '__DEFAULT')
@@ -286,7 +295,8 @@ export class GameHudRenderer {
         cooldownMs: player?.shielding ? 0 : (player?.shieldCooldownMs ?? 0),
         cooldownTotalMs: SHIELD_COOLDOWN_MS,
         disabled: !player,
-        counter: player?.shielding ? `${player.shieldHp}` : undefined,
+        shielding: player?.shielding ?? false,
+        shieldRemainingMs: player?.shieldRemainingMs ?? 0,
       },
       {
         keyLabel: '',
@@ -321,9 +331,14 @@ export class GameHudRenderer {
   private drawSlot(slot: SlotState, index: number, x: number, y: number, size: number, time: number): void {
     const cx = x + size / 2;
     const cy = y + size / 2;
-    const ready = !slot.disabled && slot.cooldownMs <= 0;
+    const isShieldSlot = slot.shielding !== undefined;
+    const ready = isShieldSlot
+      ? !slot.disabled && !slot.shielding && slot.cooldownMs <= 0
+      : !slot.disabled && slot.cooldownMs <= 0;
     const iconExists = Boolean(slot.iconKey && this.scene.textures.exists(slot.iconKey));
-    const pulse = ready ? 0.14 + Math.sin(time * 0.005) * 0.05 : 0.03;
+    const pulse = slot.shielding
+      ? 0.12 + Math.sin(time * 0.007) * 0.06
+      : (ready ? 0.14 + Math.sin(time * 0.005) * 0.05 : 0.03);
 
     this.triggerReadyPulse(`slot-${index}`, ready, cx, cy, size, slot.color);
 
@@ -335,7 +350,7 @@ export class GameHudRenderer {
     this.bottomGfx.lineStyle(2, slot.color, slot.disabled ? 0.18 : 0.66);
     this.bottomGfx.strokeRoundedRect(x + 3, y + 3, size - 6, size - 6, Math.max(5, radius - 2));
     this.bottomGfx.fillStyle(slot.color, pulse);
-    this.bottomGfx.fillCircle(cx, cy - size * 0.08, size * 0.34);
+    this.bottomGfx.fillCircle(cx, cy, size * 0.34);
     const labelBandH = Math.max(22, size * 0.34);
     if (!slot.hideLabelBand) {
       this.bottomGfx.fillStyle(0x000000, 0.44);
@@ -345,12 +360,43 @@ export class GameHudRenderer {
     const image = this.iconImages[index];
     const iconScale = slot.iconScale ?? 0.52;
     const iconYOffsetRatio = slot.iconYOffsetRatio ?? 0.1;
+    let iconAlpha: number;
+    if (isShieldSlot) {
+      if (slot.disabled) iconAlpha = 0.3;
+      else if (slot.shielding) iconAlpha = 1.0;
+      else if (slot.cooldownMs > 0) iconAlpha = 0.42;
+      else iconAlpha = 0.5;
+    } else {
+      iconAlpha = slot.disabled || slot.cooldownMs > 0 ? 0.42 : 0.92;
+    }
     image
       .setVisible(iconExists)
       .setPosition(cx, cy - size * iconYOffsetRatio)
       .setDisplaySize(size * iconScale, size * iconScale)
-      .setAlpha(slot.disabled || slot.cooldownMs > 0 ? 0.42 : 0.92);
+      .setAlpha(iconAlpha);
     if (slot.iconKey && iconExists) image.setTexture(slot.iconKey);
+
+    if (slot.shielding) {
+      const r1Alpha = 0.45 + 0.55 * Math.sin(time * 0.006);
+      const r2Alpha = 0.3 + 0.4 * Math.sin(time * 0.006 + 1.2);
+      this.cooldownGfx.lineStyle(2.5, slot.color, r1Alpha);
+      this.cooldownGfx.strokeCircle(cx, cy, size * 0.38);
+      this.cooldownGfx.lineStyle(1.5, slot.color, r2Alpha);
+      this.cooldownGfx.strokeCircle(cx, cy, size * 0.26);
+    }
+
+    if (isShieldSlot) {
+      if (slot.shielding && (slot.shieldRemainingMs ?? 0) > 0) {
+        const countStr = this.getCooldownText(slot.shieldRemainingMs ?? 0) ?? '';
+        this.shieldCountdownText
+          .setText(countStr)
+          .setFontSize(size < 68 ? 14 : 17)
+          .setPosition(x + size - 5, y + size - 5)
+          .setAlpha(0.9);
+      } else {
+        this.shieldCountdownText.setAlpha(0);
+      }
+    }
 
     const cooldownText = this.getCooldownText(slot.cooldownMs);
     const centerText = slot.counter ?? cooldownText ?? (iconExists ? '' : slot.fallbackIcon);
@@ -358,7 +404,7 @@ export class GameHudRenderer {
     this.centerTexts[index]
       .setText(centerText)
       .setFontSize(size < 68 ? 30 : 36)
-      .setPosition(cx, cy - size * 0.08)
+      .setPosition(cx, cy)
       .setColor(slot.disabled ? '#3b5660' : '#dffcff')
       .setAlpha(centerText ? 1 : 0);
     this.keyTexts[index]
@@ -374,13 +420,13 @@ export class GameHudRenderer {
       .setColor(slot.disabled ? '#41555d' : (slot.nameColor ?? '#bdefff'))
       .setAlpha(slot.name && !slot.hideLabelBand ? 1 : 0);
 
-    if (slot.cooldownMs > 0 && slot.cooldownTotalMs > 0) {
+    if (slot.cooldownMs > 0 && slot.cooldownTotalMs > 0 && !slot.shielding) {
       const progress = Phaser.Math.Clamp(slot.cooldownMs / slot.cooldownTotalMs, 0, 1);
       this.cooldownGfx.fillStyle(0x000000, 0.64);
-      this.drawCooldownWedge(cx, cy - size * 0.08, size * 0.34, progress);
+      this.drawCooldownWedge(cx, cy, size * 0.34, progress);
       this.cooldownGfx.lineStyle(3, slot.color, 0.78);
       this.cooldownGfx.beginPath();
-      this.cooldownGfx.arc(cx, cy - size * 0.08, size * 0.34, -Math.PI / 2 + Math.PI * 2 * progress, Math.PI * 1.5, false);
+      this.cooldownGfx.arc(cx, cy, size * 0.34, -Math.PI / 2 + Math.PI * 2 * progress, Math.PI * 1.5, false);
       this.cooldownGfx.strokePath();
     }
   }

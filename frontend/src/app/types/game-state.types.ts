@@ -61,6 +61,7 @@ export interface PlayerPublicState {
   shieldHp: number;
   shieldMaxHp: number;
   shieldCooldownMs: number;
+  shieldRemainingMs: number;
 }
 
 export interface ActivePowerUpPublicState {

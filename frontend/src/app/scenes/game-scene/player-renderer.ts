@@ -21,8 +21,8 @@ import {
 import { ensureWeaponOverlayTexture } from '../../rendering/weapon-svg-textures';
 import { ensureShieldSvgTexture } from '../../rendering/shield-svg-textures';
 
-const SHIELDED_TANK_ALPHA = 0.5;
-const SHIELDED_WEAPON_ALPHA = 0.5;
+const SHIELDED_TANK_ALPHA = 0.9;
+const SHIELDED_WEAPON_ALPHA = 0.9;
 
 interface TankSprites {
   body: Phaser.GameObjects.Image;
