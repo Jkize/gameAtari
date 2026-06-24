@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameMap, PlayerPublicState } from '../../types/game-state.types';
 import {
   BODY_TURN_STEP,
+  BUSH_COVER_DEPTH,
   C,
   colorToCss,
   HIT_REVEAL_BLINK_MS,
@@ -23,6 +24,7 @@ import { ensureShieldSvgTexture } from '../../rendering/shield-svg-textures';
 
 const SHIELDED_TANK_ALPHA = 0.9;
 const SHIELDED_WEAPON_ALPHA = 0.9;
+const SHIELD_DEPTH = BUSH_COVER_DEPTH - 0.1;
 
 interface TankSprites {
   body: Phaser.GameObjects.Image;
@@ -337,7 +339,7 @@ export class PlayerRenderer {
     const shieldR = r * 1.65;
     const pulse = 0.5 + 0.5 * Math.sin(time * 0.006);
     const alpha = (revealAlpha ?? 1) * (0.62 + 0.28 * pulse) * frac;
-    const depth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.55 : 8.6;
+    const depth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.55 : SHIELD_DEPTH;
 
     if (!sprites.shield) {
       sprites.shield = this.scene.add.image(x, y, textureKey)

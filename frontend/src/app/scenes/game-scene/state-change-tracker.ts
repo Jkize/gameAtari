@@ -22,8 +22,12 @@ type NewBulletGroup = {
   y: number;
 };
 
+const SHIELD_EXPIRY_REVEAL_GRACE_MS = 120;
+
 export class StateChangeTracker {
   private playerLastHp: Map<string, number> = new Map();
+  private playerLastShieldHp: Map<string, number> = new Map();
+  private playerLastShieldRemainingMs: Map<string, number> = new Map();
   private playerLastPos: Map<string, { x: number; y: number }> = new Map();
   private playerLastReloadMs: Map<string, number> = new Map();
   private playerLastDashing: Map<string, boolean> = new Map();
@@ -46,6 +50,8 @@ export class StateChangeTracker {
 
   reset(): void {
     this.playerLastHp.clear();
+    this.playerLastShieldHp.clear();
+    this.playerLastShieldRemainingMs.clear();
     this.playerLastPos.clear();
     this.playerLastReloadMs.clear();
     this.playerLastDashing.clear();
@@ -62,6 +68,8 @@ export class StateChangeTracker {
     const pos = this.playerLastPos.get(playerId);
     if (pos) this.effects.spawnExplosion(pos.x, pos.y, true);
     this.playerLastHp.delete(playerId);
+    this.playerLastShieldHp.delete(playerId);
+    this.playerLastShieldRemainingMs.delete(playerId);
     this.playerLastPos.delete(playerId);
     this.playerRenderer.remove(playerId);
   }
@@ -90,6 +98,8 @@ export class StateChangeTracker {
         const lastHp = this.playerLastHp.get(id);
         if (pos && (lastHp === undefined || lastHp > 0)) this.effects.spawnExplosion(pos.x, pos.y, true);
         this.playerLastHp.delete(id);
+        this.playerLastShieldHp.delete(id);
+        this.playerLastShieldRemainingMs.delete(id);
         this.playerLastPos.delete(id);
         this.playerLastReloadMs.delete(id);
         this.playerLastDashing.delete(id);
@@ -141,14 +151,26 @@ export class StateChangeTracker {
 
     state.players.forEach(p => {
       let revealUntil: number | undefined;
-      const prev = this.playerLastHp.get(p.id);
-      if (prev !== undefined && p.hp < prev) {
+      const prevHp = this.playerLastHp.get(p.id);
+      const prevShieldHp = this.playerLastShieldHp.get(p.id);
+      const prevShieldRemainingMs = this.playerLastShieldRemainingMs.get(p.id);
+      const tookHpDamage = prevHp !== undefined && p.hp < prevHp;
+      const shieldExpiredNaturally =
+        p.shieldHp === 0 &&
+        p.shieldRemainingMs === 0 &&
+        prevShieldRemainingMs !== undefined &&
+        prevShieldRemainingMs <= SHIELD_EXPIRY_REVEAL_GRACE_MS;
+      const tookShieldDamage =
+        prevShieldHp !== undefined &&
+        p.shieldHp < prevShieldHp &&
+        !shieldExpiredNaturally;
+      if (tookHpDamage || tookShieldDamage) {
         revealUntil = this.scene.time.now + HIT_REVEAL_MS;
         if (p.id === myPlayerId) {
           this.scene.cameras.main.shake(220, 0.009);
         }
       }
-      if (prev !== undefined && prev > 0 && p.hp <= 0) {
+      if (prevHp !== undefined && prevHp > 0 && p.hp <= 0) {
         this.effects.spawnExplosion(p.x, p.y, true);
       }
       if (localPlayer && p.dashing && !this.playerLastDashing.get(p.id)) {
@@ -156,6 +178,8 @@ export class StateChangeTracker {
       }
       this.playerRenderer.recordPlayerState(p, revealUntil);
       this.playerLastHp.set(p.id, p.hp);
+      this.playerLastShieldHp.set(p.id, p.shieldHp);
+      this.playerLastShieldRemainingMs.set(p.id, p.shieldRemainingMs);
       this.playerLastPos.set(p.id, { x: p.x, y: p.y });
       this.playerLastReloadMs.set(p.id, p.weapon.reloadMs);
       this.playerLastDashing.set(p.id, p.dashing);
