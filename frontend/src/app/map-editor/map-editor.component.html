@@ -1,0 +1,221 @@
+<div class="editor-shell">
+  <header class="toolbar">
+    <a routerLink="/" class="brand" title="Return to game">TANK ARENA <span>MAP LAB</span></a>
+
+    <label class="field name-field">
+      <span>Name</span>
+      <input [value]="store.document().name" (change)="changeMetadata('name', $any($event.target).value)" />
+    </label>
+    <label class="field compact">
+      <span>Width</span>
+      <input type="number" min="1" [value]="store.document().width"
+        (change)="changeMetadata('width', $any($event.target).value)" />
+    </label>
+    <label class="field compact">
+      <span>Height</span>
+      <input type="number" min="1" [value]="store.document().height"
+        (change)="changeMetadata('height', $any($event.target).value)" />
+    </label>
+
+    <div class="toolbar-group">
+      <button type="button" (click)="store.undo()" [disabled]="!store.canUndo()" title="Undo (Ctrl+Z)">↶</button>
+      <button type="button" (click)="store.redo()" [disabled]="!store.canRedo()" title="Redo (Ctrl+Shift+Z)">↷</button>
+      <button type="button" (click)="canvas?.setZoom(store.viewport().zoom / 1.2)" title="Zoom out">−</button>
+      <label class="zoom-field">
+        <input type="number" min="10" max="400" [value]="(store.viewport().zoom * 100).toFixed(0)"
+          (change)="setZoomPercent($any($event.target).value)" aria-label="Zoom percentage" />
+        <span>%</span>
+      </label>
+      <button type="button" (click)="canvas?.setZoom(store.viewport().zoom * 1.2)" title="Zoom in">+</button>
+      <button type="button" (click)="canvas?.fitMap()">Fit</button>
+      <button type="button" (click)="canvas?.resetView()">100%</button>
+    </div>
+
+    <div class="toolbar-actions">
+      <button type="button" (click)="helpOpen.set(true)" title="Keyboard shortcuts">?</button>
+      <button type="button" (click)="openImport()">Import JSON</button>
+      <button type="button" class="primary" (click)="download()" [class.has-errors]="errors().length">
+        Download JSON
+      </button>
+      <input #fileInput hidden type="file" accept=".json,application/json" (change)="importFile($event)" />
+    </div>
+  </header>
+
+  <main class="workspace" [class.left-closed]="!leftOpen()" [class.right-closed]="!rightOpen()">
+    <aside class="panel asset-panel">
+      <button class="collapse left" type="button" (click)="leftOpen.set(!leftOpen())"
+        [title]="leftOpen() ? 'Collapse asset library' : 'Open asset library'">{{ leftOpen() ? '‹' : '›' }}</button>
+      @if (leftOpen()) {
+        <div class="panel-heading">
+          <div>
+            <small>BUILD TOOLS</small>
+            <h2>Asset Library</h2>
+          </div>
+          <span>{{ filteredCatalog().length }}</span>
+        </div>
+        <button type="button" class="select-tool" [class.active]="store.tool() === 'select'"
+          (click)="store.setTool('select')">
+          <strong>Pointer / Move</strong>
+          <small>Select and drag existing objects</small>
+        </button>
+        <button type="button" class="spawn-tool" [class.active]="store.tool() === 'spawn'"
+          (click)="store.setTool('spawn')">
+          <strong>＋ Player Spawn</strong>
+          <small>Capacity: {{ store.document().spawnPoints.length }} players</small>
+        </button>
+        <label class="search">
+          <span>Search</span>
+          <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="rock, bush, flower..." />
+        </label>
+        <div class="category-tabs">
+          @for (item of categories; track item) {
+            <button type="button" [class.active]="category() === item" (click)="chooseCategory(item)">{{ item }}</button>
+          }
+        </div>
+        <div class="asset-grid">
+          @for (item of filteredCatalog(); track item.assetId) {
+            <button type="button" class="asset-card" [class.active]="store.tool() === item.assetId"
+              (click)="store.setTool(item.assetId)" [title]="'Place ' + item.name">
+              <img [src]="item.previewPath" [alt]="item.name" />
+              <span>{{ item.name }}</span>
+              <small>{{ item.defaultWidth }}×{{ item.defaultHeight }}</small>
+            </button>
+          }
+        </div>
+      }
+    </aside>
+
+    <section class="canvas-area">
+      <app-map-editor-canvas />
+      <div class="canvas-status">
+        <span>{{ store.document().width }} × {{ store.document().height }}</span>
+        <span>{{ store.document().obstacles.length }} objects</span>
+        <span>{{ store.document().spawnPoints.length }} players</span>
+        <span>Tool: {{ store.tool() === 'select' ? 'Pointer / Move' : store.tool() }}</span>
+      </div>
+      <div class="grid-controls">
+        <label><input type="checkbox" [checked]="store.gridVisible()"
+          (change)="store.gridVisible.set($any($event.target).checked)" /> Grid</label>
+        <label><input type="checkbox" [checked]="store.snapEnabled()"
+          (change)="store.snapEnabled.set($any($event.target).checked)" /> Snap</label>
+        <select [value]="store.gridSize()" (change)="changeGridSize($any($event.target).value)" aria-label="Grid size">
+          @for (size of gridSizes; track size) { <option [value]="size">{{ size }} px</option> }
+        </select>
+      </div>
+    </section>
+
+    <aside class="panel inspector-panel">
+      <button class="collapse right" type="button" (click)="rightOpen.set(!rightOpen())"
+        [title]="rightOpen() ? 'Collapse inspector' : 'Open inspector'">{{ rightOpen() ? '›' : '‹' }}</button>
+      @if (rightOpen()) {
+        <div class="panel-heading">
+          <div>
+            <small>PROPERTIES</small>
+            <h2>Inspector</h2>
+          </div>
+          <span>{{ store.selection().length }} selected</span>
+        </div>
+
+        @if (store.singleObstacle(); as obstacle) {
+          <section class="inspector-section">
+            <h3>{{ obstacle.assetId }}</h3>
+            <p class="muted">{{ obstacle.type }} · center coordinates</p>
+            <div class="property-grid">
+              <label><span>X</span><input type="number" [value]="obstacle.x"
+                (change)="updateObstacle('x', $any($event.target).value)" /></label>
+              <label><span>Y</span><input type="number" [value]="obstacle.y"
+                (change)="updateObstacle('y', $any($event.target).value)" /></label>
+              <label><span>Width</span><input type="number" min="1" [value]="obstacle.width"
+                (change)="updateObstacle('width', $any($event.target).value)" /></label>
+              <label><span>Height</span><input type="number" min="1" [value]="obstacle.height"
+                (change)="updateObstacle('height', $any($event.target).value)" /></label>
+            </div>
+          </section>
+        } @else if (store.singleSpawn(); as spawn) {
+          <section class="inspector-section">
+            <h3>Player Spawn {{ store.document().spawnPoints.indexOf(spawn) + 1 }}</h3>
+            <p class="muted">Tank safety radius: 28 px</p>
+            <div class="property-grid">
+              <label><span>X</span><input type="number" [value]="spawn.x"
+                (change)="updateSpawn('x', $any($event.target).value)" /></label>
+              <label><span>Y</span><input type="number" [value]="spawn.y"
+                (change)="updateSpawn('y', $any($event.target).value)" /></label>
+            </div>
+            <div class="button-row">
+              <button type="button" (click)="store.reorderSpawn(spawn.editorId, -1)">Move earlier</button>
+              <button type="button" (click)="store.reorderSpawn(spawn.editorId, 1)">Move later</button>
+            </div>
+          </section>
+        } @else if (store.selection().length > 1) {
+          <section class="inspector-section">
+            <h3>{{ store.selection().length }} items selected</h3>
+            <p class="muted">Drag them together or use arrow keys for precise movement.</p>
+          </section>
+        } @else {
+          <section class="inspector-section stats">
+            <h3>Map Summary</h3>
+            <div><span>Obstacles</span><strong>{{ store.document().obstacles.length }}</strong></div>
+            <div><span>Spawn points</span><strong>{{ store.document().spawnPoints.length }}</strong></div>
+            <div><span>Player capacity</span><strong>{{ store.document().spawnPoints.length }}</strong></div>
+          </section>
+        }
+
+        @if (store.selection().length) {
+          <div class="button-row selection-actions">
+            <button type="button" (click)="store.duplicateSelection()">Duplicate</button>
+            <button type="button" class="danger" (click)="store.deleteSelection()">Delete</button>
+          </div>
+        }
+
+        @if (store.importNotice()) {
+          <p class="notice">{{ store.importNotice() }}</p>
+        }
+        @if (importError()) {
+          <p class="error-banner">{{ importError() }}</p>
+        }
+
+        <section class="validation">
+          <div class="validation-heading">
+            <h3>Validation</h3>
+            <span [class.invalid]="errors().length">{{ errors().length }} errors · {{ warnings().length }} warnings</span>
+          </div>
+          <div class="issue-list">
+            @for (issue of issues(); track $index) {
+              <button type="button" class="issue" [class.error]="issue.severity === 'error'"
+                (click)="selectIssue(issue)">
+                <span>{{ issue.severity === 'error' ? '!' : '△' }}</span>
+                {{ issue.message }}
+              </button>
+            } @empty {
+              <p class="valid">✓ Map is ready to export.</p>
+            }
+          </div>
+        </section>
+      }
+    </aside>
+  </main>
+</div>
+
+@if (helpOpen()) {
+  <div class="modal-backdrop" (click)="helpOpen.set(false)">
+    <section class="help-dialog" role="dialog" aria-modal="true" aria-label="Editor shortcuts" (click)="$event.stopPropagation()">
+      <button class="modal-close" type="button" (click)="helpOpen.set(false)">×</button>
+      <small>FIELD MANUAL</small>
+      <h2>Keyboard & Mouse</h2>
+      <dl>
+        <dt>Wheel</dt><dd>Zoom beneath cursor</dd>
+        <dt>Space + drag / Middle drag</dt><dd>Pan viewport</dd>
+        <dt>Shift + click</dt><dd>Add/remove selection</dd>
+        <dt>Drag empty space</dt><dd>Box select</dd>
+        <dt>Place an asset</dt><dd>Automatically returns to Pointer / Move</dd>
+        <dt>Alt while dragging</dt><dd>Move freely without snapping</dd>
+        <dt>Right click / Escape</dt><dd>Cancel placement and return to Pointer / Move</dd>
+        <dt>Arrow / Shift + Arrow</dt><dd>Move 1 px / one grid cell</dd>
+        <dt>Ctrl+D</dt><dd>Duplicate selection</dd>
+        <dt>Delete</dt><dd>Delete selection</dd>
+        <dt>Ctrl+Z / Ctrl+Shift+Z</dt><dd>Undo / redo</dd>
+        <dt>Escape</dt><dd>Return to select tool</dd>
+      </dl>
+    </section>
+  </div>
+}

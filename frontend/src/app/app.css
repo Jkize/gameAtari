@@ -1,29 +1,5 @@
 :host {
-  --page-bg: #20170d;
-
-  display: flex;
+  display: block;
   width: 100vw;
   height: 100vh;
-  box-sizing: border-box;
-  padding: 5vh 5vw;
-  align-items: center;
-  justify-content: center;
-  background: var(--page-bg);
-  overflow: hidden;
-}
-
-:host(.scenario-desert) {
-  --page-bg: #20170d;
-}
-
-.game-wrapper,
-#game-container {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-}
-
-#game-container canvas {
-  display: block;
 }

@@ -1,30 +1,11 @@
-import { Component, AfterViewInit, OnDestroy, ViewChild, ElementRef, HostBinding } from '@angular/core';
-import { TankGame } from './game/TankGame';
-import { ACTIVE_BACKGROUND_SCENARIO } from './scenarios/background-scenarios';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App implements AfterViewInit, OnDestroy {
-  protected readonly scenarioClass = ACTIVE_BACKGROUND_SCENARIO.cssClass;
-
-  @HostBinding('class')
-  protected readonly hostClass = this.scenarioClass;
-
-  @ViewChild('gameContainer', { static: true })
-  private containerRef!: ElementRef<HTMLDivElement>;
-
-  private game!: TankGame;
-
-  ngAfterViewInit(): void {
-    this.game = new TankGame(this.containerRef.nativeElement);
-  }
-
-  ngOnDestroy(): void {
-    this.game?.destroy(true);
-  }
-}
+export class App {}
