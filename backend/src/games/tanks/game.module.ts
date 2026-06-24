@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
 import { GameLoopService } from './game-loop.service';
-import { MapService } from './map.service';
+import { MapService } from './maps/map.service';
 import { CollisionService } from './collision.service';
 import { WeaponService } from './weapons/weapon.service';
 import { WeaponLaserService } from './weapons/weapon-laser.service';

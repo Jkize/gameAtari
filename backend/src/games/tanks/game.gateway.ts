@@ -11,7 +11,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { GameLoopService } from './game-loop.service';
-import { MapService } from './map.service';
+import { MapService } from './maps/map.service';
 import { PlayerInput } from './types/player.types';
 import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
 

@@ -1,7 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Server } from 'socket.io';
 import { DESTROYED_BODY_TTL_MS, GameService, SHIELD_COOLDOWN_MS, SHIELD_HP } from './game.service';
-import { MapService } from './map.service';
+import { MapService } from './maps/map.service';
 import { CollisionService } from './collision.service';
 import { WeaponService } from './weapons/weapon.service';
 import { WeaponLaserService } from './weapons/weapon-laser.service';

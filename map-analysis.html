@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tank Arena — Map Analysis</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 40px 50px;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 26px;
+    color: #0f3460;
+    border-bottom: 3px solid #e94560;
+    padding-bottom: 10px;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-size: 17px;
+    color: #16213e;
+    background: #e8f0fe;
+    border-left: 4px solid #4a90e2;
+    padding: 7px 12px;
+    margin: 28px 0 14px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  h3 {
+    font-size: 13px;
+    color: #0f3460;
+    margin: 16px 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 12px;
+  }
+  th {
+    background: #16213e;
+    color: #fff;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  tr:nth-child(even) td { background: #f7f9ff; }
+  tr:hover td { background: #edf2ff; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-destructible { background: #fff3cd; color: #856404; }
+  .badge-indestructible { background: #d1ecf1; color: #0c5460; }
+  .badge-soft { background: #d4edda; color: #155724; }
+  .badge-reflect { background: #e2d9f3; color: #4a235a; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .card {
+    border: 1px solid #dce3f0;
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+  .card-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f3460;
+  }
+  .card-sub {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+  }
+  pre, code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11.5px;
+  }
+  pre {
+    background: #1a1a2e;
+    color: #a8d8ea;
+    padding: 16px 18px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 10px 0 18px 0;
+    line-height: 1.7;
+  }
+  code {
+    background: #eef2ff;
+    color: #3c5a99;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .map-grid {
+    width: 100%;
+    max-width: 700px;
+    margin: 12px auto 20px auto;
+    display: block;
+  }
+  .spawn-dot { fill: #e94560; }
+  .obstacle-rock { fill: #7f8c8d; opacity: 0.85; }
+  .obstacle-wood { fill: #a0522d; opacity: 0.85; }
+  .obstacle-steel { fill: #4a90e2; opacity: 0.85; }
+  .obstacle-mirror { fill: #9b59b6; opacity: 0.85; }
+  .obstacle-bush { fill: #27ae60; opacity: 0.7; }
+  .power-dot { fill: #f39c12; }
+  .map-bg { fill: #2d5a27; }
+  .map-border { fill: none; stroke: #1a3a15; stroke-width: 3; }
+  .label { font-size: 9px; fill: #fff; text-anchor: middle; dominant-baseline: middle; }
+  .spawn-label { font-size: 8px; fill: #fff; text-anchor: middle; }
+  .section-note {
+    background: #fffbf0;
+    border-left: 3px solid #f39c12;
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 14px;
+  }
+  .prompt-box {
+    background: #0f3460;
+    color: #e8f0fe;
+    border-radius: 8px;
+    padding: 20px 22px;
+    margin: 14px 0;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .prompt-box .ph { color: #e94560; font-weight: 700; }
+  .page-break { page-break-before: always; }
+  ul { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+  .toc a { color: #4a90e2; text-decoration: none; font-size: 13px; }
+  .toc li { margin-bottom: 6px; }
+  .footer {
+    margin-top: 40px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+  }
+  @media print {
+    body { padding: 20px 30px; }
+    .page-break { page-break-before: always; }
+    pre { background: #222; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Tank Arena — Map Analysis</h1>
+<div class="subtitle">Generated: 2026-06-24 &nbsp;·&nbsp; Source: backend/src/games/tanks/map.service.ts &amp; obstacle.config.ts</div>
+
+<!-- TABLE OF CONTENTS -->
+<ul class="toc">
+  <li><a href="#dimensions">1. Map Dimensions</a></li>
+  <li><a href="#obstacles">2. Obstacle Types Reference</a></li>
+  <li><a href="#assets">3. Visual Asset IDs</a></li>
+  <li><a href="#layout">4. Current Map Layout (Overview)</a></li>
+  <li><a href="#spawns">5. Player Spawn Points</a></li>
+  <li><a href="#powerups">6. Power-up Spawn Locations</a></li>
+  <li><a href="#json">7. JSON Structure Reference</a></li>
+  <li><a href="#prompt">8. Prompt Template for Custom Scenarios</a></li>
+</ul>
+
+<!-- 1. DIMENSIONS -->
+<h2 id="dimensions">1. Map Dimensions</h2>
+<div class="grid">
+  <div class="card">
+    <div class="card-title">World Width</div>
+    <div class="card-value">1600 px</div>
+    <div class="card-sub">Horizontal axis</div>
+  </div>
+  <div class="card">
+    <div class="card-title">World Height</div>
+    <div class="card-value">1200 px</div>
+    <div class="card-sub">Vertical axis</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Default Obstacle Size</div>
+    <div class="card-value">64 × 64 px</div>
+    <div class="card-sub">Width &amp; height default</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Coordinate System</div>
+    <div class="card-value">Center origin</div>
+    <div class="card-sub">x,y = center of obstacle</div>
+  </div>
+</div>
+<div class="section-note">
+  All obstacle <code>x</code> and <code>y</code> values are <strong>center positions</strong>. The renderer calculates the top-left corner as <code>x − width/2</code>, <code>y − height/2</code>.
+</div>
+
+<!-- 2. OBSTACLES -->
+<h2 id="obstacles">2. Obstacle Types Reference</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>HP</th>
+      <th>Shots to destroy<br><small>(default bullet: 20 dmg)</small></th>
+      <th>Blocks Players</th>
+      <th>Blocks Bullets</th>
+      <th>Default assetId</th>
+      <th>Behaviour</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>bush</strong></td>
+      <td>34</td>
+      <td>2</td>
+      <td>No</td>
+      <td>Damages it</td>
+      <td>bush_01_rounded_dense</td>
+      <td><span class="badge badge-soft">Soft cover</span> Players pass through. Bullets deal damage and eventually destroy it.</td>
+    </tr>
+    <tr>
+      <td><strong>decoration</strong></td>
+      <td>9999</td>
+      <td>∞</td>
+      <td>No</td>
+      <td>No</td>
+      <td>decoration_01_spiky_organic</td>
+      <td><span class="badge badge-soft">Visual only</span> Purely cosmetic. Does not block anything.</td>
+    </tr>
+    <tr>
+      <td><strong>wood</strong></td>
+      <td>68</td>
+      <td>4</td>
+      <td>Yes</td>
+      <td>Yes</td>
+      <td>wood_barricade</td>
+      <td><span class="badge badge-destructible">Destructible</span> Solid cover. Can be shot down after sustained fire.</td>
+    </tr>
+    <tr>
+      <td><strong>rock</strong></td>
+      <td>102</td>
+      <td>6</td>
+      <td>Yes</td>
+      <td>Yes</td>
+      <td>rock_block</td>
+      <td><span class="badge badge-destructible">Destructible</span> Harder solid cover. Takes more fire to break.</td>
+    </tr>
+    <tr>
+      <td><strong>steel</strong></td>
+      <td>9999</td>
+      <td>∞</td>
+      <td>Yes</td>
+      <td>Yes</td>
+      <td>steel_block_01</td>
+      <td><span class="badge badge-indestructible">Indestructible</span> Permanent hard anchor. Cannot be destroyed.</td>
+    </tr>
+    <tr>
+      <td><strong>mirror</strong></td>
+      <td>9999</td>
+      <td>∞</td>
+      <td>Yes</td>
+      <td>Reflects</td>
+      <td>mirror_panel_01</td>
+      <td><span class="badge badge-reflect">Reflector</span> Indestructible. Reflects bullets off the hit face.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Bush vs Decoration — key difference</h3>
+<ul>
+  <li><strong>Bush</strong> — has collision with bullets (HP depletes), can be destroyed. Used as soft cover that eventually disappears.</li>
+  <li><strong>Decoration</strong> — completely ignored by all game logic. Pure visual dressing.</li>
+</ul>
+
+<h3>Mirror geometry tip</h3>
+<p>Mirrors use non-square dimensions to define the reflective face direction:</p>
+<ul>
+  <li><code>width &gt; height</code> (e.g. 140×18) → horizontal mirror, reflects bullets traveling vertically.</li>
+  <li><code>height &gt; width</code> (e.g. 18×130) → vertical mirror, reflects bullets traveling horizontally.</li>
+</ul>
+
+<!-- 3. ASSET IDs -->
+<h2 id="assets">3. Visual Asset IDs</h2>
+<div class="grid">
+  <div>
+    <h3>Bush variants (4)</h3>
+    <table>
+      <thead><tr><th>assetId</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>bush_01_rounded_dense</td><td>Dense round shrub (default)</td></tr>
+        <tr><td>bush_02_irregular_leafy</td><td>Leafy irregular shape</td></tr>
+        <tr><td>bush_03_compact_arcade</td><td>Compact arcade-style</td></tr>
+        <tr><td>bush_04_wide_low</td><td>Wide, low-profile</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h3>Solid obstacles</h3>
+    <table>
+      <thead><tr><th>Type</th><th>assetId</th></tr></thead>
+      <tbody>
+        <tr><td>wood</td><td>wood_barricade</td></tr>
+        <tr><td>rock</td><td>rock_block</td></tr>
+        <tr><td>steel</td><td>steel_block_01</td></tr>
+        <tr><td>mirror</td><td>mirror_panel_01</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<h3>Decoration variants (14)</h3>
+<table>
+  <thead><tr><th>assetId</th><th>assetId</th></tr></thead>
+  <tbody>
+    <tr><td>decoration_01_spiky_organic</td><td>decoration_08_tall_grass_wildflowers</td></tr>
+    <tr><td>decoration_02_two_lobed</td><td>decoration_09_cactus_flowers</td></tr>
+    <tr><td>decoration_03_pink_yellow_flowers</td><td>decoration_10_reed_patch_orange</td></tr>
+    <tr><td>decoration_04_grass_blue_flowers</td><td>decoration_11_fern_star</td></tr>
+    <tr><td>decoration_05_wild_red_flowers</td><td>decoration_12_clover_patch</td></tr>
+    <tr><td>decoration_06_sharp_grass_pink_yellow</td><td>decoration_13_dry_grass_mix</td></tr>
+    <tr><td>decoration_07_leafy_blue_flower</td><td>decoration_14_vine_swirl</td></tr>
+  </tbody>
+</table>
+
+<!-- 4. LAYOUT MAP -->
+<div class="page-break"></div>
+<h2 id="layout">4. Current Map Layout (Overhead Overview)</h2>
+<div class="section-note">
+  SVG schematic — not to pixel scale. Numbers next to elements show approximate coordinates. Map is 1600×1200 px.
+</div>
+
+<svg class="map-grid" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" class="map-bg" rx="4"/>
+  <rect width="800" height="600" class="map-border" rx="4"/>
+
+  <!-- Scale factor: x/2, y/2 -->
+
+  <!-- BUSH PAIRS near spawn corners (330, 230) area -->
+  <!-- TL bush pair around 330,230 → 165,115 -->
+  <rect x="145" y="105" width="35" height="35" class="obstacle-bush" rx="3"/>
+  <rect x="185" y="105" width="35" height="35" class="obstacle-bush" rx="3"/>
+  <!-- TR bush pair around 1270,230 → 635,115 -->
+  <rect x="580" y="105" width="35" height="35" class="obstacle-bush" rx="3"/>
+  <rect x="620" y="105" width="35" height="35" class="obstacle-bush" rx="3"/>
+  <!-- BL bush pair around 330,970 → 165,485 -->
+  <rect x="145" y="465" width="35" height="35" class="obstacle-bush" rx="3"/>
+  <rect x="185" y="465" width="35" height="35" class="obstacle-bush" rx="3"/>
+  <!-- BR bush pair around 1270,970 → 635,485 -->
+  <rect x="580" y="465" width="35" height="35" class="obstacle-bush" rx="3"/>
+  <rect x="620" y="465" width="35" height="35" class="obstacle-bush" rx="3"/>
+
+  <!-- Bush quad 660,290 → 330,145 -->
+  <rect x="312" y="127" width="30" height="30" class="obstacle-bush" rx="3"/>
+  <rect x="347" y="127" width="30" height="30" class="obstacle-bush" rx="3"/>
+  <rect x="312" y="162" width="30" height="30" class="obstacle-bush" rx="3"/>
+  <rect x="347" y="162" width="30" height="30" class="obstacle-bush" rx="3"/>
+
+  <!-- Bush quad 940,910 → 470,455 -->
+  <rect x="452" y="437" width="30" height="30" class="obstacle-bush" rx="3"/>
+  <rect x="487" y="437" width="30" height="30" class="obstacle-bush" rx="3"/>
+  <rect x="452" y="472" width="30" height="30" class="obstacle-bush" rx="3"/>
+  <rect x="487" y="472" width="30" height="30" class="obstacle-bush" rx="3"/>
+
+  <!-- Central bush pair 800,600 → 400,300 -->
+  <rect x="368" y="285" width="30" height="30" class="obstacle-bush" rx="3"/>
+  <rect x="403" y="285" width="30" height="30" class="obstacle-bush" rx="3"/>
+
+  <!-- ROCK lines: 360,430 + MAP_WIDTH-544,770 -->
+  <!-- 360,430 → 180,215 | 3 rocks gap 64 -->
+  <rect x="170" y="205" width="22" height="22" class="obstacle-rock" rx="2"/>
+  <rect x="202" y="205" width="22" height="22" class="obstacle-rock" rx="2"/>
+  <rect x="234" y="205" width="22" height="22" class="obstacle-rock" rx="2"/>
+  <!-- 1056,770 → 528,385 | 3 rocks -->
+  <rect x="518" y="375" width="22" height="22" class="obstacle-rock" rx="2"/>
+  <rect x="550" y="375" width="22" height="22" class="obstacle-rock" rx="2"/>
+  <rect x="582" y="375" width="22" height="22" class="obstacle-rock" rx="2"/>
+
+  <!-- WOOD lines: 260,610 and MAP_WIDTH-436,610 -->
+  <!-- 260,610 → 130,305 | 3 wood gap 88 -->
+  <rect x="120" y="295" width="28" height="18" class="obstacle-wood" rx="2"/>
+  <rect x="163" y="295" width="28" height="18" class="obstacle-wood" rx="2"/>
+  <rect x="207" y="295" width="28" height="18" class="obstacle-wood" rx="2"/>
+  <!-- 1164,610 → 582,305 | 3 wood -->
+  <rect x="572" y="295" width="28" height="18" class="obstacle-wood" rx="2"/>
+  <rect x="615" y="295" width="28" height="18" class="obstacle-wood" rx="2"/>
+  <rect x="659" y="295" width="28" height="18" class="obstacle-wood" rx="2"/>
+
+  <!-- STEEL: 470,600 | 1130,600 | 700,500 | 900,700 -->
+  <rect x="226" y="286" width="18" height="18" class="obstacle-steel" rx="2"/>
+  <rect x="546" y="286" width="18" height="18" class="obstacle-steel" rx="2"/>
+  <rect x="341" y="241" width="18" height="18" class="obstacle-steel" rx="2"/>
+  <rect x="441" y="341" width="18" height="18" class="obstacle-steel" rx="2"/>
+
+  <!-- MIRRORS: 260,350 (140x18) | MAP-260,MAP-350 (140x18) | 620,900 (18x130) | MAP-620,300 (18x130) -->
+  <!-- horizontal mirror at 260,350 → 130,175, scale width=70, h=9 -->
+  <rect x="95" y="171" width="70" height="9" class="obstacle-mirror" rx="1"/>
+  <!-- horizontal mirror at 1340,850 → 670,425 -->
+  <rect x="635" y="421" width="70" height="9" class="obstacle-mirror" rx="1"/>
+  <!-- vertical mirror at 620,900 → 310,450, w=9 h=65 -->
+  <rect x="306" y="418" width="9" height="65" class="obstacle-mirror" rx="1"/>
+  <!-- vertical mirror at 980,300 → 490,150, w=9 h=65 -->
+  <rect x="486" y="118" width="9" height="65" class="obstacle-mirror" rx="1"/>
+
+  <!-- SPAWN POINTS (15 total) -->
+  <!-- 1: 150,150 → 75,75 -->
+  <circle cx="75" cy="75" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="75" y="75" class="spawn-label" font-size="8">1</text>
+  <!-- 2: 1450,150 → 725,75 -->
+  <circle cx="725" cy="75" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="725" y="75" class="spawn-label">2</text>
+  <!-- 3: 150,1050 → 75,525 -->
+  <circle cx="75" cy="525" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="75" y="525" class="spawn-label">3</text>
+  <!-- 4: 1450,1050 → 725,525 -->
+  <circle cx="725" cy="525" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="725" y="525" class="spawn-label">4</text>
+  <!-- 5: 800,120 → 400,60 -->
+  <circle cx="400" cy="60" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="400" y="60" class="spawn-label">5</text>
+  <!-- 6: 800,1080 → 400,540 -->
+  <circle cx="400" cy="540" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="400" y="540" class="spawn-label">6</text>
+  <!-- 7: 120,600 → 60,300 -->
+  <circle cx="60" cy="300" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="60" y="300" class="spawn-label">7</text>
+  <!-- 8: 1480,600 → 740,300 -->
+  <circle cx="740" cy="300" r="8" class="spawn-dot" opacity="0.9"/>
+  <text x="740" y="300" class="spawn-label">8</text>
+  <!-- 9: 400,300 → 200,150 -->
+  <circle cx="200" cy="150" r="7" class="spawn-dot" opacity="0.7"/>
+  <text x="200" y="150" class="spawn-label">9</text>
+  <!-- 10: 1200,300 → 600,150 -->
+  <circle cx="600" cy="150" r="7" class="spawn-dot" opacity="0.7"/>
+  <text x="600" y="150" class="spawn-label">10</text>
+  <!-- 11: 400,900 → 200,450 -->
+  <circle cx="200" cy="450" r="7" class="spawn-dot" opacity="0.7"/>
+  <text x="200" y="450" class="spawn-label">11</text>
+  <!-- 12: 1200,900 → 600,450 -->
+  <circle cx="600" cy="450" r="7" class="spawn-dot" opacity="0.7"/>
+  <text x="600" y="450" class="spawn-label">12</text>
+  <!-- 13: 550,550 → 275,275 -->
+  <circle cx="275" cy="275" r="7" class="spawn-dot" opacity="0.7"/>
+  <text x="275" y="275" class="spawn-label">13</text>
+  <!-- 14: 1050,550 → 525,275 -->
+  <circle cx="525" cy="275" r="7" class="spawn-dot" opacity="0.7"/>
+  <text x="525" y="275" class="spawn-label">14</text>
+  <!-- 15: 800,400 → 400,200 -->
+  <circle cx="400" cy="200" r="7" class="spawn-dot" opacity="0.7"/>
+  <text x="400" y="200" class="spawn-label">15</text>
+
+  <!-- POWER-UPS: triple_shot 800,520 | shotgun 730,650 | grenade 870,650 | laser 800,720 -->
+  <circle cx="400" cy="260" r="7" class="power-dot" opacity="0.9"/>
+  <text x="400" y="260" class="label" font-size="7">3x</text>
+  <circle cx="365" cy="325" r="7" class="power-dot" opacity="0.9"/>
+  <text x="365" y="325" class="label" font-size="7">SG</text>
+  <circle cx="435" cy="325" r="7" class="power-dot" opacity="0.9"/>
+  <text x="435" y="325" class="label" font-size="7">GR</text>
+  <circle cx="400" cy="360" r="7" class="power-dot" opacity="0.9"/>
+  <text x="400" y="360" class="label" font-size="7">LZ</text>
+
+  <!-- LEGEND -->
+  <rect x="12" y="555" width="780" height="38" fill="#11111f" opacity="0.85" rx="4"/>
+  <circle cx="30" cy="574" r="5" fill="#e94560"/>
+  <text x="38" y="578" fill="#eee" font-size="9">Spawn</text>
+  <circle cx="85" cy="574" r="5" fill="#f39c12"/>
+  <text x="93" y="578" fill="#eee" font-size="9">Power-up</text>
+  <rect x="148" y="569" width="12" height="10" fill="#27ae60" rx="1"/>
+  <text x="163" y="578" fill="#eee" font-size="9">Bush</text>
+  <rect x="198" y="569" width="12" height="10" fill="#7f8c8d" rx="1"/>
+  <text x="213" y="578" fill="#eee" font-size="9">Rock</text>
+  <rect x="248" y="569" width="12" height="10" fill="#a0522d" rx="1"/>
+  <text x="263" y="578" fill="#eee" font-size="9">Wood</text>
+  <rect x="305" y="569" width="12" height="10" fill="#4a90e2" rx="1"/>
+  <text x="320" y="578" fill="#eee" font-size="9">Steel</text>
+  <rect x="358" y="569" width="12" height="10" fill="#9b59b6" rx="1"/>
+  <text x="373" y="578" fill="#eee" font-size="9">Mirror</text>
+</svg>
+
+<!-- 5. SPAWN POINTS -->
+<h2 id="spawns">5. Player Spawn Points</h2>
+<div class="section-note">
+  Players are assigned spawns in round-robin order (<code>players.size % 15</code>). Assigned as players join, not re-assigned on respawn.
+</div>
+<table>
+  <thead>
+    <tr><th>#</th><th>X</th><th>Y</th><th>Zone</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>150</td><td>150</td><td>Top-left corner</td></tr>
+    <tr><td>2</td><td>1450</td><td>150</td><td>Top-right corner</td></tr>
+    <tr><td>3</td><td>150</td><td>1050</td><td>Bottom-left corner</td></tr>
+    <tr><td>4</td><td>1450</td><td>1050</td><td>Bottom-right corner</td></tr>
+    <tr><td>5</td><td>800</td><td>120</td><td>Top center edge</td></tr>
+    <tr><td>6</td><td>800</td><td>1080</td><td>Bottom center edge</td></tr>
+    <tr><td>7</td><td>120</td><td>600</td><td>Left center edge</td></tr>
+    <tr><td>8</td><td>1480</td><td>600</td><td>Right center edge</td></tr>
+    <tr><td>9</td><td>400</td><td>300</td><td>Upper-left quad</td></tr>
+    <tr><td>10</td><td>1200</td><td>300</td><td>Upper-right quad</td></tr>
+    <tr><td>11</td><td>400</td><td>900</td><td>Lower-left quad</td></tr>
+    <tr><td>12</td><td>1200</td><td>900</td><td>Lower-right quad</td></tr>
+    <tr><td>13</td><td>550</td><td>550</td><td>Center-left</td></tr>
+    <tr><td>14</td><td>1050</td><td>550</td><td>Center-right</td></tr>
+    <tr><td>15</td><td>800</td><td>400</td><td>Center-top</td></tr>
+  </tbody>
+</table>
+
+<!-- 6. POWER-UPS -->
+<h2 id="powerups">6. Power-up Spawn Locations</h2>
+<table>
+  <thead>
+    <tr><th>Type</th><th>X</th><th>Y</th><th>Radius</th><th>assetId</th><th>Effect</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>triple_shot</td><td>800</td><td>520</td><td>18 px</td><td>power_triple_shot</td><td>3 bullets per shot at spread angles</td></tr>
+    <tr><td>shotgun</td><td>730</td><td>650</td><td>18 px</td><td>power_shotgun</td><td>5 pellets, shorter range</td></tr>
+    <tr><td>grenade</td><td>870</td><td>650</td><td>18 px</td><td>power_grenade</td><td>Slow projectile, AOE explosion radius 100</td></tr>
+    <tr><td>laser</td><td>800</td><td>720</td><td>18 px</td><td>power_laser</td><td>2 shots, 1000 ms beam, 1200 max distance</td></tr>
+  </tbody>
+</table>
+<div class="section-note">
+  All 4 power-ups are clustered in the lower-center area (730–870, 520–720). Players must converge to the center to collect them.
+</div>
+
+<!-- 7. JSON STRUCTURE -->
+<div class="page-break"></div>
+<h2 id="json">7. JSON Structure Reference</h2>
+<p>The complete <code>GameMap</code> JSON shape sent to clients via <code>gameJoined</code>:</p>
+
+<pre>{
+  "width": 1600,
+  "height": 1200,
+  "obstacles": [
+    {
+      "id": "uuid-v4",
+      "type": "rock" | "wood" | "steel" | "bush" | "decoration" | "mirror",
+      "assetId": "rock_block",           // optional, falls back to type default
+      "x": 360,                          // CENTER x position
+      "y": 430,                          // CENTER y position
+      "width": 64,                       // obstacle width  (default 64)
+      "height": 64,                      // obstacle height (default 64)
+      "hp": 102,                         // current HP
+      "maxHp": 102,                      // max HP
+      "healthRatio": 1.0,                // hp / maxHp (0.0 – 1.0)
+      "destructible": true
+    }
+  ],
+  "powerUps": [
+    {
+      "id": "uuid-v4",
+      "type": "triple_shot" | "shotgun" | "grenade" | "laser",
+      "assetId": "power_triple_shot",
+      "x": 800,
+      "y": 520,
+      "radius": 18                       // pickup radius in pixels
+    }
+  ]
+}</pre>
+
+<h3>Obstacle HP &amp; destructible reference (for JSON authors)</h3>
+<table>
+  <thead><tr><th>type</th><th>hp / maxHp</th><th>destructible</th><th>healthRatio</th></tr></thead>
+  <tbody>
+    <tr><td>bush</td><td>34</td><td>true</td><td>1.0</td></tr>
+    <tr><td>decoration</td><td>9999</td><td>false</td><td>1.0</td></tr>
+    <tr><td>wood</td><td>68</td><td>true</td><td>1.0</td></tr>
+    <tr><td>rock</td><td>102</td><td>true</td><td>1.0</td></tr>
+    <tr><td>steel</td><td>9999</td><td>false</td><td>1.0</td></tr>
+    <tr><td>mirror</td><td>9999</td><td>false</td><td>1.0</td></tr>
+  </tbody>
+</table>
+
+<h3>Mirror orientation rules</h3>
+<table>
+  <thead><tr><th>Desired orientation</th><th>width</th><th>height</th><th>Reflects</th></tr></thead>
+  <tbody>
+    <tr><td>Horizontal panel (─)</td><td>e.g. 140</td><td>18</td><td>Bullets moving up/down</td></tr>
+    <tr><td>Vertical panel (│)</td><td>18</td><td>e.g. 130</td><td>Bullets moving left/right</td></tr>
+    <tr><td>Diagonal-ish</td><td>~equal</td><td>~equal</td><td>Depends on hit face</td></tr>
+  </tbody>
+</table>
+
+<!-- 8. PROMPT TEMPLATE -->
+<h2 id="prompt">8. Prompt Template for Custom Scenarios</h2>
+<p>Paste this template into a new conversation and fill in the placeholders:</p>
+
+<div class="prompt-box">
+  Create a Tank Arena map scenario called <span class="ph">[SCENARIO NAME]</span>.<br><br>
+
+  Map size: 1600 × 1200 px. Obstacle positions are center coordinates.<br><br>
+
+  <strong>Theme:</strong> <span class="ph">[e.g. "abandoned factory", "jungle ruins", "urban street grid", "symmetrical sniper duel"]</span><br><br>
+
+  <strong>Layout intent:</strong><br>
+  - Number of lanes: <span class="ph">[e.g. 3 horizontal + 2 vertical]</span><br>
+  - Center area: <span class="ph">[open / contested / blocked]</span><br>
+  - Preferred obstacle density: <span class="ph">[sparse / medium / dense]</span><br>
+  - Symmetry: <span class="ph">[yes (left-right) / yes (4-way) / no]</span><br><br>
+
+  <strong>Obstacle types to include:</strong><br>
+  - bush: <span class="ph">[count or "many" / "few" / "none"]</span><br>
+  - wood: <span class="ph">[count]</span><br>
+  - rock: <span class="ph">[count]</span><br>
+  - steel: <span class="ph">[count, these are permanent anchors]</span><br>
+  - mirror: <span class="ph">[count, specify horizontal/vertical/mixed]</span><br>
+  - decoration: <span class="ph">[count, visual only, no collision]</span><br><br>
+
+  <strong>Special constraints:</strong><br>
+  - Keep the 4 corner spawn zones (within ~200 px of each corner) free of solid obstacles.<br>
+  - Keep at least one clear path through the horizontal center lane (y ≈ 500–700).<br>
+  - Power-up area: <span class="ph">[keep center / spread across map / remove and relocate]</span><br><br>
+
+  Output a JSON object with this exact structure:<br>
+  {<br>
+  &nbsp;&nbsp;"obstacles": [ { "type", "x", "y", "width"?, "height"?, "assetId"? } … ],<br>
+  &nbsp;&nbsp;"powerUps": [ { "type", "x", "y" } … ]<br>
+  }<br><br>
+
+  Do not include "id", "hp", "maxHp", "healthRatio", or "destructible" — the server fills those from type defaults.
+</div>
+
+<h3>Quick scenario examples you can use directly</h3>
+<table>
+  <thead><tr><th>Scenario name</th><th>Key characteristics</th></tr></thead>
+  <tbody>
+    <tr><td>Urban Grid</td><td>3 vertical street corridors with wood barricades and steel anchors. Rock intersections at crossings. Bushes in alleys.</td></tr>
+    <tr><td>Sniper Duel</td><td>Long horizontal mirrors creating ricochet chambers. Very few solid obstacles. Power-ups at extreme edges.</td></tr>
+    <tr><td>Jungle Fortress</td><td>Dense bush perimeter, rock cluster center, steel bunker in middle. Only 4 spawn corners open.</td></tr>
+    <tr><td>Symmetrical Clash</td><td>Perfect 4-way symmetry. Identical cover lines per quadrant. Central steel tower unreachable without flanking.</td></tr>
+    <tr><td>Open Field</td><td>Minimal obstacles. All 4 power-ups spread to corners. Long-range and dash gameplay dominates.</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  Tank Arena · Map Analysis · Generated 2026-06-24 · source: backend/src/games/tanks/map.service.ts
+</div>
+</body>
+</html>

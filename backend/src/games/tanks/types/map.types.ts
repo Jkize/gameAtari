@@ -40,9 +40,16 @@ export interface Obstacle {
   destructible: boolean;
 }
 
+export interface SpawnPoint {
+  x: number;
+  y: number;
+}
+
 export interface GameMap {
+  name?: string;
   width: number;
   height: number;
+  spawnPoints?: SpawnPoint[];
   obstacles: Obstacle[];
   powerUps: PowerUpSpawn[];
 }

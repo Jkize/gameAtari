@@ -6,10 +6,14 @@ class SocketManager {
   private socket: Socket | null = null;
 
   connect(): Socket {
-    if (this.socket?.connected) return this.socket;
+    if (this.socket) {
+      if (!this.socket.active) {
+        this.socket.connect();
+      }
+      return this.socket;
+    }
 
     this.socket = io(BACKEND_URL, {
-      transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,

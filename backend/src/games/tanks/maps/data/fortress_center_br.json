@@ -1,0 +1,75 @@
+{
+  "name": "Fortress Center BR",
+  "width": 2400,
+  "height": 1800,
+  "spawnPoints": [
+    { "x": 180, "y": 180 },
+    { "x": 600, "y": 150 },
+    { "x": 1200, "y": 120 },
+    { "x": 1800, "y": 150 },
+    { "x": 2220, "y": 180 },
+    { "x": 120, "y": 900 },
+    { "x": 2280, "y": 900 },
+    { "x": 180, "y": 1620 },
+    { "x": 600, "y": 1650 },
+    { "x": 1200, "y": 1680 },
+    { "x": 1800, "y": 1650 },
+    { "x": 2220, "y": 1620 },
+    { "x": 450, "y": 900 },
+    { "x": 1950, "y": 900 },
+    { "x": 1200, "y": 350 }
+  ],
+  "obstacles": [
+    { "type": "steel", "assetId": "steel_block_01", "x": 1005, "y": 705, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1125, "y": 705, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1275, "y": 705, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1395, "y": 705, "width": 90, "height": 90 },
+
+    { "type": "steel", "assetId": "steel_block_01", "x": 1005, "y": 1095, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1125, "y": 1095, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1275, "y": 1095, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1395, "y": 1095, "width": 90, "height": 90 },
+
+    { "type": "steel", "assetId": "steel_block_01", "x": 945, "y": 825, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 945, "y": 975, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1455, "y": 825, "width": 90, "height": 90 },
+    { "type": "steel", "assetId": "steel_block_01", "x": 1455, "y": 975, "width": 90, "height": 90 },
+
+    { "type": "wood", "assetId": "wood_barricade", "x": 1200, "y": 805, "width": 160, "height": 50 },
+    { "type": "wood", "assetId": "wood_barricade", "x": 1200, "y": 995, "width": 160, "height": 50 },
+    { "type": "wood", "assetId": "wood_barricade", "x": 1065, "y": 930, "width": 50, "height": 130 },
+    { "type": "wood", "assetId": "wood_barricade", "x": 1335, "y": 930, "width": 50, "height": 130 },
+
+    { "type": "rock", "assetId": "rock_block", "x": 660, "y": 560, "width": 80, "height": 80 },
+    { "type": "rock", "assetId": "rock_block", "x": 800, "y": 660, "width": 80, "height": 80 },
+    { "type": "rock", "assetId": "rock_block", "x": 1740, "y": 560, "width": 80, "height": 80 },
+    { "type": "rock", "assetId": "rock_block", "x": 1600, "y": 660, "width": 80, "height": 80 },
+
+    { "type": "rock", "assetId": "rock_block", "x": 660, "y": 1240, "width": 80, "height": 80 },
+    { "type": "rock", "assetId": "rock_block", "x": 800, "y": 1140, "width": 80, "height": 80 },
+    { "type": "rock", "assetId": "rock_block", "x": 1740, "y": 1240, "width": 80, "height": 80 },
+    { "type": "rock", "assetId": "rock_block", "x": 1600, "y": 1140, "width": 80, "height": 80 },
+
+    { "type": "bush", "assetId": "bush_01_rounded_dense", "x": 355, "y": 355, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_02_irregular_leafy", "x": 475, "y": 425, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_03_compact_arcade", "x": 585, "y": 345, "width": 90, "height": 90 },
+
+    { "type": "bush", "assetId": "bush_01_rounded_dense", "x": 1895, "y": 355, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_02_irregular_leafy", "x": 2015, "y": 425, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_03_compact_arcade", "x": 1785, "y": 345, "width": 90, "height": 90 },
+
+    { "type": "bush", "assetId": "bush_01_rounded_dense", "x": 355, "y": 1415, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_02_irregular_leafy", "x": 475, "y": 1345, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_03_compact_arcade", "x": 585, "y": 1425, "width": 90, "height": 90 },
+
+    { "type": "bush", "assetId": "bush_01_rounded_dense", "x": 1895, "y": 1415, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_02_irregular_leafy", "x": 2015, "y": 1345, "width": 90, "height": 90 },
+    { "type": "bush", "assetId": "bush_03_compact_arcade", "x": 1785, "y": 1425, "width": 90, "height": 90 },
+
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 840, "y": 891, "width": 240, "height": 22 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1560, "y": 891, "width": 240, "height": 22 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1199, "y": 530, "width": 22, "height": 220 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1199, "y": 1270, "width": 22, "height": 220 }
+  ],
+  "powerUps": []
+}

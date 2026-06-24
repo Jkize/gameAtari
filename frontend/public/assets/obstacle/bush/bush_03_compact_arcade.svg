@@ -18,9 +18,7 @@
     </filter>
   </defs>
 
-  <g filter="url(#v2SoftShadow)">
-    <rect x="5" y="5" width="54" height="54" rx="2.2" fill="#123d1a"/>
-
+  <g transform="translate(-5.2364 -5.2364) scale(1.16364)" filter="url(#v2SoftShadow)">
     <!-- Chunkier border -->
     <g>
       <rect x="7" y="4.8" width="8" height="10" rx="4" fill="url(#v2LeafDark)"/>
