@@ -104,7 +104,7 @@ export class WeaponLaserService {
         bullet.radius,
         player,
       ))) {
-        this.gameService.damagePlayer(player, damage);
+        this.gameService.damagePlayer(player, damage, bullet.ownerId);
       }
     }
 

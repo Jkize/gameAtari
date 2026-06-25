@@ -1,22 +1,21 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Server } from 'socket.io';
+import { CollisionService } from './collision.service';
 import { DESTROYED_BODY_TTL_MS, GameService, SHIELD_COOLDOWN_MS, SHIELD_HP } from './game.service';
 import { MapService } from './maps/map.service';
-import { CollisionService } from './collision.service';
-import { WeaponService } from './weapons/weapon.service';
-import { WeaponLaserService } from './weapons/weapon-laser.service';
-import { WeaponGrenadeService } from './weapons/weapon-grenade.service';
-import { BulletImpactMaterial, BulletPublicState, GameState } from './types/game-state.types';
-import { PlayerPublicState } from './types/player.types';
-import { ActivePowerUp, ActivePowerUpPublicState } from './types/power-up.types';
-import { ObstacleType } from './types/map.types';
-import { PLAYER_ROOM, WATCHER_ROOM } from './socket-rooms';
 import { applyObstacleDamage, isSoftCoverObstacle } from './obstacle.config';
+import { GameSessionsService } from './runtime/game-sessions.service';
+import { BulletImpactMaterial, BulletPublicState, GameState } from './types/game-state.types';
+import { ObstacleType } from './types/map.types';
+import { ActivePowerUp, ActivePowerUpPublicState } from './types/power-up.types';
+import { PlayerPublicState } from './types/player.types';
+import { WeaponGrenadeService } from './weapons/weapon-grenade.service';
+import { WeaponLaserService } from './weapons/weapon-laser.service';
+import { WeaponService } from './weapons/weapon.service';
+import { canBulletHitPlayer } from './bullet-hit-policy';
 
-const TICK_RATE = 60;
-const TICK_INTERVAL = 1000 / TICK_RATE;
-const WATCHER_BROADCAST_RATE = 30;
-const WATCHER_BROADCAST_INTERVAL = 1000 / WATCHER_BROADCAST_RATE;
+const TICK_INTERVAL = 1000 / 60;
+const WATCHER_BROADCAST_INTERVAL = 1000 / 30;
 const OBSTACLE_IMPACT_MATERIAL: Partial<Record<ObstacleType, BulletImpactMaterial>> = {
   wood: 'wood',
   rock: 'rock',
@@ -24,14 +23,20 @@ const OBSTACLE_IMPACT_MATERIAL: Partial<Record<ObstacleType, BulletImpactMateria
   mirror: 'mirror',
 };
 
+interface LoopRuntime {
+  timer: NodeJS.Timeout;
+  lastTickTime: number;
+  lastWatcherBroadcastTime: number;
+}
+
 @Injectable()
 export class GameLoopService implements OnModuleDestroy {
   private server!: Server;
-  private loopTimer: NodeJS.Timeout | null = null;
-  private lastTickTime = 0;
-  private lastWatcherBroadcastTime = 0;
+  private readonly loops = new Map<string, LoopRuntime>();
+  private finishedHandler?: (roomId: string) => Promise<void> | void;
 
   constructor(
+    private readonly sessions: GameSessionsService,
     private readonly gameService: GameService,
     private readonly mapService: MapService,
     private readonly collisionService: CollisionService,
@@ -44,134 +49,164 @@ export class GameLoopService implements OnModuleDestroy {
     this.server = server;
   }
 
-  start(): void {
-    if (this.loopTimer) return;
-    if (!this.gameService.map) {
-      this.gameService.map = this.mapService.createMap();
-    }
-    this.gameService.status = 'playing';
-    this.lastTickTime = Date.now();
-    this.lastWatcherBroadcastTime = 0;
-    this.loopTimer = setInterval(() => this.tick(), TICK_INTERVAL);
+  onFinished(handler: (roomId: string) => Promise<void> | void): void {
+    this.finishedHandler = handler;
   }
 
-  stop(): void {
-    if (this.loopTimer) {
-      clearInterval(this.loopTimer);
-      this.loopTimer = null;
-    }
+  prepare(roomId: string, players: Array<{ userId: string; username: string }>): void {
+    this.sessions.create(roomId);
+    this.sessions.run(roomId, () => {
+      this.gameService.reset();
+      this.gameService.map = this.mapService.createMap();
+      for (const player of players) this.gameService.addPlayer(player.userId, player.username);
+    });
+  }
+
+  start(roomId: string): void {
+    if (this.loops.has(roomId)) return;
+    this.sessions.run(roomId, () => {
+      if (!this.gameService.map) this.gameService.map = this.mapService.createMap();
+      this.gameService.status = 'playing';
+      const state = this.sessions.require(roomId);
+      state.startedAt = new Date();
+    });
+    const runtime: LoopRuntime = {
+      timer: setInterval(() => this.tick(roomId), TICK_INTERVAL),
+      lastTickTime: Date.now(),
+      lastWatcherBroadcastTime: 0,
+    };
+    this.loops.set(roomId, runtime);
+  }
+
+  stop(roomId: string): void {
+    const runtime = this.loops.get(roomId);
+    if (!runtime) return;
+    clearInterval(runtime.timer);
+    this.loops.delete(roomId);
+  }
+
+  remove(roomId: string): void {
+    this.stop(roomId);
+    this.sessions.remove(roomId);
+  }
+
+  hasSession(roomId: string): boolean {
+    return Boolean(this.sessions.get(roomId));
+  }
+
+  addPlayer(roomId: string, userId: string, username: string): void {
+    this.sessions.run(roomId, () => this.gameService.addPlayer(userId, username));
+  }
+
+  removePlayer(roomId: string, userId: string): void {
+    this.sessions.run(roomId, () => this.gameService.removePlayer(userId));
+  }
+
+  applyInput(roomId: string, userId: string, input: Parameters<GameService['applyInput']>[1]): void {
+    this.sessions.run(roomId, () => this.gameService.applyInput(userId, input));
+  }
+
+  buildState(roomId: string): GameState {
+    return this.sessions.run(roomId, () => this.buildCurrentState());
   }
 
   onModuleDestroy(): void {
-    this.stop();
+    for (const roomId of this.loops.keys()) this.stop(roomId);
   }
 
-  buildState(): GameState {
+  private tick(roomId: string): void {
+    const runtime = this.loops.get(roomId);
+    if (!runtime || !this.sessions.get(roomId)) return;
+    this.sessions.run(roomId, () => {
+      const now = Date.now();
+      const deltaTime = Math.min(0.1, (now - runtime.lastTickTime) / 1000);
+      runtime.lastTickTime = now;
+      if (!this.gameService.map) return;
+
+      if (this.gameService.status === 'playing') {
+        this.processPlayers(deltaTime, now);
+        this.processBullets(deltaTime);
+        this.checkWinCondition(roomId);
+      }
+      this.broadcastState(roomId, runtime, now);
+      if (this.gameService.status === 'finished' && !this.hasVisibleDestroyedBodies(now)) {
+        this.stop(roomId);
+      }
+    });
+  }
+
+  private buildCurrentState(): GameState {
     const { map, players, bullets, status, impactEvents } = this.gameService;
     const now = Date.now();
-
     const publicPlayers: PlayerPublicState[] = [...players.values()]
-      .filter(p => p.alive || this.isDestroyedBodyVisible(p.destroyedAt, now))
-      .map(p => ({
-        id: p.id,
-        x: p.x,
-        y: p.y,
-        radius: p.radius,
-        hp: p.hp,
-        maxHp: p.maxHp,
-        bodyAngle: p.bodyAngle,
-        aimAngle: p.aimAngle,
-        color: p.color,
-        dashCooldownMs: Math.max(0, p.dashCooldown - (now - p.lastDashAt)),
-        weapon: this.weaponService.getPublicState(p, now),
-        activePowerUp: this.buildActivePowerUpState(p.activePowerUp, now),
-        dashing: now < p.dashUntil,
-        alive: p.alive,
-        destroyedBodyAlpha: p.alive ? undefined : this.getDestroyedBodyAlpha(p.destroyedAt, now),
-        shielding: p.shieldHp > 0 && now < p.shieldUntil,
-        shieldHp: (p.shieldHp > 0 && now < p.shieldUntil) ? Math.max(0, p.shieldHp) : 0,
+      .filter(player => player.alive || this.isDestroyedBodyVisible(player.destroyedAt, now))
+      .map(player => ({
+        id: player.id,
+        username: player.username,
+        x: player.x,
+        y: player.y,
+        radius: player.radius,
+        hp: player.hp,
+        maxHp: player.maxHp,
+        bodyAngle: player.bodyAngle,
+        aimAngle: player.aimAngle,
+        color: player.color,
+        dashCooldownMs: Math.max(0, player.dashCooldown - (now - player.lastDashAt)),
+        weapon: this.weaponService.getPublicState(player, now),
+        activePowerUp: this.buildActivePowerUpState(player.activePowerUp, now),
+        dashing: now < player.dashUntil,
+        alive: player.alive,
+        destroyedBodyAlpha: player.alive ? undefined : this.getDestroyedBodyAlpha(player.destroyedAt, now),
+        shielding: player.shieldHp > 0 && now < player.shieldUntil,
+        shieldHp: player.shieldHp > 0 && now < player.shieldUntil ? Math.max(0, player.shieldHp) : 0,
         shieldMaxHp: SHIELD_HP,
-        shieldCooldownMs: Math.max(0, SHIELD_COOLDOWN_MS - (now - p.lastShieldAt)),
-        shieldRemainingMs: (p.shieldHp > 0 && now < p.shieldUntil) ? Math.max(0, p.shieldUntil - now) : 0,
+        shieldCooldownMs: Math.max(0, SHIELD_COOLDOWN_MS - (now - player.lastShieldAt)),
+        shieldRemainingMs: player.shieldHp > 0 && now < player.shieldUntil
+          ? Math.max(0, player.shieldUntil - now)
+          : 0,
       }));
-
-    const publicBullets: BulletPublicState[] = bullets.map(b => ({
-      id: b.id,
-      ownerId: b.ownerId,
-      kind: b.kind,
-      x: b.x,
-      y: b.y,
-      endX: b.endX,
-      endY: b.endY,
-      bendX: b.bendX,
-      bendY: b.bendY,
-      radius: b.radius,
-      explosionRadius: b.explosionRadius,
-      pierceMetalRemaining: b.pierceMetalRemaining,
-      reflectCount: b.reflectCount,
-      reflectX: b.reflectX,
-      reflectY: b.reflectY,
+    const publicBullets: BulletPublicState[] = bullets.map(bullet => ({
+      id: bullet.id,
+      ownerId: bullet.ownerId,
+      kind: bullet.kind,
+      x: bullet.x,
+      y: bullet.y,
+      endX: bullet.endX,
+      endY: bullet.endY,
+      bendX: bullet.bendX,
+      bendY: bullet.bendY,
+      radius: bullet.radius,
+      explosionRadius: bullet.explosionRadius,
+      pierceMetalRemaining: bullet.pierceMetalRemaining,
+      reflectCount: bullet.reflectCount,
+      reflectX: bullet.reflectX,
+      reflectY: bullet.reflectY,
     }));
-
-    return {
-      status,
-      map: map!,
-      players: publicPlayers,
-      bullets: publicBullets,
-      impactEvents: [...impactEvents],
-    };
-  }
-
-  private tick(): void {
-    const now = Date.now();
-    const deltaTime = (now - this.lastTickTime) / 1000;
-    this.lastTickTime = now;
-
-    const { map } = this.gameService;
-    if (!map) return;
-
-    if (this.gameService.status === 'playing') {
-      this.processPlayers(deltaTime, now);
-      this.processBullets(deltaTime);
-      this.checkWinCondition();
-    }
-
-    this.broadcastState(now);
-
-    if (this.gameService.status === 'finished' && !this.hasVisibleDestroyedBodies(now)) {
-      this.stop();
-    }
+    return { status, map: map!, players: publicPlayers, bullets: publicBullets, impactEvents: [...impactEvents] };
   }
 
   private processPlayers(deltaTime: number, now: number): void {
     const { players, bullets, map } = this.gameService;
     if (!map) return;
-
     for (const player of players.values()) {
       if (!player.alive) continue;
-
       const previousX = player.x;
       const previousY = player.y;
-      const isFiringLaser = bullets.some(bullet => bullet.ownerId === player.id && bullet.kind === 'laser');
-
-      if (!isFiringLaser) {
+      const firingLaser = bullets.some(bullet => bullet.ownerId === player.id && bullet.kind === 'laser');
+      if (!firingLaser) {
         this.gameService.movePlayer(player, deltaTime, now);
         this.collisionService.clampPlayerToBounds(player, map.width, map.height);
-      }
-
-      if (!isFiringLaser) {
-        for (const obs of map.obstacles) {
-          if (isSoftCoverObstacle(obs)) continue;
-          this.collisionService.resolvePlayerVsObstacle(player, obs, previousX, previousY);
+        for (const obstacle of map.obstacles) {
+          if (!isSoftCoverObstacle(obstacle)) {
+            this.collisionService.resolvePlayerVsObstacle(player, obstacle, previousX, previousY);
+          }
         }
       }
-
-      for (let i = map.powerUps.length - 1; i >= 0; i--) {
-        if (this.gameService.tryPickupPowerUp(player, map.powerUps[i], now)) {
-          map.powerUps.splice(i, 1);
+      for (let index = map.powerUps.length - 1; index >= 0; index--) {
+        if (this.gameService.tryPickupPowerUp(player, map.powerUps[index], now)) {
+          map.powerUps.splice(index, 1);
         }
       }
-
       this.gameService.tryShoot(player, now);
     }
   }
@@ -179,29 +214,21 @@ export class GameLoopService implements OnModuleDestroy {
   private processBullets(deltaTime: number): void {
     const { players, bullets, map } = this.gameService;
     if (!map) return;
-
     const dead = new Set<string>();
-
     for (const bullet of bullets) {
       if (bullet.kind === 'laser') {
-        if (!this.weaponLaserService.processBeam(bullet, deltaTime)) {
-          dead.add(bullet.id);
-        }
+        if (!this.weaponLaserService.processBeam(bullet, deltaTime)) dead.add(bullet.id);
         continue;
       }
-
       const previousX = bullet.x;
       const previousY = bullet.y;
-
       bullet.x += bullet.dirX * bullet.speed * deltaTime;
       bullet.y += bullet.dirY * bullet.speed * deltaTime;
       bullet.lifeTime -= deltaTime * 1000;
-
       const reachedMaxDistance = bullet.maxDistance !== undefined &&
         bullet.startX !== undefined &&
         bullet.startY !== undefined &&
         (bullet.x - bullet.startX) ** 2 + (bullet.y - bullet.startY) ** 2 >= bullet.maxDistance ** 2;
-
       if (
         bullet.lifeTime <= 0 ||
         reachedMaxDistance ||
@@ -213,98 +240,67 @@ export class GameLoopService implements OnModuleDestroy {
         continue;
       }
 
-      // Bullet vs obstacles
       let absorbed = false;
-      for (let i = map.obstacles.length - 1; i >= 0; i--) {
-        const obs = map.obstacles[i];
-        if (isSoftCoverObstacle(obs)) continue;
-        if (!this.collisionService.bulletVsObstacleAlongPath(bullet, obs, previousX, previousY)) continue;
-
-        if (obs.type === 'mirror') {
-          this.collisionService.reflectBulletFromObstacle(bullet, obs, previousX, previousY);
+      for (let index = map.obstacles.length - 1; index >= 0; index--) {
+        const obstacle = map.obstacles[index];
+        if (isSoftCoverObstacle(obstacle)) continue;
+        if (!this.collisionService.bulletVsObstacleAlongPath(bullet, obstacle, previousX, previousY)) continue;
+        if (obstacle.type === 'mirror') {
+          this.collisionService.reflectBulletFromObstacle(bullet, obstacle, previousX, previousY);
           bullet.reflectCount = (bullet.reflectCount ?? 0) + 1;
           bullet.reflectX = bullet.x;
           bullet.reflectY = bullet.y;
           break;
         }
-
-        if (bullet.kind === 'grenade') {
-          this.weaponGrenadeService.explode(bullet);
-          dead.add(bullet.id);
-          absorbed = true;
-          break;
+        if (bullet.kind === 'grenade') this.weaponGrenadeService.explode(bullet);
+        else {
+          this.recordBulletImpact(bullet, this.getObstacleImpactMaterial(obstacle.type));
+          if (obstacle.destructible) {
+            applyObstacleDamage(obstacle, bullet.damage);
+            if (obstacle.hp <= 0) map.obstacles.splice(index, 1);
+          }
         }
-
-        this.recordBulletImpact(bullet, this.getObstacleImpactMaterial(obs.type));
         dead.add(bullet.id);
-
-        if (obs.destructible) {
-          applyObstacleDamage(obs, bullet.damage);
-          if (obs.hp <= 0) map.obstacles.splice(i, 1);
-        }
-
         absorbed = true;
         break;
       }
-
       if (absorbed) continue;
-
-      // Bullet vs players
       for (const player of players.values()) {
+        if (!canBulletHitPlayer(bullet, player)) continue;
         if (!this.collisionService.bulletVsPlayer(bullet, player)) continue;
-        if (bullet.kind === 'grenade') {
-          this.weaponGrenadeService.explode(bullet);
-        } else {
-          this.gameService.damagePlayer(player, bullet.damage);
+        if (bullet.kind === 'grenade') this.weaponGrenadeService.explode(bullet);
+        else {
+          this.gameService.damagePlayer(player, bullet.damage, bullet.ownerId);
           this.recordBulletImpact(bullet, 'spark');
         }
         dead.add(bullet.id);
         break;
       }
     }
-
-    this.gameService.bullets = bullets.filter(b => !dead.has(b.id));
+    this.gameService.bullets = bullets.filter(bullet => !dead.has(bullet.id));
   }
 
-  private checkWinCondition(): void {
-    const { players } = this.gameService;
-    const alive = [...players.values()].filter(p => p.alive);
-
-    if (players.size > 1 && alive.length <= 1) {
+  private checkWinCondition(roomId: string): void {
+    const alive = [...this.gameService.players.values()].filter(player => player.alive);
+    const initialPlayerCount = this.sessions.require(roomId).stats.size;
+    if (initialPlayerCount > 1 && alive.length <= 1) {
       this.gameService.status = 'finished';
+      this.sessions.require(roomId).endedAt = new Date();
+      void this.finishedHandler?.(roomId);
     }
   }
 
-  private isDestroyedBodyVisible(destroyedAt: number | undefined, now: number): boolean {
-    return destroyedAt !== undefined && now - destroyedAt < DESTROYED_BODY_TTL_MS;
-  }
-
-  private hasVisibleDestroyedBodies(now: number): boolean {
-    return [...this.gameService.players.values()].some(p => this.isDestroyedBodyVisible(p.destroyedAt, now));
-  }
-
-  private getDestroyedBodyAlpha(destroyedAt: number | undefined, now: number): number {
-    if (destroyedAt === undefined) return 0;
-    const remainingMs = Math.max(0, DESTROYED_BODY_TTL_MS - (now - destroyedAt));
-    return remainingMs / DESTROYED_BODY_TTL_MS;
-  }
-
-  private broadcastState(now: number): void {
-    const state = this.buildState();
-    this.server.to(PLAYER_ROOM).emit('gameState', state);
-
-    if (now - this.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL) {
-      this.lastWatcherBroadcastTime = now;
-      this.server.to(WATCHER_ROOM).emit('gameState', state);
+  private broadcastState(roomId: string, runtime: LoopRuntime, now: number): void {
+    const state = this.buildCurrentState();
+    this.server.to(`game:${roomId}:players`).emit('gameState', state);
+    if (now - runtime.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL) {
+      runtime.lastWatcherBroadcastTime = now;
+      this.server.to(`game:${roomId}:watchers`).emit('gameState', state);
     }
-
     this.gameService.impactEvents = [];
   }
 
-  private recordBulletImpact(
-    bullet: { id: string; x: number; y: number },
-    material: BulletImpactMaterial,
-  ): void {
+  private recordBulletImpact(bullet: { id: string; x: number; y: number }, material: BulletImpactMaterial): void {
     this.gameService.impactEvents.push({
       id: `${bullet.id}:${this.gameService.impactEvents.length}`,
       bulletId: bullet.id,
@@ -318,21 +314,34 @@ export class GameLoopService implements OnModuleDestroy {
     return OBSTACLE_IMPACT_MATERIAL[type] ?? 'spark';
   }
 
+  private isDestroyedBodyVisible(destroyedAt: number | undefined, now: number): boolean {
+    return destroyedAt !== undefined && now - destroyedAt < DESTROYED_BODY_TTL_MS;
+  }
+
+  private hasVisibleDestroyedBodies(now: number): boolean {
+    return [...this.gameService.players.values()].some(player =>
+      this.isDestroyedBodyVisible(player.destroyedAt, now),
+    );
+  }
+
+  private getDestroyedBodyAlpha(destroyedAt: number | undefined, now: number): number {
+    if (destroyedAt === undefined) return 0;
+    return Math.max(0, DESTROYED_BODY_TTL_MS - (now - destroyedAt)) / DESTROYED_BODY_TTL_MS;
+  }
+
   private buildActivePowerUpState(
     activePowerUp: ActivePowerUp | undefined,
     now: number,
   ): ActivePowerUpPublicState | undefined {
-    if (!activePowerUp) return undefined;
-
-    const { expiresAt, chargeStartedAt } = activePowerUp;
-    if (expiresAt !== undefined && expiresAt <= now) return undefined;
-
+    if (!activePowerUp || (activePowerUp.expiresAt !== undefined && activePowerUp.expiresAt <= now)) {
+      return undefined;
+    }
     return {
       type: activePowerUp.type,
       name: activePowerUp.name,
-      remainingMs: expiresAt !== undefined ? expiresAt - now : undefined,
+      remainingMs: activePowerUp.expiresAt !== undefined ? activePowerUp.expiresAt - now : undefined,
       shotsRemaining: activePowerUp.shotsRemaining,
-      chargeMs: chargeStartedAt ? now - chargeStartedAt : undefined,
+      chargeMs: activePowerUp.chargeStartedAt ? now - activePowerUp.chargeStartedAt : undefined,
     };
   }
 }

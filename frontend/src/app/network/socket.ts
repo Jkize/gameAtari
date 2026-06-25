@@ -1,19 +1,21 @@
 import { io, Socket } from 'socket.io-client';
-
-const BACKEND_URL = `http://${window.location.hostname}:3000`;
+import { environment } from '../../environments/environment';
 
 class SocketManager {
   private socket: Socket | null = null;
+  private readonly guestId = crypto.randomUUID();
 
-  connect(): Socket {
+  connect(accessToken?: string): Socket {
     if (this.socket) {
+      this.socket.auth = { token: accessToken, guestId: this.guestId };
       if (!this.socket.active) {
         this.socket.connect();
       }
       return this.socket;
     }
 
-    this.socket = io(BACKEND_URL, {
+    this.socket = io(environment.backendUrl, {
+      auth: { token: accessToken, guestId: this.guestId },
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -31,6 +33,7 @@ class SocketManager {
     this.socket?.disconnect();
     this.socket = null;
   }
+
 }
 
 export const socketManager = new SocketManager();

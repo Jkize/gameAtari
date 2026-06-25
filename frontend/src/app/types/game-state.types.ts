@@ -43,6 +43,7 @@ export interface Obstacle {
 
 export interface PlayerPublicState {
   id: string;
+  username?: string;
   x: number;
   y: number;
   radius: number;

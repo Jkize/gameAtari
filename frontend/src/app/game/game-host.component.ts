@@ -2,6 +2,8 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@ang
 import { TankGame } from './TankGame';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 import { socketManager } from '../network/socket';
+import { AuthService } from '../auth/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-game-host',
@@ -41,12 +43,23 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
 
   private game?: TankGame;
 
+  private readonly returnToLobby = () => {
+    void this.router.navigateByUrl('/lobby');
+  };
+
+  constructor(
+    private readonly auth: AuthService,
+    private readonly router: Router,
+  ) {}
+
   ngAfterViewInit(): void {
+    window.addEventListener('tank-arena:return-lobby', this.returnToLobby);
+    socketManager.connect(this.auth.accessToken() ?? undefined);
     this.game = new TankGame(this.containerRef.nativeElement);
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('tank-arena:return-lobby', this.returnToLobby);
     this.game?.destroy(true);
-    socketManager.disconnect();
   }
 }

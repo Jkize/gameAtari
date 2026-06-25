@@ -1,0 +1,6 @@
+Pg admin
+Usuario: admin@tank-arena.local
+Contraseña: admin
+Contraseña de PostgreSQL: tank_arena
+
+Redis Commander queda conectado automáticamente. Los valores pueden modificarse en docker/.env.

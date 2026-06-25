@@ -13,6 +13,7 @@ export interface PlayerInput {
 
 export interface Player {
   id: string;
+  username?: string;
   x: number;
   y: number;
   radius: number;
@@ -33,10 +34,12 @@ export interface Player {
   lastShieldAt: number;
   alive: boolean;
   destroyedAt?: number;
+  disconnectedAt?: number;
 }
 
 export interface PlayerPublicState {
   id: string;
+  username?: string;
   x: number;
   y: number;
   radius: number;

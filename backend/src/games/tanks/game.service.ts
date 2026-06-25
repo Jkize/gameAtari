@@ -5,6 +5,7 @@ import { GameMap } from './types/map.types';
 import { BulletImpactPublicState, GameStatus } from './types/game-state.types';
 import { WeaponService } from './weapons/weapon.service';
 import { PowerUpSpawn } from './types/power-up.types';
+import { GameRuntimeContext } from './runtime/game-runtime-context.service';
 
 const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
@@ -54,24 +55,32 @@ const SPAWN_POINTS = [
 
 @Injectable()
 export class GameService {
-  players = new Map<string, Player>();
-  bullets: Bullet[] = [];
-  impactEvents: BulletImpactPublicState[] = [];
-  map: GameMap | null = null;
-  status: GameStatus = 'waiting';
-  private usedColorIndices = new Set<number>();
+  constructor(
+    private readonly weaponService: WeaponService,
+    private readonly runtime: GameRuntimeContext,
+  ) {}
 
-  constructor(private readonly weaponService: WeaponService) {}
+  get players(): Map<string, Player> { return this.runtime.current().players; }
+  get bullets(): Bullet[] { return this.runtime.current().bullets; }
+  set bullets(value: Bullet[]) { this.runtime.current().bullets = value; }
+  get impactEvents(): BulletImpactPublicState[] { return this.runtime.current().impactEvents; }
+  set impactEvents(value: BulletImpactPublicState[]) { this.runtime.current().impactEvents = value; }
+  get map(): GameMap | null { return this.runtime.current().map; }
+  set map(value: GameMap | null) { this.runtime.current().map = value; }
+  get status(): GameStatus { return this.runtime.current().status; }
+  set status(value: GameStatus) { this.runtime.current().status = value; }
+  private get usedColorIndices(): Set<number> { return this.runtime.current().usedColorIndices; }
 
-  addPlayer(socketId: string): Player {
-    const existing = this.players.get(socketId);
+  addPlayer(userId: string, username?: string): Player {
+    const existing = this.players.get(userId);
     if (existing) return existing;
 
     const spawn = SPAWN_POINTS[this.players.size % SPAWN_POINTS.length];
     const colorIndex = this.pickColorIndex();
 
     const player: Player = {
-      id: socketId,
+      id: userId,
+      username,
       x: spawn.x,
       y: spawn.y,
       radius: PLAYER_RADIUS,
@@ -94,17 +103,23 @@ export class GameService {
       destroyedAt: undefined,
     };
 
-    this.players.set(socketId, player);
+    this.players.set(userId, player);
+    this.runtime.current().stats.set(userId, {
+      kills: 0,
+      deaths: 0,
+      damageDealt: 0,
+      damageTaken: 0,
+    });
     return player;
   }
 
-  removePlayer(socketId: string): void {
-    const player = this.players.get(socketId);
+  removePlayer(userId: string): void {
+    const player = this.players.get(userId);
     if (player) {
       const idx = PLAYER_COLORS.indexOf(player.color);
       if (idx !== -1) this.usedColorIndices.delete(idx);
     }
-    this.players.delete(socketId);
+    this.players.delete(userId);
   }
 
   private pickColorIndex(): number {
@@ -117,8 +132,8 @@ export class GameService {
     return 0;
   }
 
-  applyInput(socketId: string, raw: Partial<PlayerInput>): void {
-    const player = this.players.get(socketId);
+  applyInput(userId: string, raw: Partial<PlayerInput>): void {
+    const player = this.players.get(userId);
     if (!player || !player.alive) return;
 
     player.input.moveX    = this.clamp(Number(raw.moveX)    || 0, -1, 1);
@@ -175,7 +190,7 @@ export class GameService {
     return true;
   }
 
-  damagePlayer(player: Player, amount: number): void {
+  damagePlayer(player: Player, amount: number, attackerId?: string): void {
     if (!player.alive) return;
 
     const now = Date.now();
@@ -187,10 +202,23 @@ export class GameService {
 
     if (amount <= 0) return;
 
+    const appliedDamage = Math.min(player.hp, amount);
     player.hp = Math.max(0, player.hp - amount);
+    const victimStats = this.runtime.current().stats.get(player.id);
+    if (victimStats) victimStats.damageTaken += appliedDamage;
+    if (attackerId && attackerId !== player.id) {
+      const attackerStats = this.runtime.current().stats.get(attackerId);
+      if (attackerStats) attackerStats.damageDealt += appliedDamage;
+    }
     if (player.hp === 0) {
       player.alive = false;
       player.destroyedAt = now;
+      if (victimStats) victimStats.deaths += 1;
+      if (attackerId && attackerId !== player.id) {
+        const attackerStats = this.runtime.current().stats.get(attackerId);
+        if (attackerStats) attackerStats.kills += 1;
+      }
+      this.runtime.current().eliminationOrder.push(player.id);
       player.input.shoot = false;
       player.input.dash = false;
       player.input.reload = false;
@@ -205,6 +233,11 @@ export class GameService {
     this.map = null;
     this.status = 'waiting';
     this.usedColorIndices.clear();
+    this.runtime.current().startedAt = null;
+    this.runtime.current().endedAt = null;
+    this.runtime.current().eliminationOrder = [];
+    this.runtime.current().stats.clear();
+    this.runtime.current().persisted = false;
   }
 
   private clamp(val: number, min: number, max: number): number {

@@ -14,6 +14,7 @@ import { ObstacleRenderer } from './game-scene/obstacle-renderer';
 import { PlayerRenderer } from './game-scene/player-renderer';
 import { PowerUpRenderer } from './game-scene/power-up-renderer';
 import { StateChangeTracker } from './game-scene/state-change-tracker';
+import { environment } from '../../environments/environment';
 
 export class GameScene extends Phaser.Scene {
   private socket!: Socket;
@@ -34,6 +35,41 @@ export class GameScene extends Phaser.Scene {
   private effectSpawner!: EffectSpawner;
   private audioManager!: AudioManager;
   private stateChangeTracker!: StateChangeTracker;
+  private returnToLobbyTimer?: number;
+  private readonly onGameJoined = (
+    data: { playerId: string; map: GameState['map']; status: GameState['status'] },
+  ): void => {
+    this.resetRoundRenderState();
+    this.myPlayerId = data.playerId;
+    this.gameState = { status: data.status, map: data.map, players: [], bullets: [], impactEvents: [] };
+    this.mapW = data.map.width;
+    this.mapH = data.map.height;
+    this.backgroundRenderer.draw(this.mapW, this.mapH);
+    this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
+    this.cameras.main.setViewport(0, 0, this.scale.width, GAME_VIEW_HEIGHT);
+  };
+  private readonly onGameState = (state: GameState): void => {
+    this.gameState = state;
+  };
+  private readonly onPlayerDisconnected = (data: { playerId: string }): void => {
+    this.stateChangeTracker.removeDisconnectedPlayer(data.playerId);
+  };
+  private readonly onGameEnded = (data: { returnToLobbyInMs?: number }): void => {
+    const returnToLobbyInMs = Math.min(data.returnToLobbyInMs ?? 5000, 5000);
+    this.hudRenderer.setReturnToLobbyCountdown(returnToLobbyInMs);
+    this.returnToLobbyTimer = window.setTimeout(() => {
+      this.returnToLobby('round_finished');
+    }, returnToLobbyInMs);
+  };
+  private readonly onRoomLeft = (): void => {
+    this.returnToLobby('membership_expired');
+  };
+  private readonly onReconnectFailed = (): void => {
+    this.returnToLobby('reconnect_failed');
+  };
+  private readonly onConnect = (): void => {
+    this.joinConfiguredRoom();
+  };
 
   constructor() {
     super({ key: 'GameScene' });
@@ -49,6 +85,8 @@ export class GameScene extends Phaser.Scene {
     this.hudRenderer.create();
     this.inputController.setup();
     this.setupSocket();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanupSocketListeners, this);
+    this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanupSocketListeners, this);
 
     this.cameras.main.fadeIn(500, 3, 6, 15);
   }
@@ -101,32 +139,47 @@ export class GameScene extends Phaser.Scene {
   private setupSocket(): void {
     this.socket = socketManager.connect();
 
-    this.socket.on('gameJoined', (data: { playerId: string; map: GameState['map']; status: GameState['status'] }) => {
-      this.resetRoundRenderState();
-      this.myPlayerId = data.playerId;
-      this.gameState = { status: data.status, map: data.map, players: [], bullets: [], impactEvents: [] };
-      this.mapW = data.map.width;
-      this.mapH = data.map.height;
-      this.backgroundRenderer.draw(this.mapW, this.mapH);
-      this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
-      this.cameras.main.setViewport(0, 0, this.scale.width, GAME_VIEW_HEIGHT);
-    });
-
-    this.socket.on('gameState', (state: GameState) => {
-      this.gameState = state;
-    });
-
-    this.socket.on('playerDisconnected', (data: { playerId: string }) => {
-      this.stateChangeTracker.removeDisconnectedPlayer(data.playerId);
-    });
-
-    this.socket.on('connect', () => {
-      this.socket.emit('joinGame');
-    });
+    this.socket.on('gameJoined', this.onGameJoined);
+    this.socket.on('gameState', this.onGameState);
+    this.socket.on('playerDisconnected', this.onPlayerDisconnected);
+    this.socket.on('game:ended', this.onGameEnded);
+    this.socket.on('room:left', this.onRoomLeft);
+    this.socket.io.on('reconnect_failed', this.onReconnectFailed);
+    this.socket.on('connect', this.onConnect);
 
     if (this.socket.connected) {
-      this.socket.emit('joinGame');
+      this.joinConfiguredRoom();
     }
+  }
+
+  private joinConfiguredRoom(): void {
+    if (!environment.devGameMode) {
+      this.socket.emit('room:getState');
+      return;
+    }
+    const match = window.location.pathname.match(/^\/game\/([^/]+)/);
+    this.socket.emit('joinGame', { roomId: decodeURIComponent(match?.[1] ?? 'salatest') });
+  }
+
+  private returnToLobby(reason: string): void {
+    window.dispatchEvent(new CustomEvent('tank-arena:return-lobby', {
+      detail: { reason },
+    }));
+  }
+
+  private cleanupSocketListeners(): void {
+    if (this.returnToLobbyTimer !== undefined) {
+      window.clearTimeout(this.returnToLobbyTimer);
+      this.returnToLobbyTimer = undefined;
+    }
+    if (!this.socket) return;
+    this.socket.off('gameJoined', this.onGameJoined);
+    this.socket.off('gameState', this.onGameState);
+    this.socket.off('playerDisconnected', this.onPlayerDisconnected);
+    this.socket.off('game:ended', this.onGameEnded);
+    this.socket.off('room:left', this.onRoomLeft);
+    this.socket.off('connect', this.onConnect);
+    this.socket.io.off('reconnect_failed', this.onReconnectFailed);
   }
 
   private resetRoundRenderState(): void {

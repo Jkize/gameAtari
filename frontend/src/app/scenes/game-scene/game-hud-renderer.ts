@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_VIEW_HEIGHT, HUD_HEIGHT } from '../../game/viewport.config';
 import { GameState, PlayerPublicState, PowerUpType } from '../../types/game-state.types';
 import { C, MONO } from './game-scene.constants';
+import { environment } from '../../../environments/environment';
 
 type HudObject = Phaser.GameObjects.GameObject;
 
@@ -48,6 +49,7 @@ export class GameHudRenderer {
   private uiCamera!: Phaser.Cameras.Scene2D.Camera;
   private readonly hudObjects = new Set<HudObject>();
   private readonly readyMap = new Map<string, boolean>();
+  private returnToLobbyAt = 0;
 
   private frameGfx!: Phaser.GameObjects.Graphics;
   private topGfx!: Phaser.GameObjects.Graphics;
@@ -201,6 +203,10 @@ export class GameHudRenderer {
     this.drawTopPanels(me, Boolean(myPlayerId), state.players.length);
     this.drawBottomHud(me, time);
     this.updateOverlay(state, myPlayerId, me, time);
+  }
+
+  setReturnToLobbyCountdown(durationMs: number): void {
+    this.returnToLobbyAt = Date.now() + durationMs;
   }
 
   private add<T extends HudObject>(object: T): T {
@@ -620,7 +626,14 @@ export class GameHudRenderer {
       this.centerSub.setAlpha(1).setText('NO SURVIVORS');
     }
 
-    this.centerHint.setAlpha(0.68).setText('PRESS [ENTER] TO PLAY AGAIN');
+    const remainingSeconds = this.returnToLobbyAt > 0
+      ? Math.max(0, Math.ceil((this.returnToLobbyAt - Date.now()) / 1000))
+      : 5;
+    this.centerHint.setAlpha(0.8).setText(
+      environment.devGameMode
+        ? `VOLVIENDO AL LOBBY EN ${remainingSeconds}s · [ENTER] REINICIO DEV`
+        : `VOLVIENDO AL LOBBY EN ${remainingSeconds}s`,
+    );
     this.statusText.setText('');
   }
 }

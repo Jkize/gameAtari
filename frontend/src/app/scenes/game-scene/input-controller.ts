@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Socket } from 'socket.io-client';
 import { GameState } from '../../types/game-state.types';
 import { PlayerInput } from '../../types/input.types';
+import { environment } from '../../../environments/environment';
 
 type SceneState = {
   getGameState(): GameState | null;
@@ -49,7 +50,10 @@ export class InputController {
       const socket = this.state.getSocket();
       if (gameState?.status === 'waiting' && this.state.getMyPlayerId()) {
         socket.emit('startGame');
-      } else if (gameState?.status === 'finished') {
+      } else if (
+        environment.devGameMode &&
+        gameState?.status === 'finished'
+      ) {
         socket.emit('restartGame');
       }
     });

@@ -23,7 +23,11 @@ export class WeaponGrenadeService {
       if (edgeDistance > radius) continue;
 
       const falloff = 1 - edgeDistance / radius;
-      this.gameService.damagePlayer(player, Math.ceil(bullet.damage * (0.45 + falloff * 0.55)));
+      this.gameService.damagePlayer(
+        player,
+        Math.ceil(bullet.damage * (0.45 + falloff * 0.55)),
+        bullet.ownerId,
+      );
     }
 
     for (let i = map.obstacles.length - 1; i >= 0; i--) {
