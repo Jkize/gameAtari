@@ -14,6 +14,7 @@ import { GameSessionsService } from './runtime/game-sessions.service';
 import { RoomsService } from '../../rooms/rooms.service';
 import { MatchesService } from '../../matches/matches.service';
 import { RewardsService } from '../../rewards/rewards.service';
+import { SocketRateLimiterService } from './socket-rate-limiter.service';
 
 @Module({
   imports: [AuthModule, UsersModule],
@@ -31,6 +32,7 @@ import { RewardsService } from '../../rewards/rewards.service';
     RoomsService,
     MatchesService,
     RewardsService,
+    SocketRateLimiterService,
   ],
   exports: [GameSessionsService],
 })

@@ -1,0 +1,125 @@
+TANK ARENA - LOCAL BACKEND CAPACITY TEST
+========================================
+
+CURRENT LIMITS
+--------------
+- Maximum players per room: 15
+- Minimum players to start: 2
+- Backend simulation: 60 ticks per second
+- Player state broadcast: 60 messages per second
+- Spectator state broadcast: 30 messages per second
+- Rooms and game sessions are stored in backend process memory.
+- Use only one backend instance until game state is synchronized between instances.
+
+
+TEST OBJECTIVE
+--------------
+Determine how many simultaneous players and rooms one backend instance can
+support without excessive CPU, RAM, latency, missed ticks, or disconnects.
+
+
+RECOMMENDED TEST STAGES
+-----------------------
+Run each stage for at least 10-15 minutes:
+
+1. Backend idle, with no connected players.
+2. 15 players in 1 room.
+3. 30 players in 2 rooms.
+4. 60 players in 4 rooms.
+5. Continue increasing rooms until the system becomes unstable.
+
+Simulated players should continuously:
+
+- Send playerInput at 60 Hz.
+- Move and aim.
+- Shoot frequently.
+- Receive and count gameState events.
+
+
+START THE BACKEND
+-----------------
+From backend/:
+
+    npm run dev
+
+
+IDENTIFY THE BACKEND NODE PROCESS
+---------------------------------
+In another PowerShell terminal:
+
+    Get-CimInstance Win32_Process |
+      Where-Object Name -eq "node.exe" |
+      Select-Object ProcessId, CommandLine
+
+
+CHECK CURRENT RAM AND CPU
+-------------------------
+
+    Get-Process node | Select-Object Id, ProcessName,
+      @{Name="RAM_MB";Expression={[math]::Round($_.WorkingSet64 / 1MB, 2)}},
+      @{Name="CPU_Seconds";Expression={$_.CPU}}
+
+If multiple Node processes are running, replace "node" with the backend PID:
+
+    Get-Process -Id YOUR_BACKEND_PID | Select-Object Id,
+      @{Name="RAM_MB";Expression={[math]::Round($_.WorkingSet64 / 1MB, 2)}},
+      @{Name="CPU_Seconds";Expression={$_.CPU}}
+
+
+CONTINUOUS RAM AND CPU MONITORING
+---------------------------------
+Replace YOUR_BACKEND_PID:
+
+    while ($true) {
+      Clear-Host
+      Get-Process -Id YOUR_BACKEND_PID | Select-Object Id,
+        @{Name="RAM_MB";Expression={[math]::Round($_.WorkingSet64 / 1MB, 2)}},
+        @{Name="CPU_Seconds";Expression={$_.CPU}}
+      Start-Sleep 2
+    }
+
+Stop monitoring with Ctrl+C.
+
+
+WHAT TO RECORD
+--------------
+For every test stage, record:
+
+- Number of players.
+- Number of active rooms.
+- Idle RAM before the test.
+- Average and maximum RAM during the test.
+- CPU utilization.
+- Actual gameState messages received per second.
+- Input-to-state latency.
+- Socket disconnects and errors.
+- Whether RAM returns close to idle after clients disconnect.
+
+
+SUGGESTED PASS CONDITIONS
+-------------------------
+- Tick work normally completes within 16.7 ms.
+- Players receive close to 60 gameState events per second.
+- CPU remains below approximately 75%.
+- RAM stabilizes instead of continuously increasing.
+- No unexpected socket disconnects.
+- Gameplay remains responsive during sustained movement and shooting.
+
+
+IMPORTANT INTERPRETATION
+------------------------
+- 15 players is the gameplay limit per room, not the backend capacity limit.
+- One room with 15 active players at 60 Hz should be reasonable, but it must
+  be verified using the intended production CPU and RAM limits.
+- Local results are useful for detecting bottlenecks and memory leaks, but a
+  final test should run on a staging machine similar to production.
+- Continuous RAM growth after players disconnect may indicate a memory leak.
+- Spectators can substantially increase network traffic because each receives
+  game state at 30 Hz.
+
+
+NEXT IMPLEMENTATION
+-------------------
+Create a custom Node.js load-test client using socket.io-client. It should
+open multiple connections, join rooms, send randomized playerInput at 60 Hz,
+and report received gameState frequency, latency, errors, and disconnects.

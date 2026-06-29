@@ -17,6 +17,7 @@ import { MatchesService } from '../../matches/matches.service';
 import { RoomsService } from '../../rooms/rooms.service';
 import { GameLoopService } from './game-loop.service';
 import { PlayerInput } from './types/player.types';
+import { SocketRateLimiterService } from './socket-rate-limiter.service';
 
 type AuthenticatedSocket = Socket & {
   data: Socket['data'] & {
@@ -41,6 +42,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly gameLoop: GameLoopService,
     private readonly matches: MatchesService,
     private readonly config: ConfigService,
+    private readonly rateLimiter: SocketRateLimiterService,
   ) {}
 
   afterInit(server: Server): void {
@@ -57,6 +59,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     });
     server.use(async (socket, next) => {
       try {
+        const ip = socket.handshake.address;
+        if (!this.rateLimiter.isConnectionAllowed(ip)) {
+          next(new Error('Too many connections from this IP'));
+          return;
+        }
         if (this.isDevGameMode()) {
           const requestedId = socket.handshake.auth?.guestId;
           const guestId = typeof requestedId === 'string' && /^[a-zA-Z0-9-]{8,80}$/.test(requestedId)
@@ -82,12 +89,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleConnection(client: AuthenticatedSocket): void {
+    this.rateLimiter.addConnection(client.handshake.address, client.id);
     client.join('lobby');
     client.emit('lobby:roomsUpdated', this.rooms.list());
     console.log(`[connect] ${client.id} user=${client.data.auth.userId}`);
   }
 
   handleDisconnect(client: AuthenticatedSocket): void {
+    this.rateLimiter.removeConnection(client.handshake.address, client.id);
     const auth = client.data.auth;
     if (auth) void this.rooms.disconnect(auth.userId, client.id);
   }
@@ -99,6 +108,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('lobby:quickPlay')
   async quickPlay(@ConnectedSocket() client: AuthenticatedSocket): Promise<void> {
+    if (!this.rateLimiter.checkLobbyAction(client.data.auth.userId)) {
+      client.emit('game:error', { code: 'RATE_LIMITED', message: 'Too many requests, slow down' });
+      return;
+    }
     await this.safe(client, async () => {
       const room = await this.rooms.quickPlay(client, client.data.auth);
       client.emit('room:joined', room);
@@ -111,6 +124,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() body: { name?: string } = {},
   ): Promise<void> {
+    if (!this.rateLimiter.checkLobbyAction(client.data.auth.userId)) {
+      client.emit('game:error', { code: 'RATE_LIMITED', message: 'Too many requests, slow down' });
+      return;
+    }
     await this.safe(client, async () => {
       const room = await this.rooms.create(client, client.data.auth, body?.name);
       client.emit('room:joined', room);
@@ -123,6 +140,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() body: { roomId?: string },
   ): Promise<void> {
+    if (!this.rateLimiter.checkLobbyAction(client.data.auth.userId)) {
+      client.emit('game:error', { code: 'RATE_LIMITED', message: 'Too many requests, slow down' });
+      return;
+    }
     await this.safe(client, async () => {
       if (!body?.roomId) throw new Error('roomId is required');
       const room = await this.rooms.join(body.roomId, client, client.data.auth);
@@ -189,6 +210,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() input: Partial<PlayerInput>,
   ): void {
+    if (!this.rateLimiter.checkPlayerInput(client.data.auth.userId)) return;
     const room = this.rooms.roomForUser(client.data.auth.userId);
     if (!room || room.status !== 'in_game' || !this.gameLoop.hasSession(room.id)) return;
     this.gameLoop.applyInput(room.id, client.data.auth.userId, input);
