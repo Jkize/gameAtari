@@ -2,6 +2,7 @@
   "name": "Jungle Survival BR v2",
   "width": 2900,
   "height": 2300,
+  "maxPlayers": 15,
   "spawnPoints": [
     {
       "x": 312,

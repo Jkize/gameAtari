@@ -36,6 +36,7 @@ export interface CustomMapJson {
   name: string;
   width: number;
   height: number;
+  maxPlayers: number;
   spawnPoints: Array<{ x: number; y: number }>;
   obstacles: Array<{
     type: ObstacleType;

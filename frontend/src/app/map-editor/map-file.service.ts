@@ -170,6 +170,7 @@ export class MapFileService {
       name: document.name.trim(),
       width: Math.round(document.width),
       height: Math.round(document.height),
+      maxPlayers: document.spawnPoints.length,
       spawnPoints: document.spawnPoints.map(point => ({ x: Math.round(point.x), y: Math.round(point.y) })),
       obstacles: document.obstacles.map(obstacle => ({
         type: obstacle.type,
