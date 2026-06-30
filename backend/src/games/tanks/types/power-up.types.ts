@@ -36,6 +36,7 @@ export interface PowerUpSpawn {
   x: number;
   y: number;
   radius: number;
+  createdAt: number;
 }
 
 export interface ActivePowerUpPublicState {

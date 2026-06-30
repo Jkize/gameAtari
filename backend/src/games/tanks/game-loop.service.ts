@@ -1,4 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Server } from 'socket.io';
 import { SOCKET_EVENTS } from '../../common/socket-events';
 import { CollisionService } from './collision.service';
@@ -14,6 +15,11 @@ import { WeaponGrenadeService } from './weapons/weapon-grenade.service';
 import { WeaponLaserService } from './weapons/weapon-laser.service';
 import { WeaponService } from './weapons/weapon.service';
 import { canBulletHitPlayer } from './bullet-hit-policy';
+import {
+  FIRST_POWER_UP_SPAWN_DELAY_MS,
+  POWER_UP_SPAWN_INTERVAL_MS,
+  PowerUpSpawnService,
+} from './power-up-spawn.service';
 
 const TICK_INTERVAL = 1000 / 60;
 const WATCHER_BROADCAST_INTERVAL = 1000 / 30;
@@ -30,6 +36,7 @@ interface LoopRuntime {
   lastWatcherBroadcastTime: number;
   avgTickMs: number;
   delayedTicks: number;
+  nextPowerUpSpawnAt?: number;
 }
 
 export interface TickMetrics {
@@ -52,6 +59,8 @@ export class GameLoopService implements OnModuleDestroy {
     private readonly weaponService: WeaponService,
     private readonly weaponLaserService: WeaponLaserService,
     private readonly weaponGrenadeService: WeaponGrenadeService,
+    private readonly powerUpSpawnService: PowerUpSpawnService,
+    private readonly config: ConfigService,
   ) {}
 
   setServer(server: Server): void {
@@ -78,6 +87,9 @@ export class GameLoopService implements OnModuleDestroy {
       this.gameService.status = 'playing';
       const state = this.sessions.require(roomId);
       state.startedAt = new Date();
+      if (this.isProductionPowerUpSpawningEnabled()) {
+        this.gameService.map.powerUps = [];
+      }
     });
     const runtime: LoopRuntime = {
       timer: setInterval(() => this.tick(roomId), TICK_INTERVAL),
@@ -85,6 +97,9 @@ export class GameLoopService implements OnModuleDestroy {
       lastWatcherBroadcastTime: 0,
       avgTickMs: 0,
       delayedTicks: 0,
+      nextPowerUpSpawnAt: this.isProductionPowerUpSpawningEnabled()
+        ? Date.now() + FIRST_POWER_UP_SPAWN_DELAY_MS
+        : undefined,
     };
     this.loops.set(roomId, runtime);
   }
@@ -152,7 +167,8 @@ export class GameLoopService implements OnModuleDestroy {
       if (!this.gameService.map) return;
 
       if (this.gameService.status === 'playing') {
-        this.processPlayers(deltaTime, now);
+        this.processPowerUpSpawns(roomId, runtime, now);
+        this.processPlayers(roomId, deltaTime, now);
         this.processBullets(deltaTime);
         this.checkWinCondition(roomId);
       }
@@ -213,7 +229,23 @@ export class GameLoopService implements OnModuleDestroy {
     return { status, map: map!, players: publicPlayers, bullets: publicBullets, impactEvents: [...impactEvents] };
   }
 
-  private processPlayers(deltaTime: number, now: number): void {
+  private processPowerUpSpawns(roomId: string, runtime: LoopRuntime, now: number): void {
+    if (!this.isProductionPowerUpSpawningEnabled() || runtime.nextPowerUpSpawnAt === undefined) return;
+    if (now < runtime.nextPowerUpSpawnAt) return;
+
+    runtime.nextPowerUpSpawnAt = now + POWER_UP_SPAWN_INTERVAL_MS;
+    const { map, players } = this.gameService;
+    if (!map) return;
+
+    const powerUp = this.powerUpSpawnService.trySpawn(map, players.values(), now);
+    if (!powerUp) return;
+
+    map.powerUps.push(powerUp);
+    this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.POWER_UP.SPAWNED, powerUp);
+    this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.POWER_UP.SPAWNED, powerUp);
+  }
+
+  private processPlayers(roomId: string, deltaTime: number, now: number): void {
     const { players, bullets, map } = this.gameService;
     if (!map) return;
     for (const player of players.values()) {
@@ -231,8 +263,17 @@ export class GameLoopService implements OnModuleDestroy {
         }
       }
       for (let index = map.powerUps.length - 1; index >= 0; index--) {
-        if (this.gameService.tryPickupPowerUp(player, map.powerUps[index], now)) {
+        const powerUp = map.powerUps[index];
+        if (this.gameService.tryPickupPowerUp(player, powerUp, now)) {
           map.powerUps.splice(index, 1);
+          this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.POWER_UP.COLLECTED, {
+            powerUpId: powerUp.id,
+            playerId: player.id,
+          });
+          this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.POWER_UP.COLLECTED, {
+            powerUpId: powerUp.id,
+            playerId: player.id,
+          });
         }
       }
       this.gameService.tryShoot(player, now);
@@ -340,6 +381,10 @@ export class GameLoopService implements OnModuleDestroy {
 
   private getObstacleImpactMaterial(type: ObstacleType): BulletImpactMaterial {
     return OBSTACLE_IMPACT_MATERIAL[type] ?? 'spark';
+  }
+
+  private isProductionPowerUpSpawningEnabled(): boolean {
+    return !this.config.get<boolean>('DEV_GAME_MODE', false);
   }
 
   private isDestroyedBodyVisible(destroyedAt: number | undefined, now: number): boolean {

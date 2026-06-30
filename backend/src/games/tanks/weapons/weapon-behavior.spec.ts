@@ -1,5 +1,6 @@
 import { CollisionService } from '../collision.service';
 import { GameService } from '../game.service';
+import { PowerUpSpawnService } from '../power-up-spawn.service';
 import { GameRuntimeContext } from '../runtime/game-runtime-context.service';
 import { GameSessionsService } from '../runtime/game-sessions.service';
 import { Obstacle } from '../types/map.types';
@@ -19,7 +20,7 @@ describe('weapon behavior', () => {
     sessions = new GameSessionsService(context);
     sessions.create('test-room');
     weapons = new WeaponService();
-    game = new GameService(weapons, context);
+    game = new GameService(weapons, context, new PowerUpSpawnService());
     const collision = new CollisionService();
     laser = new WeaponLaserService(game, collision);
     grenade = new WeaponGrenadeService(game);

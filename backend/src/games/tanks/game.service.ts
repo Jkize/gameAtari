@@ -6,6 +6,7 @@ import { BulletImpactPublicState, GameStatus } from './types/game-state.types';
 import { WeaponService } from './weapons/weapon.service';
 import { PowerUpSpawn } from './types/power-up.types';
 import { GameRuntimeContext } from './runtime/game-runtime-context.service';
+import { PowerUpSpawnService } from './power-up-spawn.service';
 
 const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
@@ -58,6 +59,7 @@ export class GameService {
   constructor(
     private readonly weaponService: WeaponService,
     private readonly runtime: GameRuntimeContext,
+    private readonly powerUpSpawnService: PowerUpSpawnService,
   ) {}
 
   get players(): Map<string, Player> { return this.runtime.current().players; }
@@ -181,10 +183,7 @@ export class GameService {
   }
 
   tryPickupPowerUp(player: Player, powerUp: PowerUpSpawn, now: number): boolean {
-    const dx = player.x - powerUp.x;
-    const dy = player.y - powerUp.y;
-    const minDist = player.radius + powerUp.radius;
-    if (dx * dx + dy * dy > minDist * minDist) return false;
+    if (!this.powerUpSpawnService.isPickupValid(player, powerUp)) return false;
 
     this.weaponService.applyPowerUp(player, powerUp.type, now);
     return true;

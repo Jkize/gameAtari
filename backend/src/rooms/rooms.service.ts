@@ -14,7 +14,7 @@ const DEV_COUNTDOWN_SECONDS = 3;
 const COUNTDOWN_TIERS = [
   { minPlayers: 15, seconds: 10 },
   { minPlayers: 8, seconds: 20 },
-  { minPlayers: 4, seconds: 45 },
+  { minPlayers: 4, seconds: 40 },
 ];
 const RECONNECT_GRACE_MS = 15_000;
 const ROUND_RESET_MS = 5_000;

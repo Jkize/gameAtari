@@ -270,6 +270,7 @@ export class MapService {
       x,
       y,
       radius: POWER_UP_RADIUS,
+      createdAt: Date.now(),
     };
   }
 

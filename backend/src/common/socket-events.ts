@@ -31,6 +31,10 @@ export const SOCKET_EVENTS = {
     ERROR: 'game:error',
     PLAYER_DISCONNECTED: 'playerDisconnected',
   },
+  POWER_UP: { //Only infromational events, no actions are performed on the server
+    SPAWNED: 'powerUp:spawned',
+    COLLECTED: 'powerUp:collected',
+  },
   SESSION: {
     REPLACED: 'session:replaced',
     CLAIMED: 'session:claimed',
