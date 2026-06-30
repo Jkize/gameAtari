@@ -133,6 +133,44 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
+  it('keeps the player in the room when the replaced socket disconnects during session claim', async () => {
+    jest.useFakeTimers();
+    const { rooms, server } = createHarness();
+    const firstSocket = {
+      id: 'socket-original-tab',
+      data: {},
+      join: jest.fn(),
+      emit: jest.fn(),
+      disconnect: jest.fn(() => {
+        void rooms.disconnect('same-user', 'socket-original-tab');
+      }),
+    };
+    server.sockets.sockets.set(firstSocket.id, firstSocket);
+    await rooms.quickPlay(firstSocket as never, {
+      userId: 'same-user',
+      username: 'Pilot',
+    });
+    const room = rooms.roomForUser('same-user')!;
+
+    const secondSocket = {
+      id: 'socket-new-tab',
+      data: {},
+      join: jest.fn(),
+      emit: jest.fn(),
+    };
+    rooms.reconnectCurrent(secondSocket as never, {
+      userId: 'same-user',
+      username: 'Pilot',
+    });
+
+    expect(rooms.roomForUser('same-user')?.id).toBe(room.id);
+    expect(room.players.size).toBe(1);
+    expect(room.players.get('same-user')?.socketId).toBe(secondSocket.id);
+    expect(rooms.list()[0].playerCount).toBe(1);
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
   it('uses 4 players as the production minimum and waits below that threshold', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(false);

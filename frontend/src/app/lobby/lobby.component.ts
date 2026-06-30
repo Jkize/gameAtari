@@ -104,7 +104,11 @@ export class LobbyComponent implements OnInit, OnDestroy {
     this.socket.on(SOCKET_EVENTS.ROOM.RETURNED_TO_LOBBY, () => this.currentRoom.set(null));
     this.socket.on(SOCKET_EVENTS.ROOM.LEFT, () => this.currentRoom.set(null));
     this.socket.on(SOCKET_EVENTS.SESSION.CLAIMED, data => this.notice.set(data?.message ?? SESSION_MESSAGES.CLAIMED));
-    this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, data => this.notice.set(data?.message ?? SESSION_MESSAGES.REPLACED));
+    this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, data => {
+      this.currentRoom.set(null);
+      this.error.set('');
+      this.notice.set(data?.message ?? SESSION_MESSAGES.REPLACED);
+    });
     this.socket.on(SOCKET_EVENTS.GAME.STARTED, (data: { roomId?: string }) => {
       if (environment.devGameMode && data?.roomId) {
         const slug = data.roomId.replace(/^dev-/, '');

@@ -8,7 +8,7 @@ import { RedisService } from '../redis/redis.service';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
 
 export const DEV_MIN_PLAYERS = 2;
-export const PROD_MIN_PLAYERS = 4;
+export const PROD_MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 15;
 const DEV_COUNTDOWN_SECONDS = 3;
 const COUNTDOWN_TIERS = [
@@ -235,8 +235,13 @@ export class RoomsService {
   private reconnect(room: GameRoom, socket: Socket, userId: string): RoomPublicState {
     const member = room.players.get(userId);
     if (!member) throw new NotFoundException('Room membership not found');
-    if (member.socketId && member.socketId !== socket.id) {
-      const previousSocket = this.server.sockets.sockets.get(member.socketId);
+    const previousSocketId = member.socketId;
+    member.socketId = socket.id;
+    member.disconnectedAt = undefined;
+    socket.data.roomId = room.id;
+    socket.join(this.playerSocketRoom(room.id));
+    if (previousSocketId && previousSocketId !== socket.id) {
+      const previousSocket = this.server.sockets.sockets.get(previousSocketId);
       previousSocket?.emit(SOCKET_EVENTS.SESSION.REPLACED, {
         reason: SESSION_REASONS.DUPLICATE_TAB,
         message: SESSION_MESSAGES.REPLACED,
@@ -247,10 +252,6 @@ export class RoomsService {
         message: SESSION_MESSAGES.CLAIMED,
       });
     }
-    member.socketId = socket.id;
-    member.disconnectedAt = undefined;
-    socket.data.roomId = room.id;
-    socket.join(this.playerSocketRoom(room.id));
     void this.redis.set(`presence:${userId}`, room.id, 'EX', 60);
     if (room.status === 'in_game' && this.gameLoop.hasSession(room.id)) {
       const state = this.gameLoop.buildState(room.id);
