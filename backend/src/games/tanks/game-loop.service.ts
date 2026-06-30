@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Server } from 'socket.io';
+import { SOCKET_EVENTS } from '../../common/socket-events';
 import { CollisionService } from './collision.service';
 import { DESTROYED_BODY_TTL_MS, GameService, SHIELD_COOLDOWN_MS, SHIELD_HP } from './game.service';
 import { MapService } from './maps/map.service';
@@ -27,6 +28,14 @@ interface LoopRuntime {
   timer: NodeJS.Timeout;
   lastTickTime: number;
   lastWatcherBroadcastTime: number;
+  avgTickMs: number;
+  delayedTicks: number;
+}
+
+export interface TickMetrics {
+  targetMs: number;
+  averageMs: number;
+  delayedTicks: number;
 }
 
 @Injectable()
@@ -74,6 +83,8 @@ export class GameLoopService implements OnModuleDestroy {
       timer: setInterval(() => this.tick(roomId), TICK_INTERVAL),
       lastTickTime: Date.now(),
       lastWatcherBroadcastTime: 0,
+      avgTickMs: 0,
+      delayedTicks: 0,
     };
     this.loops.set(roomId, runtime);
   }
@@ -114,13 +125,30 @@ export class GameLoopService implements OnModuleDestroy {
     for (const roomId of this.loops.keys()) this.stop(roomId);
   }
 
+  getTickMetrics(): TickMetrics {
+    const runtimes = [...this.loops.values()];
+    if (runtimes.length === 0) {
+      return { targetMs: parseFloat(TICK_INTERVAL.toFixed(2)), averageMs: parseFloat(TICK_INTERVAL.toFixed(2)), delayedTicks: 0 };
+    }
+    const avgMs = runtimes.reduce((sum, r) => sum + (r.avgTickMs || TICK_INTERVAL), 0) / runtimes.length;
+    const delayed = runtimes.reduce((sum, r) => sum + r.delayedTicks, 0);
+    return {
+      targetMs: parseFloat(TICK_INTERVAL.toFixed(2)),
+      averageMs: parseFloat(avgMs.toFixed(2)),
+      delayedTicks: delayed,
+    };
+  }
+
   private tick(roomId: string): void {
     const runtime = this.loops.get(roomId);
     if (!runtime || !this.sessions.get(roomId)) return;
     this.sessions.run(roomId, () => {
       const now = Date.now();
-      const deltaTime = Math.min(0.1, (now - runtime.lastTickTime) / 1000);
+      const deltaMs = now - runtime.lastTickTime;
+      const deltaTime = Math.min(0.1, deltaMs / 1000);
       runtime.lastTickTime = now;
+      runtime.avgTickMs = runtime.avgTickMs === 0 ? deltaMs : runtime.avgTickMs * 0.9 + deltaMs * 0.1;
+      if (deltaMs > TICK_INTERVAL + 3) runtime.delayedTicks++;
       if (!this.gameService.map) return;
 
       if (this.gameService.status === 'playing') {
@@ -292,10 +320,10 @@ export class GameLoopService implements OnModuleDestroy {
 
   private broadcastState(roomId: string, runtime: LoopRuntime, now: number): void {
     const state = this.buildCurrentState();
-    this.server.to(`game:${roomId}:players`).emit('gameState', state);
+    this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.GAME.STATE, state);
     if (now - runtime.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL) {
       runtime.lastWatcherBroadcastTime = now;
-      this.server.to(`game:${roomId}:watchers`).emit('gameState', state);
+      this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.GAME.STATE, state);
     }
     this.gameService.impactEvents = [];
   }

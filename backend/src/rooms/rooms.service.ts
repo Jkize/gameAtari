@@ -1,14 +1,21 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { Server, Socket } from 'socket.io';
+import { SESSION_MESSAGES, SESSION_REASONS, SOCKET_EVENTS } from '../common/socket-events';
 import { GameLoopService } from '../games/tanks/game-loop.service';
 import { RedisService } from '../redis/redis.service';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
 
-export const MIN_PLAYERS = 2;
+export const DEV_MIN_PLAYERS = 2;
+export const PROD_MIN_PLAYERS = 4;
 export const MAX_PLAYERS = 15;
-const COUNTDOWN_SECONDS = 45;
-const FULL_COUNTDOWN_SECONDS = 10;
+const DEV_COUNTDOWN_SECONDS = 3;
+const COUNTDOWN_TIERS = [
+  { minPlayers: 15, seconds: 10 },
+  { minPlayers: 8, seconds: 20 },
+  { minPlayers: 4, seconds: 45 },
+];
 const RECONNECT_GRACE_MS = 15_000;
 const ROUND_RESET_MS = 5_000;
 
@@ -21,10 +28,15 @@ export class RoomsService {
   constructor(
     private readonly gameLoop: GameLoopService,
     private readonly redis: RedisService,
+    private readonly config?: ConfigService,
   ) {}
 
   setServer(server: Server): void {
     this.server = server;
+  }
+
+  getSocketCount(): number {
+    return this.server?.sockets?.sockets?.size ?? 0;
   }
 
   list(): RoomPublicState[] {
@@ -61,7 +73,7 @@ export class RoomsService {
         (candidate.status === 'waiting' || candidate.status === 'countdown') &&
         candidate.players.size < MAX_PLAYERS,
       )
-      .sort((a, b) => a.createdAt - b.createdAt)[0] ?? this.createRoomInternal();
+      .sort((a, b) => b.players.size - a.players.size || a.createdAt - b.createdAt)[0] ?? this.createRoomInternal();
     return this.join(room.id, socket, auth);
   }
 
@@ -148,7 +160,7 @@ export class RoomsService {
     this.userRoom.delete(userId);
     await this.redis.del(`presence:${userId}`);
     if (this.gameLoop.hasSession(room.id)) this.gameLoop.removePlayer(room.id, userId);
-    this.server.to(this.playerSocketRoom(room.id)).emit('playerDisconnected', { playerId: userId, reason });
+    this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.GAME.PLAYER_DISCONNECTED, { playerId: userId, reason });
     if (room.players.size === 0 && room.status !== 'in_game') this.destroy(room.id);
     else {
       this.updateCountdown(room);
@@ -184,7 +196,7 @@ export class RoomsService {
     this.emitRoom(room);
     const gameState = this.gameLoop.buildState(roomId);
     const winner = gameState.players.find(player => player.alive);
-    this.server.to(this.playerSocketRoom(room.id)).emit('game:ended', {
+    this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.GAME.ENDED, {
       roomId,
       winnerUserId: winner?.id ?? null,
       state: gameState,
@@ -224,7 +236,16 @@ export class RoomsService {
     const member = room.players.get(userId);
     if (!member) throw new NotFoundException('Room membership not found');
     if (member.socketId && member.socketId !== socket.id) {
-      this.server.sockets.sockets.get(member.socketId)?.disconnect(true);
+      const previousSocket = this.server.sockets.sockets.get(member.socketId);
+      previousSocket?.emit(SOCKET_EVENTS.SESSION.REPLACED, {
+        reason: SESSION_REASONS.DUPLICATE_TAB,
+        message: SESSION_MESSAGES.REPLACED,
+      });
+      previousSocket?.disconnect(true);
+      socket.emit(SOCKET_EVENTS.SESSION.CLAIMED, {
+        reason: SESSION_REASONS.DUPLICATE_TAB,
+        message: SESSION_MESSAGES.CLAIMED,
+      });
     }
     member.socketId = socket.id;
     member.disconnectedAt = undefined;
@@ -233,8 +254,8 @@ export class RoomsService {
     void this.redis.set(`presence:${userId}`, room.id, 'EX', 60);
     if (room.status === 'in_game' && this.gameLoop.hasSession(room.id)) {
       const state = this.gameLoop.buildState(room.id);
-      socket.emit('gameJoined', { playerId: userId, map: state.map, status: state.status, roomId: room.id });
-      socket.emit('gameState', state);
+      socket.emit(SOCKET_EVENTS.GAME.JOINED, { playerId: userId, map: state.map, status: state.status, roomId: room.id });
+      socket.emit(SOCKET_EVENTS.GAME.STATE, state);
     }
     this.emitRoom(room);
     return this.publicState(room);
@@ -242,32 +263,34 @@ export class RoomsService {
 
   private updateCountdown(room: GameRoom): void {
     if (room.status === 'in_game' || room.status === 'finished') return;
-    if (room.players.size < MIN_PLAYERS) {
+    const minPlayers = this.activeMinPlayers();
+    if (room.players.size < minPlayers) {
       if (room.countdownTimer) clearInterval(room.countdownTimer);
       room.countdownTimer = undefined;
       room.countdownEndsAt = undefined;
       if (room.status === 'countdown') {
         room.status = 'waiting';
-        this.server.to(this.playerSocketRoom(room.id)).emit('room:countdownCancelled', this.publicState(room));
+        this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, this.publicState(room));
       }
       return;
     }
-    const desiredSeconds = room.players.size >= MAX_PLAYERS ? FULL_COUNTDOWN_SECONDS : COUNTDOWN_SECONDS;
+    const desiredSeconds = this.countdownSecondsFor(room.players.size);
     const desiredEnd = Date.now() + desiredSeconds * 1000;
     if (room.status !== 'countdown') {
       room.status = 'countdown';
       room.countdownEndsAt = desiredEnd;
-      this.server.to(this.playerSocketRoom(room.id)).emit('room:countdownStarted', this.publicState(room));
+      this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.ROOM.COUNTDOWN_STARTED, this.publicState(room));
       room.countdownTimer = setInterval(() => this.tickCountdown(room.id), 1000);
-    } else if (room.players.size >= MAX_PLAYERS && (room.countdownEndsAt ?? desiredEnd) > desiredEnd) {
+    } else if ((room.countdownEndsAt ?? desiredEnd) > desiredEnd) {
       room.countdownEndsAt = desiredEnd;
+      this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.ROOM.COUNTDOWN_UPDATED, this.publicState(room));
     }
   }
 
   private tickCountdown(roomId: string): void {
     const room = this.rooms.get(roomId);
     if (!room || room.status !== 'countdown' || !room.countdownEndsAt) return;
-    if (room.players.size < MIN_PLAYERS) {
+    if (room.players.size < this.activeMinPlayers()) {
       this.updateCountdown(room);
       this.emitRoom(room);
       return;
@@ -279,7 +302,7 @@ export class RoomsService {
       return;
     }
     const state = this.publicState(room);
-    this.server.to(this.playerSocketRoom(room.id)).emit('room:countdownUpdated', state);
+    this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.ROOM.COUNTDOWN_UPDATED, state);
     this.emitRoom(room);
   }
 
@@ -296,14 +319,14 @@ export class RoomsService {
     for (const member of room.players.values()) {
       if (!member.socketId) continue;
       const socket = this.server.sockets.sockets.get(member.socketId);
-      socket?.emit('gameJoined', {
+      socket?.emit(SOCKET_EVENTS.GAME.JOINED, {
         playerId: member.userId,
         roomId: room.id,
         map: state.map,
         status: state.status,
       });
     }
-    this.server.to(this.playerSocketRoom(room.id)).emit('gameStarted', { status: 'playing', roomId: room.id });
+    this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.GAME.STARTED, { status: 'playing', roomId: room.id });
     this.emitRoom(room);
   }
 
@@ -313,7 +336,7 @@ export class RoomsService {
       name: room.name,
       status: room.status,
       playerCount: room.players.size,
-      minPlayers: MIN_PLAYERS,
+      minPlayers: this.activeMinPlayers(),
       maxPlayers: MAX_PLAYERS,
       countdownSeconds: room.countdownEndsAt
         ? Math.max(0, Math.ceil((room.countdownEndsAt - Date.now()) / 1000))
@@ -328,35 +351,20 @@ export class RoomsService {
 
   private emitRoom(room: GameRoom): void {
     const state = this.publicState(room);
-    this.server.to(this.playerSocketRoom(room.id)).emit('room:stateUpdated', state);
+    this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.ROOM.STATE_UPDATED, state);
     void this.redis.set(`room:${room.id}`, JSON.stringify(state), 'EX', 180);
     this.emitLobby();
   }
 
   private emitLobby(): void {
-    if (this.server) this.server.to('lobby').emit('lobby:roomsUpdated', this.list());
+    if (this.server) this.server.to('lobby').emit(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, this.list());
   }
 
   private resetRound(roomId: string): void {
     const room = this.rooms.get(roomId);
     if (!room || room.status !== 'finished') return;
     room.roundResetTimer = undefined;
-    if (room.players.size === 0) {
-      this.destroy(roomId);
-      return;
-    }
-
-    this.gameLoop.stop(room.id);
-    room.status = 'waiting';
-    room.countdownEndsAt = undefined;
-    const players = [...room.players.values()].map(member => ({
-      userId: member.userId,
-      username: member.username,
-    }));
-    this.gameLoop.prepare(room.id, players);
-    this.updateCountdown(room);
-    this.emitRoom(room);
-    this.server.to(this.playerSocketRoom(room.id)).emit('room:returnedToLobby', this.publicState(room));
+    this.releaseFinishedRoom(room);
   }
 
   private destroy(roomId: string): void {
@@ -376,5 +384,31 @@ export class RoomsService {
 
   private playerSocketRoom(roomId: string): string {
     return `game:${roomId}:players`;
+  }
+
+  private releaseFinishedRoom(room: GameRoom): void {
+    const socketRoom = this.playerSocketRoom(room.id);
+    for (const member of room.players.values()) {
+      this.userRoom.delete(member.userId);
+      void this.redis.del(`presence:${member.userId}`);
+      if (!member.socketId) continue;
+      const socket = this.server.sockets.sockets.get(member.socketId);
+      socket?.leave(socketRoom);
+      socket?.emit(SOCKET_EVENTS.ROOM.LEFT, { reason: 'round_finished' });
+    }
+    this.gameLoop.remove(room.id);
+    this.rooms.delete(room.id);
+    void this.redis.del(`room:${room.id}`);
+    this.emitLobby();
+  }
+
+  private activeMinPlayers(): number {
+    return this.config?.get<boolean>('DEV_GAME_MODE', false) ? DEV_MIN_PLAYERS : PROD_MIN_PLAYERS;
+  }
+
+  private countdownSecondsFor(playerCount: number): number {
+    if (this.config?.get<boolean>('DEV_GAME_MODE', false)) return DEV_COUNTDOWN_SECONDS;
+    return COUNTDOWN_TIERS.find(tier => playerCount >= tier.minPlayers)?.seconds
+      ?? COUNTDOWN_TIERS[COUNTDOWN_TIERS.length - 1].seconds;
   }
 }

@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, ViewChild, signal } from '@angula
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { PublicStatsComponent } from '../stats/public-stats.component';
 import { AuthService } from './auth.service';
 
 declare global {
@@ -20,13 +21,15 @@ declare global {
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PublicStatsComponent],
   template: `
     <main class="auth-shell">
       <section class="panel">
         <p class="eyebrow">TANK ARENA</p>
         <h1>Entra a la arena</h1>
         <p class="copy">Autentícate para acceder al lobby y a las partidas públicas.</p>
+
+        <app-public-stats></app-public-stats>
 
         @if (!auth.onboardingToken()) {
           <div #googleButton class="google-button"></div>

@@ -21,6 +21,7 @@ export const envValidationSchema = Joi.object({
   GOOGLE_CLIENT_ID: Joi.string().required(),
   REWARD_AMOUNT: Joi.number().min(0).default(1),
   REWARD_ASSET: Joi.string().default('TA_BETA'),
+  ADMIN_USER_IDS: Joi.string().optional().default(''),
 }).custom((value, helpers) => {
   if (value.NODE_ENV === 'production') {
     if (value.DEV_GAME_MODE || value.DEV_INFRA_OPTIONAL || value.DEV_MANUAL_START) {

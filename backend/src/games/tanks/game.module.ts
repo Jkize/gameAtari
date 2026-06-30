@@ -34,6 +34,6 @@ import { SocketRateLimiterService } from './socket-rate-limiter.service';
     RewardsService,
     SocketRateLimiterService,
   ],
-  exports: [GameSessionsService],
+  exports: [GameSessionsService, GameLoopService, RoomsService],
 })
 export class GameModule {}

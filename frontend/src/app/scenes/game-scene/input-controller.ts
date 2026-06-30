@@ -3,6 +3,7 @@ import type { Socket } from 'socket.io-client';
 import { GameState } from '../../types/game-state.types';
 import { PlayerInput } from '../../types/input.types';
 import { environment } from '../../../environments/environment';
+import { SOCKET_EVENTS } from '../../network/socket-events';
 
 type SceneState = {
   getGameState(): GameState | null;
@@ -49,12 +50,12 @@ export class InputController {
       const gameState = this.state.getGameState();
       const socket = this.state.getSocket();
       if (gameState?.status === 'waiting' && this.state.getMyPlayerId()) {
-        socket.emit('startGame');
+        socket.emit(SOCKET_EVENTS.GAME.START);
       } else if (
         environment.devGameMode &&
         gameState?.status === 'finished'
       ) {
-        socket.emit('restartGame');
+        socket.emit(SOCKET_EVENTS.GAME.RESTART);
       }
     });
 
@@ -106,6 +107,6 @@ export class InputController {
     this.pendingDash = false;
     this.pendingReload = false;
     this.pendingShield = false;
-    this.state.getSocket().emit('playerInput', input);
+    this.state.getSocket().emit(SOCKET_EVENTS.GAME.PLAYER_INPUT, input);
   }
 }

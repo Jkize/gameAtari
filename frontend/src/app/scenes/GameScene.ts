@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Socket } from 'socket.io-client';
 import { GAME_VIEW_HEIGHT } from '../game/viewport.config';
 import { socketManager } from '../network/socket';
+import { SOCKET_EVENTS, SESSION_MESSAGES } from '../network/socket-events';
 import { GameState } from '../types/game-state.types';
 import { ArenaBackgroundRenderer } from './game-scene/arena-background-renderer';
 import { AudioManager } from './game-scene/audio-manager';
@@ -66,6 +67,13 @@ export class GameScene extends Phaser.Scene {
   };
   private readonly onReconnectFailed = (): void => {
     this.returnToLobby('reconnect_failed');
+  };
+  private readonly onSessionReplaced = (data?: { message?: string }): void => {
+    window.sessionStorage.setItem(
+      'tank-arena:lobby-notice',
+      data?.message ?? SESSION_MESSAGES.REPLACED,
+    );
+    this.returnToLobby('session_replaced');
   };
   private readonly onConnect = (): void => {
     this.joinConfiguredRoom();
@@ -139,13 +147,14 @@ export class GameScene extends Phaser.Scene {
   private setupSocket(): void {
     this.socket = socketManager.connect();
 
-    this.socket.on('gameJoined', this.onGameJoined);
-    this.socket.on('gameState', this.onGameState);
-    this.socket.on('playerDisconnected', this.onPlayerDisconnected);
-    this.socket.on('game:ended', this.onGameEnded);
-    this.socket.on('room:left', this.onRoomLeft);
-    this.socket.io.on('reconnect_failed', this.onReconnectFailed);
-    this.socket.on('connect', this.onConnect);
+    this.socket.on(SOCKET_EVENTS.GAME.JOINED, this.onGameJoined);
+    this.socket.on(SOCKET_EVENTS.GAME.STATE, this.onGameState);
+    this.socket.on(SOCKET_EVENTS.GAME.PLAYER_DISCONNECTED, this.onPlayerDisconnected);
+    this.socket.on(SOCKET_EVENTS.GAME.ENDED, this.onGameEnded);
+    this.socket.on(SOCKET_EVENTS.ROOM.LEFT, this.onRoomLeft);
+    this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, this.onSessionReplaced);
+    this.socket.io.on(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
+    this.socket.on(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
 
     if (this.socket.connected) {
       this.joinConfiguredRoom();
@@ -154,11 +163,11 @@ export class GameScene extends Phaser.Scene {
 
   private joinConfiguredRoom(): void {
     if (!environment.devGameMode) {
-      this.socket.emit('room:getState');
+      this.socket.emit(SOCKET_EVENTS.ROOM.GET_STATE);
       return;
     }
     const match = window.location.pathname.match(/^\/game\/([^/]+)/);
-    this.socket.emit('joinGame', { roomId: decodeURIComponent(match?.[1] ?? 'salatest') });
+    this.socket.emit(SOCKET_EVENTS.GAME.JOIN, { roomId: decodeURIComponent(match?.[1] ?? 'salatest') });
   }
 
   private returnToLobby(reason: string): void {
@@ -173,13 +182,14 @@ export class GameScene extends Phaser.Scene {
       this.returnToLobbyTimer = undefined;
     }
     if (!this.socket) return;
-    this.socket.off('gameJoined', this.onGameJoined);
-    this.socket.off('gameState', this.onGameState);
-    this.socket.off('playerDisconnected', this.onPlayerDisconnected);
-    this.socket.off('game:ended', this.onGameEnded);
-    this.socket.off('room:left', this.onRoomLeft);
-    this.socket.off('connect', this.onConnect);
-    this.socket.io.off('reconnect_failed', this.onReconnectFailed);
+    this.socket.off(SOCKET_EVENTS.GAME.JOINED, this.onGameJoined);
+    this.socket.off(SOCKET_EVENTS.GAME.STATE, this.onGameState);
+    this.socket.off(SOCKET_EVENTS.GAME.PLAYER_DISCONNECTED, this.onPlayerDisconnected);
+    this.socket.off(SOCKET_EVENTS.GAME.ENDED, this.onGameEnded);
+    this.socket.off(SOCKET_EVENTS.ROOM.LEFT, this.onRoomLeft);
+    this.socket.off(SOCKET_EVENTS.SESSION.REPLACED, this.onSessionReplaced);
+    this.socket.off(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
+    this.socket.io.off(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
   }
 
   private resetRoundRenderState(): void {
