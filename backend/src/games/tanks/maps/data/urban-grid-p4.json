@@ -1,0 +1,499 @@
+{
+  "name": "urban_grid_p4",
+  "width": 1600,
+  "height": 1200,
+  "maxPlayers": 4,
+  "spawnPoints": [
+    {
+      "x": 80,
+      "y": 1152
+    },
+    {
+      "x": 80,
+      "y": 48
+    },
+    {
+      "x": 1504,
+      "y": 64
+    },
+    {
+      "x": 1456,
+      "y": 1120
+    }
+  ],
+  "obstacles": [
+    {
+      "type": "steel",
+      "assetId": "steel_block_01",
+      "x": 256,
+      "y": 368,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "type": "steel",
+      "assetId": "steel_block_01",
+      "x": 1456,
+      "y": 368,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "steel",
+      "assetId": "steel_block_01",
+      "x": 256,
+      "y": 960,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "steel",
+      "assetId": "steel_block_01",
+      "x": 1456,
+      "y": 960,
+      "width": 64,
+      "height": 80
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 80,
+      "y": 144,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 656,
+      "y": 272,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1216,
+      "y": 256,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 80,
+      "y": 1040,
+      "width": 75,
+      "height": 75
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 256,
+      "y": 1152,
+      "width": 75,
+      "height": 75
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1296,
+      "y": 1152,
+      "width": 75,
+      "height": 75
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 784,
+      "y": 640,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 720,
+      "y": 640,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 848,
+      "y": 640,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 912,
+      "y": 640,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 840,
+      "y": 345,
+      "width": 80,
+      "height": 46
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_01_spiky_organic",
+      "x": 496,
+      "y": 112,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_07_leafy_blue_flower",
+      "x": 624,
+      "y": 1104,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_04_grass_blue_flowers",
+      "x": 64,
+      "y": 624,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_03_pink_yellow_flowers",
+      "x": 1040,
+      "y": 528,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_13_dry_grass_mix",
+      "x": 464,
+      "y": 800,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_01_spiky_organic",
+      "x": 1072,
+      "y": 64,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_06_sharp_grass_pink_yellow",
+      "x": 1296,
+      "y": 832,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_14_vine_swirl",
+      "x": 1104,
+      "y": 1168,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_03_pink_yellow_flowers",
+      "x": 880,
+      "y": 144,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_01_spiky_organic",
+      "x": 80,
+      "y": 272,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_08_tall_grass_wildflowers",
+      "x": 1312,
+      "y": 448,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_05_wild_red_flowers",
+      "x": 896,
+      "y": 1136,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 256,
+      "y": 640,
+      "width": 43,
+      "height": 184
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 1296,
+      "y": 640,
+      "width": 43,
+      "height": 184
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 480,
+      "y": 656,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 480,
+      "y": 720,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 480,
+      "y": 592,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_06_sharp_grass_pink_yellow",
+      "x": 144,
+      "y": 464,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_01_spiky_organic",
+      "x": 352,
+      "y": 192,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_12_clover_patch",
+      "x": 1008,
+      "y": 880,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_14_vine_swirl",
+      "x": 1520,
+      "y": 624,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_11_fern_star",
+      "x": 176,
+      "y": 784,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_14_vine_swirl",
+      "x": 672,
+      "y": 176,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_03_pink_yellow_flowers",
+      "x": 432,
+      "y": 1088,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1504,
+      "y": 160,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1360,
+      "y": 64,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 256,
+      "y": 64,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 800,
+      "y": 944,
+      "width": 80,
+      "height": 46
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 512,
+      "y": 944,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 576,
+      "y": 944,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 448,
+      "y": 944,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1168,
+      "y": 656,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1168,
+      "y": 720,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1168,
+      "y": 592,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 496,
+      "y": 400,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 560,
+      "y": 400,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 432,
+      "y": 400,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1152,
+      "y": 928,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1216,
+      "y": 928,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1088,
+      "y": 928,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1168,
+      "y": 400,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1232,
+      "y": 400,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1104,
+      "y": 400,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1312,
+      "y": 1024,
+      "width": 70,
+      "height": 70
+    }
+  ],
+  "powerUps": []
+}
