@@ -63,6 +63,7 @@ export class GameHudRenderer {
   private playersPanelImage!: Phaser.GameObjects.Image;
 
   private hpText!: Phaser.GameObjects.Text;
+  private rttText!: Phaser.GameObjects.Text;
   private playersText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
   private centerBig!: Phaser.GameObjects.Text;
@@ -117,6 +118,14 @@ export class GameHudRenderer {
       fontFamily: MONO,
       color: '#ffd98a',
     }).setOrigin(1, 0.5).setDepth(HUD_DEPTH + 3).setScrollFactor(0).setAlpha(0.66));
+
+    this.rttText = this.add(this.scene.add.text(W - 94, 21, '', {
+      fontSize: '13px',
+      fontFamily: MONO,
+      color: '#00ff66',
+      stroke: '#00130b',
+      strokeThickness: 3,
+    }).setOrigin(1, 0.5).setDepth(HUD_DEPTH + 4).setScrollFactor(0).setAlpha(0.96));
 
     this.statusText = this.add(this.scene.add.text(W / 2, GAME_VIEW_HEIGHT - 16, '', {
       fontSize: '13px',
@@ -186,7 +195,7 @@ export class GameHudRenderer {
   showConnectingOverlay(): void {
     this.syncCameraIgnores();
     this.drawStaticFrame();
-    this.drawTopPanels(undefined, false, 0);
+    this.drawTopPanels(undefined, false, 0, null);
     this.drawBottomHud(undefined, 0);
     this.overlayGfx.clear();
     this.overlayGfx.fillStyle(0x000000, 0.74);
@@ -196,12 +205,12 @@ export class GameHudRenderer {
     this.centerHint.setAlpha(0);
   }
 
-  update(state: GameState, myPlayerId: string, time: number): void {
+  update(state: GameState, myPlayerId: string, time: number, rttMs: number | null): void {
     const me = state.players.find(p => p.id === myPlayerId);
 
     this.syncCameraIgnores();
     this.drawStaticFrame();
-    this.drawTopPanels(me, Boolean(myPlayerId), state.players.length);
+    this.drawTopPanels(me, Boolean(myPlayerId), state.players.length, rttMs);
     this.drawBottomHud(me, time);
     this.updateOverlay(state, myPlayerId, me, time);
   }
@@ -229,7 +238,12 @@ export class GameHudRenderer {
     this.frameGfx.clear();
   }
 
-  private drawTopPanels(player: PlayerPublicState | undefined, hasPlayerId: boolean, players: number): void {
+  private drawTopPanels(
+    player: PlayerPublicState | undefined,
+    hasPlayerId: boolean,
+    players: number,
+    rttMs: number | null,
+  ): void {
     const hp = player?.hp ?? 0;
     const maxHp = player?.maxHp || 100;
     const hpFrac = Phaser.Math.Clamp(hp / maxHp, 0, 1);
@@ -239,7 +253,7 @@ export class GameHudRenderer {
       .setDisplaySize(210, 56);
     this.playersPanelImage
       .setVisible(this.scene.textures.exists('hud-players-panel'))
-      .setDisplaySize(150, 42);
+      .setDisplaySize(220, 42);
 
     this.topGfx.clear();
 
@@ -254,6 +268,10 @@ export class GameHudRenderer {
       .setText(player ? `HP  ${hp}` : hasPlayerId ? 'HP  DEAD' : 'HP  ---')
       .setColor(player ? '#00ff66' : hasPlayerId ? '#ff3355' : '#46606b');
     this.playersText.setText(`PLAYERS: ${players || '-'}`);
+    this.rttText
+      .setText(rttMs === null ? '' : `${Math.round(rttMs)} ms`)
+      .setVisible(rttMs !== null)
+      .setPosition(this.playersText.x - this.playersText.width - 7, this.playersText.y);
   }
 
   private drawBottomHud(player: PlayerPublicState | undefined, time: number): void {

@@ -43,6 +43,10 @@ export const SOCKET_EVENTS = {
     CONNECT: 'connect',
     RECONNECT_FAILED: 'reconnect_failed',
   },
+  NETWORK: {
+    PING: 'network:ping',
+    PONG: 'network:pong',
+  },
 } as const;
 
 export const SESSION_REASONS = {

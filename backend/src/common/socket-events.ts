@@ -43,6 +43,10 @@ export const SOCKET_EVENTS = {
     REPLACED: 'session:replaced',
     CLAIMED: 'session:claimed',
   },
+  NETWORK: {
+    PING: 'network:ping',
+    PONG: 'network:pong',
+  },
 } as const;
 
 export const SESSION_REASONS = {

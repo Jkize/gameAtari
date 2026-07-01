@@ -254,6 +254,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.rooms.startNow(client.data.auth.userId);
   }
 
+  @SubscribeMessage(SOCKET_EVENTS.NETWORK.PING)
+  networkPing(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() body: { sentAt?: number } = {},
+  ): void {
+    if (typeof body.sentAt !== 'number') return;
+    client.emit(SOCKET_EVENTS.NETWORK.PONG, { sentAt: body.sentAt });
+  }
+
   private async safe(client: AuthenticatedSocket, action: () => Promise<void>): Promise<void> {
     try {
       await action();

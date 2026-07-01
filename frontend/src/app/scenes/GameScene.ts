@@ -4,6 +4,7 @@ import { GAME_VIEW_HEIGHT } from '../game/viewport.config';
 import { socketManager } from '../network/socket';
 import { SOCKET_EVENTS, SESSION_MESSAGES } from '../network/socket-events';
 import { GameMap, GameState, RealtimeGameState } from '../types/game-state.types';
+import { SnapshotInterpolator } from './game-scene/snapshot-interpolator';
 import { ArenaBackgroundRenderer } from './game-scene/arena-background-renderer';
 import { AudioManager } from './game-scene/audio-manager';
 import { BulletRenderer } from './game-scene/bullet-renderer';
@@ -21,6 +22,8 @@ type RoomCountdownState = {
   status?: string;
   countdownSeconds?: number | null;
 };
+
+const RTT_PING_INTERVAL_MS = 1000;
 
 export class GameScene extends Phaser.Scene {
   private socket!: Socket;
@@ -43,6 +46,11 @@ export class GameScene extends Phaser.Scene {
   private audioManager!: AudioManager;
   private stateChangeTracker!: StateChangeTracker;
   private returnToLobbyTimer?: number;
+  private networkRttMs: number | null = null;
+  private lastRttPingAt = 0;
+  private readonly snapshotInterpolator = new SnapshotInterpolator({
+    enabled: environment.interpolationEnabled,
+  });
   private readonly onGameJoined = (
     data: { playerId: string; map: GameMap; status: GameState['status'] },
   ): void => {
@@ -76,9 +84,16 @@ export class GameScene extends Phaser.Scene {
   }
   private readonly onGameState = (state: RealtimeGameState): void => {
     if (!this.currentMap) return;
+
     this.currentMap.powerUps = state.powerUps;
-    this.gameState = { ...state, map: this.currentMap };
-    if (state.status !== 'waiting') this.hudRenderer.setWaitingCountdown(null);
+
+    if (state.status !== 'waiting') {
+      this.hudRenderer.setWaitingCountdown(null);
+    }
+
+    const fullState: GameState = { ...state, map: this.currentMap };
+
+    this.snapshotInterpolator.push(fullState);
   };
   private readonly onRoomCountdown = (state: RoomCountdownState): void => {
     this.hudRenderer.setWaitingCountdown(state.countdownSeconds ?? null);
@@ -123,6 +138,10 @@ export class GameScene extends Phaser.Scene {
   private readonly onConnect = (): void => {
     this.joinConfiguredRoom();
   };
+  private readonly onNetworkPong = (data: { sentAt?: number }): void => {
+    if (typeof data.sentAt !== 'number') return;
+    this.updateNetworkRtt(Date.now() - data.sentAt);
+  };
 
   constructor() {
     super({ key: 'GameScene' });
@@ -145,24 +164,55 @@ export class GameScene extends Phaser.Scene {
   }
 
   override update(time: number): void {
-    const state = this.gameState;
+    const latest = this.snapshotInterpolator.latest();
 
-    if (!state) {
+    if (!latest) {
       this.hudRenderer.showConnectingOverlay();
       return;
     }
 
-    this.stateChangeTracker.check(state, this.myPlayerId);
+    // Authoritative state for input, HUD, events, sounds, HP, kills, power-ups, etc.
+    this.gameState = latest;
+
+    // Interpolated state for visual rendering only.
+    const renderState = this.snapshotInterpolator.buildRenderState() ?? this.gameState;
+
+    // Authoritative: sounds, explosions, HP tracking, impact events, kill events.
+    this.stateChangeTracker.check(this.gameState, this.myPlayerId);
+
     clearDynamicLayers(this.layers);
 
-    this.obstacleRenderer.drawGlows(state.map.obstacles);
-    this.powerUpRenderer.draw(state.map.powerUps, time);
-    this.playerRenderer.draw(state.players, state.map, this.myPlayerId, time);
-    this.bulletRenderer.draw(state.bullets, time);
+    // Authoritative/static visuals.
+    this.obstacleRenderer.drawGlows(this.gameState.map.obstacles);
+    this.powerUpRenderer.draw(this.gameState.map.powerUps, time);
 
-    this.followLocalPlayer();
+    // Interpolated visuals: remote player and bullet positions.
+    this.playerRenderer.draw(renderState.players, renderState.map, this.myPlayerId, time);
+    this.bulletRenderer.draw(renderState.bullets, time);
+
+    this.followLocalPlayer(renderState);
     this.inputController.sendInput(time);
-    this.hudRenderer.update(state, this.myPlayerId, time);
+    this.updateRttProbe(time, this.gameState.status);
+    this.hudRenderer.update(this.gameState, this.myPlayerId, time, this.networkRttMs);
+  }
+
+  private updateRttProbe(time: number, status: GameState['status']): void {
+    if (status !== 'playing') {
+      this.networkRttMs = null;
+      this.lastRttPingAt = 0;
+      return;
+    }
+
+    if (time - this.lastRttPingAt < RTT_PING_INTERVAL_MS) return;
+    this.lastRttPingAt = time;
+    this.socket.emit(SOCKET_EVENTS.NETWORK.PING, { sentAt: Date.now() });
+  }
+
+  private updateNetworkRtt(sampleMs: number): void {
+    const sample = Math.max(0, sampleMs);
+    this.networkRttMs = this.networkRttMs === null
+      ? sample
+      : this.networkRttMs * 0.85 + sample * 0.15;
   }
 
   private createHelpers(): void {
@@ -205,6 +255,7 @@ export class GameScene extends Phaser.Scene {
     this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, this.onRoomCountdownCancelled);
     this.socket.on(SOCKET_EVENTS.ROOM.LEFT, this.onRoomLeft);
     this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, this.onSessionReplaced);
+    this.socket.on(SOCKET_EVENTS.NETWORK.PONG, this.onNetworkPong);
     this.socket.io.on(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
     this.socket.on(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
 
@@ -247,11 +298,15 @@ export class GameScene extends Phaser.Scene {
     this.socket.off(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, this.onRoomCountdownCancelled);
     this.socket.off(SOCKET_EVENTS.ROOM.LEFT, this.onRoomLeft);
     this.socket.off(SOCKET_EVENTS.SESSION.REPLACED, this.onSessionReplaced);
+    this.socket.off(SOCKET_EVENTS.NETWORK.PONG, this.onNetworkPong);
     this.socket.off(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
     this.socket.io.off(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
   }
 
   private resetRoundRenderState(): void {
+    this.snapshotInterpolator.clear();
+    this.networkRttMs = null;
+    this.lastRttPingAt = 0;
     this.obstacleRenderer.reset();
     this.powerUpRenderer.reset();
     this.playerRenderer.reset();
@@ -260,9 +315,8 @@ export class GameScene extends Phaser.Scene {
     this.hudRenderer.setWaitingCountdown(null);
   }
 
-  private followLocalPlayer(): void {
-    if (!this.gameState) return;
-    const me = this.gameState.players.find(p => p.id === this.myPlayerId);
+  private followLocalPlayer(state: GameState): void {
+    const me = state.players.find(p => p.id === this.myPlayerId);
     if (me) {
       this.camTarget.setPosition(me.x, me.y);
     }
