@@ -147,7 +147,6 @@ export class MapEditorComponent {
   download(): void {
     if (this.errors().length) {
       this.rightOpen.set(true);
-      return;
     }
     this.files.download(this.store.document());
   }

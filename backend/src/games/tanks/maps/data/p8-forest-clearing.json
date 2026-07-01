@@ -1,0 +1,859 @@
+{
+  "name": "p8_forest_clearing",
+  "width": 2200,
+  "height": 1700,
+  "maxPlayers": 8,
+  "spawnPoints": [
+    {
+      "x": 112,
+      "y": 80
+    },
+    {
+      "x": 2080,
+      "y": 120
+    },
+    {
+      "x": 120,
+      "y": 1580
+    },
+    {
+      "x": 2080,
+      "y": 1580
+    },
+    {
+      "x": 1100,
+      "y": 96
+    },
+    {
+      "x": 1100,
+      "y": 1604
+    },
+    {
+      "x": 96,
+      "y": 850
+    },
+    {
+      "x": 2104,
+      "y": 850
+    }
+  ],
+  "obstacles": [
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 224,
+      "y": 208,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 288,
+      "y": 208,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 224,
+      "y": 272,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 288,
+      "y": 272,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 352,
+      "y": 240,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 224,
+      "y": 336,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1968,
+      "y": 208,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1904,
+      "y": 208,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 1968,
+      "y": 272,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 1904,
+      "y": 272,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1840,
+      "y": 240,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1968,
+      "y": 336,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 224,
+      "y": 1456,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 288,
+      "y": 1456,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 224,
+      "y": 1392,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 288,
+      "y": 1392,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 352,
+      "y": 1424,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 224,
+      "y": 1328,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1968,
+      "y": 1456,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1904,
+      "y": 1456,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 1968,
+      "y": 1392,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 1904,
+      "y": 1392,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1840,
+      "y": 1424,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1968,
+      "y": 1328,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1040,
+      "y": 1456,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1100,
+      "y": 1456,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 1152,
+      "y": 1456,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 1040,
+      "y": 1520,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1100,
+      "y": 1520,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1152,
+      "y": 1520,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 192,
+      "y": 768,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 192,
+      "y": 848,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 192,
+      "y": 928,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 256,
+      "y": 784,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 256,
+      "y": 848,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 256,
+      "y": 912,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1984,
+      "y": 768,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1984,
+      "y": 848,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 1984,
+      "y": 928,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 2048,
+      "y": 784,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 2048,
+      "y": 848,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 2048,
+      "y": 912,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1024,
+      "y": 784,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1100,
+      "y": 784,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1184,
+      "y": 784,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1024,
+      "y": 912,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1100,
+      "y": 912,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1184,
+      "y": 912,
+      "width": 64,
+      "height": 56
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 768,
+      "y": 640,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1440,
+      "y": 640,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 768,
+      "y": 1056,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1440,
+      "y": 1056,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 480,
+      "y": 432,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1728,
+      "y": 432,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 480,
+      "y": 1264,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 1728,
+      "y": 1264,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 160,
+      "y": 432,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "rock",
+      "assetId": "rock_block",
+      "x": 160,
+      "y": 1264,
+      "width": 70,
+      "height": 70
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 1100,
+      "y": 496,
+      "width": 200,
+      "height": 16
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 1100,
+      "y": 1200,
+      "width": 200,
+      "height": 16
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 720,
+      "y": 848,
+      "width": 16,
+      "height": 200
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 1488,
+      "y": 848,
+      "width": 16,
+      "height": 200
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 1100,
+      "y": 624,
+      "width": 120,
+      "height": 16
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 1100,
+      "y": 1072,
+      "width": 120,
+      "height": 16
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_01_spiky_organic",
+      "x": 112,
+      "y": 112,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_05_wild_red_flowers",
+      "x": 2000,
+      "y": 112,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_04_grass_blue_flowers",
+      "x": 112,
+      "y": 1584,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_07_leafy_blue_flower",
+      "x": 2000,
+      "y": 1584,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_08_tall_grass_wildflowers",
+      "x": 1100,
+      "y": 112,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_06_sharp_grass_pink_yellow",
+      "x": 1100,
+      "y": 1584,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_11_fern_star",
+      "x": 96,
+      "y": 656,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_03_pink_yellow_flowers",
+      "x": 96,
+      "y": 1040,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_12_clover_patch",
+      "x": 2016,
+      "y": 656,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_13_dry_grass_mix",
+      "x": 2016,
+      "y": 1040,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_14_vine_swirl",
+      "x": 576,
+      "y": 848,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_01_spiky_organic",
+      "x": 1632,
+      "y": 848,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_06_sharp_grass_pink_yellow",
+      "x": 480,
+      "y": 336,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_08_tall_grass_wildflowers",
+      "x": 1728,
+      "y": 336,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_11_fern_star",
+      "x": 480,
+      "y": 1360,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "decoration",
+      "assetId": "decoration_13_dry_grass_mix",
+      "x": 1728,
+      "y": 1360,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 208,
+      "y": 80,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 120,
+      "y": 196,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1920,
+      "y": 112,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 2080,
+      "y": 196,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 208,
+      "y": 1616,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 120,
+      "y": 1504,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 2004,
+      "y": 1580,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 2080,
+      "y": 1504,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1036,
+      "y": 96,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1164,
+      "y": 96,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1036,
+      "y": 1604,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 1164,
+      "y": 1604,
+      "width": 32,
+      "height": 64
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 96,
+      "y": 776,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 96,
+      "y": 924,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 2104,
+      "y": 776,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "wood",
+      "assetId": "wood_barricade",
+      "x": 2104,
+      "y": 924,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1040,
+      "y": 192,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1104,
+      "y": 192,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_03_compact_arcade",
+      "x": 1152,
+      "y": 192,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_04_wide_low",
+      "x": 1040,
+      "y": 256,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_01_rounded_dense",
+      "x": 1104,
+      "y": 256,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "bush",
+      "assetId": "bush_02_irregular_leafy",
+      "x": 1152,
+      "y": 256,
+      "width": 64,
+      "height": 64
+    }
+  ],
+  "powerUps": []
+}

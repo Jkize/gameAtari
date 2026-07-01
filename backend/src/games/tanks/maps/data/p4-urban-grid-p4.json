@@ -25,16 +25,8 @@
     {
       "type": "steel",
       "assetId": "steel_block_01",
-      "x": 256,
-      "y": 368,
-      "width": 80,
-      "height": 80
-    },
-    {
-      "type": "steel",
-      "assetId": "steel_block_01",
       "x": 1456,
-      "y": 368,
+      "y": 384,
       "width": 64,
       "height": 64
     },
@@ -45,14 +37,6 @@
       "y": 960,
       "width": 64,
       "height": 64
-    },
-    {
-      "type": "steel",
-      "assetId": "steel_block_01",
-      "x": 1456,
-      "y": 960,
-      "width": 64,
-      "height": 80
     },
     {
       "type": "rock",
@@ -107,40 +91,32 @@
       "assetId": "bush_01_rounded_dense",
       "x": 784,
       "y": 640,
-      "width": 80,
-      "height": 80
+      "width": 70,
+      "height": 70
     },
     {
       "type": "bush",
       "assetId": "bush_02_irregular_leafy",
       "x": 720,
       "y": 640,
-      "width": 80,
-      "height": 80
+      "width": 70,
+      "height": 70
     },
     {
       "type": "bush",
       "assetId": "bush_03_compact_arcade",
       "x": 848,
       "y": 640,
-      "width": 80,
-      "height": 80
+      "width": 70,
+      "height": 70
     },
     {
       "type": "bush",
       "assetId": "bush_04_wide_low",
       "x": 912,
       "y": 640,
-      "width": 80,
-      "height": 80
-    },
-    {
-      "type": "mirror",
-      "assetId": "mirror_panel_01",
-      "x": 840,
-      "y": 345,
-      "width": 80,
-      "height": 46
+      "width": 70,
+      "height": 70
     },
     {
       "type": "decoration",
@@ -241,18 +217,10 @@
     {
       "type": "mirror",
       "assetId": "mirror_panel_01",
-      "x": 256,
-      "y": 640,
-      "width": 43,
-      "height": 184
-    },
-    {
-      "type": "mirror",
-      "assetId": "mirror_panel_01",
-      "x": 1296,
-      "y": 640,
-      "width": 43,
-      "height": 184
+      "x": 233,
+      "y": 633,
+      "width": 14,
+      "height": 175
     },
     {
       "type": "wood",
@@ -357,14 +325,6 @@
       "y": 64,
       "width": 64,
       "height": 64
-    },
-    {
-      "type": "mirror",
-      "assetId": "mirror_panel_01",
-      "x": 800,
-      "y": 944,
-      "width": 80,
-      "height": 46
     },
     {
       "type": "wood",
@@ -493,6 +453,46 @@
       "y": 1024,
       "width": 70,
       "height": 70
+    },
+    {
+      "type": "steel",
+      "assetId": "steel_block_01",
+      "x": 256,
+      "y": 400,
+      "width": 64,
+      "height": 64
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 1296,
+      "y": 656,
+      "width": 14,
+      "height": 175
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 816,
+      "y": 944,
+      "width": 200,
+      "height": 14
+    },
+    {
+      "type": "mirror",
+      "assetId": "mirror_panel_01",
+      "x": 816,
+      "y": 400,
+      "width": 200,
+      "height": 14
+    },
+    {
+      "type": "steel",
+      "assetId": "steel_block_01",
+      "x": 1456,
+      "y": 960,
+      "width": 64,
+      "height": 64
     }
   ],
   "powerUps": []

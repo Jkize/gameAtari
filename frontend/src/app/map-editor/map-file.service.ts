@@ -191,8 +191,11 @@ export class MapFileService {
     const anchor = window.document.createElement('a');
     anchor.href = url;
     anchor.download = `${this.slug(document.name) || 'custom-map'}.json`;
+    anchor.style.display = 'none';
+    window.document.body.appendChild(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   private slug(value: string): string {
