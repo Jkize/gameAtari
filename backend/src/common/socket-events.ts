@@ -35,6 +35,10 @@ export const SOCKET_EVENTS = {
     SPAWNED: 'powerUp:spawned',
     COLLECTED: 'powerUp:collected',
   },
+  OBSTACLE: {
+    DAMAGED: 'obstacle:damaged',
+    DESTROYED: 'obstacle:destroyed',
+  },
   SESSION: {
     REPLACED: 'session:replaced',
     CLAIMED: 'session:claimed',

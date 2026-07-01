@@ -7,7 +7,7 @@ import { DESTROYED_BODY_TTL_MS, GameService, SHIELD_COOLDOWN_MS, SHIELD_HP } fro
 import { MapService } from './maps/map.service';
 import { applyObstacleDamage, isSoftCoverObstacle } from './obstacle.config';
 import { GameSessionsService } from './runtime/game-sessions.service';
-import { BulletImpactMaterial, BulletPublicState, GameState } from './types/game-state.types';
+import { BulletImpactMaterial, BulletImpactPublicState, BulletPublicState, GameState, InitialGameState } from './types/game-state.types';
 import { ObstacleType } from './types/map.types';
 import { ActivePowerUp, ActivePowerUpPublicState } from './types/power-up.types';
 import { PlayerPublicState } from './types/player.types';
@@ -22,7 +22,9 @@ import {
 } from './power-up-spawn.service';
 
 const TICK_INTERVAL = 1000 / 60;
-const WATCHER_BROADCAST_INTERVAL = 1000 / 30;
+const PLAYER_BROADCAST_INTERVAL = 1000 / 30;
+const WATCHER_BROADCAST_INTERVAL = 1000 / 15;
+const ENABLE_NET_LOGS = false;
 const OBSTACLE_IMPACT_MATERIAL: Partial<Record<ObstacleType, BulletImpactMaterial>> = {
   wood: 'wood',
   rock: 'rock',
@@ -33,7 +35,10 @@ const OBSTACLE_IMPACT_MATERIAL: Partial<Record<ObstacleType, BulletImpactMateria
 interface LoopRuntime {
   timer: NodeJS.Timeout;
   lastTickTime: number;
+  lastPlayerBroadcastTime: number;
   lastWatcherBroadcastTime: number;
+  pendingWatcherImpactEvents: BulletImpactPublicState[];
+  lastNetLogTime: number;
   avgTickMs: number;
   delayedTicks: number;
   nextPowerUpSpawnAt?: number;
@@ -87,19 +92,20 @@ export class GameLoopService implements OnModuleDestroy {
       this.gameService.status = 'playing';
       const state = this.sessions.require(roomId);
       state.startedAt = new Date();
-      if (this.isProductionPowerUpSpawningEnabled()) {
+      if (this.isProductionMode()) {
         this.gameService.map.powerUps = [];
       }
     });
     const runtime: LoopRuntime = {
       timer: setInterval(() => this.tick(roomId), TICK_INTERVAL),
       lastTickTime: Date.now(),
+      lastPlayerBroadcastTime: 0,
       lastWatcherBroadcastTime: 0,
+      pendingWatcherImpactEvents: [],
+      lastNetLogTime: 0,
       avgTickMs: 0,
       delayedTicks: 0,
-      nextPowerUpSpawnAt: this.isProductionPowerUpSpawningEnabled()
-        ? Date.now() + FIRST_POWER_UP_SPAWN_DELAY_MS
-        : undefined,
+      nextPowerUpSpawnAt: Date.now() + FIRST_POWER_UP_SPAWN_DELAY_MS,
     };
     this.loops.set(roomId, runtime);
   }
@@ -136,6 +142,13 @@ export class GameLoopService implements OnModuleDestroy {
     return this.sessions.run(roomId, () => this.buildCurrentState());
   }
 
+  buildInitialState(roomId: string): InitialGameState {
+    return this.sessions.run(roomId, () => ({
+      map: this.gameService.map!,
+      state: this.buildCurrentState(),
+    }));
+  }
+
   onModuleDestroy(): void {
     for (const roomId of this.loops.keys()) this.stop(roomId);
   }
@@ -166,12 +179,14 @@ export class GameLoopService implements OnModuleDestroy {
       if (deltaMs > TICK_INTERVAL + 3) runtime.delayedTicks++;
       if (!this.gameService.map) return;
 
+      const impactStartIndex = this.gameService.impactEvents.length;
       if (this.gameService.status === 'playing') {
         this.processPowerUpSpawns(roomId, runtime, now);
         this.processPlayers(roomId, deltaTime, now);
-        this.processBullets(deltaTime);
+        this.processBullets(roomId, deltaTime);
         this.checkWinCondition(roomId);
       }
+      runtime.pendingWatcherImpactEvents.push(...this.gameService.impactEvents.slice(impactStartIndex));
       this.broadcastState(roomId, runtime, now);
       if (this.gameService.status === 'finished' && !this.hasVisibleDestroyedBodies(now)) {
         this.stop(roomId);
@@ -226,11 +241,17 @@ export class GameLoopService implements OnModuleDestroy {
       reflectX: bullet.reflectX,
       reflectY: bullet.reflectY,
     }));
-    return { status, map: map!, players: publicPlayers, bullets: publicBullets, impactEvents: [...impactEvents] };
+    return {
+      status,
+      players: publicPlayers,
+      bullets: publicBullets,
+      powerUps: [...(map?.powerUps ?? [])],
+      impactEvents: [...impactEvents],
+    };
   }
 
   private processPowerUpSpawns(roomId: string, runtime: LoopRuntime, now: number): void {
-    if (!this.isProductionPowerUpSpawningEnabled() || runtime.nextPowerUpSpawnAt === undefined) return;
+    if (runtime.nextPowerUpSpawnAt === undefined) return;
     if (now < runtime.nextPowerUpSpawnAt) return;
 
     runtime.nextPowerUpSpawnAt = now + POWER_UP_SPAWN_INTERVAL_MS;
@@ -280,13 +301,15 @@ export class GameLoopService implements OnModuleDestroy {
     }
   }
 
-  private processBullets(deltaTime: number): void {
+  private processBullets(roomId: string, deltaTime: number): void {
     const { players, bullets, map } = this.gameService;
     if (!map) return;
     const dead = new Set<string>();
     for (const bullet of bullets) {
       if (bullet.kind === 'laser') {
-        if (!this.weaponLaserService.processBeam(bullet, deltaTime)) dead.add(bullet.id);
+        const result = this.weaponLaserService.processBeam(bullet, deltaTime);
+        this.emitObstacleChanges(roomId, result.obstacleChanges);
+        if (!result.alive) dead.add(bullet.id);
         continue;
       }
       const previousX = bullet.x;
@@ -303,7 +326,7 @@ export class GameLoopService implements OnModuleDestroy {
         reachedMaxDistance ||
         this.collisionService.isBulletOutOfBounds(bullet, map.width, map.height)
       ) {
-        if (bullet.kind === 'grenade') this.weaponGrenadeService.explode(bullet);
+        if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
         else this.recordBulletImpact(bullet, 'spark');
         dead.add(bullet.id);
         continue;
@@ -321,12 +344,17 @@ export class GameLoopService implements OnModuleDestroy {
           bullet.reflectY = bullet.y;
           break;
         }
-        if (bullet.kind === 'grenade') this.weaponGrenadeService.explode(bullet);
+        if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
         else {
           this.recordBulletImpact(bullet, this.getObstacleImpactMaterial(obstacle.type));
           if (obstacle.destructible) {
             applyObstacleDamage(obstacle, bullet.damage);
-            if (obstacle.hp <= 0) map.obstacles.splice(index, 1);
+            if (obstacle.hp <= 0) {
+              map.obstacles.splice(index, 1);
+              this.emitObstacleDestroyed(roomId, obstacle.id);
+            } else {
+              this.emitObstacleDamaged(roomId, obstacle);
+            }
           }
         }
         dead.add(bullet.id);
@@ -337,7 +365,7 @@ export class GameLoopService implements OnModuleDestroy {
       for (const player of players.values()) {
         if (!canBulletHitPlayer(bullet, player)) continue;
         if (!this.collisionService.bulletVsPlayer(bullet, player)) continue;
-        if (bullet.kind === 'grenade') this.weaponGrenadeService.explode(bullet);
+        if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
         else {
           this.gameService.damagePlayer(player, bullet.damage, bullet.ownerId);
           this.recordBulletImpact(bullet, 'spark');
@@ -360,13 +388,73 @@ export class GameLoopService implements OnModuleDestroy {
   }
 
   private broadcastState(roomId: string, runtime: LoopRuntime, now: number): void {
-    const state = this.buildCurrentState();
-    this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.GAME.STATE, state);
-    if (now - runtime.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL) {
-      runtime.lastWatcherBroadcastTime = now;
-      this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.GAME.STATE, state);
+    const shouldBroadcastPlayers = now - runtime.lastPlayerBroadcastTime >= PLAYER_BROADCAST_INTERVAL;
+    const shouldBroadcastWatchers = now - runtime.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL;
+
+    if (shouldBroadcastPlayers) {
+      runtime.lastPlayerBroadcastTime = now;
+      const state = this.buildCurrentState();
+      this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.GAME.STATE, state);
+      this.logNetworkSnapshot(roomId, 'players', state, PLAYER_BROADCAST_INTERVAL, now, runtime);
+      this.gameService.impactEvents = [];
     }
-    this.gameService.impactEvents = [];
+
+    if (shouldBroadcastWatchers) {
+      runtime.lastWatcherBroadcastTime = now;
+      const state = {
+        ...this.buildCurrentState(),
+        impactEvents: [...runtime.pendingWatcherImpactEvents],
+      };
+      this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.GAME.STATE, state);
+      this.logNetworkSnapshot(roomId, 'watchers', state, WATCHER_BROADCAST_INTERVAL, now, runtime);
+      runtime.pendingWatcherImpactEvents = [];
+    }
+  }
+
+  private emitObstacleDamaged(roomId: string, obstacle: { id: string; hp: number; healthRatio: number }): void {
+    const payload = { id: obstacle.id, hp: obstacle.hp, healthRatio: obstacle.healthRatio };
+    this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.OBSTACLE.DAMAGED, payload);
+    this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.OBSTACLE.DAMAGED, payload);
+  }
+
+  private handleGrenadeExplosion(roomId: string, bullet: Parameters<WeaponGrenadeService['explode']>[0]): void {
+    this.emitObstacleChanges(roomId, this.weaponGrenadeService.explode(bullet));
+  }
+
+  private emitObstacleChanges(
+    roomId: string,
+    changes: Array<{ id: string; hp: number; healthRatio: number; destroyed: boolean }>,
+  ): void {
+    for (const change of changes) {
+      if (change.destroyed) this.emitObstacleDestroyed(roomId, change.id);
+      else this.emitObstacleDamaged(roomId, change);
+    }
+  }
+
+  private emitObstacleDestroyed(roomId: string, obstacleId: string): void {
+    const payload = { id: obstacleId };
+    this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.OBSTACLE.DESTROYED, payload);
+    this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.OBSTACLE.DESTROYED, payload);
+  }
+
+  private logNetworkSnapshot(
+    roomId: string,
+    audience: 'players' | 'watchers',
+    payload: GameState,
+    intervalMs: number,
+    now: number,
+    runtime: LoopRuntime,
+  ): void {
+    if (!ENABLE_NET_LOGS || now - runtime.lastNetLogTime < 1000) return;
+    runtime.lastNetLogTime = now;
+    const socketRoom = `game:${roomId}:${audience}`;
+    const recipientCount = this.server.sockets.adapter.rooms.get(socketRoom)?.size ?? 0;
+    const bytes = Buffer.byteLength(JSON.stringify(payload), 'utf8');
+    const snapshotsPerSecond = 1000 / intervalMs;
+    const mbPerSecond = (bytes * snapshotsPerSecond * recipientCount) / 1024 / 1024;
+    console.log(
+      `[net] room=${roomId} audience=${audience} gameState=${(bytes / 1024).toFixed(2)}KB hz=${snapshotsPerSecond.toFixed(1)} recipients=${recipientCount} estOut=${mbPerSecond.toFixed(2)}MB/s`,
+    );
   }
 
   private recordBulletImpact(bullet: { id: string; x: number; y: number }, material: BulletImpactMaterial): void {
@@ -383,7 +471,7 @@ export class GameLoopService implements OnModuleDestroy {
     return OBSTACLE_IMPACT_MATERIAL[type] ?? 'spark';
   }
 
-  private isProductionPowerUpSpawningEnabled(): boolean {
+  private isProductionMode(): boolean {
     return !this.config.get<boolean>('DEV_GAME_MODE', false);
   }
 

@@ -11,9 +11,9 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const FORTRESS_CENTER_DATA = require('./data/fortress_center_br.json') as RawMapJson;
-const JUNGLE_SURVIVAL_DATA = require('./data/jungle_survival_br.json') as RawMapJson;
-const JUNGLE_SURVIVAL_DATAV2 = require('./data/jungle-survival-br-v2.json') as RawMapJson;
-const URBAN_ASSAULT_DATA_P4 = require('./data/urban-grid-p4.json') as RawMapJson;
+const JUNGLE_SURVIVAL_DATA = require('./data/p16-jungle-survival.json') as RawMapJson;
+const JUNGLE_SURVIVAL_DATAV2 = require('./data/p8-jungle-survival.json') as RawMapJson;
+const URBAN_ASSAULT_DATA_P4 = require('./data/p4-urban-grid-p4.json') as RawMapJson;
 
 
 

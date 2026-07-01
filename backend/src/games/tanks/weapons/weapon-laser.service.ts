@@ -17,6 +17,18 @@ interface LaserSegment {
   reflection?: { dirX: number; dirY: number; mirrorId: string };
 }
 
+export interface LaserObstacleChange {
+  id: string;
+  hp: number;
+  healthRatio: number;
+  destroyed: boolean;
+}
+
+export interface LaserProcessResult {
+  alive: boolean;
+  obstacleChanges: LaserObstacleChange[];
+}
+
 @Injectable()
 export class WeaponLaserService {
   constructor(
@@ -24,15 +36,15 @@ export class WeaponLaserService {
     private readonly collisionService: CollisionService,
   ) {}
 
-  processBeam(bullet: Bullet, deltaTime: number): boolean {
+  processBeam(bullet: Bullet, deltaTime: number): LaserProcessResult {
     const { players, map } = this.gameService;
-    if (!map) return false;
+    if (!map) return { alive: false, obstacleChanges: [] };
 
     const owner = players.get(bullet.ownerId);
-    if (!owner?.alive) return false;
+    if (!owner?.alive) return { alive: false, obstacleChanges: [] };
 
     bullet.lifeTime -= deltaTime * 1000;
-    if (bullet.lifeTime <= 0) return false;
+    if (bullet.lifeTime <= 0) return { alive: false, obstacleChanges: [] };
 
     const angle = this.rotateTowardAngle(
       Math.atan2(bullet.dirY, bullet.dirX),
@@ -68,7 +80,8 @@ export class WeaponLaserService {
     bullet.bendY = undefined;
     const damage = Math.max(1, Math.ceil(LASER_CONFIG.damagePerSecond * deltaTime));
 
-    const firstSegment = this.processSegment(bullet, bullet.x, bullet.y, dirX, dirY, maxDistance, damage);
+    const obstacleChanges: LaserObstacleChange[] = [];
+    const firstSegment = this.processSegment(bullet, bullet.x, bullet.y, dirX, dirY, maxDistance, damage, undefined, obstacleChanges);
     bullet.endX = firstSegment.endX;
     bullet.endY = firstSegment.endY;
 
@@ -84,6 +97,7 @@ export class WeaponLaserService {
         remainingDistance,
         damage,
         firstSegment.reflection.mirrorId,
+        obstacleChanges,
       );
 
       bullet.bendX = firstSegment.endX;
@@ -108,7 +122,7 @@ export class WeaponLaserService {
       }
     }
 
-    return true;
+    return { alive: true, obstacleChanges };
   }
 
   private rotateTowardAngle(current: number, target: number, maxStep: number): number {
@@ -130,6 +144,7 @@ export class WeaponLaserService {
     maxDistance: number,
     damage: number,
     ignoredObstacleId?: string,
+    obstacleChanges: LaserObstacleChange[] = [],
   ): LaserSegment {
     const map = this.gameService.map!;
     let beamEndDistance = maxDistance;
@@ -150,7 +165,15 @@ export class WeaponLaserService {
 
       if (obs.type === 'bush') {
         const currentIndex = map.obstacles.findIndex(current => current.id === obs.id);
-        if (currentIndex !== -1) map.obstacles.splice(currentIndex, 1);
+        if (currentIndex !== -1) {
+          map.obstacles.splice(currentIndex, 1);
+          obstacleChanges.push({
+            id: obs.id,
+            hp: 0,
+            healthRatio: 0,
+            destroyed: true,
+          });
+        }
         continue;
       }
 
@@ -181,12 +204,26 @@ export class WeaponLaserService {
 
       applyObstacleDamage(obs, damage);
       if (obs.hp > 0) {
+        obstacleChanges.push({
+          id: obs.id,
+          hp: obs.hp,
+          healthRatio: obs.healthRatio,
+          destroyed: false,
+        });
         beamEndDistance = hitDistance;
         break;
       }
 
       const currentIndex = map.obstacles.findIndex(current => current.id === obs.id);
-      if (currentIndex !== -1) map.obstacles.splice(currentIndex, 1);
+      if (currentIndex !== -1) {
+        map.obstacles.splice(currentIndex, 1);
+        obstacleChanges.push({
+          id: obs.id,
+          hp: obs.hp,
+          healthRatio: obs.healthRatio,
+          destroyed: true,
+        });
+      }
     }
 
     return {

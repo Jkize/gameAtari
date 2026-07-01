@@ -201,9 +201,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return;
     }
     client.join(`game:${body.roomId}:watchers`);
-    const state = this.gameLoop.buildState(body.roomId);
-    client.emit(SOCKET_EVENTS.GAME.WATCH_JOINED, { watcherId: client.data.auth.userId, map: state.map, status: state.status });
-    client.emit(SOCKET_EVENTS.GAME.STATE, state);
+    const initial = this.gameLoop.buildInitialState(body.roomId);
+    client.emit(SOCKET_EVENTS.GAME.WATCH_JOINED, {
+      watcherId: client.data.auth.userId,
+      map: initial.map,
+      status: initial.state.status,
+    });
+    client.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
   }
 
   @SubscribeMessage(SOCKET_EVENTS.GAME.PLAYER_INPUT)
@@ -279,13 +283,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         client.data.auth.username,
       );
     }
-    const state = this.gameLoop.buildState(room.id);
+    const initial = this.gameLoop.buildInitialState(room.id);
     client.emit(SOCKET_EVENTS.GAME.JOINED, {
       playerId: client.data.auth.userId,
       roomId: room.id,
-      map: state.map,
-      status: state.status,
+      map: initial.map,
+      status: initial.state.status,
     });
-    client.emit(SOCKET_EVENTS.GAME.STATE, state);
+    client.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
   }
 }

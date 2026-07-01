@@ -50,6 +50,7 @@ export class GameHudRenderer {
   private readonly hudObjects = new Set<HudObject>();
   private readonly readyMap = new Map<string, boolean>();
   private returnToLobbyAt = 0;
+  private waitingCountdownSeconds: number | null = null;
 
   private frameGfx!: Phaser.GameObjects.Graphics;
   private topGfx!: Phaser.GameObjects.Graphics;
@@ -207,6 +208,10 @@ export class GameHudRenderer {
 
   setReturnToLobbyCountdown(durationMs: number): void {
     this.returnToLobbyAt = Date.now() + durationMs;
+  }
+
+  setWaitingCountdown(seconds: number | null): void {
+    this.waitingCountdownSeconds = seconds;
   }
 
   private add<T extends HudObject>(object: T): T {
@@ -594,7 +599,10 @@ export class GameHudRenderer {
 
       const blink = Math.sin(time * 0.0038) > 0;
       this.centerBig.setAlpha(1).setText('TANK ARENA').setColor('#dffcff');
-      this.centerSub.setAlpha(1).setText(myPlayerId ? 'PRESS [ENTER] TO START' : 'WAITING FOR SERVER...')
+      const waitingText = this.waitingCountdownSeconds !== null
+        ? `STARTING IN ${this.waitingCountdownSeconds}s`
+        : myPlayerId ? 'WAITING FOR PLAYERS...' : 'WAITING FOR SERVER...';
+      this.centerSub.setAlpha(1).setText(waitingText)
         .setColor(blink ? '#ffffff' : '#79eaff');
       this.centerHint.setAlpha(0.72).setText('W A S D  -  MOUSE AIM  -  CLICK SHOOT');
       this.statusText.setText('');

@@ -7,7 +7,7 @@ import { GameLoopService } from '../games/tanks/game-loop.service';
 import { RedisService } from '../redis/redis.service';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
 
-export const DEV_MIN_PLAYERS = 2;
+export const DEV_MIN_PLAYERS = 1;
 export const PROD_MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 15;
 const DEV_COUNTDOWN_SECONDS = 3;
@@ -254,9 +254,14 @@ export class RoomsService {
     }
     void this.redis.set(`presence:${userId}`, room.id, 'EX', 60);
     if (room.status === 'in_game' && this.gameLoop.hasSession(room.id)) {
-      const state = this.gameLoop.buildState(room.id);
-      socket.emit(SOCKET_EVENTS.GAME.JOINED, { playerId: userId, map: state.map, status: state.status, roomId: room.id });
-      socket.emit(SOCKET_EVENTS.GAME.STATE, state);
+      const initial = this.gameLoop.buildInitialState(room.id);
+      socket.emit(SOCKET_EVENTS.GAME.JOINED, {
+        playerId: userId,
+        map: initial.map,
+        status: initial.state.status,
+        roomId: room.id,
+      });
+      socket.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
     }
     this.emitRoom(room);
     return this.publicState(room);
@@ -316,15 +321,15 @@ export class RoomsService {
     }));
     this.gameLoop.prepare(room.id, players);
     this.gameLoop.start(room.id);
-    const state = this.gameLoop.buildState(room.id);
+    const initial = this.gameLoop.buildInitialState(room.id);
     for (const member of room.players.values()) {
       if (!member.socketId) continue;
       const socket = this.server.sockets.sockets.get(member.socketId);
       socket?.emit(SOCKET_EVENTS.GAME.JOINED, {
         playerId: member.userId,
         roomId: room.id,
-        map: state.map,
-        status: state.status,
+        map: initial.map,
+        status: initial.state.status,
       });
     }
     this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.GAME.STARTED, { status: 'playing', roomId: room.id });

@@ -116,16 +116,22 @@ export interface PowerUpSpawn {
 }
 
 export interface GameMap {
+  name?: string;
   width: number;
   height: number;
+  spawnPoints?: Array<{ x: number; y: number }>;
   obstacles: Obstacle[];
   powerUps: PowerUpSpawn[];
 }
 
-export interface GameState {
+export interface RealtimeGameState {
   status: GameStatus;
-  map: GameMap;
   players: PlayerPublicState[];
   bullets: BulletPublicState[];
+  powerUps: PowerUpSpawn[];
   impactEvents: BulletImpactPublicState[];
+}
+
+export interface GameState extends RealtimeGameState {
+  map: GameMap;
 }

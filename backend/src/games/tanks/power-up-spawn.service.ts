@@ -4,7 +4,7 @@ import { GameMap, Obstacle } from './types/map.types';
 import { Player } from './types/player.types';
 import { PowerUpSpawn, PowerUpType } from './types/power-up.types';
 
-export const FIRST_POWER_UP_SPAWN_DELAY_MS = 12_000;
+export const FIRST_POWER_UP_SPAWN_DELAY_MS = 3_000;
 export const POWER_UP_SPAWN_INTERVAL_MS = 15_000;
 export const MAX_SPAWN_ATTEMPTS = 30;
 export const MIN_DISTANCE_FROM_PLAYER = 180;

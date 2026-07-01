@@ -3,16 +3,24 @@ import { GameService } from '../game.service';
 import { Bullet } from '../types/bullet.types';
 import { applyObstacleDamage, isSoftCoverObstacle } from '../obstacle.config';
 
+export interface GrenadeObstacleChange {
+  id: string;
+  hp: number;
+  healthRatio: number;
+  destroyed: boolean;
+}
+
 @Injectable()
 export class WeaponGrenadeService {
   constructor(private readonly gameService: GameService) {}
 
-  explode(bullet: Bullet): void {
+  explode(bullet: Bullet): GrenadeObstacleChange[] {
     const { players, map } = this.gameService;
-    if (!map) return;
+    if (!map) return [];
 
     const radius = bullet.explosionRadius ?? 120;
     const radiusSq = radius * radius;
+    const obstacleChanges: GrenadeObstacleChange[] = [];
 
     for (const player of players.values()) {
       if (!player.alive) continue;
@@ -42,7 +50,16 @@ export class WeaponGrenadeService {
       if (dx * dx + dy * dy > radiusSq) continue;
 
       applyObstacleDamage(obs, bullet.obstacleDamage ?? bullet.damage);
-      if (obs.hp <= 0) map.obstacles.splice(i, 1);
+      const destroyed = obs.hp <= 0;
+      obstacleChanges.push({
+        id: obs.id,
+        hp: obs.hp,
+        healthRatio: obs.healthRatio,
+        destroyed,
+      });
+      if (destroyed) map.obstacles.splice(i, 1);
     }
+
+    return obstacleChanges;
   }
 }

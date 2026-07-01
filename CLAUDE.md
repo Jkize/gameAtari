@@ -1,183 +1,206 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-Tank Arena — a real-time multiplayer browser game. The backend is the authoritative game server; the frontend is a pure renderer and input forwarder. No persistence layer exists (no database, Redis, auth, lobbies, or rankings).
+Tank Arena is a real-time multiplayer browser game.
 
-## Dev Commands
+- Backend: NestJS + TypeScript + Socket.IO. The backend is the authoritative simulation.
+- Frontend: Angular shell + Phaser + Socket.IO client. The frontend renders authoritative state and sends input only.
+- Runtime game state is in memory.
+- Rooms/lobby/auth/persistence exist; avoid adding new persistence, rankings, tournaments, or broad infrastructure unless requested.
+- Run backend and frontend in separate terminals.
 
-Both packages must run simultaneously during development.
+## Commands
 
-**Backend** (`backend/`)
-```
-npm run dev          # nest start --watch (hot-reload)
-npm run build        # nest build
-npm run start        # production start
-```
+Backend, from `backend/`:
 
-**Frontend** (`frontend/`)
-```
-npm start            # ng serve  (http://localhost:4200)
-npm run build        # ng build
-npm test             # vitest via ng test
-```
-
-There are no shared scripts at the repo root — open two terminals.
-
-## Architecture
-
-### Data flow
-
-```
-Browser (Angular shell)
-  └─ TankGame (Phaser.Game)
-       ├─ BootScene  → preloads assets, fades into GameScene
-       └─ GameScene  ←→  Socket.IO  ←→  GameGateway (NestJS)
-                                              ├─ GameService     (state + physics constants)
-                                              ├─ GameLoopService (60-tick setInterval)
-                                              ├─ CollisionService (AABB + swept checks)
-                                              └─ MapService      (map generation)
+```bash
+npm run dev
+npm run build
+npm run start
+npm test
 ```
 
-The Angular app (`app.ts`) mounts a `<canvas>` element and hands it to `TankGame`. Angular itself plays no further role in gameplay — all rendering and networking lives inside Phaser scenes.
+Frontend, from `frontend/`:
 
-### Socket.IO event contract
+```bash
+npm start
+npm run build
+npm test
+```
 
-| Direction | Event | Payload |
-|-----------|-------|---------|
-| Client → Server | `joinGame` | — |
-| Client → Server | `watchGame` | — |
-| Client → Server | `playerInput` | `PlayerInput` (moveX, moveY, aimAngle, shoot, dash) |
-| Client → Server | `startGame` | — |
-| Client → Server | `restartGame` | — |
-| Server → Client | `gameJoined` | `{ playerId, map, status }` |
-| Server → Client | `watchJoined` | — |
-| Server → Client | `gameState` | `GameState` (full snapshot every tick) |
-| Server → Client | `gameStarted` | `{ status }` |
-| Server → Client | `playerDisconnected` | `{ id }` |
+## Authoritative Runtime Contract
 
-- `PLAYER_ROOM`: active players — receive full `gameState` at **60 Hz**.
-- `WATCHER_ROOM`: spectators — receive `gameState` at **30 Hz**.
+The client must not send positions, HP, damage, collision results, winners, or map mutations. It sends input only:
 
-The client sends input at 60 Hz, throttled by `INPUT_HZ`.
+```ts
+{
+  moveX: number;
+  moveY: number;
+  aimAngle: number;
+  shoot: boolean;
+  dash?: boolean;
+  reload?: boolean;
+  shield?: boolean;
+}
+```
 
-The client must not send positions, HP, damage, collision results, winners, or map mutations — only `PlayerInput`.
+The server owns movement, bullets, weapons, collisions, power-ups, HP, deaths, obstacle destruction, game status, win/restart behavior, and room countdowns.
 
-### Game loop (`GameLoopService`)
+## Current Networking Model
 
-Tick rate: **60 Hz**. Each tick computes `deltaTime`, then:
+The game loop separates simulation frequency from network frequency.
 
-1. Move all alive players (`GameService.movePlayer`) — applies dash multiplier (4×) during `dashUntil` window. Player movement is skipped while the player is firing a laser.
-2. Clamp players to map bounds.
-3. Resolve player vs obstacle collisions (skips `bush` type).
-4. Process shooting (`GameService.tryShoot`) via `WeaponService`.
-5. Advance bullets with `deltaTime`:
-   - Laser beams are handled separately from normal bullets.
-   - Expired bullets (lifetime/range/bounds) are removed.
-   - Swept `bulletVsObstacleAlongPath` check per bullet per obstacle:
-     - `mirror` → reflect and continue.
-     - Solid obstacles → absorb bullet, damage/destroy obstacle.
-   - Grenades explode on obstacle hit, player hit, or expiry.
-6. Run bullet vs player collision.
-7. Check win condition: if more than one player has joined and ≤1 are alive → `finished`, loop stops.
-8. Broadcast `gameState` to `PLAYER_ROOM` (every tick) and `WATCHER_ROOM` (every other tick).
+- Simulation: 60 Hz.
+- Player `gameState`: 30 Hz.
+- Watcher `gameState`: 15 Hz.
+- Client input: 60 Hz.
+- Phaser can render 60 FPS, but without interpolation it visually follows the latest 30 Hz authoritative snapshot.
 
-### Collision system (`CollisionService`)
-
-- All obstacles are AABB (axis-aligned bounding boxes). Positions are **centers**; bounds are derived as `x ± width/2`, `y ± height/2`.
-- Player vs obstacle: resolves by restoring the axis the player approached from (`previousX`/`previousY` side detection).
-- Bullet path check: slab-method ray vs expanded AABB, falls back to point-in-AABB for current position.
-- Mirror reflection: determines hit face from bullet's previous position; flips the corresponding direction component and repositions bullet outside the surface.
-- Power-ups are picked up by radius overlap.
-- Bushes do not block player movement.
-
-### Obstacle types
-
-| Type | Destructible | HP | Notes |
-|------|-------------|-----|-------|
-| bush | yes | 34 | No collision for players; bullets pass through and damage it |
-| wood | yes | 68 | Solid cover |
-| rock | yes | 102 | Solid cover |
-| steel | no | 9999 | Indestructible anchor |
-| mirror | no | 9999 | Reflects bullets |
-
-### Weapons & Power-ups
-
-**Default weapon:** 6-round magazine, 300 ms fire cooldown, 1400 ms reload, max 5 active bullets, speed 600, damage 20.
-
-| Power-up | Behavior |
-|----------|----------|
-| `triple_shot` | Three bullets at spread angles (temporary) |
-| `shotgun` | Five pellets, shorter lifetime/range (temporary) |
-| `grenade` | Slower projectile, explosion radius 100 (temporary) |
-| `laser` | 2 shots, beam duration 1000 ms, max distance 1200, can pierce limited metal, special movement/recoil |
-
-Default power-up spawns on the map: `triple_shot`, `shotgun`, `grenade`, `laser`.
-
-### Player model
-
-Players have: `hp`, `maxHp`, `radius`, `speed`, `bodyAngle`, `aimAngle`, color, weapon state, optional active power-up, dash cooldown, and `alive`.
-
-- Movement input is clamped to `[-1, 1]` and normalized so diagonal movement is not faster.
-- **Dash:** 4× speed for 300 ms, 5000 ms cooldown, only while moving. Server-authoritative.
-- Spawn points are fixed.
-
-### Rendering (GameScene)
-
-Phaser layers redrawn each frame:
-- **`bgGfx`** depth 0 — static map background (drawn once on `gameJoined`).
-- **`glowGfx`** depth 4, `ADD` blend mode — all glows (player halos, bullet halos, mirror bloom).
-- **`mainGfx`** depth 5, normal blend — tank bodies, HP bars, bullet cores.
-
-Static obstacle graphics (`obsGfx: Map<id, GameObject>`) sit at depth 2 (or 6 for bushes). Created on first sight of an obstacle ID; destroyed when that ID disappears from server state.
-
-Non-mirror obstacles prefer image assets when textures exist; procedural drawing is the fallback. Both paths check `obs.assetId` first, then `OBSTACLE_ASSET_BY_TYPE[obs.type]`.
-
-Tanks use generated SVG textures (body/turret and destroyed variants). Power-ups use `weapon-${assetId}` textures or a tinted fallback.
-
-HUD displays: HP, dash cooldown, ammo/reload, power-up state, player count, status, and round overlays.
-
-Camera follows an invisible target moved to the local player position.
-
-### Map
-
-Fixed 1600×1200 px world. `MapService.buildPredefinedObstacles()` constructs the layout using helpers (`addSymmetric`, `addHorizontalLine`, `addVerticalLine`, `addBushPair`, `addBushQuad`). Map is generated once at gateway init and again at `startGame` if missing. Obstacle coordinates are **center** positions.
-
-### Game states
-
-`waiting` → `playing` → `finished`.
-
-- `startGame` transitions `waiting → playing`.
-- `finished` is set by `GameLoopService` when the win condition triggers.
-- `restartGame` resets the game and re-adds current player sockets, returning to `waiting`.
-
-### Public `GameState` shape
+Frequent `gameState` does not include the map:
 
 ```ts
 {
   status: 'waiting' | 'playing' | 'finished';
-  map: {
-    width: number;
-    height: number;
-    obstacles: Obstacle[];
-    powerUps: PowerUpSpawn[];
-  };
   players: PlayerPublicState[];
   bullets: BulletPublicState[];
+  powerUps: PowerUpSpawn[];
+  impactEvents: BulletImpactPublicState[];
 }
 ```
 
-When changing backend public fields, update frontend types and rendering/input code in the same change. There is no shared package — contracts are kept in sync manually.
+The full map is sent once through `gameJoined` or `watchJoined`:
+
+```ts
+gameJoined: { playerId, roomId, map, status }
+watchJoined: { watcherId, map, status }
+```
+
+The frontend caches the initial map and merges it with realtime snapshots.
+
+Do not put full `map`, `obstacles`, `spawnPoints`, `width`, or `height` back into frequent `gameState` unless explicitly requested.
+
+## Socket.IO Events
+
+Client to server:
+
+- `joinGame`, `watchGame`, `playerInput`, `startGame`, `restartGame`
+- `lobby:listRooms`, `lobby:quickPlay`, `lobby:createRoom`, `lobby:joinRoom`, `lobby:leaveRoom`, `room:getState`
+
+Server to client:
+
+- `gameJoined`, `watchJoined`, `gameStarted`, `gameState`, `game:ended`, `playerDisconnected`, `game:error`
+- `room:joined`, `room:left`, `room:stateUpdated`, `room:countdownStarted`, `room:countdownUpdated`, `room:countdownCancelled`
+- `obstacle:damaged`, `obstacle:destroyed`
+- `powerUp:spawned`, `powerUp:collected` still exist as informational events, but current frontend reconciles visible power-ups from `gameState.powerUps`.
+
+Player room: `game:${roomId}:players`.
+Watcher room: `game:${roomId}:watchers`.
+Lobby room: `lobby`.
+
+## Map, Obstacles, And Power-Ups
+
+- Full `GameMap` is initial/static from the network perspective.
+- Obstacle damage/destruction is sent as:
+
+```ts
+obstacle:damaged { id, hp, healthRatio }
+obstacle:destroyed { id }
+```
+
+- These events must be emitted for any weapon/mechanic that mutates obstacles.
+- Current code covers normal bullets, grenades, and laser obstacle/bush changes.
+- Power-ups stay in frequent `gameState.powerUps` because the array is small.
+- In development, initial JSON power-ups are preserved if present and dynamic spawning is enabled.
+- In production, initial JSON power-ups are cleared at match start and dynamic spawning is enabled.
+- First dynamic spawn delay: 3000 ms.
+- Subsequent spawn interval: 15000 ms.
+- Current map JSON files mostly contain `"powerUps": []`, so power-ups usually appear from dynamic spawn.
+
+## Development Vs Production Rooms
+
+- `DEV_GAME_MODE=true` enables guest auth and development rooms such as `dev-salatest`.
+- Development min players: 1.
+- Development countdown: 3 seconds.
+- Production min players: 2.
+- `DEV_MANUAL_START` exists, but default flow is authoritative countdown, not ENTER manual start.
+- Frontend HUD listens to room countdown events and can display `STARTING IN Ns`.
+
+## Backend Notes
+
+Important files:
+
+- `backend/src/games/tanks/game.gateway.ts`: Socket.IO gateway, auth/guest mode, game joins/watch.
+- `backend/src/rooms/rooms.service.ts`: room membership, countdowns, reconnect, finish/release.
+- `backend/src/games/tanks/game-loop.service.ts`: simulation loop, realtime state builder, network broadcast cadence, map delta events.
+- `backend/src/games/tanks/game.service.ts`: player lifecycle, input validation, movement, dash, shield, shooting, damage, reset.
+- `backend/src/games/tanks/maps/map.service.ts`: JSON map loading and legacy helper map.
+- `backend/src/games/tanks/collision.service.ts`: AABB/swept collision and mirror reflection.
+- `backend/src/games/tanks/weapons/`: default, power-up, laser, and grenade behavior.
+- `backend/src/games/tanks/types/`: backend contracts.
+
+Loop behavior:
+
+- Tick at 60 Hz.
+- While `playing`, process power-up spawns, players, bullets, win condition, then broadcast when player/watcher network interval is due.
+- Player movement is skipped while the player is firing a laser.
+- Bushes and decorations do not block player movement.
+- Power-ups are picked up by radius overlap.
+- Mirrors reflect bullets.
+- Destructible obstacles lose HP and are removed at zero HP.
+- Win condition: if more than one player exists and one or zero are alive, status becomes `finished`; loop stops after destroyed bodies fade.
+
+## Frontend Notes
+
+Important files:
+
+- `frontend/src/app/scenes/GameScene.ts`: socket setup, cached map, realtime snapshot merge, render loop.
+- `frontend/src/app/scenes/game-scene/`: input, HUD, renderers, effects, state change tracking.
+- `frontend/src/app/network/socket-events.ts`: frontend event names; keep aligned with backend.
+- `frontend/src/app/types/game-state.types.ts`: frontend copy of public contracts.
+
+Frontend responsibilities:
+
+- Cache map from `gameJoined` / `watchJoined`.
+- Reconcile visible power-ups from `gameState.powerUps`.
+- Apply obstacle events to cached map.
+- Send input at 60 Hz while playing.
+- Do not simulate authoritative collisions, HP, damage, deaths, map mutation, or winners.
+
+Rendering notes:
+
+- Obstacles are static render objects keyed by obstacle ID.
+- Power-ups use `weapon-${assetId}` textures or tinted fallback.
+- HUD shows HP, dash, shield, ammo/reload, active power-up, player count, countdown/status overlays.
+- Camera follows an invisible target moved to the local player.
+
+## Verification And Logs
+
+Build both packages when changing shared contracts:
+
+```bash
+cd backend && npm run build
+cd frontend && npm run build
+```
+
+`GameLoopService` has `ENABLE_NET_LOGS`; it should remain `false` by default. When enabled, it measures real payload size using:
+
+```ts
+Buffer.byteLength(JSON.stringify(payload), 'utf8')
+```
+
+Recent observed payload after removing map from `gameState`: about 0.85 KB to 1.45 KB per snapshot with 2 players on a small map at 30 Hz.
+
+Some existing backend tests may have stale expectations around room min players/countdown/power-up caps; verify whether failures are related before treating them as regressions.
 
 ## Development Guidelines
 
-- Preserve the server-authoritative design. The client only sends `PlayerInput`.
+- Preserve the server-authoritative design.
 - Prefer small, focused edits in the existing NestJS/Phaser style.
 - Treat obstacle positions as centers everywhere.
 - Keep bushes non-blocking for tanks unless explicitly changing game design.
-- Do not add persistence, Redis, auth, lobbies, rankings, or tournaments unless requested.
 - Avoid broad refactors while gameplay behavior is moving quickly.
-- When adding a game mechanic, update backend simulation, public state, frontend types, and rendering/HUD together.
-- Build both packages when changing shared contracts.
+- Update backend simulation, public contracts/events, frontend types, and rendering/HUD together when adding mechanics.
+- Do not reintroduce full map into frequent `gameState` without an explicit networking decision.

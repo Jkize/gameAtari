@@ -31,6 +31,10 @@ export const SOCKET_EVENTS = {
     ERROR: 'game:error',
     PLAYER_DISCONNECTED: 'playerDisconnected',
   },
+  OBSTACLE: {
+    DAMAGED: 'obstacle:damaged',
+    DESTROYED: 'obstacle:destroyed',
+  },
   SESSION: {
     REPLACED: 'session:replaced',
     CLAIMED: 'session:claimed',

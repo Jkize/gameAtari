@@ -3,7 +3,7 @@ import type { Socket } from 'socket.io-client';
 import { GAME_VIEW_HEIGHT } from '../game/viewport.config';
 import { socketManager } from '../network/socket';
 import { SOCKET_EVENTS, SESSION_MESSAGES } from '../network/socket-events';
-import { GameState } from '../types/game-state.types';
+import { GameMap, GameState, RealtimeGameState } from '../types/game-state.types';
 import { ArenaBackgroundRenderer } from './game-scene/arena-background-renderer';
 import { AudioManager } from './game-scene/audio-manager';
 import { BulletRenderer } from './game-scene/bullet-renderer';
@@ -17,10 +17,16 @@ import { PowerUpRenderer } from './game-scene/power-up-renderer';
 import { StateChangeTracker } from './game-scene/state-change-tracker';
 import { environment } from '../../environments/environment';
 
+type RoomCountdownState = {
+  status?: string;
+  countdownSeconds?: number | null;
+};
+
 export class GameScene extends Phaser.Scene {
   private socket!: Socket;
   private myPlayerId = '';
   private gameState: GameState | null = null;
+  private currentMap: GameMap | null = null;
   private mapW = 1600;
   private mapH = 1200;
   private layers!: GameSceneLayers;
@@ -38,19 +44,58 @@ export class GameScene extends Phaser.Scene {
   private stateChangeTracker!: StateChangeTracker;
   private returnToLobbyTimer?: number;
   private readonly onGameJoined = (
-    data: { playerId: string; map: GameState['map']; status: GameState['status'] },
+    data: { playerId: string; map: GameMap; status: GameState['status'] },
   ): void => {
     this.resetRoundRenderState();
     this.myPlayerId = data.playerId;
-    this.gameState = { status: data.status, map: data.map, players: [], bullets: [], impactEvents: [] };
-    this.mapW = data.map.width;
-    this.mapH = data.map.height;
+    this.initializeMap(data.map, data.status);
+  };
+  private readonly onWatchJoined = (
+    data: { watcherId: string; map: GameMap; status: GameState['status'] },
+  ): void => {
+    this.resetRoundRenderState();
+    this.myPlayerId = '';
+    this.initializeMap(data.map, data.status);
+    void data.watcherId;
+  };
+  private initializeMap(map: GameMap, status: GameState['status']): void {
+    this.currentMap = map;
+    this.gameState = {
+      status,
+      map: this.currentMap,
+      players: [],
+      bullets: [],
+      powerUps: this.currentMap.powerUps,
+      impactEvents: [],
+    };
+    this.mapW = map.width;
+    this.mapH = map.height;
     this.backgroundRenderer.draw(this.mapW, this.mapH);
     this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
     this.cameras.main.setViewport(0, 0, this.scale.width, GAME_VIEW_HEIGHT);
+  }
+  private readonly onGameState = (state: RealtimeGameState): void => {
+    if (!this.currentMap) return;
+    this.currentMap.powerUps = state.powerUps;
+    this.gameState = { ...state, map: this.currentMap };
+    if (state.status !== 'waiting') this.hudRenderer.setWaitingCountdown(null);
   };
-  private readonly onGameState = (state: GameState): void => {
-    this.gameState = state;
+  private readonly onRoomCountdown = (state: RoomCountdownState): void => {
+    this.hudRenderer.setWaitingCountdown(state.countdownSeconds ?? null);
+  };
+  private readonly onRoomCountdownCancelled = (): void => {
+    this.hudRenderer.setWaitingCountdown(null);
+  };
+  private readonly onObstacleDamaged = (data: { id: string; hp: number; healthRatio: number }): void => {
+    const obstacle = this.currentMap?.obstacles.find(obs => obs.id === data.id);
+    if (!obstacle) return;
+    obstacle.hp = data.hp;
+    obstacle.healthRatio = data.healthRatio;
+  };
+  private readonly onObstacleDestroyed = (data: { id: string }): void => {
+    if (!this.currentMap) return;
+    this.currentMap.obstacles = this.currentMap.obstacles.filter(obs => obs.id !== data.id);
+    this.obstacleRenderer.remove(data.id);
   };
   private readonly onPlayerDisconnected = (data: { playerId: string }): void => {
     this.stateChangeTracker.removeDisconnectedPlayer(data.playerId);
@@ -148,9 +193,16 @@ export class GameScene extends Phaser.Scene {
     this.socket = socketManager.connect();
 
     this.socket.on(SOCKET_EVENTS.GAME.JOINED, this.onGameJoined);
+    this.socket.on(SOCKET_EVENTS.GAME.WATCH_JOINED, this.onWatchJoined);
     this.socket.on(SOCKET_EVENTS.GAME.STATE, this.onGameState);
     this.socket.on(SOCKET_EVENTS.GAME.PLAYER_DISCONNECTED, this.onPlayerDisconnected);
     this.socket.on(SOCKET_EVENTS.GAME.ENDED, this.onGameEnded);
+    this.socket.on(SOCKET_EVENTS.OBSTACLE.DAMAGED, this.onObstacleDamaged);
+    this.socket.on(SOCKET_EVENTS.OBSTACLE.DESTROYED, this.onObstacleDestroyed);
+    this.socket.on(SOCKET_EVENTS.ROOM.STATE_UPDATED, this.onRoomCountdown);
+    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_STARTED, this.onRoomCountdown);
+    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_UPDATED, this.onRoomCountdown);
+    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, this.onRoomCountdownCancelled);
     this.socket.on(SOCKET_EVENTS.ROOM.LEFT, this.onRoomLeft);
     this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, this.onSessionReplaced);
     this.socket.io.on(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
@@ -183,9 +235,16 @@ export class GameScene extends Phaser.Scene {
     }
     if (!this.socket) return;
     this.socket.off(SOCKET_EVENTS.GAME.JOINED, this.onGameJoined);
+    this.socket.off(SOCKET_EVENTS.GAME.WATCH_JOINED, this.onWatchJoined);
     this.socket.off(SOCKET_EVENTS.GAME.STATE, this.onGameState);
     this.socket.off(SOCKET_EVENTS.GAME.PLAYER_DISCONNECTED, this.onPlayerDisconnected);
     this.socket.off(SOCKET_EVENTS.GAME.ENDED, this.onGameEnded);
+    this.socket.off(SOCKET_EVENTS.OBSTACLE.DAMAGED, this.onObstacleDamaged);
+    this.socket.off(SOCKET_EVENTS.OBSTACLE.DESTROYED, this.onObstacleDestroyed);
+    this.socket.off(SOCKET_EVENTS.ROOM.STATE_UPDATED, this.onRoomCountdown);
+    this.socket.off(SOCKET_EVENTS.ROOM.COUNTDOWN_STARTED, this.onRoomCountdown);
+    this.socket.off(SOCKET_EVENTS.ROOM.COUNTDOWN_UPDATED, this.onRoomCountdown);
+    this.socket.off(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, this.onRoomCountdownCancelled);
     this.socket.off(SOCKET_EVENTS.ROOM.LEFT, this.onRoomLeft);
     this.socket.off(SOCKET_EVENTS.SESSION.REPLACED, this.onSessionReplaced);
     this.socket.off(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
@@ -197,6 +256,8 @@ export class GameScene extends Phaser.Scene {
     this.powerUpRenderer.reset();
     this.playerRenderer.reset();
     this.stateChangeTracker.reset();
+    this.currentMap = null;
+    this.hudRenderer.setWaitingCountdown(null);
   }
 
   private followLocalPlayer(): void {

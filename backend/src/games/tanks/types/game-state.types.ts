@@ -1,4 +1,5 @@
 import { GameMap } from './map.types';
+import { PowerUpSpawn } from './power-up.types';
 import { PlayerPublicState } from './player.types';
 
 export type GameStatus = 'waiting' | 'playing' | 'finished';
@@ -32,8 +33,13 @@ export interface BulletImpactPublicState {
 
 export interface GameState {
   status: GameStatus;
-  map: GameMap;
   players: PlayerPublicState[];
   bullets: BulletPublicState[];
+  powerUps: PowerUpSpawn[];
   impactEvents: BulletImpactPublicState[];
+}
+
+export interface InitialGameState {
+  map: GameMap;
+  state: GameState;
 }
