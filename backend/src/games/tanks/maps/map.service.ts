@@ -1,21 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { OBSTACLE_DEFINITIONS } from '../obstacle.config';
 import { GameMap, Obstacle, ObstacleAssetId, ObstacleType } from '../types/map.types';
 import { PowerUpSpawn, PowerUpType } from '../types/power-up.types';
-import {
-  BUSH_OBSTACLE_ASSET_IDS,
-  DECORATION_OBSTACLE_ASSET_IDS,
-  DEFAULT_OBSTACLE_SIZE,
-  OBSTACLE_DEFINITIONS,
-} from '../obstacle.config';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const FORTRESS_CENTER_DATA = require('./data/fortress_center_br.json') as RawMapJson;
 const JUNGLE_SURVIVAL_DATA = require('./data/p16-jungle-survival.json') as RawMapJson;
-const JUNGLE_SURVIVAL_DATAV2 = require('./data/p8-jungle-survival.json') as RawMapJson;
+const CANYON_STANDOFF_DATA_P16 = require('./data/p16-canyon-standoff.json') as RawMapJson;
+const FOREST_CLEARING_DATA_P16 = require('./data/p16-forest-clearing.json') as RawMapJson;
+const FORTRESS_SIEGE_DATA_P16 = require('./data/p16-fortress-siege.json') as RawMapJson;
+const MIRROR_MAZE_DATA_P16 = require('./data/p16-mirror-maze.json') as RawMapJson;
+const URBAN_GRID_DATA_P16 = require('./data/p16-urban-grid.json') as RawMapJson;
+const CANYON_STANDOFF_DATA_P4 = require('./data/p4-canyon-standoff.json') as RawMapJson;
+const FOREST_CLEARING_DATA_P4 = require('./data/p4-forest-clearing.json') as RawMapJson;
+const FORTRESS_SIEGE_DATA_P4 = require('./data/p4-fortress-siege.json') as RawMapJson;
+const JUNGLE_SURVIVAL_DATA_P4 = require('./data/p4-jungle-survival.json') as RawMapJson;
+const MIRROR_MAZE_DATA_P4 = require('./data/p4-mirror-maze.json') as RawMapJson;
 const URBAN_ASSAULT_DATA_P4 = require('./data/p4-urban-grid-p4.json') as RawMapJson;
-
-
+const CANYON_STANDOFF_DATA_P8 = require('./data/p8-canyon-standoff.json') as RawMapJson;
+const FOREST_CLEARING_DATA_P8 = require('./data/p8-forest-clearing.json') as RawMapJson;
+const FORTRESS_SIEGE_DATA_P8 = require('./data/p8-fortress-siege.json') as RawMapJson;
+const JUNGLE_SURVIVAL_DATA_P8 = require('./data/p8-jungle-survival.json') as RawMapJson;
+const MIRROR_MAZE_DATA_P8 = require('./data/p8-mirror-maze.json') as RawMapJson;
+const URBAN_GRID_DATA_P8 = require('./data/p8-urban-grid.json') as RawMapJson;
 
 const POWER_UP_RADIUS = 18;
 
@@ -45,17 +53,53 @@ interface RawMapJson {
   name: string;
   width: number;
   height: number;
+  maxPlayers?: number;
   spawnPoints: { x: number; y: number }[];
   obstacles: RawObstacle[];
   powerUps: RawPowerUp[];
 }
 
+const MAP_POOL: RawMapJson[] = [
+  FORTRESS_CENTER_DATA,
+  JUNGLE_SURVIVAL_DATA,
+  CANYON_STANDOFF_DATA_P16,
+  FOREST_CLEARING_DATA_P16,
+  FORTRESS_SIEGE_DATA_P16,
+  MIRROR_MAZE_DATA_P16,
+  URBAN_GRID_DATA_P16,
+  CANYON_STANDOFF_DATA_P4,
+  FOREST_CLEARING_DATA_P4,
+  FORTRESS_SIEGE_DATA_P4,
+  JUNGLE_SURVIVAL_DATA_P4,
+  MIRROR_MAZE_DATA_P4,
+  URBAN_ASSAULT_DATA_P4,
+  CANYON_STANDOFF_DATA_P8,
+  FOREST_CLEARING_DATA_P8,
+  FORTRESS_SIEGE_DATA_P8,
+  JUNGLE_SURVIVAL_DATA_P8,
+  MIRROR_MAZE_DATA_P8,
+  URBAN_GRID_DATA_P8,
+];
+
 @Injectable()
 export class MapService {
-  createMap(): GameMap {
-    //return this.loadFromJson(JUNGLE_SURVIVAL_DATA); 
-    return this.loadFromJson(URBAN_ASSAULT_DATA_P4);
-    //return this.createLegacyMap(); 
+  createMap(playerCount = 4): GameMap {
+    return this.loadFromJson(this.pickMapForPlayerCount(playerCount));
+  }
+
+  private pickMapForPlayerCount(playerCount: number): RawMapJson {
+    const tier = this.tierForPlayerCount(playerCount);
+    const candidates = MAP_POOL.filter(map => map.spawnPoints.length === tier);
+    if (candidates.length === 0) {
+      throw new Error(`No map found for ${tier}-player tier`);
+    }
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  private tierForPlayerCount(playerCount: number): number {
+    if (playerCount <= 4) return 4;
+    if (playerCount <= 8) return 8;
+    return 16;
   }
 
   private loadFromJson(data: RawMapJson): GameMap {
@@ -88,181 +132,6 @@ export class MapService {
     };
   }
 
-  // Legacy hardcoded 1600×1200 map — kept for testing
-  createLegacyMap(): GameMap {
-    return {
-      width: 1600,
-      height: 1200,
-      obstacles: this.buildLegacyObstacles(),
-      powerUps: this.buildLegacyPowerUps(),
-    };
-  }
-
-  private obs(
-    type: ObstacleType,
-    x: number,
-    y: number,
-    w = DEFAULT_OBSTACLE_SIZE,
-    h = DEFAULT_OBSTACLE_SIZE,
-    assetId?: Obstacle['assetId'],
-  ): Obstacle {
-    const definition = OBSTACLE_DEFINITIONS[type];
-
-    return {
-      id: uuidv4(),
-      type,
-      assetId: assetId ?? definition.assetId,
-      x,
-      y,
-      width: w,
-      height: h,
-      hp: definition.hp,
-      maxHp: definition.hp,
-      healthRatio: 1,
-      destructible: definition.destructible,
-    };
-  }
-
-  private buildLegacyObstacles(): Obstacle[] {
-    const MAP_WIDTH = 1600;
-    const MAP_HEIGHT = 1200;
-    const obstacles: Obstacle[] = [];
-    const usedPositions = new Set<string>();
-    const bushCoverSize = 70;
-    const bushGap = -5;
-    const bushPatchGap = bushCoverSize + bushGap;
-
-    const add = (
-      type: ObstacleType,
-      x: number,
-      y: number,
-      w = DEFAULT_OBSTACLE_SIZE,
-      h = DEFAULT_OBSTACLE_SIZE,
-      assetId?: Obstacle['assetId'],
-    ) => {
-      const key = `${type}-${x}-${y}-${w}-${h}-${assetId ?? ''}`;
-
-      if (usedPositions.has(key)) {
-        return;
-      }
-
-      usedPositions.add(key);
-      obstacles.push(this.obs(type, x, y, w, h, assetId));
-    };
-
-    const addSymmetric = (
-      type: ObstacleType,
-      x: number,
-      y: number,
-      w = DEFAULT_OBSTACLE_SIZE,
-      h = DEFAULT_OBSTACLE_SIZE,
-    ) => {
-      const mirroredX = MAP_WIDTH - x;
-      const mirroredY = MAP_HEIGHT - y;
-
-      add(type, x, y, w, h);
-      add(type, mirroredX, y, w, h);
-      add(type, x, mirroredY, w, h);
-      add(type, mirroredX, mirroredY, w, h);
-    };
-
-    const addHorizontalLine = (
-      type: ObstacleType,
-      startX: number,
-      y: number,
-      count: number,
-      gap = 80,
-      w = DEFAULT_OBSTACLE_SIZE,
-      h = DEFAULT_OBSTACLE_SIZE,
-    ) => {
-      for (let i = 0; i < count; i++) {
-        add(type, startX + i * gap, y, w, h);
-      }
-    };
-
-    const addVerticalLine = (
-      type: ObstacleType,
-      x: number,
-      startY: number,
-      count: number,
-      gap = 80,
-      w = DEFAULT_OBSTACLE_SIZE,
-      h = DEFAULT_OBSTACLE_SIZE,
-    ) => {
-      for (let i = 0; i < count; i++) {
-        add(type, x, startY + i * gap, w, h);
-      }
-    };
-
-    const addBushPair = (x: number, y: number, horizontal = true) => {
-      if (horizontal) {
-        add('bush', x - bushPatchGap / 2, y, bushCoverSize, bushCoverSize);
-        add('bush', x + bushPatchGap / 2, y, bushCoverSize, bushCoverSize);
-      } else {
-        add('bush', x, y - bushPatchGap / 2, bushCoverSize, bushCoverSize);
-        add('bush', x, y + bushPatchGap / 2, bushCoverSize, bushCoverSize);
-      }
-    };
-
-    const addBushQuad = (x: number, y: number) => {
-      add('bush', x - bushPatchGap / 2, y - bushPatchGap / 2, bushCoverSize, bushCoverSize);
-      add('bush', x + bushPatchGap / 2, y - bushPatchGap / 2, bushCoverSize, bushCoverSize);
-      add('bush', x - bushPatchGap / 2, y + bushPatchGap / 2, bushCoverSize, bushCoverSize);
-      add('bush', x + bushPatchGap / 2, y + bushPatchGap / 2, bushCoverSize, bushCoverSize);
-    };
-
-    const addAssetPreview = () => {
-      const columns = 9;
-      const gap = bushPatchGap;
-      const startX = MAP_WIDTH / 2 - ((columns - 1) * gap) / 2;
-      const startY = MAP_HEIGHT - 154;
-      const previewAssets = [
-        ...BUSH_OBSTACLE_ASSET_IDS.map(assetId => ({ type: 'bush' as const, assetId })),
-        ...DECORATION_OBSTACLE_ASSET_IDS.map(assetId => ({ type: 'decoration' as const, assetId })),
-      ];
-
-      previewAssets.forEach(({ type, assetId }, index) => {
-        const x = startX + (index % columns) * gap;
-        const y = startY + Math.floor(index / columns) * gap;
-        add(type, x, y, bushCoverSize, bushCoverSize, assetId);
-      });
-    };
-
-    // Unused helpers referenced above — suppress TS error
-    void addSymmetric;
-    void addVerticalLine;
-
-    addBushPair(330, 230, true);
-    addBushPair(MAP_WIDTH - 330, 230, true);
-    addBushPair(330, MAP_HEIGHT - 230, true);
-    addBushPair(MAP_WIDTH - 330, MAP_HEIGHT - 230, true);
-
-    addBushQuad(660, 290);
-    addBushQuad(940, 910);
-
-    addBushPair(800, 600, true);
-
-    addAssetPreview();
-
-    addHorizontalLine('rock', 360, 430, 3, DEFAULT_OBSTACLE_SIZE);
-    addHorizontalLine('rock', MAP_WIDTH - 544, 770, 3, DEFAULT_OBSTACLE_SIZE);
-
-    addHorizontalLine('wood', 260, 610, 3, 88);
-    addHorizontalLine('wood', MAP_WIDTH - 436, 610, 3, 88);
-
-    add('steel', 470, 600);
-    add('steel', MAP_WIDTH - 470, 600);
-    add('steel', 700, 500);
-    add('steel', 900, 700);
-
-    add('mirror', 260, 350, 140, 18);
-    add('mirror', MAP_WIDTH - 260, MAP_HEIGHT - 350, 140, 18);
-    add('mirror', 620, 900, 18, 130);
-    add('mirror', MAP_WIDTH - 620, 300, 18, 130);
- //s ss
-    return obstacles;
-  }
-
   private power(type: PowerUpType, x: number, y: number): PowerUpSpawn {
     return {
       id: uuidv4(),
@@ -273,14 +142,5 @@ export class MapService {
       radius: POWER_UP_RADIUS,
       createdAt: Date.now(),
     };
-  }
-
-  private buildLegacyPowerUps(): PowerUpSpawn[] {
-    return [
-      this.power('triple_shot', 800, 520),
-      this.power('shotgun', 730, 650),
-      this.power('grenade', 870, 650),
-      this.power('laser', 800, 720),
-    ];
   }
 }

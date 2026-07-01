@@ -36,24 +36,6 @@ export const PLAYER_COLORS = [
   0x8e44ad, // dark violet
 ];
 
-const SPAWN_POINTS = [
-  { x: 150,  y: 150  },
-  { x: 1450, y: 150  },
-  { x: 150,  y: 1050 },
-  { x: 1450, y: 1050 },
-  { x: 800,  y: 120  },
-  { x: 800,  y: 1080 },
-  { x: 120,  y: 600  },
-  { x: 1480, y: 600  },
-  { x: 400,  y: 300  },
-  { x: 1200, y: 300  },
-  { x: 400,  y: 900  },
-  { x: 1200, y: 900  },
-  { x: 550,  y: 550  },
-  { x: 1050, y: 550  },
-  { x: 800,  y: 400  },
-];
-
 @Injectable()
 export class GameService {
   constructor(
@@ -77,7 +59,11 @@ export class GameService {
     const existing = this.players.get(userId);
     if (existing) return existing;
 
-    const spawn = SPAWN_POINTS[this.players.size % SPAWN_POINTS.length];
+    const spawnPoints = this.map?.spawnPoints;
+    if (!spawnPoints?.length) {
+      throw new Error('Cannot add player without map spawn points');
+    }
+    const spawn = spawnPoints[this.players.size % spawnPoints.length];
     const colorIndex = this.pickColorIndex();
 
     const player: Player = {

@@ -79,8 +79,9 @@ export class GameLoopService implements OnModuleDestroy {
   prepare(roomId: string, players: Array<{ userId: string; username: string }>): void {
     this.sessions.create(roomId);
     this.sessions.run(roomId, () => {
+      const preparedMap = this.gameService.map;
       this.gameService.reset();
-      this.gameService.map = this.mapService.createMap();
+      this.gameService.map = preparedMap ?? this.mapService.createMap(players.length);
       for (const player of players) this.gameService.addPlayer(player.userId, player.username);
     });
   }
@@ -88,7 +89,7 @@ export class GameLoopService implements OnModuleDestroy {
   start(roomId: string): void {
     if (this.loops.has(roomId)) return;
     this.sessions.run(roomId, () => {
-      if (!this.gameService.map) this.gameService.map = this.mapService.createMap();
+      if (!this.gameService.map) this.gameService.map = this.mapService.createMap(this.gameService.players.size);
       this.gameService.status = 'playing';
       const state = this.sessions.require(roomId);
       state.startedAt = new Date();

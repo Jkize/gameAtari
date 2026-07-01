@@ -3,7 +3,7 @@ import { GameService } from '../game.service';
 import { PowerUpSpawnService } from '../power-up-spawn.service';
 import { GameRuntimeContext } from '../runtime/game-runtime-context.service';
 import { GameSessionsService } from '../runtime/game-sessions.service';
-import { Obstacle } from '../types/map.types';
+import { GameMap, Obstacle } from '../types/map.types';
 import { WeaponGrenadeService } from './weapon-grenade.service';
 import { WeaponLaserService } from './weapon-laser.service';
 import { WeaponService } from './weapon.service';
@@ -33,7 +33,7 @@ describe('weapon behavior', () => {
     ['laser', 1, 'laser'],
   ] as const)('creates the expected %s projectile pattern', (powerUp, count, kind) => {
     sessions.run('test-room', () => {
-      game.map = { width: 1600, height: 1200, obstacles: [], powerUps: [] };
+      game.map = createTestMap();
       const player = game.addPlayer('owner');
       player.input.shoot = true;
       player.input.aimAngle = 0;
@@ -48,7 +48,7 @@ describe('weapon behavior', () => {
 
   it('does not damage the laser owner before reflection', () => {
     sessions.run('test-room', () => {
-      game.map = { width: 1600, height: 1200, obstacles: [], powerUps: [] };
+      game.map = createTestMap();
       const owner = game.addPlayer('owner');
       owner.x = 100;
       owner.y = 100;
@@ -77,7 +77,7 @@ describe('weapon behavior', () => {
         healthRatio: 1,
         destructible: false,
       };
-      game.map = { width: 1600, height: 1200, obstacles: [mirror], powerUps: [] };
+      game.map = createTestMap([mirror]);
       const owner = game.addPlayer('owner');
       owner.x = 100;
       owner.y = 100;
@@ -95,7 +95,7 @@ describe('weapon behavior', () => {
 
   it('applies grenade splash damage to enemies and its owner inside the blast radius', () => {
     sessions.run('test-room', () => {
-      game.map = { width: 1600, height: 1200, obstacles: [], powerUps: [] };
+      game.map = createTestMap();
       const owner = game.addPlayer('owner');
       const enemy = game.addPlayer('enemy');
       owner.x = 100;
@@ -122,4 +122,17 @@ describe('weapon behavior', () => {
       expect(enemy.hp).toBeLessThan(enemy.maxHp);
     });
   });
+
+  function createTestMap(obstacles: Obstacle[] = []): GameMap {
+    return {
+      width: 1600,
+      height: 1200,
+      spawnPoints: [
+        { x: 100, y: 100 },
+        { x: 130, y: 100 },
+      ],
+      obstacles,
+      powerUps: [],
+    };
+  }
 });
