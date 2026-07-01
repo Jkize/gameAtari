@@ -18,9 +18,9 @@ import {
   TANK_TURRET_ORIGIN_X,
   TANK_TURRET_ORIGIN_Y,
   TANK_TURRET_ROTATION_OFFSET,
-} from '../../rendering/tank-svg-textures';
-import { ensureWeaponOverlayTexture } from '../../rendering/weapon-svg-textures';
-import { ensureShieldSvgTexture } from '../../rendering/shield-svg-textures';
+} from '../../shared/rendering/tank-svg-textures';
+import { ensureWeaponOverlayTexture } from '../../shared/rendering/weapon-svg-textures';
+import { ensureShieldSvgTexture } from '../../shared/rendering/shield-svg-textures';
 
 const SHIELDED_TANK_ALPHA = 0.9;
 const SHIELDED_WEAPON_ALPHA = 0.9;

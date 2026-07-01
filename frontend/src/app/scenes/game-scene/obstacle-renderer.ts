@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
+import { drawMirrorPanel, MirrorPanelSurface } from '../../shared/rendering/mirror-panel-renderer';
 import { Obstacle } from '../../types/game-state.types';
-import { BUSH_COVER_DEPTH, OBSTACLE_ASSET_BY_TYPE, OBS, hashString, seededRandom } from './game-scene.constants';
+import { BUSH_COVER_DEPTH, OBSTACLE_ASSET_BY_TYPE, OBS } from './game-scene.constants';
 import { GameSceneLayers } from './game-scene-layers';
 
 export class ObstacleRenderer {
@@ -92,7 +93,13 @@ export class ObstacleRenderer {
 
   private createObstacleGfx(obs: Obstacle): Phaser.GameObjects.GameObject {
     const textureKey = this.getObstacleTextureKey(obs);
-    if (obs.type !== 'mirror' && textureKey && this.scene.textures.exists(textureKey)) {
+    if (obs.type === 'mirror') {
+      const gfx = this.scene.add.graphics().setDepth(2);
+      this.drawMirrorObstacle(gfx, obs);
+      return gfx;
+    }
+
+    if (textureKey && this.scene.textures.exists(textureKey)) {
       return this.scene.add.image(obs.x, obs.y, textureKey)
         .setOrigin(0.5)
         .setDisplaySize(obs.width, obs.height)
@@ -101,83 +108,35 @@ export class ObstacleRenderer {
 
     const gfx = this.scene.add.graphics().setDepth(obs.type === 'bush' ? BUSH_COVER_DEPTH : 2);
 
-    if (obs.type === 'mirror') {
-      this.drawMirrorObstacle(gfx, obs, seededRandom(hashString(obs.id)));
-      return gfx;
-    }
-
     const col = OBS[obs.type] ?? OBS['rock'];
     gfx.fillStyle(col.fill, 1);
     gfx.fillRect(obs.x - obs.width / 2, obs.y - obs.height / 2, obs.width, obs.height);
     return gfx;
   }
 
-  private drawMirrorObstacle(gfx: Phaser.GameObjects.Graphics, obs: Obstacle, rng: () => number): void {
-    const x = obs.x - obs.width / 2;
-    const y = obs.y - obs.height / 2;
-    const w = obs.width;
-    const h = obs.height;
-    const horizontal = w >= h;
-    const frame = Math.max(3, Math.min(7, Math.min(w, h) * 0.22));
-    const glassX = x + frame;
-    const glassY = y + frame;
-    const glassW = Math.max(1, w - frame * 2);
-    const glassH = Math.max(1, h - frame * 2);
-    const longSide = horizontal ? w : h;
-    const segmentCount = Math.max(2, Math.floor(longSide / 34));
-
-    gfx.fillStyle(0x000000, 0.42);
-    gfx.fillRect(x + 5, y + 6, w + 8, h + 8);
-    gfx.fillStyle(0x001823, 1);
-    gfx.fillRect(x - 5, y - 5, w + 10, h + 10);
-    gfx.fillStyle(0x00384e, 1);
-    gfx.fillRect(x - 2, y - 2, w + 4, h + 4);
-    gfx.fillStyle(0x001f2b, 1);
-    gfx.fillRect(x, y, w, h);
-    gfx.fillStyle(0x008fa8, 0.58);
-    gfx.fillRect(glassX, glassY, glassW, glassH);
-    gfx.fillStyle(0x18e6ff, 0.32);
-    gfx.fillRect(glassX + 2, glassY + 2, Math.max(1, glassW - 4), Math.max(1, glassH * 0.42));
-    gfx.fillStyle(0x004f68, 0.35);
-    gfx.fillRect(glassX + 2, glassY + glassH * 0.58, Math.max(1, glassW - 4), Math.max(1, glassH * 0.34));
-
-    gfx.lineStyle(2, 0x00f7ff, 0.55);
-    for (let i = 1; i < segmentCount; i++) {
-      const t = i / segmentCount;
-      if (horizontal) {
-        const sx = x + w * t + (rng() - 0.5) * 2;
-        gfx.lineBetween(sx, y + frame * 0.7, sx, y + h - frame * 0.7);
-      } else {
-        const sy = y + h * t + (rng() - 0.5) * 2;
-        gfx.lineBetween(x + frame * 0.7, sy, x + w - frame * 0.7, sy);
-      }
-    }
-
-    gfx.lineStyle(2.5, 0xffffff, 0.62);
-    if (horizontal) {
-      gfx.lineBetween(glassX + glassW * 0.12, glassY + glassH * 0.34, glassX + glassW * 0.36, glassY + glassH * 0.34);
-      gfx.lineBetween(glassX + glassW * 0.50, glassY + glassH * 0.50, glassX + glassW * 0.76, glassY + glassH * 0.50);
-      gfx.lineStyle(1.5, 0x9dffff, 0.48);
-      gfx.lineBetween(glassX + glassW * 0.18, glassY + glassH * 0.68, glassX + glassW * 0.90, glassY + glassH * 0.68);
-    } else {
-      gfx.lineBetween(glassX + glassW * 0.36, glassY + glassH * 0.12, glassX + glassW * 0.36, glassY + glassH * 0.36);
-      gfx.lineBetween(glassX + glassW * 0.50, glassY + glassH * 0.50, glassX + glassW * 0.50, glassY + glassH * 0.76);
-      gfx.lineStyle(1.5, 0x9dffff, 0.48);
-      gfx.lineBetween(glassX + glassW * 0.68, glassY + glassH * 0.18, glassX + glassW * 0.68, glassY + glassH * 0.90);
-    }
-
-    gfx.lineStyle(3, 0x00eaff, 0.88);
-    gfx.strokeRect(x - 1, y - 1, w + 2, h + 2);
-    gfx.lineStyle(1.5, 0xb9ffff, 0.72);
-    gfx.strokeRect(glassX, glassY, glassW, glassH);
-
-    gfx.fillStyle(0x00eaff, 0.90);
-    if (horizontal) {
-      gfx.fillRect(x - 3, y - 3, 7, h + 6);
-      gfx.fillRect(x + w - 4, y - 3, 7, h + 6);
-    } else {
-      gfx.fillRect(x - 3, y - 3, w + 6, 7);
-      gfx.fillRect(x - 3, y + h - 4, w + 6, 7);
-    }
+  private drawMirrorObstacle(gfx: Phaser.GameObjects.Graphics, obs: Obstacle): void {
+    const surface: MirrorPanelSurface = {
+      fillRect: (x, y, width, height, color, alpha) => {
+        gfx.fillStyle(color, alpha);
+        gfx.fillRect(x, y, width, height);
+      },
+      fillRoundedRect: (x, y, width, height, radius, color, alpha) => {
+        gfx.fillStyle(color, alpha);
+        gfx.fillRoundedRect(x, y, width, height, radius);
+      },
+      strokeLine: (x1, y1, x2, y2, width, color, alpha) => {
+        gfx.lineStyle(width, color, alpha);
+        gfx.lineBetween(x1, y1, x2, y2);
+      },
+      strokeRoundedRect: (x, y, width, height, radius, lineWidth, color, alpha) => {
+        gfx.lineStyle(lineWidth, color, alpha);
+        gfx.strokeRoundedRect(x, y, width, height, radius);
+      },
+      fillCircle: (x, y, radius, color, alpha) => {
+        gfx.fillStyle(color, alpha);
+        gfx.fillCircle(x, y, radius);
+      },
+    };
+    drawMirrorPanel(surface, obs);
   }
 }

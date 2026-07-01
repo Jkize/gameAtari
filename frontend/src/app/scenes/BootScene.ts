@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 
 const OBSTACLE_SVG_TEXTURE_SIZE = { width: 64, height: 64 } as const;
+const MIRROR_SVG_TEXTURE_SIZE = { width: 256, height: 64 } as const;
 const WEAPON_SVG_TEXTURE_SIZE = { width: 96, height: 96 } as const;
 const HUD_ICON_SVG_TEXTURE_SIZE = { width: 96, height: 96 } as const;
 // Matches hud-bottom-panel.svg and the final HUD display rect ratio:
@@ -67,7 +68,7 @@ export class BootScene extends Phaser.Scene {
     });
 
     this.load.image('obstacle-steel_block_01', 'assets/obstacle/steel_block_01.png');
-    this.load.image('obstacle-mirror_panel_01', 'assets/obstacle/mirror_panel_01.png');
+    this.load.svg('obstacle-mirror_panel_01', 'assets/obstacle/mirror_panel_01.svg', MIRROR_SVG_TEXTURE_SIZE);
     this.load.svg('weapon-power_triple_shot', 'assets/weapon/power_triple_shot.svg', WEAPON_SVG_TEXTURE_SIZE);
     this.load.svg('weapon-power_shotgun', 'assets/weapon/power_shotgun.svg', WEAPON_SVG_TEXTURE_SIZE);
     this.load.svg('weapon-power_grenade', 'assets/weapon/power_grenade.svg', WEAPON_SVG_TEXTURE_SIZE);

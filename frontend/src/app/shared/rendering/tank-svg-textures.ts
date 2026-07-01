@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { applyTankColor, colorToKeyPart, loadSvgTexture } from './svg-texture-utils';
 
 export interface TankTextureKeys {
   body: string;
@@ -23,7 +24,6 @@ const TANK_CRITICAL_BODY_TEMPLATE_PATH = '/assets/tanks/tank_body_critical_templ
 const TANK_CRITICAL_TURRET_TEMPLATE_PATH = '/assets/tanks/tank_pistol_critical_template.svg';
 const TANK_DESTROYED_BODY_TEMPLATE_PATH = '/assets/tanks/tank_body_destroyed_template.svg';
 const TANK_DESTROYED_TURRET_TEMPLATE_PATH = '/assets/tanks/tank_pistol_destroyed_template.svg';
-const TANK_COLOR_PATTERN = /--tank-color:\s*#[0-9a-fA-F]{3,8}\s*;/;
 
 interface TankSvgTemplates {
   body: string;
@@ -37,13 +37,6 @@ interface TankSvgTemplates {
 }
 
 let tankSvgTemplatesPromise: Promise<TankSvgTemplates> | null = null;
-
-function svgTexture(scene: Phaser.Scene, key: string, svgString: string, width = 96, height = 96): string {
-  const blob = new Blob([svgString], { type: 'image/svg+xml' });
-  const url = URL.createObjectURL(blob);
-  scene.load.svg(key, url, { width, height });
-  return url;
-}
 
 function getTankSvgTemplates(): Promise<TankSvgTemplates> {
   tankSvgTemplatesPromise ??= Promise.all([
@@ -67,18 +60,6 @@ function getTankSvgTemplates(): Promise<TankSvgTemplates> {
   }));
 
   return tankSvgTemplatesPromise;
-}
-
-function colorToCss(color: number): string {
-  return '#' + color.toString(16).padStart(6, '0');
-}
-
-function colorToKeyPart(color: number): string {
-  return color.toString(16).padStart(6, '0');
-}
-
-function applyTankColor(svg: string, color: number): string {
-  return svg.replace(TANK_COLOR_PATTERN, `--tank-color: ${colorToCss(color)};`);
 }
 
 export function getTankTextureKeys(color: number): TankTextureKeys {
@@ -128,26 +109,26 @@ export function ensureTankSvgTextures(scene: Phaser.Scene, color: number): TankT
   registry.set('tankTextureLoads', pending);
 
   void getTankSvgTemplates().then(templates => {
-    const bodyUrl = svgTexture(scene, keys.body, applyTankColor(templates.body, color), 112, 112);
-    const turretUrl = svgTexture(scene, keys.turret, applyTankColor(templates.turret, color), 112, 112);
-    const hurtBodyUrl = svgTexture(scene, keys.hurtBody, applyTankColor(templates.hurtBody, color), 112, 112);
-    const hurtTurretUrl = svgTexture(scene, keys.hurtTurret, applyTankColor(templates.hurtTurret, color), 112, 112);
-    const criticalBodyUrl = svgTexture(scene, keys.criticalBody, applyTankColor(templates.criticalBody, color), 112, 112);
-    const criticalTurretUrl = svgTexture(
+    const bodyUrl = loadSvgTexture(scene, keys.body, applyTankColor(templates.body, color), 112, 112);
+    const turretUrl = loadSvgTexture(scene, keys.turret, applyTankColor(templates.turret, color), 112, 112);
+    const hurtBodyUrl = loadSvgTexture(scene, keys.hurtBody, applyTankColor(templates.hurtBody, color), 112, 112);
+    const hurtTurretUrl = loadSvgTexture(scene, keys.hurtTurret, applyTankColor(templates.hurtTurret, color), 112, 112);
+    const criticalBodyUrl = loadSvgTexture(scene, keys.criticalBody, applyTankColor(templates.criticalBody, color), 112, 112);
+    const criticalTurretUrl = loadSvgTexture(
       scene,
       keys.criticalTurret,
       applyTankColor(templates.criticalTurret, color),
       112,
       112,
     );
-    const destroyedBodyUrl = svgTexture(
+    const destroyedBodyUrl = loadSvgTexture(
       scene,
       keys.destroyedBody,
       applyTankColor(templates.destroyedBody, color),
       112,
       112,
     );
-    const destroyedTurretUrl = svgTexture(
+    const destroyedTurretUrl = loadSvgTexture(
       scene,
       keys.destroyedTurret,
       applyTankColor(templates.destroyedTurret, color),

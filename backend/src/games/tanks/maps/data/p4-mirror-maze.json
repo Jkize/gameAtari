@@ -1,0 +1,41 @@
+{
+  "name": "mirror_maze_p4",
+  "width": 1600,
+  "height": 1200,
+  "maxPlayers": 4,
+  "spawnPoints": [
+    { "x": 80, "y": 80 },
+    { "x": 1520, "y": 80 },
+    { "x": 80, "y": 1120 },
+    { "x": 1520, "y": 1120 }
+  ],
+  "obstacles": [
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 320, "y": 200, "width": 200, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 800, "y": 180, "width": 300, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1280, "y": 200, "width": 200, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 480, "y": 440, "width": 160, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 800, "y": 480, "width": 200, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1120, "y": 440, "width": 160, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 480, "y": 760, "width": 160, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 800, "y": 720, "width": 200, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1120, "y": 760, "width": 160, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 320, "y": 1000, "width": 200, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 800, "y": 1020, "width": 300, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1280, "y": 1000, "width": 200, "height": 16 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 200, "y": 500, "width": 16, "height": 300 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1400, "y": 500, "width": 16, "height": 300 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 400, "y": 320, "width": 16, "height": 200 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1200, "y": 320, "width": 16, "height": 200 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 400, "y": 880, "width": 16, "height": 200 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1200, "y": 880, "width": 16, "height": 200 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 600, "y": 320, "width": 16, "height": 260 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1000, "y": 320, "width": 16, "height": 260 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 600, "y": 880, "width": 16, "height": 260 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1000, "y": 880, "width": 16, "height": 260 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 800, "y": 340, "width": 16, "height": 200 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 800, "y": 860, "width": 16, "height": 200 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 200, "y": 850, "width": 16, "height": 200 },
+    { "type": "mirror", "assetId": "mirror_panel_01", "x": 1400, "y": 850, "width": 16, "height": 200 }
+  ],
+  "powerUps": []
+}

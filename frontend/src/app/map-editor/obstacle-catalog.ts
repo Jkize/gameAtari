@@ -95,7 +95,7 @@ export const OBSTACLE_CATALOG: readonly ObstacleCatalogItem[] = [
     category: 'Structures',
     type: 'mirror',
     assetId: 'mirror_panel_01',
-    previewPath: 'assets/obstacle/mirror_panel_01.png',
+    previewPath: 'assets/obstacle/mirror_panel_01.svg',
     defaultWidth: 140,
     defaultHeight: 18,
     minWidth: 12,

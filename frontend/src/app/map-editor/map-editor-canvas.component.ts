@@ -9,6 +9,7 @@ import {
 import { CATALOG_BY_ASSET } from './obstacle-catalog';
 import { EditorObstacle, EditorSelection } from './map-editor.models';
 import { MapEditorStore } from './map-editor.store';
+import { drawMirrorPanel, MirrorPanelSurface } from '../shared/rendering/mirror-panel-renderer';
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 type Interaction =
@@ -452,6 +453,11 @@ export class MapEditorCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private drawObstacle(context: CanvasRenderingContext2D, obstacle: EditorObstacle): void {
+    if (obstacle.type === 'mirror') {
+      this.drawMirrorObstacle(context, obstacle);
+      return;
+    }
+
     const catalog = CATALOG_BY_ASSET.get(obstacle.assetId);
     const image = catalog ? this.getImage(catalog.previewPath) : undefined;
     context.save();
@@ -466,6 +472,50 @@ export class MapEditorCanvasComponent implements AfterViewInit, OnDestroy {
       context.fillStyle = colors[obstacle.type] ?? '#555';
       context.fillRect(obstacle.x - obstacle.width / 2, obstacle.y - obstacle.height / 2, obstacle.width, obstacle.height);
     }
+    context.restore();
+  }
+
+  private drawMirrorObstacle(context: CanvasRenderingContext2D, obstacle: EditorObstacle): void {
+    context.save();
+    const surface: MirrorPanelSurface = {
+      fillRect: (x, y, width, height, color, alpha) => {
+        context.fillStyle = this.rgba(color, alpha);
+        context.fillRect(x, y, width, height);
+      },
+      fillRoundedRect: (x, y, width, height, radius, color, alpha) => {
+        context.fillStyle = this.rgba(color, alpha);
+        this.roundedRectPath(context, x, y, width, height, radius);
+        context.fill();
+      },
+      strokeLine: (x1, y1, x2, y2, width, color, alpha) => {
+        context.strokeStyle = this.rgba(color, alpha);
+        context.lineWidth = width;
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+      },
+      strokeRoundedRect: (x, y, width, height, radius, lineWidth, color, alpha) => {
+        context.strokeStyle = this.rgba(color, alpha);
+        context.lineWidth = lineWidth;
+        this.roundedRectPath(context, x, y, width, height, radius);
+        context.stroke();
+      },
+      fillCircle: (x, y, radius, color, alpha) => {
+        context.fillStyle = this.rgba(color, alpha);
+        context.beginPath();
+        context.arc(x, y, radius, 0, Math.PI * 2);
+        context.fill();
+      },
+    };
+
+    drawMirrorPanel(surface, {
+      id: obstacle.editorId,
+      x: obstacle.x,
+      y: obstacle.y,
+      width: obstacle.width,
+      height: obstacle.height,
+    });
     context.restore();
   }
 
@@ -561,6 +611,30 @@ export class MapEditorCanvasComponent implements AfterViewInit, OnDestroy {
       this.images.set(path, image);
     }
     return image;
+  }
+
+  private roundedRectPath(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number): void {
+    const r = Math.max(0, Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2));
+    const right = x + width;
+    const bottom = y + height;
+    context.beginPath();
+    context.moveTo(x + r, y);
+    context.lineTo(right - r, y);
+    context.quadraticCurveTo(right, y, right, y + r);
+    context.lineTo(right, bottom - r);
+    context.quadraticCurveTo(right, bottom, right - r, bottom);
+    context.lineTo(x + r, bottom);
+    context.quadraticCurveTo(x, bottom, x, bottom - r);
+    context.lineTo(x, y + r);
+    context.quadraticCurveTo(x, y, x + r, y);
+    context.closePath();
+  }
+
+  private rgba(color: number, alpha: number): string {
+    const r = (color >> 16) & 0xff;
+    const g = (color >> 8) & 0xff;
+    const b = color & 0xff;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   private eventPoint(event: MouseEvent): { x: number; y: number } {

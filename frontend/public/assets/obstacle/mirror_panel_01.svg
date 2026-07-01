@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 64" width="256" height="64">
+  <defs>
+    <linearGradient id="outerFrame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a5261"/>
+      <stop offset="0.45" stop-color="#063242"/>
+      <stop offset="1" stop-color="#011820"/>
+    </linearGradient>
+
+    <linearGradient id="innerFrame" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00eaff"/>
+      <stop offset="0.18" stop-color="#087b93"/>
+      <stop offset="0.52" stop-color="#01425a"/>
+      <stop offset="0.82" stop-color="#0aa7bf"/>
+      <stop offset="1" stop-color="#c9ffff"/>
+    </linearGradient>
+
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dfffff"/>
+      <stop offset="0.16" stop-color="#5bf4ff"/>
+      <stop offset="0.45" stop-color="#0799b5"/>
+      <stop offset="0.72" stop-color="#02415f"/>
+      <stop offset="1" stop-color="#001826"/>
+    </linearGradient>
+
+    <linearGradient id="glassShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.72"/>
+      <stop offset="0.35" stop-color="#8cffff" stop-opacity="0.24"/>
+      <stop offset="0.75" stop-color="#00283a" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#00070c" stop-opacity="0.55"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-20%" y="-70%" width="140%" height="240%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- DROP SHADOW -->
+  <rect x="13" y="13" width="234" height="42" rx="8" fill="#00070a" opacity="0.48"/>
+
+  <!-- OUTER CASE -->
+  <rect x="6" y="6" width="244" height="50" rx="9" fill="url(#outerFrame)"/>
+  <rect x="10" y="10" width="236" height="42" rx="6" fill="#001923"/>
+
+  <!-- METAL END CAPS -->
+  <path d="M10 14 Q10 10 15 10 L34 10 L34 52 L15 52 Q10 52 10 48Z" fill="#092d3a"/>
+  <path d="M246 14 Q246 10 241 10 L222 10 L222 52 L241 52 Q246 52 246 48Z" fill="#092d3a"/>
+  <path d="M18 14 L28 14 L28 48 L18 48 Q14 48 14 44 L14 18 Q14 14 18 14Z" fill="#00cde8" opacity="0.52"/>
+  <path d="M238 14 L228 14 L228 48 L238 48 Q242 48 242 44 L242 18 Q242 14 238 14Z" fill="#00eaff" opacity="0.62"/>
+
+  <!-- MIRROR SURFACE -->
+  <rect x="33" y="14" width="190" height="36" rx="4" fill="url(#glass)"/>
+  <rect x="33" y="14" width="190" height="36" rx="4" fill="url(#glassShade)"/>
+
+  <!-- SEGMENTS -->
+  <g opacity="0.8">
+    <path d="M72 16 L72 48" stroke="#9bffff" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+    <path d="M112 16 L112 48" stroke="#00eaff" stroke-width="2" stroke-linecap="round" opacity="0.32"/>
+    <path d="M153 16 L153 48" stroke="#9bffff" stroke-width="2" stroke-linecap="round" opacity="0.42"/>
+    <path d="M192 16 L192 48" stroke="#00eaff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+  </g>
+
+  <!-- REFLECTION BANDS -->
+  <path d="M43 22 L90 22" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.58"/>
+  <path d="M103 31 L168 31" stroke="#c9ffff" stroke-width="3" stroke-linecap="round" opacity="0.38"/>
+  <path d="M66 42 L208 42" stroke="#8ffcff" stroke-width="2" stroke-linecap="round" opacity="0.28"/>
+  <path d="M39 18 L85 48" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" opacity="0.22"/>
+  <path d="M127 16 L180 48" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" opacity="0.18"/>
+
+  <!-- INNER RIM -->
+  <rect x="30" y="12" width="196" height="40" rx="5" fill="none" stroke="url(#innerFrame)" stroke-width="4"/>
+  <rect x="34" y="16" width="188" height="32" rx="3" fill="none" stroke="#c9ffff" stroke-width="1.4" opacity="0.66"/>
+
+  <!-- BOLTS -->
+  <g>
+    <circle cx="23" cy="22" r="4.2" fill="#b9faff"/>
+    <circle cx="23" cy="22" r="2" fill="#064353"/>
+    <circle cx="23" cy="42" r="4.2" fill="#29dff2"/>
+    <circle cx="23" cy="42" r="2" fill="#032c38"/>
+
+    <circle cx="233" cy="22" r="4.2" fill="#b9faff"/>
+    <circle cx="233" cy="22" r="2" fill="#064353"/>
+    <circle cx="233" cy="42" r="4.2" fill="#29dff2"/>
+    <circle cx="233" cy="42" r="2" fill="#032c38"/>
+  </g>
+
+  <!-- ELECTRIC EDGE -->
+  <rect x="7" y="7" width="242" height="48" rx="8" fill="none" stroke="#00eaff" stroke-width="2" opacity="0.78" filter="url(#softGlow)"/>
+  <path d="M17 9 L87 9" stroke="#dfffff" stroke-width="2" stroke-linecap="round" opacity="0.42"/>
+  <path d="M180 55 L238 55" stroke="#00eaff" stroke-width="2" stroke-linecap="round" opacity="0.36"/>
+</svg>
