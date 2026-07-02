@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GameMap } from './types/map.types';
 
-export type DangerZonePhase = 'inactive' | 'warning' | 'active' | 'final';
+export type DangerZonePhase = 'inactive' | 'warning' | 'active' | 'final' | 'sudden_death';
 
 export interface DangerZoneConfig {
   targetDurationMs: number;
@@ -11,6 +11,9 @@ export interface DangerZoneConfig {
   shrinkEveryMs: number;
   initialRadius: number;
   finalRadius: number;
+  suddenDeathRadius: number;
+  finalHoldMs: number;
+  suddenDeathShrinkMs: number;
   damagePerSecond: number;
 }
 
@@ -29,15 +32,8 @@ export interface DangerZonePublicState {
   centerX: number;
   centerY: number;
   radius: number;
-  initialRadius: number;
-  finalRadius: number;
-  damagePerSecond: number;
-  warningMessage: string;
-  startedAtMs: number;
-  warningStartsAtMs: number;
-  damageStartsAtMs: number;
-  targetDurationMs: number;
-  nextShrinkAtMs?: number;
+  warningStartsAt: number;
+  damageStartsAt: number;
 }
 
 const EDGE_MARGIN_PX = 300;
@@ -53,6 +49,9 @@ const CONFIGS_BY_PLAYER_TIER: Record<4 | 8 | 16, DangerZoneConfig> = {
     shrinkEveryMs: 35_000,
     initialRadius: 900,
     finalRadius: 220,
+    suddenDeathRadius: 40,
+    finalHoldMs: 40_000,
+    suddenDeathShrinkMs: 30_000,
     damagePerSecond: 4,
   },
   8: {
@@ -63,6 +62,9 @@ const CONFIGS_BY_PLAYER_TIER: Record<4 | 8 | 16, DangerZoneConfig> = {
     shrinkEveryMs: 35_000,
     initialRadius: 1000,
     finalRadius: 250,
+    suddenDeathRadius: 50,
+    finalHoldMs: 45_000,
+    suddenDeathShrinkMs: 35_000,
     damagePerSecond: 5,
   },
   16: {
@@ -73,6 +75,9 @@ const CONFIGS_BY_PLAYER_TIER: Record<4 | 8 | 16, DangerZoneConfig> = {
     shrinkEveryMs: 40_000,
     initialRadius: 1150,
     finalRadius: 300,
+    suddenDeathRadius: 60,
+    finalHoldMs: 50_000,
+    suddenDeathShrinkMs: 45_000,
     damagePerSecond: 6,
   },
 };
@@ -122,7 +127,6 @@ export class DangerZoneService {
   }
 
   buildPublicState(zone: DangerZoneRuntimeState, now: number): DangerZonePublicState {
-    const elapsedMs = Math.max(0, now - zone.startedAtMs);
     const phase = this.phaseAt(zone, now);
     const radius = this.radiusAt(zone, now);
 
@@ -131,18 +135,8 @@ export class DangerZoneService {
       centerX: zone.centerX,
       centerY: zone.centerY,
       radius,
-      initialRadius: zone.initialRadius,
-      finalRadius: zone.finalRadius,
-      damagePerSecond: zone.damagePerSecond,
-      warningMessage: zone.warningMessage,
-      startedAtMs: zone.startedAtMs,
-      warningStartsAtMs: zone.warningStartsAtMs,
-      damageStartsAtMs: zone.damageStartsAtMs,
-      targetDurationMs: zone.targetDurationMs,
-      nextShrinkAtMs: phase === 'active'
-        ? zone.startedAtMs + zone.damageStartsAtMs +
-          (Math.floor(Math.max(0, elapsedMs - zone.damageStartsAtMs) / zone.shrinkEveryMs) + 1) * zone.shrinkEveryMs
-        : undefined,
+      warningStartsAt: zone.startedAtMs + zone.warningStartsAtMs,
+      damageStartsAt: zone.startedAtMs + zone.damageStartsAtMs,
     };
   }
 
@@ -150,13 +144,20 @@ export class DangerZoneService {
     const elapsedMs = Math.max(0, now - zone.startedAtMs);
     if (elapsedMs < zone.warningStartsAtMs) return 'inactive';
     if (elapsedMs < zone.damageStartsAtMs) return 'warning';
-    if (this.radiusAt(zone, now) <= zone.finalRadius) return 'final';
+    if (elapsedMs >= zone.targetDurationMs + zone.finalHoldMs) return 'sudden_death';
+    if (elapsedMs >= zone.targetDurationMs) return 'final';
     return 'active';
   }
 
   radiusAt(zone: DangerZoneRuntimeState, now: number): number {
     const elapsedMs = Math.max(0, now - zone.startedAtMs);
     if (elapsedMs < zone.damageStartsAtMs) return zone.initialRadius;
+    if (elapsedMs >= zone.targetDurationMs + zone.finalHoldMs) {
+      const suddenElapsedMs = elapsedMs - zone.targetDurationMs - zone.finalHoldMs;
+      const progress = Math.min(1, suddenElapsedMs / Math.max(1, zone.suddenDeathShrinkMs));
+      return zone.finalRadius + (zone.suddenDeathRadius - zone.finalRadius) * progress;
+    }
+    if (elapsedMs >= zone.targetDurationMs) return zone.finalRadius;
 
     const shrinkDurationMs = Math.max(1, zone.targetDurationMs - zone.damageStartsAtMs);
     const progress = Math.min(1, (elapsedMs - zone.damageStartsAtMs) / shrinkDurationMs);

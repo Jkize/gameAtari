@@ -25,7 +25,7 @@ export type ObstacleAssetId =
   | 'steel_block_01'
   | 'mirror_panel_01';
 export type GameStatus  = 'waiting' | 'playing' | 'finished';
-export type DangerZonePhase = 'inactive' | 'warning' | 'active' | 'final';
+export type DangerZonePhase = 'inactive' | 'warning' | 'active' | 'final' | 'sudden_death';
 
 export interface Obstacle {
   id: string;
@@ -130,15 +130,8 @@ export interface DangerZonePublicState {
   centerX: number;
   centerY: number;
   radius: number;
-  initialRadius: number;
-  finalRadius: number;
-  damagePerSecond: number;
-  warningMessage: string;
-  startedAtMs: number;
-  warningStartsAtMs: number;
-  damageStartsAtMs: number;
-  targetDurationMs: number;
-  nextShrinkAtMs?: number;
+  warningStartsAt: number;
+  damageStartsAt: number;
 }
 
 export interface RealtimeGameState {

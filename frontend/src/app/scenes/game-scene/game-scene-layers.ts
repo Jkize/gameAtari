@@ -14,7 +14,7 @@ export interface GameSceneLayers {
 export function createGameSceneLayers(scene: Phaser.Scene): GameSceneLayers {
   return {
     bgGfx: scene.add.graphics().setDepth(0),
-    dangerZoneGfx: scene.add.graphics().setDepth(REVEALED_TANK_DEPTH + 0.35),
+    dangerZoneGfx: scene.add.graphics().setDepth(4),
     glowGfx: scene.add.graphics().setDepth(1).setBlendMode(Phaser.BlendModes.ADD),
     mainGfx: scene.add.graphics().setDepth(5),
     bulletGlowGfx: scene.add.graphics().setDepth(9).setBlendMode(Phaser.BlendModes.ADD),

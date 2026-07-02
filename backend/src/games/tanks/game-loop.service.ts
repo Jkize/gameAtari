@@ -518,6 +518,8 @@ export class GameLoopService implements OnModuleDestroy {
       targetDurationMs: 45_000,
       maxDurationMs: 70_000,
       shrinkEveryMs: 5_000,
+      finalHoldMs: 8_000,
+      suddenDeathShrinkMs: 12_000,
     };
   }
 

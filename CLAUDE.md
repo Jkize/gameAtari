@@ -127,10 +127,12 @@ Tank Arena has a server-authoritative safe-zone / danger-zone mechanic for match
 - Backend owns center, radius, phase, timing, and out-of-zone damage.
 - Frontend only renders `gameState.dangerZone` and HUD warnings; it must not apply damage or move players.
 - `gameState.dangerZone` is intentionally small and optional. Do not reintroduce full `map` into frequent snapshots.
+- Frequent `dangerZone` payload intentionally includes only `phase`, `centerX`, `centerY`, `radius`, `warningStartsAt`, and `damageStartsAt`.
 - No teleporting, forced movement, or exact-point objective is used.
 - Center is chosen once per match with `edgeMarginPx = 300`.
 - Initial radius is dynamic by map size: farthest map corner from center plus 10 px, so the zone begins just outside any current map.
 - Final radius tiers: 220 px for <=4 players, 250 px for <=8, 300 px for <=16.
+- After reaching final radius, the zone holds briefly, then enters `sudden_death` and shrinks again to a tiny radius: 40 px for <=4 players, 50 px for <=8, 60 px for <=16.
 - Zone damage ignores shield, does not credit kills, but still records damage taken, deaths, destroyed body timing, and elimination order.
 - `DEV_GAME_MODE=true` compresses timings for testing: warning at 5s, damage at 10s, final target at 45s.
 - Production <=4-player timing: warning at 90s, damage at 120s, final target at 240s; larger tiers are slower.

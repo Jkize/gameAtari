@@ -20,10 +20,10 @@ export class DangerZoneRenderer {
     const pulse = (Math.sin(time * 0.006) + 1) / 2;
     const isWarning = zone.phase === 'warning';
     const isPreheat = zone.phase === 'inactive';
-    const isFinal = zone.phase === 'final';
+    const isFinal = zone.phase === 'final' || zone.phase === 'sudden_death';
     const edgeColor = isWarning || isPreheat ? WARNING_EDGE : isFinal ? FINAL_EDGE : ACTIVE_EDGE;
-    const outsideAlpha = (isWarning ? 0.10 + pulse * 0.04 : isFinal ? 0.34 + pulse * 0.08 : 0.23 + pulse * 0.05) * warmupAlpha;
-    const glowAlpha = (isWarning ? 0.28 + pulse * 0.15 : isFinal ? 0.70 + pulse * 0.22 : 0.52 + pulse * 0.18) * warmupAlpha;
+    const outsideAlpha = (isWarning ? 0.055 + pulse * 0.025 : isFinal ? 0.16 + pulse * 0.035 : 0.11 + pulse * 0.025) * warmupAlpha;
+    const glowAlpha = (isWarning ? 0.24 + pulse * 0.12 : isFinal ? 0.46 + pulse * 0.16 : 0.38 + pulse * 0.12) * warmupAlpha;
     const outerRadius = Math.hypot(map.width, map.height) + Math.max(map.width, map.height);
     const donutRadius = (outerRadius + zone.radius) / 2;
     const donutWidth = Math.max(1, outerRadius - zone.radius);
@@ -37,7 +37,7 @@ export class DangerZoneRenderer {
       this.drawLavaBands(zone, outerRadius, time, isFinal);
     }
 
-    this.gfx.lineStyle(18 + pulse * 6, edgeColor, glowAlpha * 0.45);
+    this.gfx.lineStyle(16 + pulse * 5, edgeColor, glowAlpha * 0.36);
     this.gfx.strokeCircle(zone.centerX, zone.centerY, zone.radius);
     this.gfx.lineStyle(5, edgeColor, glowAlpha);
     this.gfx.strokeCircle(zone.centerX, zone.centerY, zone.radius);
@@ -47,11 +47,11 @@ export class DangerZoneRenderer {
 
   private getWarmupAlpha(zone: DangerZonePublicState): number {
     if (zone.phase !== 'inactive') {
-      const elapsedSinceWarning = Date.now() - (zone.startedAtMs + zone.warningStartsAtMs);
+      const elapsedSinceWarning = Date.now() - zone.warningStartsAt;
       return Phaser.Math.Clamp(elapsedSinceWarning / 900, 0.2, 1);
     }
 
-    const msUntilWarning = zone.startedAtMs + zone.warningStartsAtMs - Date.now();
+    const msUntilWarning = zone.warningStartsAt - Date.now();
     if (msUntilWarning > PREHEAT_MS) return 0;
     return Phaser.Math.Clamp(1 - msUntilWarning / PREHEAT_MS, 0, 0.32);
   }
@@ -67,7 +67,7 @@ export class DangerZoneRenderer {
       const offset = ((time * (0.035 + i * 0.006)) + i * 90) % 220;
       const radius = zone.radius + 55 + offset;
       if (radius >= outerRadius) continue;
-      const alpha = (isFinal ? 0.18 : 0.10) * (1 - Math.min(1, offset / 260));
+      const alpha = (isFinal ? 0.075 : 0.055) * (1 - Math.min(1, offset / 260));
       this.gfx.lineStyle(4 + i, LAVA_HOT, alpha);
       this.gfx.strokeCircle(zone.centerX, zone.centerY, radius);
     }

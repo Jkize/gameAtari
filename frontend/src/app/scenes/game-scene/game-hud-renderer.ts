@@ -696,7 +696,7 @@ export class GameHudRenderer {
     }
 
     if (zone.phase === 'warning') {
-      const seconds = Math.max(0, Math.ceil((zone.startedAtMs + zone.damageStartsAtMs - Date.now()) / 1000));
+      const seconds = Math.max(0, Math.ceil((zone.damageStartsAt - Date.now()) / 1000));
       this.zoneAlertText
         .setText(`LA ZONA SE CIERRA EN ${seconds}s`)
         .setColor('#ffd166')
@@ -712,19 +712,27 @@ export class GameHudRenderer {
       return;
     }
 
+    if (zone.phase === 'sudden_death') {
+      this.zoneAlertText
+        .setText('ZONA FINAL CERRANDO')
+        .setColor('#ff2a1f')
+        .setAlpha(0.78 + pulse * 0.22);
+      return;
+    }
+
     this.zoneAlertText.setAlpha(0);
   }
 
   private getPlayingStatusText(state: GameState, me: PlayerPublicState | undefined): string {
     if (!me) return 'YOU HAVE BEEN ELIMINATED';
     if (this.isOutsideDangerZone(state, me)) return 'FUERA DE ZONA';
-    if (state.dangerZone?.phase === 'warning') return state.dangerZone.warningMessage;
+    if (state.dangerZone?.phase === 'warning') return 'LA ZONA SE ESTA CERRANDO';
     return '';
   }
 
   private isOutsideDangerZone(state: GameState, player: PlayerPublicState | undefined): boolean {
     const zone = state.dangerZone;
-    if (!zone || !player || (zone.phase !== 'active' && zone.phase !== 'final')) return false;
+    if (!zone || !player || !['active', 'final', 'sudden_death'].includes(zone.phase)) return false;
     return (player.x - zone.centerX) ** 2 + (player.y - zone.centerY) ** 2 > zone.radius ** 2;
   }
 }
