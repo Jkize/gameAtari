@@ -90,6 +90,7 @@ Frequent `gameState` no longer includes the full map.
   bullets: BulletPublicState[];
   powerUps: PowerUpSpawn[];
   impactEvents: BulletImpactPublicState[];
+  dangerZone?: DangerZonePublicState;
 }
 ```
 
@@ -142,6 +143,29 @@ Obstacle coordinates are center positions everywhere.
 - First dynamic spawn delay is 3000 ms.
 - Subsequent dynamic spawn interval is 15000 ms.
 - Current map JSON files mostly have `"powerUps": []`, so visible power-ups usually come from dynamic spawn.
+
+## Danger Zone
+
+Tank Arena has a server-authoritative safe-zone / danger-zone mechanic to control match duration.
+
+- The backend owns danger-zone center, radius, phase, timing, and out-of-zone damage.
+- The frontend only renders the zone and HUD warnings; it must not calculate or apply zone damage.
+- The zone is included as a small optional `gameState.dangerZone` payload; do not add full map data to frequent snapshots for this.
+- No teleporting, forced movement, or exact-point objective is used. Players move naturally; out-of-zone players take server damage.
+- The center is chosen once per match using `edgeMarginPx = 300`, so the center is never too close to map edges.
+- The initial radius is dynamic per map: it covers the farthest map corner from the chosen center plus 10 px, so the circle starts just outside the current map regardless of map size.
+- The final radius depends on player-count tier: 220 px for <=4 players, 250 px for <=8, 300 px for <=16.
+- Zone damage ignores shield and does not credit kills to another player, but still records `damageTaken`, death, destroyed body timing, and elimination order.
+- In `DEV_GAME_MODE=true`, zone timings are compressed for testing: warning at 5s, damage at 10s, target/final at 45s.
+- In production, <=4-player timing is warning at 90s, damage at 120s, target/final at 240s; larger tiers are slower.
+
+Important files:
+
+- `backend/src/games/tanks/danger-zone.service.ts`: config tiers, center picking, phase/radius calculation, public zone state.
+- `backend/src/games/tanks/game-loop.service.ts`: initializes zone, applies zone damage each tick, includes zone in `gameState`.
+- `backend/src/games/tanks/game.service.ts`: `damagePlayerDirect` for shield-ignoring zone damage.
+- `frontend/src/app/scenes/game-scene/danger-zone-renderer.ts`: lava-style ring/overlay renderer.
+- `frontend/src/app/scenes/game-scene/game-hud-renderer.ts`: zone warnings such as `LA ZONA SE CIERRA EN Ns` and `FUERA DE ZONA`.
 
 ## Development Vs Production Room Behavior
 

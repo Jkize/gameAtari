@@ -21,6 +21,7 @@ export class GameSessionsService {
       usedColorIndices: new Set(),
       startedAt: null,
       endedAt: null,
+      dangerZone: null,
       eliminationOrder: [],
       stats: new Map(),
       persisted: false,

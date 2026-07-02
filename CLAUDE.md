@@ -68,6 +68,7 @@ Frequent `gameState` does not include the map:
   bullets: BulletPublicState[];
   powerUps: PowerUpSpawn[];
   impactEvents: BulletImpactPublicState[];
+  dangerZone?: DangerZonePublicState;
 }
 ```
 
@@ -118,6 +119,29 @@ obstacle:destroyed { id }
 - First dynamic spawn delay: 3000 ms.
 - Subsequent spawn interval: 15000 ms.
 - Current map JSON files mostly contain `"powerUps": []`, so power-ups usually appear from dynamic spawn.
+
+## Danger Zone
+
+Tank Arena has a server-authoritative safe-zone / danger-zone mechanic for match pacing.
+
+- Backend owns center, radius, phase, timing, and out-of-zone damage.
+- Frontend only renders `gameState.dangerZone` and HUD warnings; it must not apply damage or move players.
+- `gameState.dangerZone` is intentionally small and optional. Do not reintroduce full `map` into frequent snapshots.
+- No teleporting, forced movement, or exact-point objective is used.
+- Center is chosen once per match with `edgeMarginPx = 300`.
+- Initial radius is dynamic by map size: farthest map corner from center plus 10 px, so the zone begins just outside any current map.
+- Final radius tiers: 220 px for <=4 players, 250 px for <=8, 300 px for <=16.
+- Zone damage ignores shield, does not credit kills, but still records damage taken, deaths, destroyed body timing, and elimination order.
+- `DEV_GAME_MODE=true` compresses timings for testing: warning at 5s, damage at 10s, final target at 45s.
+- Production <=4-player timing: warning at 90s, damage at 120s, final target at 240s; larger tiers are slower.
+
+Important files:
+
+- `backend/src/games/tanks/danger-zone.service.ts`: tier configs, center picking, phase/radius/public state.
+- `backend/src/games/tanks/game-loop.service.ts`: zone initialization, tick damage, `gameState` payload.
+- `backend/src/games/tanks/game.service.ts`: direct shield-ignoring zone damage helper.
+- `frontend/src/app/scenes/game-scene/danger-zone-renderer.ts`: lava-style world renderer.
+- `frontend/src/app/scenes/game-scene/game-hud-renderer.ts`: zone warning HUD.
 
 ## Development Vs Production Rooms
 

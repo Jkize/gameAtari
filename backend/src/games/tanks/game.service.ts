@@ -7,6 +7,7 @@ import { WeaponService } from './weapons/weapon.service';
 import { PowerUpSpawn } from './types/power-up.types';
 import { GameRuntimeContext } from './runtime/game-runtime-context.service';
 import { PowerUpSpawnService } from './power-up-spawn.service';
+import type { DangerZoneRuntimeState } from './danger-zone.service';
 
 const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
@@ -51,6 +52,8 @@ export class GameService {
   set impactEvents(value: BulletImpactPublicState[]) { this.runtime.current().impactEvents = value; }
   get map(): GameMap | null { return this.runtime.current().map; }
   set map(value: GameMap | null) { this.runtime.current().map = value; }
+  get dangerZone(): DangerZoneRuntimeState | null { return this.runtime.current().dangerZone; }
+  set dangerZone(value: DangerZoneRuntimeState | null) { this.runtime.current().dangerZone = value; }
   get status(): GameStatus { return this.runtime.current().status; }
   set status(value: GameStatus) { this.runtime.current().status = value; }
   private get usedColorIndices(): Set<number> { return this.runtime.current().usedColorIndices; }
@@ -187,6 +190,15 @@ export class GameService {
 
     if (amount <= 0) return;
 
+    this.applyHpDamage(player, amount, now, attackerId);
+  }
+
+  damagePlayerDirect(player: Player, amount: number, now = Date.now()): void {
+    if (!player.alive || amount <= 0) return;
+    this.applyHpDamage(player, amount, now);
+  }
+
+  private applyHpDamage(player: Player, amount: number, now: number, attackerId?: string): void {
     const appliedDamage = Math.min(player.hp, amount);
     player.hp = Math.max(0, player.hp - amount);
     const victimStats = this.runtime.current().stats.get(player.id);
@@ -220,6 +232,7 @@ export class GameService {
     this.usedColorIndices.clear();
     this.runtime.current().startedAt = null;
     this.runtime.current().endedAt = null;
+    this.runtime.current().dangerZone = null;
     this.runtime.current().eliminationOrder = [];
     this.runtime.current().stats.clear();
     this.runtime.current().persisted = false;

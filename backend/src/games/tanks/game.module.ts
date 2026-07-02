@@ -16,6 +16,7 @@ import { MatchesService } from '../../matches/matches.service';
 import { RewardsService } from '../../rewards/rewards.service';
 import { SocketRateLimiterService } from './socket-rate-limiter.service';
 import { PowerUpSpawnService } from './power-up-spawn.service';
+import { DangerZoneService } from './danger-zone.service';
 
 @Module({
   imports: [AuthModule, UsersModule],
@@ -35,6 +36,7 @@ import { PowerUpSpawnService } from './power-up-spawn.service';
     RewardsService,
     SocketRateLimiterService,
     PowerUpSpawnService,
+    DangerZoneService,
   ],
   exports: [GameSessionsService, GameLoopService, RoomsService],
 })

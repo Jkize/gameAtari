@@ -1,6 +1,7 @@
 import { GameMap } from './map.types';
 import { PowerUpSpawn } from './power-up.types';
 import { PlayerPublicState } from './player.types';
+import type { DangerZonePublicState } from '../danger-zone.service';
 
 export type GameStatus = 'waiting' | 'playing' | 'finished';
 export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror';
@@ -37,6 +38,7 @@ export interface GameState {
   bullets: BulletPublicState[];
   powerUps: PowerUpSpawn[];
   impactEvents: BulletImpactPublicState[];
+  dangerZone?: DangerZonePublicState;
 }
 
 export interface InitialGameState {

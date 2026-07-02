@@ -66,6 +66,7 @@ export class GameHudRenderer {
   private rttText!: Phaser.GameObjects.Text;
   private playersText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
+  private zoneAlertText!: Phaser.GameObjects.Text;
   private centerBig!: Phaser.GameObjects.Text;
   private centerSub!: Phaser.GameObjects.Text;
   private centerHint!: Phaser.GameObjects.Text;
@@ -132,6 +133,15 @@ export class GameHudRenderer {
       fontFamily: MONO,
       color: '#ffee00',
     }).setOrigin(0.5, 1).setDepth(HUD_DEPTH + 3).setScrollFactor(0));
+
+    this.zoneAlertText = this.add(this.scene.add.text(W / 2, 76, '', {
+      fontSize: '22px',
+      fontFamily: MONO,
+      color: '#ffd166',
+      stroke: '#2b0800',
+      strokeThickness: 6,
+      align: 'center',
+    }).setOrigin(0.5).setDepth(HUD_DEPTH + 9).setScrollFactor(0).setAlpha(0));
 
     this.centerBig = this.add(this.scene.add.text(W / 2, GAME_VIEW_HEIGHT / 2 - 30, '', {
       fontSize: '48px',
@@ -611,6 +621,7 @@ export class GameHudRenderer {
     const W = this.scene.scale.width;
 
     if (state.status === 'waiting') {
+      this.zoneAlertText.setAlpha(0);
       this.overlayGfx.clear();
       this.overlayGfx.fillStyle(0x000000, 0.54);
       this.overlayGfx.fillRect(0, 0, W, GAME_VIEW_HEIGHT);
@@ -632,11 +643,15 @@ export class GameHudRenderer {
       this.centerBig.setAlpha(0);
       this.centerSub.setAlpha(0);
       this.centerHint.setAlpha(0);
-      this.statusText.setText(me ? '' : 'YOU HAVE BEEN ELIMINATED');
+      this.updateZoneAlert(state, me, time);
+      this.statusText
+        .setText(this.getPlayingStatusText(state, me))
+        .setColor(this.isOutsideDangerZone(state, me) ? '#ff5a1f' : '#ffee00');
       return;
     }
 
     this.overlayGfx.clear();
+    this.zoneAlertText.setAlpha(0);
     this.overlayGfx.fillStyle(0x000000, 0.72);
     this.overlayGfx.fillRect(0, 0, W, GAME_VIEW_HEIGHT);
 
@@ -661,5 +676,55 @@ export class GameHudRenderer {
         : `VOLVIENDO AL LOBBY EN ${remainingSeconds}s`,
     );
     this.statusText.setText('');
+  }
+
+  private updateZoneAlert(state: GameState, me: PlayerPublicState | undefined, time: number): void {
+    const zone = state.dangerZone;
+    if (!zone || zone.phase === 'inactive') {
+      this.zoneAlertText.setAlpha(0);
+      return;
+    }
+
+    const outside = this.isOutsideDangerZone(state, me);
+    const pulse = (Math.sin(time * 0.009) + 1) / 2;
+    if (outside) {
+      this.zoneAlertText
+        .setText('FUERA DE ZONA\nRECIBIENDO DANO')
+        .setColor('#ff7a1f')
+        .setAlpha(0.88 + pulse * 0.12);
+      return;
+    }
+
+    if (zone.phase === 'warning') {
+      const seconds = Math.max(0, Math.ceil((zone.startedAtMs + zone.damageStartsAtMs - Date.now()) / 1000));
+      this.zoneAlertText
+        .setText(`LA ZONA SE CIERRA EN ${seconds}s`)
+        .setColor('#ffd166')
+        .setAlpha(0.70 + pulse * 0.22);
+      return;
+    }
+
+    if (zone.phase === 'final') {
+      this.zoneAlertText
+        .setText('ZONA FINAL')
+        .setColor('#ff4a1f')
+        .setAlpha(0.52 + pulse * 0.22);
+      return;
+    }
+
+    this.zoneAlertText.setAlpha(0);
+  }
+
+  private getPlayingStatusText(state: GameState, me: PlayerPublicState | undefined): string {
+    if (!me) return 'YOU HAVE BEEN ELIMINATED';
+    if (this.isOutsideDangerZone(state, me)) return 'FUERA DE ZONA';
+    if (state.dangerZone?.phase === 'warning') return state.dangerZone.warningMessage;
+    return '';
+  }
+
+  private isOutsideDangerZone(state: GameState, player: PlayerPublicState | undefined): boolean {
+    const zone = state.dangerZone;
+    if (!zone || !player || (zone.phase !== 'active' && zone.phase !== 'final')) return false;
+    return (player.x - zone.centerX) ** 2 + (player.y - zone.centerY) ** 2 > zone.radius ** 2;
   }
 }

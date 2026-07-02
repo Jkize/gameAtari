@@ -8,6 +8,7 @@ import { SnapshotInterpolator } from './game-scene/snapshot-interpolator';
 import { ArenaBackgroundRenderer } from './game-scene/arena-background-renderer';
 import { AudioManager } from './game-scene/audio-manager';
 import { BulletRenderer } from './game-scene/bullet-renderer';
+import { DangerZoneRenderer } from './game-scene/danger-zone-renderer';
 import { EffectSpawner } from './game-scene/effect-spawner';
 import { clearDynamicLayers, createGameSceneLayers, GameSceneLayers } from './game-scene/game-scene-layers';
 import { GameHudRenderer } from './game-scene/game-hud-renderer';
@@ -40,6 +41,7 @@ export class GameScene extends Phaser.Scene {
   private powerUpRenderer!: PowerUpRenderer;
   private playerRenderer!: PlayerRenderer;
   private bulletRenderer!: BulletRenderer;
+  private dangerZoneRenderer!: DangerZoneRenderer;
   private hudRenderer!: GameHudRenderer;
   private inputController!: InputController;
   private effectSpawner!: EffectSpawner;
@@ -185,6 +187,7 @@ export class GameScene extends Phaser.Scene {
     // Authoritative/static visuals.
     this.obstacleRenderer.drawGlows(this.gameState.map.obstacles);
     this.powerUpRenderer.draw(this.gameState.map.powerUps, time);
+    this.dangerZoneRenderer.draw(this.gameState.dangerZone, this.gameState.map, time);
 
     // Interpolated visuals: remote player and bullet positions.
     this.playerRenderer.draw(renderState.players, renderState.map, this.myPlayerId, time);
@@ -223,6 +226,7 @@ export class GameScene extends Phaser.Scene {
     this.powerUpRenderer = new PowerUpRenderer(this, this.layers);
     this.playerRenderer = new PlayerRenderer(this, this.layers);
     this.bulletRenderer = new BulletRenderer(this.layers);
+    this.dangerZoneRenderer = new DangerZoneRenderer(this.layers.dangerZoneGfx);
     this.hudRenderer = new GameHudRenderer(this);
     this.inputController = new InputController(this, {
       getGameState: () => this.gameState,

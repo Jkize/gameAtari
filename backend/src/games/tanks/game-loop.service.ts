@@ -20,6 +20,7 @@ import {
   POWER_UP_SPAWN_INTERVAL_MS,
   PowerUpSpawnService,
 } from './power-up-spawn.service';
+import { DangerZoneConfig, DangerZoneService } from './danger-zone.service';
 
 const TICK_INTERVAL = 1000 / 60;
 const PLAYER_BROADCAST_INTERVAL = 1000 / 30;
@@ -65,6 +66,7 @@ export class GameLoopService implements OnModuleDestroy {
     private readonly weaponLaserService: WeaponLaserService,
     private readonly weaponGrenadeService: WeaponGrenadeService,
     private readonly powerUpSpawnService: PowerUpSpawnService,
+    private readonly dangerZoneService: DangerZoneService,
     private readonly config: ConfigService,
   ) {}
 
@@ -92,7 +94,14 @@ export class GameLoopService implements OnModuleDestroy {
       if (!this.gameService.map) this.gameService.map = this.mapService.createMap(this.gameService.players.size);
       this.gameService.status = 'playing';
       const state = this.sessions.require(roomId);
-      state.startedAt = new Date();
+      const startedAt = Date.now();
+      state.startedAt = new Date(startedAt);
+      this.gameService.dangerZone = this.dangerZoneService.createRuntimeState(
+        this.gameService.map,
+        this.gameService.players.size,
+        startedAt,
+        this.getDangerZoneConfigOverride(),
+      );
       if (this.isProductionMode()) {
         this.gameService.map.powerUps = [];
       }
@@ -184,6 +193,7 @@ export class GameLoopService implements OnModuleDestroy {
       if (this.gameService.status === 'playing') {
         this.processPowerUpSpawns(roomId, runtime, now);
         this.processPlayers(roomId, deltaTime, now);
+        this.processDangerZone(deltaTime, now);
         this.processBullets(roomId, deltaTime);
         this.checkWinCondition(roomId);
       }
@@ -196,7 +206,7 @@ export class GameLoopService implements OnModuleDestroy {
   }
 
   private buildCurrentState(): GameState {
-    const { map, players, bullets, status, impactEvents } = this.gameService;
+    const { map, players, bullets, status, impactEvents, dangerZone } = this.gameService;
     const now = Date.now();
     const publicPlayers: PlayerPublicState[] = [...players.values()]
       .filter(player => player.alive || this.isDestroyedBodyVisible(player.destroyedAt, now))
@@ -248,6 +258,7 @@ export class GameLoopService implements OnModuleDestroy {
       bullets: publicBullets,
       powerUps: [...(map?.powerUps ?? [])],
       impactEvents: [...impactEvents],
+      dangerZone: dangerZone ? this.dangerZoneService.buildPublicState(dangerZone, now) : undefined,
     };
   }
 
@@ -299,6 +310,29 @@ export class GameLoopService implements OnModuleDestroy {
         }
       }
       this.gameService.tryShoot(player, now);
+    }
+  }
+
+  private processDangerZone(deltaTime: number, now: number): void {
+    const zone = this.gameService.dangerZone;
+    if (!zone) return;
+    const phase = this.dangerZoneService.phaseAt(zone, now);
+    if (phase === 'inactive' || phase === 'warning') return;
+
+    const damage = zone.damagePerSecond * deltaTime;
+    if (damage <= 0) return;
+
+    for (const player of this.gameService.players.values()) {
+      if (!player.alive) continue;
+      if (!this.dangerZoneService.isOutside(zone, player.x, player.y, now)) {
+        zone.damageCarryByPlayerId[player.id] = 0;
+        continue;
+      }
+
+      const carried = (zone.damageCarryByPlayerId[player.id] ?? 0) + damage;
+      const wholeDamage = Math.floor(carried);
+      zone.damageCarryByPlayerId[player.id] = carried - wholeDamage;
+      if (wholeDamage > 0) this.gameService.damagePlayerDirect(player, wholeDamage, now);
     }
   }
 
@@ -474,6 +508,17 @@ export class GameLoopService implements OnModuleDestroy {
 
   private isProductionMode(): boolean {
     return !this.config.get<boolean>('DEV_GAME_MODE', false);
+  }
+
+  private getDangerZoneConfigOverride(): Partial<DangerZoneConfig> {
+    if (this.isProductionMode()) return {};
+    return {
+      warningStartsAtMs: 5_000,
+      damageStartsAtMs: 10_000,
+      targetDurationMs: 45_000,
+      maxDurationMs: 70_000,
+      shrinkEveryMs: 5_000,
+    };
   }
 
   private isDestroyedBodyVisible(destroyedAt: number | undefined, now: number): boolean {

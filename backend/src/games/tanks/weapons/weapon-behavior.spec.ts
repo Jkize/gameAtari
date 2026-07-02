@@ -123,6 +123,27 @@ describe('weapon behavior', () => {
     });
   });
 
+  it('applies direct danger-zone damage without consuming shield or crediting kills', () => {
+    sessions.run('test-room', () => {
+      game.map = createTestMap();
+      const victim = game.addPlayer('victim');
+      victim.hp = 5;
+      victim.shieldHp = 35;
+      victim.shieldUntil = Date.now() + 10_000;
+
+      game.damagePlayerDirect(victim, 5);
+
+      expect(victim.alive).toBe(false);
+      expect(victim.hp).toBe(0);
+      expect(victim.shieldHp).toBe(35);
+      expect(sessions.require('test-room').stats.get('victim')).toMatchObject({
+        deaths: 1,
+        damageTaken: 5,
+      });
+      expect(sessions.require('test-room').stats.get('victim')?.kills).toBe(0);
+    });
+  });
+
   function createTestMap(obstacles: Obstacle[] = []): GameMap {
     return {
       width: 1600,
