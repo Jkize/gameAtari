@@ -54,6 +54,6 @@ export const SESSION_REASONS = {
 } as const;
 
 export const SESSION_MESSAGES = {
-  REPLACED: 'Abriste esta cuenta en otra pestana. Cerramos esta sesion para evitar jugar dos veces.',
-  CLAIMED: 'Continuaste tu sesion en esta pestana. La sesion anterior fue cerrada.',
+  REPLACED: 'session.replaced',
+  CLAIMED: 'session.claimed',
 } as const;

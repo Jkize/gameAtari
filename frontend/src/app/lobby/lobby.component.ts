@@ -1,9 +1,11 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Socket } from 'socket.io-client';
 import { AuthService } from '../auth/auth.service';
 import { socketManager } from '../network/socket';
-import { SOCKET_EVENTS, SESSION_MESSAGES } from '../network/socket-events';
+import { SOCKET_EVENTS } from '../network/socket-events';
+import { LanguageSwitcherComponent } from '../shared/language-switcher.component';
 import { PublicStatsComponent } from '../stats/public-stats.component';
 import { environment } from '../../environments/environment';
 
@@ -20,38 +22,42 @@ interface RoomState {
 @Component({
   selector: 'app-lobby',
   standalone: true,
-  imports: [PublicStatsComponent],
+  imports: [PublicStatsComponent, TranslocoPipe, LanguageSwitcherComponent],
   template: `
     <main class="lobby">
       <header>
         <div>
-          <p class="eyebrow">CENTRO DE COMANDO</p>
-          <h1>Lobby publico</h1>
+          <p class="eyebrow">{{ 'lobby.eyebrow' | transloco }}</p>
+          <h1>{{ 'lobby.heading' | transloco }}</h1>
         </div>
-        <div class="pilot">{{ auth.user()?.username ?? 'Invitado local' }} <button (click)="logout()">Salir</button></div>
+        <div class="pilot">
+          {{ auth.user()?.username ?? ('lobby.guestUsername' | transloco) }}
+          <app-lang-switcher></app-lang-switcher>
+          <button (click)="logout()">{{ 'lobby.leave' | transloco }}</button>
+        </div>
       </header>
 
       <app-public-stats [compact]="true"></app-public-stats>
 
       <section class="actions">
-        <button class="primary" (click)="quickPlay()" [disabled]="!!currentRoom()">Jugar rapido</button>
+        <button class="primary" (click)="quickPlay()" [disabled]="!!currentRoom()">{{ 'lobby.quickPlay' | transloco }}</button>
       </section>
 
       @if (currentRoom()) {
         <section class="current">
-          <p>Buscando batalla</p>
+          <p>{{ 'lobby.searching' | transloco }}</p>
           <h2>{{ currentRoom()!.name }}</h2>
-          <strong>{{ capacityText(currentRoom()!) }}</strong>
+          <strong>{{ 'lobby.capacityPlayers' | transloco: { current: currentRoom()!.playerCount, max: currentRoom()!.maxPlayers } }}</strong>
           @if (currentRoom()!.countdownSeconds !== null) {
-            <span>La batalla comienza en {{ currentRoom()!.countdownSeconds }}s</span>
+            <span>{{ 'lobby.battleCountdown' | transloco: { seconds: currentRoom()!.countdownSeconds } }}</span>
           } @else {
-            <span>{{ waitingText(currentRoom()!) }}</span>
+            <span>{{ 'lobby.waitingPlayers' | transloco: { current: currentRoom()!.playerCount, min: currentRoom()!.minPlayers } }}</span>
           }
-          <button (click)="leaveRoom()">Cancelar</button>
+          <button (click)="leaveRoom()">{{ 'lobby.cancel' | transloco }}</button>
         </section>
       } @else {
         <section class="empty">
-          <p>Entra a la cola publica y te asignaremos a la mejor sala disponible.</p>
+          <p>{{ 'lobby.emptyQueue' | transloco }}</p>
         </section>
       }
 
@@ -86,6 +92,8 @@ export class LobbyComponent implements OnInit, OnDestroy {
   readonly error = signal('');
   private socket!: Socket;
 
+  private readonly transloco = inject(TranslocoService);
+
   constructor(
     readonly auth: AuthService,
     private readonly router: Router,
@@ -103,11 +111,12 @@ export class LobbyComponent implements OnInit, OnDestroy {
     this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, room => this.currentRoom.set(room));
     this.socket.on(SOCKET_EVENTS.ROOM.RETURNED_TO_LOBBY, () => this.currentRoom.set(null));
     this.socket.on(SOCKET_EVENTS.ROOM.LEFT, () => this.currentRoom.set(null));
-    this.socket.on(SOCKET_EVENTS.SESSION.CLAIMED, data => this.notice.set(data?.message ?? SESSION_MESSAGES.CLAIMED));
+    this.socket.on(SOCKET_EVENTS.SESSION.CLAIMED, data =>
+      this.notice.set(this.transloco.translate(data?.message ?? 'session.claimed')));
     this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, data => {
       this.currentRoom.set(null);
       this.error.set('');
-      this.notice.set(data?.message ?? SESSION_MESSAGES.REPLACED);
+      this.notice.set(this.transloco.translate(data?.message ?? 'session.replaced'));
     });
     this.socket.on(SOCKET_EVENTS.GAME.STARTED, (data: { roomId?: string }) => {
       if (environment.devGameMode && data?.roomId) {
@@ -117,7 +126,8 @@ export class LobbyComponent implements OnInit, OnDestroy {
       }
       void this.router.navigateByUrl('/game');
     });
-    this.socket.on(SOCKET_EVENTS.GAME.ERROR, data => this.error.set(data?.message ?? 'Error de lobby'));
+    this.socket.on(SOCKET_EVENTS.GAME.ERROR, data =>
+      this.error.set(data?.message ?? this.transloco.translate('lobby.errorFallback')));
     this.restoreStoredNotice();
     this.socket.emit(SOCKET_EVENTS.LOBBY.LIST_ROOMS);
     this.socket.emit(SOCKET_EVENTS.ROOM.GET_STATE);
@@ -141,20 +151,12 @@ export class LobbyComponent implements OnInit, OnDestroy {
   quickPlay(): void { this.socket.emit(SOCKET_EVENTS.LOBBY.QUICK_PLAY); }
   leaveRoom(): void { this.socket.emit(SOCKET_EVENTS.LOBBY.LEAVE_ROOM); }
 
-  waitingText(room: RoomState): string {
-    return `${room.playerCount}/${room.minPlayers} jugadores para iniciar`;
-  }
-
-  capacityText(room: RoomState): string {
-    return `${room.playerCount}/${room.maxPlayers} jugadores`;
-  }
-
   private restoreStoredNotice(): void {
     const key = 'tank-arena:lobby-notice';
-    const message = window.sessionStorage.getItem(key);
-    if (!message) return;
+    const stored = window.sessionStorage.getItem(key);
+    if (!stored) return;
     window.sessionStorage.removeItem(key);
-    this.notice.set(message);
+    this.notice.set(this.transloco.translate(stored));
   }
 
   async logout(): Promise<void> {

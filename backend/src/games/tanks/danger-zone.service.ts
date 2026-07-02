@@ -38,7 +38,7 @@ export interface DangerZonePublicState {
 
 const EDGE_MARGIN_PX = 300;
 const INITIAL_RADIUS_MAP_PADDING_PX = 10;
-const WARNING_MESSAGE = 'LA ZONA SE ESTA CERRANDO';
+const WARNING_MESSAGE = 'hud.zone.closing';
 
 const CONFIGS_BY_PLAYER_TIER: Record<4 | 8 | 16, DangerZoneConfig> = {
   4: {

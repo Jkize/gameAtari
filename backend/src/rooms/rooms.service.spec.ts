@@ -1,4 +1,4 @@
-import { SOCKET_EVENTS } from '../common/socket-events';
+import { SESSION_MESSAGES, SOCKET_EVENTS } from '../common/socket-events';
 import { DEV_MIN_PLAYERS, MAX_PLAYERS, PROD_MIN_PLAYERS, RoomsService } from './rooms.service';
 
 describe('RoomsService', () => {
@@ -122,12 +122,12 @@ describe('RoomsService', () => {
 
     expect(firstSocket.emit).toHaveBeenCalledWith(SOCKET_EVENTS.SESSION.REPLACED, {
       reason: 'duplicate_tab',
-      message: 'Abriste esta cuenta en otra pestana. Cerramos esta sesion para evitar jugar dos veces.',
+      message: SESSION_MESSAGES.REPLACED,
     });
     expect(firstSocket.disconnect).toHaveBeenCalledWith(true);
     expect(secondSocket.emit).toHaveBeenCalledWith(SOCKET_EVENTS.SESSION.CLAIMED, {
       reason: 'duplicate_tab',
-      message: 'Continuaste tu sesion en esta pestana. La sesion anterior fue cerrada.',
+      message: SESSION_MESSAGES.CLAIMED,
     });
     jest.clearAllTimers();
     jest.useRealTimers();

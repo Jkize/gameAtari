@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { t } from '../../shared/translate-bridge';
 import { GAME_VIEW_HEIGHT, HUD_HEIGHT } from '../../game/viewport.config';
 import { GameState, PlayerPublicState, PowerUpType } from '../../types/game-state.types';
 import { C, MONO } from './game-scene.constants';
@@ -210,7 +211,7 @@ export class GameHudRenderer {
     this.overlayGfx.clear();
     this.overlayGfx.fillStyle(0x000000, 0.74);
     this.overlayGfx.fillRect(0, 0, this.scene.scale.width, GAME_VIEW_HEIGHT);
-    this.centerBig.setText('CONNECTING...').setColor('#79eaff').setAlpha(1);
+    this.centerBig.setText(t('hud.connecting')).setColor('#79eaff').setAlpha(1);
     this.centerSub.setAlpha(0);
     this.centerHint.setAlpha(0);
   }
@@ -629,11 +630,11 @@ export class GameHudRenderer {
       const blink = Math.sin(time * 0.0038) > 0;
       this.centerBig.setAlpha(1).setText('TANK ARENA').setColor('#dffcff');
       const waitingText = this.waitingCountdownSeconds !== null
-        ? `STARTING IN ${this.waitingCountdownSeconds}s`
-        : myPlayerId ? 'WAITING FOR PLAYERS...' : 'WAITING FOR SERVER...';
+        ? t('hud.startingIn', { seconds: this.waitingCountdownSeconds })
+        : myPlayerId ? t('hud.waitingForPlayers') : t('hud.waitingForServer');
       this.centerSub.setAlpha(1).setText(waitingText)
         .setColor(blink ? '#ffffff' : '#79eaff');
-      this.centerHint.setAlpha(0.72).setText('W A S D  -  MOUSE AIM  -  CLICK SHOOT');
+      this.centerHint.setAlpha(0.72).setText(t('hud.controls'));
       this.statusText.setText('');
       return;
     }
@@ -657,14 +658,16 @@ export class GameHudRenderer {
 
     const survivors = state.players.filter(p => p.alive);
     const isWinner = survivors.some(p => p.id === myPlayerId);
-    this.centerBig.setAlpha(1).setText(isWinner ? 'VICTORY!' : 'GAME OVER')
+    this.centerBig.setAlpha(1).setText(isWinner ? t('hud.victory') : t('hud.gameOver'))
       .setColor(isWinner ? '#00ff88' : '#ff4444');
 
     if (survivors.length === 1) {
       const winnerId = survivors[0].id;
-      this.centerSub.setAlpha(1).setText(winnerId === myPlayerId ? 'YOU WIN' : `WINNER: ${winnerId.slice(0, 8)}`);
+      this.centerSub.setAlpha(1).setText(
+        winnerId === myPlayerId ? t('hud.youWin') : t('hud.winner', { id: winnerId.slice(0, 8) }),
+      );
     } else {
-      this.centerSub.setAlpha(1).setText('NO SURVIVORS');
+      this.centerSub.setAlpha(1).setText(t('hud.noSurvivors'));
     }
 
     const remainingSeconds = this.returnToLobbyAt > 0
@@ -672,8 +675,8 @@ export class GameHudRenderer {
       : 5;
     this.centerHint.setAlpha(0.8).setText(
       environment.devGameMode
-        ? `VOLVIENDO AL LOBBY EN ${remainingSeconds}s · [ENTER] REINICIO DEV`
-        : `VOLVIENDO AL LOBBY EN ${remainingSeconds}s`,
+        ? t('hud.returningToLobbyDev', { seconds: remainingSeconds })
+        : t('hud.returningToLobby', { seconds: remainingSeconds }),
     );
     this.statusText.setText('');
   }
@@ -689,7 +692,7 @@ export class GameHudRenderer {
     const pulse = (Math.sin(time * 0.009) + 1) / 2;
     if (outside) {
       this.zoneAlertText
-        .setText('FUERA DE ZONA\nRECIBIENDO DANO')
+        .setText(t('hud.zone.outsideReceivingDamage'))
         .setColor('#ff7a1f')
         .setAlpha(0.88 + pulse * 0.12);
       return;
@@ -698,7 +701,7 @@ export class GameHudRenderer {
     if (zone.phase === 'warning') {
       const seconds = Math.max(0, Math.ceil((zone.damageStartsAt - Date.now()) / 1000));
       this.zoneAlertText
-        .setText(`LA ZONA SE CIERRA EN ${seconds}s`)
+        .setText(t('hud.zone.closingIn', { seconds }))
         .setColor('#ffd166')
         .setAlpha(0.70 + pulse * 0.22);
       return;
@@ -706,7 +709,7 @@ export class GameHudRenderer {
 
     if (zone.phase === 'final') {
       this.zoneAlertText
-        .setText('ZONA FINAL')
+        .setText(t('hud.zone.finalZone'))
         .setColor('#ff4a1f')
         .setAlpha(0.52 + pulse * 0.22);
       return;
@@ -714,7 +717,7 @@ export class GameHudRenderer {
 
     if (zone.phase === 'sudden_death') {
       this.zoneAlertText
-        .setText('ZONA FINAL CERRANDO')
+        .setText(t('hud.zone.finalZoneClosing'))
         .setColor('#ff2a1f')
         .setAlpha(0.78 + pulse * 0.22);
       return;
@@ -725,8 +728,8 @@ export class GameHudRenderer {
 
   private getPlayingStatusText(state: GameState, me: PlayerPublicState | undefined): string {
     if (!me) return 'YOU HAVE BEEN ELIMINATED';
-    if (this.isOutsideDangerZone(state, me)) return 'FUERA DE ZONA';
-    if (state.dangerZone?.phase === 'warning') return 'LA ZONA SE ESTA CERRANDO';
+    if (this.isOutsideDangerZone(state, me)) return t('hud.zone.outside');
+    if (state.dangerZone?.phase === 'warning') return t('hud.zone.closing');
     return '';
   }
 

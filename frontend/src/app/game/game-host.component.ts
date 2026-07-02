@@ -1,8 +1,11 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 import { TankGame } from './TankGame';
 import { ACTIVE_BACKGROUND_SCENARIO } from '../scenarios/background-scenarios';
 import { socketManager } from '../network/socket';
 import { AuthService } from '../auth/auth.service';
+import { registerTranslate } from '../shared/translate-bridge';
 import { Router } from '@angular/router';
 
 @Component({
@@ -42,10 +45,13 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   private containerRef!: ElementRef<HTMLDivElement>;
 
   private game?: TankGame;
+  private langLoad?: Subscription;
 
   private readonly returnToLobby = () => {
     void this.router.navigateByUrl('/lobby');
   };
+
+  private readonly transloco = inject(TranslocoService);
 
   constructor(
     private readonly auth: AuthService,
@@ -53,12 +59,17 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   ) {}
 
   ngAfterViewInit(): void {
+    registerTranslate((key: string, params?: Record<string, unknown>) => this.transloco.translate(key, params));
     window.addEventListener('tank-arena:return-lobby', this.returnToLobby);
     socketManager.connect(this.auth.accessToken() ?? undefined);
-    this.game = new TankGame(this.containerRef.nativeElement);
+
+    this.langLoad = this.transloco.load(this.transloco.getActiveLang()).subscribe(() => {
+      this.game = new TankGame(this.containerRef.nativeElement);
+    });
   }
 
   ngOnDestroy(): void {
+    this.langLoad?.unsubscribe();
     window.removeEventListener('tank-arena:return-lobby', this.returnToLobby);
     this.game?.destroy(true);
   }
