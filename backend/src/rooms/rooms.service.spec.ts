@@ -1,5 +1,6 @@
 import { SESSION_MESSAGES, SOCKET_EVENTS } from '../common/socket-events';
-import { DEV_MIN_PLAYERS, MAX_PLAYERS, PROD_MIN_PLAYERS, RoomsService } from './rooms.service';
+import { RoomDevelopmentSettings } from '../config/development-settings.service';
+import { MAX_PLAYERS, PROD_MIN_PLAYERS, RoomsService } from './rooms.service';
 
 describe('RoomsService', () => {
   const createHarness = (devGameMode = false) => {
@@ -24,10 +25,12 @@ describe('RoomsService', () => {
       to: jest.fn(() => ({ emit: roomEmit })),
       sockets: { sockets: new Map() },
     };
-    const config = {
-      get: jest.fn((_key: string, fallback?: boolean) => devGameMode ?? fallback),
+    const developmentSettings = {
+      rooms: jest.fn((): RoomDevelopmentSettings | null => devGameMode
+        ? { minPlayers: 1, countdownSeconds: 3 }
+        : null),
     };
-    const rooms = new RoomsService(gameLoop as never, redis as never, config as never);
+    const rooms = new RoomsService(gameLoop as never, redis as never, developmentSettings as never);
     rooms.setServer(server as never);
     return { gameLoop, redis, server, roomEmit, rooms };
   };
@@ -49,7 +52,6 @@ describe('RoomsService', () => {
     }
 
     const list = rooms.list();
-    expect(DEV_MIN_PLAYERS).toBe(2);
     expect(MAX_PLAYERS).toBe(15);
     expect(list).toHaveLength(2);
     expect(list.map(room => room.playerCount).sort((a, b) => b - a)).toEqual([15, 1]);
@@ -171,16 +173,14 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
-  it('uses 4 players as the production minimum and waits below that threshold', async () => {
+  it('uses 2 players as the production minimum and waits below that threshold', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(false);
 
-    for (let index = 1; index <= 3; index++) {
-      await rooms.quickPlay(socket(index) as never, user(index));
-    }
+    await rooms.quickPlay(socket(1) as never, user(1));
 
     const room = rooms.roomForUser('user-1')!;
-    expect(PROD_MIN_PLAYERS).toBe(4);
+    expect(PROD_MIN_PLAYERS).toBe(2);
     expect(rooms.list()[0].minPlayers).toBe(PROD_MIN_PLAYERS);
     expect(room.status).toBe('waiting');
     expect(room.countdownEndsAt).toBeUndefined();
@@ -188,17 +188,17 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
-  it('starts a 45 second countdown at 4 production players', async () => {
+  it('starts a 40 second countdown at 2 production players', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(false);
 
-    for (let index = 1; index <= 4; index++) {
+    for (let index = 1; index <= 2; index++) {
       await rooms.quickPlay(socket(index) as never, user(index));
     }
 
     const room = rooms.roomForUser('user-1')!;
     expect(room.status).toBe('countdown');
-    expect(room.countdownEndsAt).toBe(46_000);
+    expect(room.countdownEndsAt).toBe(41_000);
     jest.clearAllTimers();
     jest.useRealTimers();
   });
@@ -207,14 +207,14 @@ describe('RoomsService', () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(false);
 
-    for (let index = 1; index <= 4; index++) {
+    for (let index = 1; index <= 2; index++) {
       await rooms.quickPlay(socket(index) as never, user(index));
     }
     const room = rooms.roomForUser('user-1')!;
-    expect(room.countdownEndsAt).toBe(46_000);
+    expect(room.countdownEndsAt).toBe(41_000);
 
     jest.setSystemTime(10_000);
-    for (let index = 5; index <= 8; index++) {
+    for (let index = 3; index <= 8; index++) {
       await rooms.quickPlay(socket(index) as never, user(index));
     }
     expect(room.countdownEndsAt).toBe(30_000);
@@ -230,13 +230,13 @@ describe('RoomsService', () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(false);
 
-    for (let index = 1; index <= 4; index++) {
+    for (let index = 1; index <= 2; index++) {
       await rooms.quickPlay(socket(index) as never, user(index));
     }
     const firstRoom = rooms.roomForUser('user-1')!;
 
     jest.setSystemTime(5_000);
-    for (let index = 5; index <= 15; index++) {
+    for (let index = 3; index <= 15; index++) {
       await rooms.quickPlay(socket(index) as never, user(index));
     }
     await rooms.quickPlay(socket(16) as never, user(16));
@@ -248,17 +248,17 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
-  it('cancels countdown when production room drops below 4 players', async () => {
+  it('cancels countdown when production room drops below 2 players', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(false);
 
-    for (let index = 1; index <= 4; index++) {
+    for (let index = 1; index <= 2; index++) {
       await rooms.quickPlay(socket(index) as never, user(index));
     }
     const room = rooms.roomForUser('user-1')!;
     expect(room.status).toBe('countdown');
 
-    await rooms.leave('user-4');
+    await rooms.leave('user-2');
 
     expect(room.status).toBe('waiting');
     expect(room.countdownEndsAt).toBeUndefined();
@@ -270,7 +270,7 @@ describe('RoomsService', () => {
   it('releases players to the lobby after a finished round instead of queueing again', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms, gameLoop, server } = createHarness(false);
-    const playerSockets = Array.from({ length: 4 }, (_, index) => ({
+    const playerSockets = Array.from({ length: 2 }, (_, index) => ({
       id: `socket-${index + 1}`,
       data: {},
       join: jest.fn(),
@@ -278,7 +278,7 @@ describe('RoomsService', () => {
       emit: jest.fn(),
     }));
 
-    for (let index = 1; index <= 4; index++) {
+    for (let index = 1; index <= 2; index++) {
       const playerSocket = playerSockets[index - 1];
       server.sockets.sockets.set(playerSocket.id, playerSocket);
       await rooms.quickPlay(playerSocket as never, user(index));
@@ -294,7 +294,7 @@ describe('RoomsService', () => {
 
     expect(rooms.list()).toHaveLength(0);
     expect(rooms.roomForUser('user-1')).toBeUndefined();
-    expect(rooms.roomForUser('user-4')).toBeUndefined();
+    expect(rooms.roomForUser('user-2')).toBeUndefined();
     expect(gameLoop.remove).toHaveBeenCalledWith(room.id);
     for (const playerSocket of playerSockets) {
       expect(playerSocket.leave).toHaveBeenCalledWith(`game:${room.id}:players`);
@@ -304,15 +304,14 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
-  it('uses 2 players as the development minimum', async () => {
+  it('uses 1 player as the development minimum', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(true);
 
     await rooms.quickPlay(socket(1) as never, user(1));
-    await rooms.quickPlay(socket(2) as never, user(2));
 
     const room = rooms.roomForUser('user-1')!;
-    expect(rooms.list()[0].minPlayers).toBe(DEV_MIN_PLAYERS);
+    expect(rooms.list()[0].minPlayers).toBe(1);
     expect(room.status).toBe('countdown');
     expect(room.countdownEndsAt).toBe(4_000);
     jest.clearAllTimers();

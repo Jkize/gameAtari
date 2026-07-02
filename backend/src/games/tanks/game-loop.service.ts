@@ -1,7 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Server } from 'socket.io';
 import { SOCKET_EVENTS } from '../../common/socket-events';
+import { DevelopmentSettingsService } from '../../config/development-settings.service';
 import { CollisionService } from './collision.service';
 import { DESTROYED_BODY_TTL_MS, GameService, SHIELD_COOLDOWN_MS, SHIELD_HP } from './game.service';
 import { MapService } from './maps/map.service';
@@ -20,12 +20,11 @@ import {
   POWER_UP_SPAWN_INTERVAL_MS,
   PowerUpSpawnService,
 } from './power-up-spawn.service';
-import { DangerZoneConfig, DangerZoneService } from './danger-zone.service';
+import { DangerZoneService } from './danger-zone.service';
 
 const TICK_INTERVAL = 1000 / 60;
 const PLAYER_BROADCAST_INTERVAL = 1000 / 30;
 const WATCHER_BROADCAST_INTERVAL = 1000 / 15;
-const ENABLE_NET_LOGS = false;
 const OBSTACLE_IMPACT_MATERIAL: Partial<Record<ObstacleType, BulletImpactMaterial>> = {
   wood: 'wood',
   rock: 'rock',
@@ -67,7 +66,7 @@ export class GameLoopService implements OnModuleDestroy {
     private readonly weaponGrenadeService: WeaponGrenadeService,
     private readonly powerUpSpawnService: PowerUpSpawnService,
     private readonly dangerZoneService: DangerZoneService,
-    private readonly config: ConfigService,
+    private readonly developmentSettings: DevelopmentSettingsService,
   ) {}
 
   setServer(server: Server): void {
@@ -100,12 +99,16 @@ export class GameLoopService implements OnModuleDestroy {
         this.gameService.map,
         this.gameService.players.size,
         startedAt,
-        this.getDangerZoneConfigOverride(),
+        this.developmentSettings.dangerZoneOverride(),
       );
-      if (this.isProductionMode()) {
+      if (this.developmentSettings.shouldClearInitialPowerUpsOnStart()) {
         this.gameService.map.powerUps = [];
       }
     });
+    const powerUps = this.developmentSettings.powerUps() ?? {
+      firstSpawnDelayMs: FIRST_POWER_UP_SPAWN_DELAY_MS,
+      spawnIntervalMs: POWER_UP_SPAWN_INTERVAL_MS,
+    };
     const runtime: LoopRuntime = {
       timer: setInterval(() => this.tick(roomId), TICK_INTERVAL),
       lastTickTime: Date.now(),
@@ -115,7 +118,7 @@ export class GameLoopService implements OnModuleDestroy {
       lastNetLogTime: 0,
       avgTickMs: 0,
       delayedTicks: 0,
-      nextPowerUpSpawnAt: Date.now() + FIRST_POWER_UP_SPAWN_DELAY_MS,
+      nextPowerUpSpawnAt: Date.now() + powerUps.firstSpawnDelayMs,
     };
     this.loops.set(roomId, runtime);
   }
@@ -266,7 +269,11 @@ export class GameLoopService implements OnModuleDestroy {
     if (runtime.nextPowerUpSpawnAt === undefined) return;
     if (now < runtime.nextPowerUpSpawnAt) return;
 
-    runtime.nextPowerUpSpawnAt = now + POWER_UP_SPAWN_INTERVAL_MS;
+    const powerUps = this.developmentSettings.powerUps() ?? {
+      firstSpawnDelayMs: FIRST_POWER_UP_SPAWN_DELAY_MS,
+      spawnIntervalMs: POWER_UP_SPAWN_INTERVAL_MS,
+    };
+    runtime.nextPowerUpSpawnAt = now + powerUps.spawnIntervalMs;
     const { map, players } = this.gameService;
     if (!map) return;
 
@@ -480,7 +487,7 @@ export class GameLoopService implements OnModuleDestroy {
     now: number,
     runtime: LoopRuntime,
   ): void {
-    if (!ENABLE_NET_LOGS || now - runtime.lastNetLogTime < 1000) return;
+    if (!this.developmentSettings.networkLogsEnabled() || now - runtime.lastNetLogTime < 1000) return;
     runtime.lastNetLogTime = now;
     const socketRoom = `game:${roomId}:${audience}`;
     const recipientCount = this.server.sockets.adapter.rooms.get(socketRoom)?.size ?? 0;
@@ -504,23 +511,6 @@ export class GameLoopService implements OnModuleDestroy {
 
   private getObstacleImpactMaterial(type: ObstacleType): BulletImpactMaterial {
     return OBSTACLE_IMPACT_MATERIAL[type] ?? 'spark';
-  }
-
-  private isProductionMode(): boolean {
-    return !this.config.get<boolean>('DEV_GAME_MODE', false);
-  }
-
-  private getDangerZoneConfigOverride(): Partial<DangerZoneConfig> {
-    if (this.isProductionMode()) return {};
-    return {
-      warningStartsAtMs: 5_000,
-      damageStartsAtMs: 10_000,
-      targetDurationMs: 45_000,
-      maxDurationMs: 70_000,
-      shrinkEveryMs: 5_000,
-      finalHoldMs: 8_000,
-      suddenDeathShrinkMs: 12_000,
-    };
   }
 
   private isDestroyedBodyVisible(destroyedAt: number | undefined, now: number): boolean {

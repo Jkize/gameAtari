@@ -9,11 +9,11 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ConfigService } from '@nestjs/config';
 import { AuthProvider } from '@prisma/client';
 import { TokensService } from '../../auth/tokens.service';
 import { AuthenticatedUser } from '../../common/auth.types';
 import { SOCKET_EVENTS } from '../../common/socket-events';
+import { DevelopmentSettingsService } from '../../config/development-settings.service';
 import { MatchesService } from '../../matches/matches.service';
 import { RoomsService } from '../../rooms/rooms.service';
 import { GameLoopService } from './game-loop.service';
@@ -42,7 +42,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly rooms: RoomsService,
     private readonly gameLoop: GameLoopService,
     private readonly matches: MatchesService,
-    private readonly config: ConfigService,
+    private readonly developmentSettings: DevelopmentSettingsService,
     private readonly rateLimiter: SocketRateLimiterService,
   ) {}
 
@@ -51,7 +51,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.rooms.setServer(server);
     this.gameLoop.onFinished(async roomId => {
       try {
-        if (!this.isDevGameMode()) await this.matches.persist(roomId);
+        if (this.developmentSettings.shouldPersistMatches()) await this.matches.persist(roomId);
       } catch (error) {
         console.error(`[match:persist] room=${roomId}`, error);
       } finally {
@@ -223,7 +223,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage(SOCKET_EVENTS.GAME.START)
   startGame(@ConnectedSocket() client: AuthenticatedSocket): void {
-    if (this.config.get<boolean>('DEV_MANUAL_START', false)) {
+    if (this.developmentSettings.isManualStartEnabled()) {
       try {
         this.rooms.startNow(client.data.auth.userId);
       } catch (error) {
@@ -242,7 +242,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage(SOCKET_EVENTS.GAME.RESTART)
   async restartGame(@ConnectedSocket() client: AuthenticatedSocket): Promise<void> {
-    if (!this.isDevGameMode() || !this.config.get<boolean>('DEV_MANUAL_START', false)) {
+    if (!this.isDevGameMode() || !this.developmentSettings.isManualStartEnabled()) {
       client.emit(SOCKET_EVENTS.GAME.ERROR, {
         code: 'RESTART_DEVELOPMENT_ONLY',
         message: 'Manual restart is only available in development mode',
@@ -275,7 +275,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   private isDevGameMode(): boolean {
-    return this.config.get<boolean>('DEV_GAME_MODE', false);
+    return this.developmentSettings.isDevGameMode();
   }
 
   private emitDevelopmentWaitingState(

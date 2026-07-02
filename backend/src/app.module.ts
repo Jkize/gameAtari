@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { DevelopmentSettingsModule } from './config/development-settings.module';
 import { envValidationSchema } from './config/env.validation';
 import { GameModule } from './games/tanks/game.module';
 import { HealthModule } from './health/health.module';
@@ -15,6 +16,7 @@ import { StatsModule } from './stats/stats.module';
       envFilePath: '.env',
       validationSchema: envValidationSchema,
     }),
+    DevelopmentSettingsModule,
     PrismaModule,
     RedisModule,
     AuthModule,

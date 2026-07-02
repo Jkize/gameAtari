@@ -3,11 +3,13 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { DevelopmentSettingsService } from './config/development-settings.service';
 import { RedisService } from './redis/redis.service';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
+  const developmentSettings = app.get(DevelopmentSettingsService);
   const redis = app.get(RedisService);
   await redis.ensureConnected();
   app.use(cookieParser());
@@ -20,7 +22,7 @@ async function bootstrap(): Promise<void> {
   const port = config.get<number>('PORT', 3000);
   await app.listen(port);
   console.log(`Game backend running on http://localhost:${port}`);
-  if (config.get<boolean>('DEV_GAME_MODE', false)) {
+  if (developmentSettings.isDevGameMode()) {
     console.warn('[DEV GAME MODE] Authentication and persistent infrastructure are bypassed.');
   }
 }

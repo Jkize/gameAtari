@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { DevelopmentSettingsService } from '../../config/development-settings.service';
 
 interface Window {
   count: number;
@@ -18,7 +18,7 @@ export class SocketRateLimiterService implements OnModuleDestroy {
   private readonly ipConnections = new Map<string, Set<string>>();
   private readonly cleanupTimer: NodeJS.Timeout;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(private readonly developmentSettings: DevelopmentSettingsService) {
     this.cleanupTimer = setInterval(() => this.cleanup(), 5 * 60 * 1000);
   }
 
@@ -80,6 +80,6 @@ export class SocketRateLimiterService implements OnModuleDestroy {
   }
 
   private isDevGameMode(): boolean {
-    return this.config.get<boolean>('DEV_GAME_MODE', false);
+    return this.developmentSettings.shouldBypassRateLimits();
   }
 }

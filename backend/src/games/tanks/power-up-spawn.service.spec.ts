@@ -14,10 +14,10 @@ describe('PowerUpSpawnService', () => {
   });
 
   it('scales the maximum active power-ups with player count', () => {
-    expect(service.maxActiveForPlayerCount(1)).toBe(2);
-    expect(service.maxActiveForPlayerCount(4)).toBe(2);
-    expect(service.maxActiveForPlayerCount(8)).toBe(3);
-    expect(service.maxActiveForPlayerCount(9)).toBe(4);
+    expect(service.maxActiveForPlayerCount(1)).toBe(3);
+    expect(service.maxActiveForPlayerCount(4)).toBe(3);
+    expect(service.maxActiveForPlayerCount(8)).toBe(4);
+    expect(service.maxActiveForPlayerCount(9)).toBe(5);
   });
 
   it('does not spawn when the map already has the allowed amount', () => {
@@ -25,6 +25,7 @@ describe('PowerUpSpawnService', () => {
     map.powerUps = [
       { id: 'a', type: 'shotgun', assetId: 'power_shotgun', x: 200, y: 200, radius: 18, createdAt: 1 },
       { id: 'b', type: 'laser', assetId: 'power_laser', x: 700, y: 700, radius: 18, createdAt: 1 },
+      { id: 'c', type: 'grenade', assetId: 'power_grenade', x: 500, y: 200, radius: 18, createdAt: 1 },
     ];
 
     expect(service.trySpawn(map, [createPlayer(100, 100)], 10_000)).toBeNull();

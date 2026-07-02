@@ -40,7 +40,7 @@ flujo completo:
 
 pgAdmin queda disponible en `http://localhost:8081`.
 
-- Login local predeterminado: `admin@tank-arena.local`
+- Login local predeterminado: `admin@example.com`
 - Contraseña de pgAdmin: `admin`
 - Servidor PostgreSQL: aparece como `Tank Arena PostgreSQL`
 - Contraseña de la conexión PostgreSQL: `tank_arena`

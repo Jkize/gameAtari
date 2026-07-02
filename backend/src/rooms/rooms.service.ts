@@ -1,16 +1,14 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { Server, Socket } from 'socket.io';
 import { SESSION_MESSAGES, SESSION_REASONS, SOCKET_EVENTS } from '../common/socket-events';
+import { DevelopmentSettingsService } from '../config/development-settings.service';
 import { GameLoopService } from '../games/tanks/game-loop.service';
 import { RedisService } from '../redis/redis.service';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
 
-export const DEV_MIN_PLAYERS = 1;
 export const PROD_MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 15;
-const DEV_COUNTDOWN_SECONDS = 3;
 const COUNTDOWN_TIERS = [
   { minPlayers: 15, seconds: 10 },
   { minPlayers: 8, seconds: 20 },
@@ -28,7 +26,7 @@ export class RoomsService {
   constructor(
     private readonly gameLoop: GameLoopService,
     private readonly redis: RedisService,
-    private readonly config?: ConfigService,
+    private readonly developmentSettings?: DevelopmentSettingsService,
   ) {}
 
   setServer(server: Server): void {
@@ -409,11 +407,12 @@ export class RoomsService {
   }
 
   private activeMinPlayers(): number {
-    return this.config?.get<boolean>('DEV_GAME_MODE', false) ? DEV_MIN_PLAYERS : PROD_MIN_PLAYERS;
+    return this.developmentSettings?.rooms()?.minPlayers ?? PROD_MIN_PLAYERS;
   }
 
   private countdownSecondsFor(playerCount: number): number {
-    if (this.config?.get<boolean>('DEV_GAME_MODE', false)) return DEV_COUNTDOWN_SECONDS;
+    const devRooms = this.developmentSettings?.rooms();
+    if (devRooms) return devRooms.countdownSeconds;
     return COUNTDOWN_TIERS.find(tier => playerCount >= tier.minPlayers)?.seconds
       ?? COUNTDOWN_TIERS[COUNTDOWN_TIERS.length - 1].seconds;
   }
