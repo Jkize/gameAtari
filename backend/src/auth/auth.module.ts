@@ -18,6 +18,6 @@ import { TokensService } from './tokens.service';
     AuthRateLimitService,
     AccessTokenGuard,
   ],
-  exports: [TokensService],
+  exports: [TokensService, AccessTokenGuard],
 })
 export class AuthModule {}

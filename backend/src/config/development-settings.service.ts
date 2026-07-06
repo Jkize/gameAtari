@@ -18,7 +18,7 @@ const DEV_ROOM_SETTINGS: RoomDevelopmentSettings = {
 };
 
 const DEV_DANGER_ZONE_OVERRIDE: Partial<DangerZoneConfig> = {
-  warningStartsAtMs: 5_000,
+  warningStartsAtMs: 90_000,
   damageStartsAtMs: 10_000,
   targetDurationMs: 45_000,
   maxDurationMs: 70_000,

@@ -27,11 +27,21 @@ export class InputController {
   private pendingDash = false;
   private pendingReload = false;
   private pendingShield = false;
+  private inputBlocked = false;
+  private readonly onSettingsMenu = (event: Event): void => {
+    this.inputBlocked = Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open);
+  };
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly state: SceneState,
-  ) {}
+  ) {
+    window.addEventListener('tank-arena:settings-menu', this.onSettingsMenu);
+  }
+
+  destroy(): void {
+    window.removeEventListener('tank-arena:settings-menu', this.onSettingsMenu);
+  }
 
   setup(): void {
     const kb = this.scene.input.keyboard!;
@@ -83,10 +93,12 @@ export class InputController {
 
     let moveX = 0;
     let moveY = 0;
-    if (this.keys.W.isDown) moveY -= 1;
-    if (this.keys.S.isDown) moveY += 1;
-    if (this.keys.A.isDown) moveX -= 1;
-    if (this.keys.D.isDown) moveX += 1;
+    if (!this.inputBlocked) {
+      if (this.keys.W.isDown) moveY -= 1;
+      if (this.keys.S.isDown) moveY += 1;
+      if (this.keys.A.isDown) moveX -= 1;
+      if (this.keys.D.isDown) moveX += 1;
+    }
 
     const me = gameState.players.find(p => p.id === myPlayerId);
     let aimAngle = 0;
@@ -99,10 +111,10 @@ export class InputController {
       moveX,
       moveY,
       aimAngle,
-      shoot: this.scene.input.activePointer.isDown,
-      dash: this.pendingDash,
-      reload: this.pendingReload,
-      shield: this.pendingShield,
+      shoot: !this.inputBlocked && this.scene.input.activePointer.isDown,
+      dash: !this.inputBlocked && this.pendingDash,
+      reload: !this.inputBlocked && this.pendingReload,
+      shield: !this.inputBlocked && this.pendingShield,
     };
     this.pendingDash = false;
     this.pendingReload = false;

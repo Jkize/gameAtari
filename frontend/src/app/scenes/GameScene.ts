@@ -305,6 +305,8 @@ export class GameScene extends Phaser.Scene {
     this.socket.off(SOCKET_EVENTS.NETWORK.PONG, this.onNetworkPong);
     this.socket.off(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
     this.socket.io.off(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
+    this.inputController.destroy();
+    this.audioManager.destroy();
   }
 
   private resetRoundRenderState(): void {

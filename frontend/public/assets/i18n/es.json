@@ -19,6 +19,14 @@
   "lobby.capacityPlayers": "{{current}}/{{max}} jugadores",
   "lobby.emptyQueue": "Entra a la cola publica y te asignaremos a la mejor sala disponible.",
 
+  "settings.menu": "MENU",
+  "settings.close": "Cerrar configuracion",
+  "settings.soundEffects": "Efectos de sonido",
+  "settings.saved": "Guardado",
+  "settings.saving": "Guardando...",
+  "settings.savedAccount": "Guardado en la cuenta",
+  "settings.savedDevice": "Guardado en este dispositivo",
+
   "session.replaced": "Abriste esta cuenta en otra pestaña. Cerramos esta sesión para evitar jugar dos veces.",
   "session.claimed": "Continuaste tu sesión en esta pestaña. La sesión anterior fue cerrada.",
 

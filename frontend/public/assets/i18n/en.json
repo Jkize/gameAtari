@@ -19,6 +19,14 @@
   "lobby.capacityPlayers": "{{current}}/{{max}} players",
   "lobby.emptyQueue": "Join the public queue and we'll assign you to the best available room.",
 
+  "settings.menu": "MENU",
+  "settings.close": "Close settings",
+  "settings.soundEffects": "Sound effects",
+  "settings.saved": "Saved",
+  "settings.saving": "Saving...",
+  "settings.savedAccount": "Saved to account",
+  "settings.savedDevice": "Saved on this device",
+
   "session.replaced": "You opened this account in another tab. We closed this session to prevent playing twice.",
   "session.claimed": "You continued your session in this tab. The previous session was closed.",
 

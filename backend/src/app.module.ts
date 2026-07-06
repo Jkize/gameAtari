@@ -7,6 +7,7 @@ import { GameModule } from './games/tanks/game.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { SettingsModule } from './settings/settings.module';
 import { StatsModule } from './stats/stats.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { StatsModule } from './stats/stats.module';
     HealthModule,
     GameModule,
     StatsModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

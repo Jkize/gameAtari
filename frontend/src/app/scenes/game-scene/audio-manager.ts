@@ -1,4 +1,8 @@
 import Phaser from 'phaser';
+import {
+  GameSettingsChangedEvent,
+  readStoredGameSettings,
+} from '../../game/game-settings.types';
 
 export type WeaponFireSound = 'standard' | 'triple_shot' | 'shotgun';
 export type BulletImpactSound = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror';
@@ -50,8 +54,18 @@ const LOCAL_PLAYER_VOLUME_BOOST = 1.18;
 
 export class AudioManager {
   private lastFireSoundAt = 0;
+  private sfxVolume = readStoredGameSettings().sfxVolume;
+  private readonly onSettingsChanged = (event: Event): void => {
+    this.sfxVolume = (event as GameSettingsChangedEvent).detail.sfxVolume;
+  };
 
-  constructor(private readonly scene: Phaser.Scene) {}
+  constructor(private readonly scene: Phaser.Scene) {
+    window.addEventListener('tank-arena:settings-changed', this.onSettingsChanged);
+  }
+
+  destroy(): void {
+    window.removeEventListener('tank-arena:settings-changed', this.onSettingsChanged);
+  }
 
   playGrenadeLaunch(origin: SoundPoint, listener: SoundPoint, isLocalPlayer: boolean): void {
     this.playSpatialSound(
@@ -154,9 +168,7 @@ export class AudioManager {
     if (volume <= 0) return;
 
     this.lastFireSoundAt = now;
-    this.scene.sound.play(key, {
-      volume,
-    });
+    this.playSound(key, volume);
   }
 
   private playSpatialSound(
@@ -175,12 +187,18 @@ export class AudioManager {
     if (volume <= 0) return;
 
     this.lastFireSoundAt = now;
-    this.scene.sound.play(key, { volume });
+    this.playSound(key, volume);
   }
 
   private playUiSound(key: string, volume: number): void {
     if (!this.scene.cache.audio.exists(key)) return;
-    this.scene.sound.play(key, { volume });
+    this.playSound(key, volume);
+  }
+
+  private playSound(key: string, volume: number): void {
+    const scaledVolume = Phaser.Math.Clamp(volume * this.sfxVolume, 0, 1);
+    if (scaledVolume <= 0) return;
+    this.scene.sound.play(key, { volume: scaledVolume });
   }
 
   private getDistanceVolume(
