@@ -29,6 +29,7 @@ export class MatchDetailComponent implements OnInit {
   readonly detail = signal<PublicMatchDetail | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly backLink: string;
 
   readonly auth = inject(AuthService);
   private readonly transloco = inject(TranslocoService);
@@ -36,7 +37,9 @@ export class MatchDetailComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly rewards: RewardsService,
-  ) {}
+  ) {
+    this.backLink = (history.state as { from?: string })?.from ?? '/matches/recent';
+  }
 
   ngOnInit(): void {
     const matchId = this.route.snapshot.paramMap.get('matchId');

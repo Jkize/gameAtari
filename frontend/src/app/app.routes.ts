@@ -34,6 +34,11 @@ export const routes: Routes = [
       import('./layout/app-layout.component').then(module => module.AppLayoutComponent),
     children: [
       {
+        path: '',
+        redirectTo: 'lobby',
+        pathMatch: 'full',
+      },
+      {
         path: 'lobby',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -58,8 +63,8 @@ export const routes: Routes = [
     ],
   },
   { path: 'rewards/me', redirectTo: 'matches/me', pathMatch: 'full' },
-  // Debe ir después del layout: es el fallback cuando la URL no matchea ningún hijo.
-  // rootGuard decide el destino según sesión: /lobby si está logueado, /auth si no.
-  { path: '', pathMatch: 'full', canActivate: [rootGuard], children: [] },
-  { path: '**', canActivate: [rootGuard], children: [] },
+  {
+    path: '**',
+    redirectTo: 'lobby',
+  },
 ];

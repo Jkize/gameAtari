@@ -3,9 +3,9 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
 import { LanguageSwitcherComponent } from '../shared/language-switcher.component';
-import { AccountModalStateService } from '../account/account-modal-state.service';
 import { MobileNavStateService } from './mobile-nav-state.service';
 import { SessionExitService } from './session-exit.service';
+import { AccountModalStateService } from '../account/account-modal-state.service';
 
 @Component({
   selector: 'app-mobile-nav',
@@ -17,8 +17,8 @@ import { SessionExitService } from './session-exit.service';
 export class MobileNavigationComponent {
   @ViewChild('closeButton') private readonly closeButton?: ElementRef<HTMLButtonElement>;
 
-  private readonly accountModal = inject(AccountModalStateService);
   private readonly sessionExit = inject(SessionExitService);
+  private readonly accountModal = inject(AccountModalStateService);
 
   constructor(
     readonly mobileNavState: MobileNavStateService,

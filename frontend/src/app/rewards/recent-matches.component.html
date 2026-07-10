@@ -26,7 +26,7 @@
               <h2>{{ item.mapName || ('rewards.common.mapFallback' | transloco) }}</h2>
               <p>{{ 'rewards.common.participants' | transloco: { count: item.playerCount } }}</p>
             </div>
-            <a [routerLink]="['/matches', item.matchId]">{{ 'rewards.recentMatches.detailLink' | transloco }}</a>
+            <a [routerLink]="['/matches', item.matchId]" [state]="{ from: '/matches/recent' }">{{ 'rewards.recentMatches.detailLink' | transloco }}</a>
           </header>
           <app-match-podium [podium]="item.podium" />
         </article>

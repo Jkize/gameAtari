@@ -103,7 +103,7 @@
   "rewards.recentMatches.loadError": "Couldn't load recent matches.",
   "rewards.recentMatches.loadErrorTitle": "We couldn't load the information",
 
-  "rewards.matchDetail.backLink": "← Global History",
+  "rewards.matchDetail.backLink": "← Back",
   "rewards.matchDetail.loadingAriaLabel": "Loading detail",
   "rewards.matchDetail.tableAriaLabel": "Public match detail",
   "rewards.matchDetail.columnPosition": "Position",

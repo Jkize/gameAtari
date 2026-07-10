@@ -1,8 +1,8 @@
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
-import { AccountModalStateService } from '../account/account-modal-state.service';
 import { SessionExitService } from './session-exit.service';
+import { AccountModalStateService } from '../account/account-modal-state.service';
 
 @Component({
   selector: 'app-user-menu',
@@ -14,8 +14,8 @@ import { SessionExitService } from './session-exit.service';
 export class UserMenuComponent {
   readonly menuOpen = signal(false);
 
-  private readonly accountModal = inject(AccountModalStateService);
   private readonly sessionExit = inject(SessionExitService);
+  private readonly accountModal = inject(AccountModalStateService);
 
   constructor(
     readonly auth: AuthService,

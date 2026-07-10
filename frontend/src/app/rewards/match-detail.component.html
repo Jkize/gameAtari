@@ -1,5 +1,5 @@
 <main class="page">
-  <nav><a routerLink="/matches/recent">{{ 'rewards.matchDetail.backLink' | transloco }}</a></nav>
+  <nav><a [routerLink]="backLink">{{ 'rewards.matchDetail.backLink' | transloco }}</a></nav>
 
   @if (loading()) {
     <app-loading-skeleton [rows]="3" [ariaLabel]="'rewards.matchDetail.loadingAriaLabel' | transloco" />

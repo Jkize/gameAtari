@@ -3,7 +3,7 @@
     <time>{{ item.playedAt | date:'medium' }}</time>
     <h2>{{ item.mapName || ('rewards.common.mapFallback' | transloco) }}</h2>
     <p>{{ 'rewards.myMatches.matchSummary' | transloco: { placement: item.placement, playerCount: item.playerCount, kills: item.kills, damage: item.damageDealt } }}</p>
-    <a class="view" [routerLink]="['/matches', item.matchId]">{{ 'rewards.myMatches.viewMatch' | transloco }}</a>
+    <a class="view" [routerLink]="['/matches', item.matchId]" [state]="{ from: '/matches/me' }">{{ 'rewards.myMatches.viewMatch' | transloco }}</a>
   </div>
   <div class="reward">
     @if (item.winner) { <strong>{{ 'rewards.common.victory' | transloco }}</strong> }
