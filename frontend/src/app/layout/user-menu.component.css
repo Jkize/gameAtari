@@ -8,10 +8,13 @@
 }
 
 .trigger {
-  padding: 8px 14px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-surface-hover);
-  color: var(--color-text-primary);
+  padding: 4px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-bg);
+  color: var(--color-accent-text);
+  font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -28,8 +31,10 @@
   flex-direction: column;
   min-width: 180px;
   background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 24px rgba(44, 44, 42, 0.12);
+  overflow: hidden;
   z-index: 30;
 }
 
@@ -39,6 +44,7 @@
   background: transparent;
   border: none;
   color: var(--color-text-primary);
+  font-weight: 400;
   cursor: pointer;
 }
 

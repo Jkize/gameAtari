@@ -6,7 +6,6 @@
 
   <div class="lobby-grid">
     <div class="lobby-main">
-      <app-public-stats [compact]="true"></app-public-stats>
       <app-quick-play-card
         [currentRoom]="currentRoom()"
         [searching]="searching()"
@@ -14,7 +13,9 @@
         (play)="quickPlay()"
         (cancel)="leaveRoom()"
         (retry)="quickPlay()"
-      ></app-quick-play-card>
+      >
+        <app-public-stats [compact]="true"></app-public-stats>
+      </app-quick-play-card>
       @if (notice()) { <p class="notice">{{ notice() }}</p> }
     </div>
     <aside class="lobby-side">

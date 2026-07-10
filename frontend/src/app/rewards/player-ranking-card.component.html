@@ -1,6 +1,11 @@
-<article class="card" [class.current-user]="isCurrentUser">
+<article class="card" [class.current-user]="isCurrentUser" [class.winner]="player.winner">
   <header class="card-header">
-    <span class="placement">{{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}</span>
+    <span class="placement">
+      @if (player.winner) {
+        <i class="ti ti-trophy" aria-hidden="true"></i>
+      }
+      {{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}
+    </span>
     <span class="result">{{ (player.winner ? 'rewards.common.victory' : 'rewards.common.eliminated') | transloco }}</span>
   </header>
   <h3 class="pilot">{{ player.username || ('rewards.common.pilotFallback' | transloco) }}</h3>

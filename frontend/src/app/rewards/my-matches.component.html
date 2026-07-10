@@ -1,5 +1,5 @@
 <main class="page">
-  <nav><a routerLink="/lobby">{{ 'rewards.common.backToLobby' | transloco }}</a></nav>
+  <nav><a routerLink="/lobby"><i class="ti ti-arrow-left" aria-hidden="true"></i> {{ 'rewards.common.backToLobby' | transloco }}</a></nav>
   <h1>{{ 'rewards.myMatches.title' | transloco }}</h1>
 
   @if (loading() && !items().length) {

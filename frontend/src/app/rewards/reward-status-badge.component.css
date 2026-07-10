@@ -1,5 +1,15 @@
-.badge { display: inline-block; padding: 5px 8px; border: 1px solid var(--color-text-secondary); font-size: .78rem; font-weight: 800; white-space: nowrap; }
-.ok { color: var(--color-accent); border-color: var(--color-accent); }
-.pending { color: var(--color-pending); border-color: var(--color-pending); }
-.warn { color: var(--color-warning); border-color: var(--color-warning); }
-.muted { color: var(--color-text-muted); border-color: var(--color-text-secondary); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: .78rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.badge i { font-size: 13px; }
+.ok { background: var(--color-success-bg); color: var(--color-success-text); }
+.pending { background: var(--color-pending-bg); color: var(--color-pending); }
+.warn { background: var(--color-error-bg); color: var(--color-error); }
+.muted { background: var(--color-bg-inset); color: var(--color-text-tertiary); border: 1px solid var(--color-border-strong); }

@@ -6,25 +6,31 @@
         <p class="eyebrow">{{ 'account.eyebrow' | transloco }}</p>
         <h2 id="account-title">{{ 'account.title' | transloco }}</h2>
       </div>
-      <button class="icon" type="button" [attr.aria-label]="'account.closeAriaLabel' | transloco" (click)="close()">X</button>
+      <button class="close" type="button" [attr.aria-label]="'account.closeAriaLabel' | transloco" (click)="close()">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
     </header>
 
     @if (loading()) {
       <div class="skeleton"></div>
       <div class="skeleton short"></div>
     } @else {
-      <div class="method">
-        <div>
+      <div class="method" [class.linked]="status()?.google?.linked">
+        <i class="ti ti-brand-google method-icon" aria-hidden="true"></i>
+        <div class="method-info">
           <strong>Google</strong>
           <span>{{ (status()?.google?.linked ? 'account.linked' : 'account.notLinked') | transloco }}</span>
         </div>
-        @if (!status()?.google?.linked) {
+        @if (status()?.google?.linked) {
+          <span class="verified-badge"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ 'account.linked' | transloco }}</span>
+        } @else {
           <div #googleButton class="google-button"></div>
         }
       </div>
 
-      <div class="method">
-        <div>
+      <div class="method" [class.linked]="status()?.phantom?.verified">
+        <i class="ti ti-wallet method-icon" aria-hidden="true"></i>
+        <div class="method-info">
           <strong>Phantom</strong>
           <span>
             @if (status()?.phantom?.verified) {
@@ -34,10 +40,19 @@
             }
           </span>
         </div>
-        @if (!status()?.phantom?.verified) {
+        @if (status()?.phantom?.verified) {
+          <span class="verified-badge"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ 'account.linked' | transloco }}</span>
+        } @else {
           <button class="action" type="button" (click)="linkPhantom()" [disabled]="busy()">{{ 'account.linkPhantom' | transloco }}</button>
         }
       </div>
+
+      @if (status()?.holder?.balance) {
+        <div class="token-balance">
+          <span class="token-balance-label"><i class="ti ti-coins" aria-hidden="true"></i> Balance</span>
+          <span class="token-balance-value">{{ status()?.holder?.balance }} <span class="unit">tokens</span></span>
+        </div>
+      }
 
       <p class="holder" [class.ok]="status()?.holder?.status === 'eligible'"
         [class.warn]="status()?.holder?.status === 'insufficient'">

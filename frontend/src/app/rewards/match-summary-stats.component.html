@@ -1,15 +1,15 @@
 <section class="summary" [attr.aria-label]="'rewards.myMatches.summaryCaption' | transloco">
-  <div>
+  <div class="stat stat-loaded">
+    <p class="label"><i class="ti ti-database" aria-hidden="true"></i> {{ 'rewards.myMatches.summaryLoadedCount' | transloco }}</p>
     <strong>{{ loadedCount }}</strong>
-    <span>{{ 'rewards.myMatches.summaryLoadedCount' | transloco }}</span>
   </div>
-  <div>
+  <div class="stat stat-victories">
+    <p class="label"><i class="ti ti-trophy" aria-hidden="true"></i> {{ 'rewards.myMatches.summaryVictories' | transloco }}</p>
     <strong>{{ victoriesCount }}</strong>
-    <span>{{ 'rewards.myMatches.summaryVictories' | transloco }}</span>
   </div>
-  <div>
+  <div class="stat stat-rewarded">
+    <p class="label"><i class="ti ti-coins" aria-hidden="true"></i> {{ 'rewards.myMatches.summaryRewarded' | transloco }}</p>
     <strong>{{ rewardedCount }}</strong>
-    <span>{{ 'rewards.myMatches.summaryRewarded' | transloco }}</span>
   </div>
 </section>
 <p class="caption">{{ 'rewards.myMatches.summaryCaption' | transloco }}</p>

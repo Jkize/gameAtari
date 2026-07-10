@@ -1,10 +1,25 @@
 <div class="podium">
   @for (player of podium; track player.placement) {
-    <div class="podium-row">
-      <div class="avatar" aria-hidden="true">{{ initials(player.username) }}</div>
-      <strong>{{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}</strong>
+    <div
+      class="podium-row"
+      [class.gold]="player.placement === 1"
+      [class.silver]="player.placement === 2"
+      [class.bronze]="player.placement === 3"
+    >
+      <div
+        class="avatar"
+        [class.gold]="player.placement === 1"
+        [class.silver]="player.placement === 2"
+        aria-hidden="true"
+      >{{ initials(player.username) }}</div>
+      <strong class="position">
+        @if (player.placement === 1) {
+          <i class="ti ti-trophy" aria-hidden="true"></i>
+        }
+        {{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}
+      </strong>
       <span>{{ player.username || ('rewards.common.pilotFallback' | transloco) }}</span>
-      <span>{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</span>
+      <span class="tokens">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</span>
       <app-reward-status-badge [status]="player.reward?.status" [publicOnly]="true"></app-reward-status-badge>
       <app-solscan-link [url]="player.reward?.solscanUrl"></app-solscan-link>
     </div>

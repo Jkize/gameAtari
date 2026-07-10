@@ -12,15 +12,25 @@
   gap: 16px;
   padding: 14px 24px;
   background: var(--color-bg-surface);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  border-bottom: 0.5px solid var(--color-border);
+  box-shadow: 0 1px 6px rgba(44, 44, 42, 0.06);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand i {
+  font-size: 18px;
+  color: var(--color-accent);
 }
 
 .brand .wordmark {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: var(--color-accent);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
 }
 
 .desktop-nav {
@@ -35,16 +45,15 @@
 }
 
 .nav-links a {
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.85rem;
   padding: 6px 2px;
-  border-bottom: 2px solid transparent;
 }
 
 .nav-links a.active {
   color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
 }
 
 .nav-links a:focus-visible {
@@ -61,7 +70,8 @@
   height: 40px;
   padding: 8px;
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
 }
 

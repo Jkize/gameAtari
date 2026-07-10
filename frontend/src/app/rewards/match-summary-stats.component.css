@@ -1,34 +1,50 @@
 .summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
   margin: 22px 0 6px;
 }
 
-.summary div {
+.stat {
   min-width: 0;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-surface);
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-bg-inset);
 }
 
-.summary strong,
-.summary span {
+.stat-victories {
+  background: var(--color-success-bg);
+}
+
+.stat-rewarded {
+  background: var(--color-gold-bg);
+}
+
+.stat .label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+.stat-victories .label {
+  color: var(--color-success-text);
+}
+
+.stat-rewarded .label {
+  color: var(--color-gold-strong);
+}
+
+.stat strong {
   display: block;
-  text-align: center;
-}
-
-.summary strong {
-  color: var(--color-accent);
-  font-size: 1.35rem;
-  line-height: 1;
-}
-
-.summary span {
-  margin-top: 5px;
-  color: var(--color-text-muted);
-  font-size: .78rem;
-  text-transform: uppercase;
+  margin-top: 2px;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .caption {
@@ -38,7 +54,6 @@
 }
 
 @media (max-width: 520px) {
-  .summary div { padding: 10px 6px; }
-  .summary strong { font-size: 1.1rem; }
-  .summary span { font-size: .68rem; }
+  .stat { padding: 10px 8px; }
+  .stat strong { font-size: 18px; }
 }

@@ -125,6 +125,7 @@
   "rewards.eligibility.prizesAriaLabel": "Available prizes",
   "rewards.eligibility.login": "Sign in",
   "rewards.eligibility.walletVerified": "Wallet verified",
+  "rewards.eligibility.balanceSufficient": "Sufficient balance",
   "rewards.eligibility.configureAccount": "Set up your account",
   "rewards.eligibility.checking": "Checking eligibility…",
   "rewards.eligibility.verificationFailedTitle": "We couldn't verify your balance",

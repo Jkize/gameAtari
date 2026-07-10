@@ -1,4 +1,35 @@
 .podium { display: grid; gap: 8px; }
-.podium-row { display: grid; grid-template-columns: 38px 42px minmax(100px, 1fr) 96px auto auto; gap: 10px; align-items: center; padding: 10px; background: rgba(13, 18, 12, .62); border: 1px solid rgba(113, 130, 92, .62); }
-.avatar { display: grid; place-items: center; width: 34px; height: 34px; background: var(--color-bg-surface-hover); color: var(--color-accent); font-weight: 800; }
+.podium-row {
+  display: grid;
+  grid-template-columns: 38px 42px minmax(100px, 1fr) 96px auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+}
+.podium-row.gold { background: var(--color-gold-bg); color: var(--color-gold-text); }
+.podium-row.silver { background: var(--color-silver-bg); color: var(--color-silver-text); }
+.podium-row.bronze { background: var(--color-bronze-bg); color: var(--color-bronze-text); }
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-bg-inset);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+.avatar.gold { background: var(--color-gold-avatar); color: var(--color-gold-text); }
+.avatar.silver { background: var(--color-silver-avatar); color: var(--color-silver-text); }
+
+.position { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
+.position .ti { font-size: 14px; }
+
+.tokens { font-family: var(--font-mono); color: var(--color-text-secondary); }
+.podium-row.gold .tokens { color: var(--color-gold-strong); }
+
 @media (max-width: 760px) { .podium-row { grid-template-columns: 38px 42px 1fr; } }

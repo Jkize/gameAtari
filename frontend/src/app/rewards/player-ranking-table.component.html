@@ -14,13 +14,18 @@
     </thead>
     <tbody>
       @for (player of players; track player.placement) {
-        <tr [class.current-user]="player.userId === currentUserId">
-          <td>{{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}</td>
+        <tr [class.current-user]="player.userId === currentUserId" [class.winner]="player.winner">
+          <td>
+            @if (player.winner) {
+              <i class="ti ti-trophy" aria-hidden="true"></i>
+            }
+            {{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}
+          </td>
           <td>{{ player.username || ('rewards.common.pilotFallback' | transloco) }}</td>
-          <td>{{ player.kills }}</td>
-          <td>{{ player.damageDealt }}</td>
+          <td class="num">{{ player.kills }}</td>
+          <td class="num">{{ player.damageDealt }}</td>
           <td>{{ (player.winner ? 'rewards.common.victory' : 'rewards.common.eliminated') | transloco }}</td>
-          <td>{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</td>
+          <td class="num">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</td>
           <td><app-reward-status-badge [status]="player.reward?.status" [publicOnly]="true"></app-reward-status-badge></td>
           <td><app-solscan-link [url]="player.reward?.solscanUrl"></app-solscan-link></td>
         </tr>

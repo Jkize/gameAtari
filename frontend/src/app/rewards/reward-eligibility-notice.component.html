@@ -4,12 +4,24 @@
   <p class="copy">{{ 'rewards.eligibility.description' | transloco }}</p>
 
   <ol class="prizes" [attr.aria-label]="'rewards.eligibility.prizesAriaLabel' | transloco">
-    <li><strong>1{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 700 } }}</span></li>
-    <li><strong>2{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 300 } }}</span></li>
-    <li><strong>3{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 100 } }}</span></li>
+    <li class="place-1"><strong><i class="ti ti-trophy" aria-hidden="true"></i> 1{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 700 } }}</span></li>
+    <li class="place-2"><strong>2{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 300 } }}</span></li>
+    <li class="place-3"><strong>3{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 100 } }}</span></li>
   </ol>
 
   <div class="state">
+    @if (auth.user()) {
+      <ul class="checklist" [class.pending]="walletStatus() === null || walletStatus()?.holder?.status === 'unavailable'">
+        <li [class.ok]="walletStatus()?.phantom?.verified === true">
+          <i [class]="walletStatus()?.phantom?.verified === true ? 'ti ti-circle-check' : 'ti ti-circle-x'" aria-hidden="true"></i>
+          <span>{{ 'rewards.eligibility.walletVerified' | transloco }}</span>
+        </li>
+        <li [class.ok]="walletStatus()?.holder?.status === 'eligible'">
+          <i [class]="walletStatus()?.holder?.status === 'eligible' ? 'ti ti-circle-check' : 'ti ti-circle-x'" aria-hidden="true"></i>
+          <span>{{ 'rewards.eligibility.balanceSufficient' | transloco }}</span>
+        </li>
+      </ul>
+    }
     @if (!auth.user()) {
       <a class="action" routerLink="/auth">{{ 'rewards.eligibility.login' | transloco }}</a>
     } @else if (walletStatus() === null) {

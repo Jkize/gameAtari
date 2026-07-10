@@ -1,18 +1,18 @@
 <article class="row">
-  <div>
+  <div class="info">
     <time>{{ item.playedAt | date:'medium' }}</time>
     <h2>{{ item.mapName || ('rewards.common.mapFallback' | transloco) }}</h2>
-    <p>{{ 'rewards.myMatches.matchSummary' | transloco: { placement: item.placement, playerCount: item.playerCount, kills: item.kills, damage: item.damageDealt } }}</p>
-    <a class="view" [routerLink]="['/matches', item.matchId]" [state]="{ from: '/matches/me' }">{{ 'rewards.myMatches.viewMatch' | transloco }}</a>
+    <p class="summary">{{ 'rewards.myMatches.matchSummary' | transloco: { placement: item.placement, playerCount: item.playerCount, kills: item.kills, damage: item.damageDealt } }}</p>
+    <a class="view" [routerLink]="['/matches', item.matchId]" [state]="{ from: '/matches/me' }">{{ 'rewards.myMatches.viewMatch' | transloco }} <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
   </div>
   <div class="reward">
-    @if (item.winner) { <strong>{{ 'rewards.common.victory' | transloco }}</strong> }
-    <span>{{ 'rewards.myMatches.potentialReward' | transloco: { amount: item.reward?.potentialAmount ?? 0 } }}</span>
+    @if (item.winner) { <strong class="victory">{{ 'rewards.common.victory' | transloco }}</strong> }
     <app-reward-status-badge [status]="item.reward?.status"></app-reward-status-badge>
     @if (item.reward?.ineligibilityReason) {
-      <small>{{ reason(item.reward!.ineligibilityReason) | transloco }}</small>
+      <small class="reason">{{ reason(item.reward!.ineligibilityReason) | transloco }}</small>
     }
-    <span>{{ 'rewards.myMatches.receivedReward' | transloco: { amount: item.reward?.amount ?? 0 } }}</span>
+    <span class="amount">{{ 'rewards.myMatches.potentialReward' | transloco: { amount: item.reward?.potentialAmount ?? 0 } }}</span>
+    <span class="amount">{{ 'rewards.myMatches.receivedReward' | transloco: { amount: item.reward?.amount ?? 0 } }}</span>
     <app-solscan-link [url]="item.reward?.solscanUrl"></app-solscan-link>
   </div>
 </article>

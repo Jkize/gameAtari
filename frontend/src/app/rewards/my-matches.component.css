@@ -1,9 +1,10 @@
 :host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-page); }
 .page { width: min(1060px, calc(100% - 40px)); margin: auto; padding: 42px 0; }
-nav a { color: var(--color-accent); text-decoration: none; }
-h1 { margin: 18px 0 24px; font-size: 2.4rem; }
+nav a { display: inline-flex; align-items: center; gap: 4px; color: var(--color-accent); text-decoration: none; font-size: 12px; }
+h1 { margin: 18px 0 24px; font-size: 2.4rem; font-weight: 500; }
 .list { display: grid; gap: 12px; }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.pill { padding: 8px 14px; border: 1px solid var(--color-border); background: var(--color-bg-surface); color: var(--color-text-tertiary); cursor: pointer; }
-.pill.active { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 800; }
-.more { margin-top: 18px; padding: 11px 18px; border: 1px solid var(--color-accent); background: var(--color-accent); color: var(--color-bg-inset); font-weight: 800; cursor: pointer; }
+.pill { padding: 4px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: var(--color-bg-inset); color: var(--color-text-secondary); font-size: 12px; font-weight: 400; cursor: pointer; }
+.pill.active { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 500; }
+.more { margin-top: 18px; padding: 11px 18px; border: none; border-radius: var(--radius-control); background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 500; cursor: pointer; }
+.more:hover { background: var(--color-accent-hover); }

@@ -1,1 +1,9 @@
-<span class="badge" [class]="statusClass()">{{ (publicOnly ? publicLabel() : label()) | transloco }}</span>
+<span class="badge" [class]="statusClass()">
+  @if (statusClass().endsWith(' ok')) {
+    <i class="ti ti-circle-check" aria-hidden="true"></i>
+  }
+  @if (statusClass().endsWith(' pending')) {
+    <i class="ti ti-clock" aria-hidden="true"></i>
+  }
+  {{ (publicOnly ? publicLabel() : label()) | transloco }}
+</span>

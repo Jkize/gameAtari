@@ -18,5 +18,6 @@
   } @else {
     <button class="primary" (click)="play.emit()">{{ 'lobby.quickPlay' | transloco }}</button>
     <p class="empty">{{ 'lobby.emptyQueue' | transloco }}</p>
+    <ng-content></ng-content>
   }
 </section>

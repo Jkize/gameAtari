@@ -22,11 +22,17 @@
         <article class="match">
           <header>
             <div>
-              <time>{{ item.playedAt | date:'medium' }}</time>
               <h2>{{ item.mapName || ('rewards.common.mapFallback' | transloco) }}</h2>
-              <p>{{ 'rewards.common.participants' | transloco: { count: item.playerCount } }}</p>
+              <p class="meta">
+                <time>{{ item.playedAt | date:'medium' }}</time>
+                <span>&middot;</span>
+                <span>{{ 'rewards.common.participants' | transloco: { count: item.playerCount } }}</span>
+              </p>
             </div>
-            <a [routerLink]="['/matches', item.matchId]" [state]="{ from: '/matches/recent' }">{{ 'rewards.recentMatches.detailLink' | transloco }}</a>
+            <a class="detail-link" [routerLink]="['/matches', item.matchId]" [state]="{ from: '/matches/recent' }">
+              {{ 'rewards.recentMatches.detailLink' | transloco }}
+              <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            </a>
           </header>
           <app-match-podium [podium]="item.podium" />
         </article>

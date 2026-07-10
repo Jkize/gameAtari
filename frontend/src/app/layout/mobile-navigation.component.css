@@ -37,13 +37,21 @@
 }
 
 .close {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 8px 14px;
-  background: transparent;
-  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--color-bg-inset);
+  border: none;
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
   cursor: pointer;
+}
+
+.close i {
+  font-size: 15px;
 }
 
 .close:focus-visible {

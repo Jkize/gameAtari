@@ -5,27 +5,33 @@
     <div class="skeleton"></div>
   } @else if (state() === 'error' && !stats()) {
     <div [attr.title]="'stats.unavailable' | transloco" [attr.aria-label]="'stats.unavailable' | transloco">
+      @if (compact) { <i class="ti ti-users" aria-hidden="true"></i> }
       <strong>—</strong>
       <span>{{ 'stats.online' | transloco }}</span>
     </div>
     <div [attr.title]="'stats.unavailable' | transloco" [attr.aria-label]="'stats.unavailable' | transloco">
+      @if (compact) { <i class="ti ti-swords" aria-hidden="true"></i> }
       <strong>—</strong>
       <span>{{ 'stats.activeMatches' | transloco }}</span>
     </div>
     <div [attr.title]="'stats.unavailable' | transloco" [attr.aria-label]="'stats.unavailable' | transloco">
+      @if (compact) { <i class="ti ti-door" aria-hidden="true"></i> }
       <strong>—</strong>
       <span>{{ 'stats.availableRooms' | transloco }}</span>
     </div>
   } @else {
     <div [attr.title]="state() === 'error' ? ('stats.stale' | transloco) : null" [attr.aria-label]="state() === 'error' ? ('stats.stale' | transloco) : null">
+      @if (compact) { <i class="ti ti-users" aria-hidden="true"></i> }
       <strong>{{ stats()!.playersOnline }}</strong>
       <span>{{ 'stats.online' | transloco }}</span>
     </div>
     <div [attr.title]="state() === 'error' ? ('stats.stale' | transloco) : null" [attr.aria-label]="state() === 'error' ? ('stats.stale' | transloco) : null">
+      @if (compact) { <i class="ti ti-swords" aria-hidden="true"></i> }
       <strong>{{ stats()!.activeMatches }}</strong>
       <span>{{ 'stats.activeMatches' | transloco }}</span>
     </div>
     <div [attr.title]="state() === 'error' ? ('stats.stale' | transloco) : null" [attr.aria-label]="state() === 'error' ? ('stats.stale' | transloco) : null">
+      @if (compact) { <i class="ti ti-door" aria-hidden="true"></i> }
       <strong>{{ stats()!.availableRooms }}</strong>
       <span>{{ 'stats.availableRooms' | transloco }}</span>
     </div>

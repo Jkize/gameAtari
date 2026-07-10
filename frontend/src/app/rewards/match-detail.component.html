@@ -1,5 +1,10 @@
 <main class="page">
-  <nav><a [routerLink]="backLink">{{ 'rewards.matchDetail.backLink' | transloco }}</a></nav>
+  <nav>
+    <a [routerLink]="backLink" class="back-link">
+      <i class="ti ti-arrow-left" aria-hidden="true"></i>
+      {{ 'rewards.matchDetail.backLink' | transloco }}
+    </a>
+  </nav>
 
   @if (loading()) {
     <app-loading-skeleton [rows]="3" [ariaLabel]="'rewards.matchDetail.loadingAriaLabel' | transloco" />
@@ -11,27 +16,32 @@
       (action)="reload()"
     />
   } @else if (detail()) {
-    <header>
-      <div>
-        <h1>{{ detail()!.mapName || ('rewards.common.mapFallback' | transloco) }}</h1>
-        <time>{{ detail()!.playedAt | date:'medium' }}</time>
+    <div class="detail-card">
+      <header>
+        <div>
+          <h1>{{ detail()!.mapName || ('rewards.common.mapFallback' | transloco) }}</h1>
+          <time>{{ detail()!.playedAt | date:'medium' }}</time>
+        </div>
+        <span class="participants-pill">
+          <i class="ti ti-users" aria-hidden="true"></i>
+          {{ 'rewards.common.participants' | transloco: { count: detail()!.playerCount } }}
+        </span>
+      </header>
+
+      <app-player-ranking-table
+        class="ranking-table"
+        [players]="detail()!.players"
+        [currentUserId]="auth.user()?.id ?? null"
+      ></app-player-ranking-table>
+
+      <div class="ranking-cards">
+        @for (player of detail()!.players; track player.placement) {
+          <app-player-ranking-card
+            [player]="player"
+            [isCurrentUser]="player.userId === (auth.user()?.id ?? null)"
+          ></app-player-ranking-card>
+        }
       </div>
-      <strong>{{ 'rewards.common.participants' | transloco: { count: detail()!.playerCount } }}</strong>
-    </header>
-
-    <app-player-ranking-table
-      class="ranking-table"
-      [players]="detail()!.players"
-      [currentUserId]="auth.user()?.id ?? null"
-    ></app-player-ranking-table>
-
-    <div class="ranking-cards">
-      @for (player of detail()!.players; track player.placement) {
-        <app-player-ranking-card
-          [player]="player"
-          [isCurrentUser]="player.userId === (auth.user()?.id ?? null)"
-        ></app-player-ranking-card>
-      }
     </div>
   }
 </main>

@@ -125,6 +125,7 @@
   "rewards.eligibility.prizesAriaLabel": "Premios disponibles",
   "rewards.eligibility.login": "Iniciar sesión",
   "rewards.eligibility.walletVerified": "Wallet verificada",
+  "rewards.eligibility.balanceSufficient": "Saldo suficiente",
   "rewards.eligibility.configureAccount": "Configura tu cuenta",
   "rewards.eligibility.checking": "Verificando elegibilidad…",
   "rewards.eligibility.verificationFailedTitle": "No pudimos verificar tu saldo",
