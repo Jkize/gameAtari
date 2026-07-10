@@ -1,0 +1,19 @@
+<div class="user-menu">
+  <button
+    type="button"
+    class="trigger"
+    aria-haspopup="true"
+    [attr.aria-expanded]="menuOpen()"
+    [attr.aria-label]="'nav.userMenu' | transloco"
+    (click)="toggleMenu()"
+  >
+    {{ auth.user()?.username ?? ('nav.guestUsername' | transloco) }}
+  </button>
+
+  @if (menuOpen()) {
+    <div class="dropdown" role="menu">
+      <button type="button" role="menuitem" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
+      <button type="button" role="menuitem" (click)="logout()">{{ 'nav.signOut' | transloco }}</button>
+    </div>
+  }
+</div>

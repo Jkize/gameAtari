@@ -1,9 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { AuthService } from '../auth/auth.service';
 import { RewardsService } from '../rewards/rewards.service';
 import { AccountSettingsComponent } from './account-settings.component';
+
+const es = {
+  'account.eyebrow': 'ACCOUNT',
+  'account.title': 'Cuenta',
+  'account.closeAriaLabel': 'Cerrar',
+  'account.linked': 'Vinculado',
+  'account.notLinked': 'No vinculado',
+  'account.walletNotLinked': 'No vinculada',
+  'account.walletVerified': 'Wallet verificada {{address}}',
+  'account.linkPhantom': 'Vincular Phantom',
+  'account.loadError': 'No pudimos cargar tu cuenta.',
+  'account.updateError': 'No se pudo actualizar la cuenta.',
+};
 
 describe('AccountSettingsComponent', () => {
   const status = {
@@ -30,7 +44,13 @@ describe('AccountSettingsComponent', () => {
       getWalletStatus: vi.fn().mockReturnValue(of(status)),
     };
     await TestBed.configureTestingModule({
-      imports: [AccountSettingsComponent],
+      imports: [
+        AccountSettingsComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { es },
+          translocoConfig: { availableLangs: ['es'], defaultLang: 'es' },
+        }),
+      ],
       providers: [
         { provide: AuthService, useValue: auth },
         { provide: RewardsService, useValue: rewards },

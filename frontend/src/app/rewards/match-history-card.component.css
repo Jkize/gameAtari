@@ -1,0 +1,6 @@
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 340px); gap: 16px; padding: 18px; border: 1px solid var(--color-text-secondary); background: var(--color-bg-surface); }
+time, p, small { color: var(--color-text-muted); }
+h2, p { margin: 4px 0; }
+.reward { display: grid; gap: 7px; justify-items: start; }
+.view { display: inline-block; margin-top: 6px; color: var(--color-accent); text-decoration: none; font-weight: 700; }
+@media (max-width: 720px) { .row { grid-template-columns: 1fr; } }

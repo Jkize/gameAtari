@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
-import { environment } from '../environments/environment';
 import { guestGuard } from './auth/guest.guard';
+import { rootGuard } from './auth/root.guard';
 
 export const routes: Routes = [
   {
@@ -9,12 +9,6 @@ export const routes: Routes = [
     canActivate: [guestGuard],
     loadComponent: () =>
       import('./auth/auth.component').then(module => module.AuthComponent),
-  },
-  {
-    path: 'lobby',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./lobby/lobby.component').then(module => module.LobbyComponent),
   },
   {
     path: 'game',
@@ -35,21 +29,37 @@ export const routes: Routes = [
       import('./map-editor/map-editor.component').then(module => module.MapEditorComponent),
   },
   {
-    path: 'rewards/me',
-    canActivate: [authGuard],
+    path: '',
     loadComponent: () =>
-      import('./rewards/my-matches.component').then(module => module.MyMatchesComponent),
+      import('./layout/app-layout.component').then(module => module.AppLayoutComponent),
+    children: [
+      {
+        path: 'lobby',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./lobby/lobby.component').then(module => module.LobbyComponent),
+      },
+      {
+        path: 'matches/me',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./rewards/my-matches.component').then(module => module.MyMatchesComponent),
+      },
+      {
+        path: 'matches/recent',
+        loadComponent: () =>
+          import('./rewards/recent-matches.component').then(module => module.RecentMatchesComponent),
+      },
+      {
+        path: 'matches/:matchId',
+        loadComponent: () =>
+          import('./rewards/match-detail.component').then(module => module.MatchDetailComponent),
+      },
+    ],
   },
-  {
-    path: 'matches/recent',
-    loadComponent: () =>
-      import('./rewards/recent-matches.component').then(module => module.RecentMatchesComponent),
-  },
-  {
-    path: 'matches/:matchId',
-    loadComponent: () =>
-      import('./rewards/match-detail.component').then(module => module.MatchDetailComponent),
-  },
-  { path: '', pathMatch: 'full', redirectTo: environment.devGameMode ? 'game/salatest' : 'auth' },
-  { path: '**', redirectTo: environment.devGameMode ? 'game/salatest' : 'auth' },
+  { path: 'rewards/me', redirectTo: 'matches/me', pathMatch: 'full' },
+  // Debe ir después del layout: es el fallback cuando la URL no matchea ningún hijo.
+  // rootGuard decide el destino según sesión: /lobby si está logueado, /auth si no.
+  { path: '', pathMatch: 'full', canActivate: [rootGuard], children: [] },
+  { path: '**', canActivate: [rootGuard], children: [] },
 ];

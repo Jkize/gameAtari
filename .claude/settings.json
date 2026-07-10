@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rg -n \"^\\\\s*\\(//|/\\\\*\\)\" frontend/src/app/layout frontend/src/app/lobby/lobby.component.ts frontend/src/app/account/account-refresh.service.ts -g '*.ts')"
+    ]
+  }
+}

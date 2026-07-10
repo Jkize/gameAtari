@@ -1,0 +1,11 @@
+.card { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 14px; border: 1px solid var(--color-border); background: var(--color-bg-surface); }
+.card.current-user { background: var(--color-bg-surface-hover); box-shadow: inset 3px 0 0 var(--color-accent); }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.placement { color: var(--color-accent); font-weight: 800; font-size: .85rem; text-transform: uppercase; }
+.result { color: var(--color-text-muted); font-size: .85rem; }
+.pilot { margin: 0; font-size: 1.1rem; }
+.stats { display: flex; gap: 16px; }
+.stat { display: flex; flex-direction: column; gap: 2px; }
+.stat .label { color: var(--color-accent); font-size: .72rem; text-transform: uppercase; }
+.stat .value { font-weight: 700; }
+.card-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 8px; border-top: 1px solid rgba(113, 130, 92, .45); }

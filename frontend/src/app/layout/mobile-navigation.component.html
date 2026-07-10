@@ -1,0 +1,32 @@
+@if (mobileNavState.open()) {
+  <div
+    id="mobile-nav-panel"
+    class="panel"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'nav.userMenu' | transloco"
+  >
+    <div class="panel-header">
+      <button
+        #closeButton
+        type="button"
+        class="close"
+        [attr.aria-label]="'nav.closeMenu' | transloco"
+        (click)="close()"
+      >
+        X
+      </button>
+    </div>
+
+    <nav class="links" aria-label="Main navigation">
+      <a routerLink="/lobby" routerLinkActive="active" (click)="close()">{{ 'nav.play' | transloco }}</a>
+      <a routerLink="/matches/me" routerLinkActive="active" (click)="close()">{{ 'nav.myMatches' | transloco }}</a>
+      <a routerLink="/matches/recent" routerLinkActive="active" (click)="close()">{{ 'nav.recentMatches' | transloco }}</a>
+    </nav>
+
+    <app-lang-switcher />
+
+    <button type="button" class="account" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
+    <button type="button" class="signout" (click)="logout()">{{ 'nav.signOut' | transloco }}</button>
+  </div>
+}

@@ -1,0 +1,37 @@
+<main class="page">
+  <nav><a routerLink="/matches/recent">{{ 'rewards.matchDetail.backLink' | transloco }}</a></nav>
+
+  @if (loading()) {
+    <app-loading-skeleton [rows]="3" [ariaLabel]="'rewards.matchDetail.loadingAriaLabel' | transloco" />
+  } @else if (error()) {
+    <app-empty-state
+      [title]="'rewards.matchDetail.loadErrorTitle' | transloco"
+      [message]="error()"
+      [actionLabel]="'rewards.common.retry' | transloco"
+      (action)="reload()"
+    />
+  } @else if (detail()) {
+    <header>
+      <div>
+        <h1>{{ detail()!.mapName || ('rewards.common.mapFallback' | transloco) }}</h1>
+        <time>{{ detail()!.playedAt | date:'medium' }}</time>
+      </div>
+      <strong>{{ 'rewards.common.participants' | transloco: { count: detail()!.playerCount } }}</strong>
+    </header>
+
+    <app-player-ranking-table
+      class="ranking-table"
+      [players]="detail()!.players"
+      [currentUserId]="auth.user()?.id ?? null"
+    ></app-player-ranking-table>
+
+    <div class="ranking-cards">
+      @for (player of detail()!.players; track player.placement) {
+        <app-player-ranking-card
+          [player]="player"
+          [isCurrentUser]="player.userId === (auth.user()?.id ?? null)"
+        ></app-player-ranking-card>
+      }
+    </div>
+  }
+</main>

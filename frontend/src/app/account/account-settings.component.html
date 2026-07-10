@@ -1,0 +1,50 @@
+@if (open) {
+  <div class="backdrop" role="presentation" (click)="close()"></div>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-title">
+    <header>
+      <div>
+        <p class="eyebrow">{{ 'account.eyebrow' | transloco }}</p>
+        <h2 id="account-title">{{ 'account.title' | transloco }}</h2>
+      </div>
+      <button class="icon" type="button" [attr.aria-label]="'account.closeAriaLabel' | transloco" (click)="close()">X</button>
+    </header>
+
+    @if (loading()) {
+      <div class="skeleton"></div>
+      <div class="skeleton short"></div>
+    } @else {
+      <div class="method">
+        <div>
+          <strong>Google</strong>
+          <span>{{ (status()?.google?.linked ? 'account.linked' : 'account.notLinked') | transloco }}</span>
+        </div>
+        @if (!status()?.google?.linked) {
+          <div #googleButton class="google-button"></div>
+        }
+      </div>
+
+      <div class="method">
+        <div>
+          <strong>Phantom</strong>
+          <span>
+            @if (status()?.phantom?.verified) {
+              {{ 'account.walletVerified' | transloco: { address: status()?.phantom?.addressPreview } }}
+            } @else {
+              {{ 'account.walletNotLinked' | transloco }}
+            }
+          </span>
+        </div>
+        @if (!status()?.phantom?.verified) {
+          <button class="action" type="button" (click)="linkPhantom()" [disabled]="busy()">{{ 'account.linkPhantom' | transloco }}</button>
+        }
+      </div>
+
+      <p class="holder" [class.ok]="status()?.holder?.status === 'eligible'"
+        [class.warn]="status()?.holder?.status === 'insufficient'">
+        {{ status()?.holder?.message }}
+      </p>
+    }
+
+    @if (error()) { <p class="error">{{ error() }}</p> }
+  </section>
+}

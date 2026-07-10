@@ -1,0 +1,3 @@
+@for (row of rowIndexes; track row) {
+  <div class="skeleton" [class.short]="row % 2 === 1" [attr.aria-label]="row === 0 ? ariaLabel : null"></div>
+}

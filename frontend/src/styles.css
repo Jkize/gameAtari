@@ -6,6 +6,21 @@
 
 :root {
   --page-bg: #20170d;
+
+  --color-bg-page: #11170f;
+  --color-bg-inset: #10150e;
+  --color-bg-surface: #1c281a;
+  --color-bg-surface-hover: #263223;
+  --color-text-primary: #edf4dc;
+  --color-text-secondary: #71825c;
+  --color-text-muted: #aeb8a6;
+  --color-text-tertiary: #cbd6bd;
+  --color-accent: #d4ff5f;
+  --color-accent-contrast: #10150e;
+  --color-border: #71825c;
+  --color-pending: #f5d76e;
+  --color-warning: #ffb36b;
+  --color-error: #ff8a80;
 }
 
 html, body {

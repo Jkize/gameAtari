@@ -1,0 +1,20 @@
+:host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-page); }
+.lobby { width: min(980px, calc(100% - 40px)); margin: auto; padding: 48px 0; }
+.eyebrow { color: var(--color-accent); letter-spacing: .2em; }
+h1 { margin: 4px 0 24px; font-size: 3rem; }
+
+.lobby-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 24px;
+  align-items: start;
+}
+
+.lobby-main { display: grid; gap: 0; }
+.lobby-side { display: grid; gap: 16px; }
+
+.notice { padding: 12px; margin-top: 16px; color: var(--color-accent); background: var(--color-bg-surface); border: 1px solid var(--color-text-secondary); }
+
+@media (max-width: 900px) {
+  .lobby-grid { grid-template-columns: 1fr; }
+}

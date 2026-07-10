@@ -1,0 +1,13 @@
+:host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-page); }
+.page { width: min(1100px, calc(100% - 40px)); margin: auto; padding: 42px 0; }
+nav a { color: var(--color-accent); text-decoration: none; font-weight: 800; }
+header { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin: 22px 0; }
+h1 { margin: 0 0 6px; font-size: 2.4rem; }
+time { color: var(--color-text-muted); }
+.ranking-table { display: block; }
+.ranking-cards { display: none; }
+
+@media (max-width: 720px) {
+  .ranking-table { display: none; }
+  .ranking-cards { display: grid; gap: 12px; }
+}

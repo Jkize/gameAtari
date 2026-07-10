@@ -1,0 +1,30 @@
+<section class="table-wrap" [attr.aria-label]="'rewards.matchDetail.tableAriaLabel' | transloco">
+  <table>
+    <thead>
+      <tr>
+        <th>{{ 'rewards.matchDetail.columnPosition' | transloco }}</th>
+        <th>{{ 'rewards.matchDetail.columnPilot' | transloco }}</th>
+        <th>{{ 'rewards.matchDetail.columnKills' | transloco }}</th>
+        <th>{{ 'rewards.matchDetail.columnDamage' | transloco }}</th>
+        <th>{{ 'rewards.matchDetail.columnResult' | transloco }}</th>
+        <th>{{ 'rewards.matchDetail.columnReward' | transloco }}</th>
+        <th>{{ 'rewards.matchDetail.columnStatus' | transloco }}</th>
+        <th>{{ 'rewards.matchDetail.columnSolscan' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (player of players; track player.placement) {
+        <tr [class.current-user]="player.userId === currentUserId">
+          <td>{{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}</td>
+          <td>{{ player.username || ('rewards.common.pilotFallback' | transloco) }}</td>
+          <td>{{ player.kills }}</td>
+          <td>{{ player.damageDealt }}</td>
+          <td>{{ (player.winner ? 'rewards.common.victory' : 'rewards.common.eliminated') | transloco }}</td>
+          <td>{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</td>
+          <td><app-reward-status-badge [status]="player.reward?.status" [publicOnly]="true"></app-reward-status-badge></td>
+          <td><app-solscan-link [url]="player.reward?.solscanUrl"></app-solscan-link></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

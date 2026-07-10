@@ -1,0 +1,4 @@
+.podium { display: grid; gap: 8px; }
+.podium-row { display: grid; grid-template-columns: 38px 42px minmax(100px, 1fr) 96px auto auto; gap: 10px; align-items: center; padding: 10px; background: rgba(13, 18, 12, .62); border: 1px solid rgba(113, 130, 92, .62); }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; background: var(--color-bg-surface-hover); color: var(--color-accent); font-weight: 800; }
+@media (max-width: 760px) { .podium-row { grid-template-columns: 38px 42px 1fr; } }

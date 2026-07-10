@@ -1,0 +1,49 @@
+<main class="page">
+  <nav><a routerLink="/lobby">{{ 'rewards.common.backToLobby' | transloco }}</a></nav>
+  <h1>{{ 'rewards.myMatches.title' | transloco }}</h1>
+
+  @if (loading() && !items().length) {
+    <app-loading-skeleton [rows]="2" [ariaLabel]="'rewards.myMatches.loadingAriaLabel' | transloco" />
+  } @else if (error()) {
+    <app-empty-state
+      [title]="'rewards.myMatches.loadErrorTitle' | transloco"
+      [message]="error()"
+      [actionLabel]="'rewards.common.retry' | transloco"
+      (action)="load()"
+    />
+  } @else if (!items().length) {
+    <app-empty-state
+      [title]="'rewards.myMatches.emptyState' | transloco"
+      [message]="'rewards.myMatches.emptyStateHint' | transloco"
+      [actionLabel]="'rewards.myMatches.emptyStateAction' | transloco"
+      (action)="goToLobby()"
+    />
+  } @else {
+    <div class="filters" role="group" [attr.aria-label]="'rewards.myMatches.title' | transloco">
+      <button type="button" class="pill" [class.active]="filter() === 'all'" (click)="setFilter('all')">{{ 'rewards.myMatches.filterAll' | transloco }}</button>
+      <button type="button" class="pill" [class.active]="filter() === 'victories'" (click)="setFilter('victories')">{{ 'rewards.myMatches.filterVictories' | transloco }}</button>
+      <button type="button" class="pill" [class.active]="filter() === 'rewarded'" (click)="setFilter('rewarded')">{{ 'rewards.myMatches.filterRewarded' | transloco }}</button>
+      <button type="button" class="pill" [class.active]="filter() === 'pending'" (click)="setFilter('pending')">{{ 'rewards.myMatches.filterPending' | transloco }}</button>
+      <button type="button" class="pill" [class.active]="filter() === 'unrewarded'" (click)="setFilter('unrewarded')">{{ 'rewards.myMatches.filterUnrewarded' | transloco }}</button>
+    </div>
+
+    <app-match-summary-stats [items]="items()" />
+
+    @if (filteredItems().length) {
+      <section class="list" [attr.aria-label]="'rewards.myMatches.listAriaLabel' | transloco">
+        @for (item of filteredItems(); track item.matchId) {
+          <app-match-history-card [item]="item" />
+        }
+      </section>
+    } @else {
+      <app-empty-state
+        [title]="'rewards.myMatches.filteredEmptyTitle' | transloco"
+        [message]="'rewards.myMatches.filteredEmpty' | transloco"
+      />
+    }
+
+    @if (nextCursor()) {
+      <button class="more" type="button" (click)="load()" [disabled]="loading()">{{ 'rewards.common.loadMore' | transloco }}</button>
+    }
+  }
+</main>

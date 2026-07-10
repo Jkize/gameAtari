@@ -1,0 +1,44 @@
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 22px 0 6px;
+}
+
+.summary div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+}
+
+.summary strong,
+.summary span {
+  display: block;
+  text-align: center;
+}
+
+.summary strong {
+  color: var(--color-accent);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.summary span {
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: .78rem;
+  text-transform: uppercase;
+}
+
+.caption {
+  margin: 0 0 22px;
+  color: var(--color-text-tertiary);
+  font-size: .78rem;
+}
+
+@media (max-width: 520px) {
+  .summary div { padding: 10px 6px; }
+  .summary strong { font-size: 1.1rem; }
+  .summary span { font-size: .68rem; }
+}

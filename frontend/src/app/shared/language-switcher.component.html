@@ -1,0 +1,9 @@
+<select
+  class="lang-select"
+  [attr.aria-label]="'nav.selectLanguage' | transloco"
+  [value]="activeLang()"
+  (change)="select($event)"
+>
+  <option value="en">EN</option>
+  <option value="es">ES</option>
+</select>

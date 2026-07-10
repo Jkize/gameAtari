@@ -1,0 +1,24 @@
+<article class="card" [class.current-user]="isCurrentUser">
+  <header class="card-header">
+    <span class="placement">{{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}</span>
+    <span class="result">{{ (player.winner ? 'rewards.common.victory' : 'rewards.common.eliminated') | transloco }}</span>
+  </header>
+  <h3 class="pilot">{{ player.username || ('rewards.common.pilotFallback' | transloco) }}</h3>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="label">{{ 'rewards.matchDetail.columnKills' | transloco }}</span>
+      <span class="value">{{ player.kills }}</span>
+    </div>
+    <div class="stat">
+      <span class="label">{{ 'rewards.matchDetail.columnDamage' | transloco }}</span>
+      <span class="value">{{ player.damageDealt }}</span>
+    </div>
+  </div>
+
+  <footer class="card-footer">
+    <span class="reward">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</span>
+    <app-reward-status-badge [status]="player.reward?.status" [publicOnly]="true"></app-reward-status-badge>
+    <app-solscan-link [url]="player.reward?.solscanUrl"></app-solscan-link>
+  </footer>
+</article>

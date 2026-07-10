@@ -1,0 +1,39 @@
+<main class="page">
+  <nav><a routerLink="/lobby">{{ 'rewards.common.backToLobby' | transloco }}</a></nav>
+  <h1>{{ 'rewards.recentMatches.title' | transloco }}</h1>
+
+  @if (loading() && !items().length) {
+    <app-loading-skeleton [rows]="2" [ariaLabel]="'rewards.recentMatches.loadingAriaLabel' | transloco" />
+  } @else if (error()) {
+    <app-empty-state
+      [title]="'rewards.recentMatches.loadErrorTitle' | transloco"
+      [message]="error()"
+      [actionLabel]="'rewards.common.retry' | transloco"
+      (action)="load()"
+    />
+  } @else if (!items().length) {
+    <app-empty-state
+      [title]="'rewards.recentMatches.emptyState' | transloco"
+      [message]="'rewards.recentMatches.emptyStateHint' | transloco"
+    />
+  } @else {
+    <section class="list" [attr.aria-label]="'rewards.recentMatches.title' | transloco">
+      @for (item of items(); track item.matchId) {
+        <article class="match">
+          <header>
+            <div>
+              <time>{{ item.playedAt | date:'medium' }}</time>
+              <h2>{{ item.mapName || ('rewards.common.mapFallback' | transloco) }}</h2>
+              <p>{{ 'rewards.common.participants' | transloco: { count: item.playerCount } }}</p>
+            </div>
+            <a [routerLink]="['/matches', item.matchId]">{{ 'rewards.recentMatches.detailLink' | transloco }}</a>
+          </header>
+          <app-match-podium [podium]="item.podium" />
+        </article>
+      }
+    </section>
+    @if (nextCursor()) {
+      <button class="more" type="button" (click)="load()" [disabled]="loading()">{{ 'rewards.common.loadMore' | transloco }}</button>
+    }
+  }
+</main>

@@ -54,21 +54,23 @@ export interface PublicMatchHistoryItem {
   podium: PublicRewardPlayer[];
 }
 
+export interface PublicMatchDetailPlayer {
+  userId?: string | null;
+  username?: string | null;
+  avatarUrl?: string | null;
+  placement: number;
+  kills: number;
+  damageDealt: number;
+  winner: boolean;
+  reward?: RewardSummary | null;
+}
+
 export interface PublicMatchDetail {
   matchId: string;
   playedAt: string;
   mapName?: string | null;
   playerCount: number;
-  players: Array<{
-    userId?: string | null;
-    username?: string | null;
-    avatarUrl?: string | null;
-    placement: number;
-    kills: number;
-    damageDealt: number;
-    winner: boolean;
-    reward?: RewardSummary | null;
-  }>;
+  players: PublicMatchDetailPlayer[];
 }
 
 export interface PagedResult<T> {

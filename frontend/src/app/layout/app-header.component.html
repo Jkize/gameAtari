@@ -1,0 +1,36 @@
+<header class="app-header">
+  <div class="brand">
+    <span class="wordmark">TANK ARENA</span>
+  </div>
+
+  <div class="desktop-nav">
+    <nav class="nav-links" aria-label="Main navigation">
+      <a routerLink="/lobby" routerLinkActive="active">{{ 'nav.play' | transloco }}</a>
+      <a routerLink="/matches/me" routerLinkActive="active">{{ 'nav.myMatches' | transloco }}</a>
+      <a routerLink="/matches/recent" routerLinkActive="active">{{ 'nav.recentMatches' | transloco }}</a>
+    </nav>
+    <app-lang-switcher />
+    <app-user-menu />
+  </div>
+
+  <button
+    type="button"
+    class="hamburger"
+    [attr.aria-expanded]="mobileNavState.open()"
+    aria-controls="mobile-nav-panel"
+    [attr.aria-label]="(mobileNavState.open() ? 'nav.closeMenu' : 'nav.openMenu') | transloco"
+    (click)="mobileNavState.toggle()"
+  >
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</header>
+
+<app-mobile-nav />
+
+<app-account-settings
+  [open]="accountModal.open()"
+  (closed)="accountModal.hide()"
+  (accountChanged)="accountRefresh.bump()"
+></app-account-settings>

@@ -1,0 +1,5 @@
+.table-wrap { overflow-x: auto; border: 1px solid var(--color-text-secondary); background: var(--color-bg-surface); }
+table { width: 100%; border-collapse: collapse; min-width: 780px; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(113, 130, 92, .45); }
+th { color: var(--color-accent); font-size: .78rem; text-transform: uppercase; }
+tr.current-user { background: var(--color-bg-surface-hover); box-shadow: inset 3px 0 0 var(--color-accent); }
