@@ -1,4 +1,4 @@
-:host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-page); }
+:host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-surface); }
 .page { width: min(1100px, calc(100% - 40px)); margin: auto; padding: 42px 0; }
 
 nav { margin-bottom: 14px; }

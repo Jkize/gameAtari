@@ -10,20 +10,8 @@
   </ol>
 
   <div class="state">
-    @if (auth.user()) {
-      <ul class="checklist" [class.pending]="walletStatus() === null || walletStatus()?.holder?.status === 'unavailable'">
-        <li [class.ok]="walletStatus()?.phantom?.verified === true">
-          <i [class]="walletStatus()?.phantom?.verified === true ? 'ti ti-circle-check' : 'ti ti-circle-x'" aria-hidden="true"></i>
-          <span>{{ 'rewards.eligibility.walletVerified' | transloco }}</span>
-        </li>
-        <li [class.ok]="walletStatus()?.holder?.status === 'eligible'">
-          <i [class]="walletStatus()?.holder?.status === 'eligible' ? 'ti ti-circle-check' : 'ti ti-circle-x'" aria-hidden="true"></i>
-          <span>{{ 'rewards.eligibility.balanceSufficient' | transloco }}</span>
-        </li>
-      </ul>
-    }
     @if (!auth.user()) {
-      <a class="action" routerLink="/auth">{{ 'rewards.eligibility.login' | transloco }}</a>
+      <a class="action-link" routerLink="/auth">{{ 'rewards.eligibility.login' | transloco }}</a>
     } @else if (walletStatus() === null) {
       <p class="status-loading">{{ 'rewards.eligibility.checking' | transloco }}</p>
     } @else if (walletStatus()!.holder.status === 'unavailable') {
@@ -40,15 +28,11 @@
         {{ 'rewards.eligibility.configureWallet' | transloco }}
       </button>
     } @else if (walletStatus()!.holder.status === 'eligible' && walletStatus()!.phantom.verified) {
-      <p class="status-title ok">{{ 'rewards.eligibility.eligibleTitle' | transloco }}</p>
-      <p class="status-hint">{{ 'rewards.eligibility.eligibleHint' | transloco }}</p>
+      <p class="check"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ 'rewards.eligibility.walletVerified' | transloco }}</p>
+      <p class="check"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ 'rewards.eligibility.balanceSufficient' | transloco }}</p>
     } @else {
       <span class="neutral">{{ 'rewards.eligibility.configureAccount' | transloco }}</span>
     }
     @if (error()) { <p class="error">{{ error() }}</p> }
   </div>
-
-  @if (auth.user() && walletStatus() !== null) {
-    <p class="hint">{{ 'rewards.eligibility.hint' | transloco }}</p>
-  }
 </section>

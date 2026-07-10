@@ -1,4 +1,4 @@
-:host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-page); }
+:host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-surface); }
 .page { width: min(1060px, calc(100% - 40px)); margin: auto; padding: 42px 0; }
 nav a, header a.detail-link { color: var(--color-accent); text-decoration: none; font-weight: 500; }
 nav a { display: inline-block; margin-bottom: 4px; }

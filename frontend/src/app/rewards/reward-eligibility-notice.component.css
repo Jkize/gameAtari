@@ -24,37 +24,31 @@ h2 { margin: 0; font-size: 1.1rem; font-weight: 500; }
 .prizes span { font-family: var(--font-mono); font-size: .85rem; color: var(--color-text-secondary); }
 .prizes li.place-1 span { color: var(--color-gold-strong); }
 
-.checklist { display: grid; gap: 6px; padding: 0; margin: 0 0 4px; list-style: none; }
-.checklist li { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--color-text-muted); }
-.checklist li i { font-size: 15px; color: var(--color-text-muted); }
-.checklist li.ok { color: var(--color-success-text); }
-.checklist li.ok i { color: var(--color-success); }
-.checklist.pending li,
-.checklist.pending li.ok,
-.checklist.pending li i,
-.checklist.pending li.ok i { color: var(--color-text-muted); }
-
 .state { display: grid; gap: 8px; justify-items: start; text-align: left; }
 .status-title { margin: 0; font-weight: 500; font-size: .95rem; color: var(--color-text-primary); }
 .status-title.ok { color: var(--color-success); }
 .status-title.warn { color: var(--color-warning); }
 .status-hint { margin: 0; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.4; }
 .status-loading { margin: 0; color: var(--color-text-muted); font-size: .85rem; }
+.check { display: flex; align-items: center; gap: 6px; margin: 0; font-size: .75rem; color: var(--color-success); }
+.check i { font-size: 15px; }
+.action-link { color: var(--color-accent); font-size: .85rem; font-weight: 500; text-decoration: none; }
+.action-link:hover { color: var(--color-accent-hover); }
 .action {
-  width: 100%;
-  min-height: 40px;
-  padding: 10px 14px;
-  border: none;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-control);
-  color: var(--color-accent-contrast);
-  background: var(--color-accent);
+  color: var(--color-accent);
+  background: transparent;
   font: inherit;
+  font-size: .85rem;
   font-weight: 500;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
 }
-.action:hover { background: var(--color-accent-hover); }
+.action:hover { background: var(--color-bg-inset); }
 .action:disabled { opacity: .55; cursor: wait; }
 .neutral {
   padding: 9px 12px;
@@ -65,4 +59,3 @@ h2 { margin: 0; font-size: 1.1rem; font-weight: 500; }
   font-weight: 500;
 }
 .error { margin: 0; color: var(--color-error); font-size: .82rem; }
-.hint { margin: 0; color: var(--color-text-muted); font-size: .78rem; line-height: 1.35; }
