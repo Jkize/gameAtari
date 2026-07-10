@@ -1,0 +1,30 @@
+gentle-ai : to configure agents
+
+lOCAL DEVNET: 824fd85b5961274f78feb539c73ac7240dc25a38a05c341b8007fdea2866b41633bd9628fecb5f3cbee8be725340c66cec4177fc6af0b5702bca9a7b54c683dc
+
+
+sebas@DESKTOP-ANEMCO7:/mnt/c/WINDOWS/system32$ spl-token create-token --decimals 9
+Creating token 6nxvwP2L9YtNB2LCS9u1BhKAyrdcvRCh95YT7aooxGai under program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA
+
+Address:  6nxvwP2L9YtNB2LCS9u1BhKAyrdcvRCh95YT7aooxGai
+Decimals:  9
+
+Signature: 43SyAYaoyb2SwKMDstKP1Q1St58G1sRxuZMegPZGk6q8HKYv7Sy68xtckZcxmNBAR4a6tEBcembikSSkZupbwtXX
+
+
+DW1="E8vcL2M1PSJGuHHNQMz1TAR2SNZwDPc8dBvucsdUvfQ7"
+
+spl-token transfer \
+  "$TOKEN_MINT" \
+  500 \
+  "$DESTINATION_WALLET" \
+  --fund-recipient
+
+
+spl-token transfer \
+  "$TOKEN_MINT" \
+  11000 \
+  "$DW1" \
+  --fund-recipient
+
+solana transfer "$DW1" 0.2 --allow-unfunded-recipient

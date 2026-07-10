@@ -71,7 +71,27 @@ export class UsersService {
       },
       include: { user: true },
     });
-    if (account) return account.user;
+    if (account) {
+      await this.prisma.wallet.upsert({
+        where: {
+          userId_provider: {
+            userId: account.userId,
+            provider: AuthProvider.PHANTOM,
+          },
+        },
+        create: {
+          userId: account.userId,
+          provider: AuthProvider.PHANTOM,
+          address: walletAddress,
+          verifiedAt: new Date(),
+        },
+        update: {
+          verifiedAt: new Date(),
+          revokedAt: null,
+        },
+      });
+      return account.user;
+    }
 
     return this.prisma.$transaction(async tx => {
       const user = await tx.user.create({ data: {} });
@@ -83,7 +103,150 @@ export class UsersService {
           walletAddress,
         },
       });
+      await tx.wallet.create({
+        data: {
+          userId: user.id,
+          provider: AuthProvider.PHANTOM,
+          address: walletAddress,
+          verifiedAt: new Date(),
+        },
+      });
       return user;
+    });
+  }
+
+  async linkGoogleAccount(userId: string, identity: GoogleIdentity): Promise<void> {
+    await this.prisma.$transaction(async tx => {
+      const linkedElsewhere = await tx.authAccount.findUnique({
+        where: {
+          provider_providerAccountId: {
+            provider: AuthProvider.GOOGLE,
+            providerAccountId: identity.subject,
+          },
+        },
+        select: { userId: true },
+      });
+      if (linkedElsewhere && linkedElsewhere.userId !== userId) {
+        throw new ConflictException('This Google account is already linked to another user');
+      }
+
+      const existingGoogle = await tx.authAccount.findFirst({
+        where: { userId, provider: AuthProvider.GOOGLE },
+        select: { providerAccountId: true },
+      });
+      if (existingGoogle && existingGoogle.providerAccountId !== identity.subject) {
+        throw new ConflictException('This user already has a Google account linked');
+      }
+
+      await tx.authAccount.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: AuthProvider.GOOGLE,
+            providerAccountId: identity.subject,
+          },
+        },
+        create: {
+          userId,
+          provider: AuthProvider.GOOGLE,
+          providerAccountId: identity.subject,
+          email: identity.email.toLowerCase(),
+        },
+        update: {
+          email: identity.email.toLowerCase(),
+        },
+      });
+
+      if (identity.avatarUrl) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { avatarUrl: identity.avatarUrl },
+        });
+      }
+    });
+  }
+
+  async linkPhantomWallet(userId: string, walletAddress: string, verificationMessage: string): Promise<void> {
+    await this.prisma.$transaction(async tx => {
+      const linkedWallet = await tx.wallet.findUnique({
+        where: { address: walletAddress },
+        select: { userId: true },
+      });
+      if (linkedWallet && linkedWallet.userId !== userId) {
+        throw new ConflictException('This Phantom wallet is already linked to another user');
+      }
+
+      const linkedAccount = await tx.authAccount.findUnique({
+        where: {
+          provider_providerAccountId: {
+            provider: AuthProvider.PHANTOM,
+            providerAccountId: walletAddress,
+          },
+        },
+        select: { userId: true },
+      });
+      if (linkedAccount && linkedAccount.userId !== userId) {
+        throw new ConflictException('This Phantom wallet is already linked to another user');
+      }
+
+      const userWallet = await tx.wallet.findUnique({
+        where: {
+          userId_provider: {
+            userId,
+            provider: AuthProvider.PHANTOM,
+          },
+        },
+        select: { address: true, verifiedAt: true },
+      });
+      if (userWallet && userWallet.address !== walletAddress) {
+        throw new ConflictException('This user already has a verified Phantom wallet');
+      }
+
+      const userPhantomAccount = await tx.authAccount.findFirst({
+        where: { userId, provider: AuthProvider.PHANTOM },
+        select: { providerAccountId: true },
+      });
+      if (userPhantomAccount && userPhantomAccount.providerAccountId !== walletAddress) {
+        throw new ConflictException('This user already has a Phantom account linked');
+      }
+
+      await tx.wallet.upsert({
+        where: {
+          userId_provider: {
+            userId,
+            provider: AuthProvider.PHANTOM,
+          },
+        },
+        create: {
+          userId,
+          provider: AuthProvider.PHANTOM,
+          address: walletAddress,
+          verifiedAt: new Date(),
+          verificationMessage,
+        },
+        update: {
+          verifiedAt: new Date(),
+          verificationMessage,
+          revokedAt: null,
+        },
+      });
+
+      await tx.authAccount.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: AuthProvider.PHANTOM,
+            providerAccountId: walletAddress,
+          },
+        },
+        create: {
+          userId,
+          provider: AuthProvider.PHANTOM,
+          providerAccountId: walletAddress,
+          walletAddress,
+        },
+        update: {
+          walletAddress,
+        },
+      });
     });
   }
 

@@ -12,14 +12,15 @@ import { UsersModule } from '../../users/users.module';
 import { GameRuntimeContext } from './runtime/game-runtime-context.service';
 import { GameSessionsService } from './runtime/game-sessions.service';
 import { RoomsService } from '../../rooms/rooms.service';
+import { MatchResultsRepository } from '../../matches/match-results.repository';
 import { MatchesService } from '../../matches/matches.service';
-import { RewardsService } from '../../rewards/rewards.service';
+import { RewardsModule } from '../../rewards/rewards.module';
 import { SocketRateLimiterService } from './socket-rate-limiter.service';
 import { PowerUpSpawnService } from './power-up-spawn.service';
 import { DangerZoneService } from './danger-zone.service';
 
 @Module({
-  imports: [AuthModule, UsersModule],
+  imports: [AuthModule, UsersModule, RewardsModule],
   providers: [
     GameGateway,
     GameService,
@@ -32,8 +33,8 @@ import { DangerZoneService } from './danger-zone.service';
     GameRuntimeContext,
     GameSessionsService,
     RoomsService,
+    MatchResultsRepository,
     MatchesService,
-    RewardsService,
     SocketRateLimiterService,
     PowerUpSpawnService,
     DangerZoneService,

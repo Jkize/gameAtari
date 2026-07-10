@@ -23,6 +23,9 @@ Frontend for Tank Arena: Angular shell + Phaser + Socket.IO client.
 - `src/app/network/socket-events.ts`: frontend event names; keep aligned with backend.
 - `src/app/types/`: frontend copies of backend contracts.
 - `public/assets/`: obstacle, weapon, tile, tank template assets.
+- `src/app/rewards/`: reward notice, personal history, public recent matches, match detail, Solscan link/status badge.
+- `src/app/account/account-settings.component.ts`: account popup for linking Google/Phantom.
+- `src/app/auth/auth.service.ts`: login and account-linking client methods.
 
 ## Networking Rules
 
@@ -37,6 +40,19 @@ this.gameState = { ...state, map: this.currentMap };
 
 - Obstacle render state must react to `obstacle:damaged` and `obstacle:destroyed`.
 - Room countdown events can show `STARTING IN Ns`.
+
+## Rewards UI
+
+- Lobby shows a non-blocking token rewards notice. It must never block Quick Play.
+- The Phantom link button is only for a logged-in Google session that does not already have verified Phantom. Use `AuthService.linkPhantom()`, not `loginPhantom()`, so the Google session is not replaced.
+- Lobby may show an informational 10,000-token holder check from `/wallets/me`, but the authoritative eligibility check still happens at match end on the backend.
+- Do not infer or construct Solscan URLs in the frontend. Use `solscanUrl` returned by the backend and open links with safe new-tab attributes.
+- Reward history routes:
+  - `/rewards/me` calls `GET /rewards/me/history` with auth and cursor pagination.
+  - `/matches/recent` calls `GET /rewards/matches/recent`.
+  - `/matches/:matchId` calls `GET /rewards/matches/:matchId`.
+- Histories load at most 50 rows per backend page and append more when `nextCursor` exists.
+- Personal history may show specific ineligibility reasons; public history should show public payment/eligibility state without internal errors.
 
 ## Input Rules
 

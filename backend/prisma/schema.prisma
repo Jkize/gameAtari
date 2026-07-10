@@ -17,38 +17,53 @@ enum MatchStatus {
 }
 
 enum RewardStatus {
+  NOT_ELIGIBLE
+  DAILY_LIMIT_REACHED
   PENDING
   PROCESSING
+  SUBMITTED
   SENT
   FAILED
+  MANUAL_REVIEW
+  CANCELLED
+}
+
+enum RewardIneligibilityReason {
+  USER_NOT_AUTHENTICATED
+  WALLET_NOT_LINKED
+  WALLET_NOT_VERIFIED
+  INSUFFICIENT_TOKEN_BALANCE
+  DAILY_LIMIT_REACHED
 }
 
 model User {
-  id             String         @id @default(uuid()) @db.Uuid
-  username       String?        @unique
-  usernameNormalized String?    @unique
-  avatarUrl      String?
-  active         Boolean        @default(true)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  accounts       AuthAccount[]
-  sessions       AuthSession[]
-  wonMatches     Match[]        @relation("MatchWinner")
-  matchPlayers   MatchPlayer[]
-  rewards        RewardLog[]
-  settings       UserSetting[]
+  id                 String             @id @default(uuid()) @db.Uuid
+  username           String?            @unique
+  usernameNormalized String?            @unique
+  avatarUrl          String?
+  active             Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  accounts           AuthAccount[]
+  sessions           AuthSession[]
+  wonMatches         Match[]            @relation("MatchWinner")
+  matchPlayers       MatchPlayer[]
+  rewards            RewardLog[]
+  wallets            Wallet[]
+  dailyRewardLimits  DailyRewardLimit[]
+  settings           UserSetting[]
 }
 
 model AuthAccount {
-  id                 String       @id @default(uuid()) @db.Uuid
-  userId             String       @db.Uuid
-  provider           AuthProvider
-  providerAccountId  String
-  email              String?
-  walletAddress      String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String       @id @default(uuid()) @db.Uuid
+  userId            String       @db.Uuid
+  provider          AuthProvider
+  providerAccountId String
+  email             String?
+  walletAddress     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@unique([provider, email])
@@ -68,14 +83,31 @@ model WalletNonce {
   @@index([walletAddress, expiresAt])
 }
 
+model Wallet {
+  id                  String       @id @default(uuid()) @db.Uuid
+  userId              String       @db.Uuid
+  provider            AuthProvider @default(PHANTOM)
+  address             String       @unique
+  verifiedAt          DateTime?
+  verificationMessage String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  revokedAt           DateTime?
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider, verifiedAt])
+}
+
 model AuthSession {
-  id         String    @id @db.Uuid
-  userId     String    @db.Uuid
-  provider   AuthProvider
-  expiresAt  DateTime
-  revokedAt  DateTime?
-  createdAt  DateTime  @default(now())
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String       @id @db.Uuid
+  userId    String       @db.Uuid
+  provider  AuthProvider
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
 }
@@ -94,52 +126,100 @@ model UserSetting {
 }
 
 model Match {
-  id              String         @id @default(uuid()) @db.Uuid
-  roomId          String         @unique
+  id              String        @id @default(uuid()) @db.Uuid
+  roomId          String        @unique
   mapName         String?
-  status          MatchStatus    @default(COMPLETED)
-  winnerUserId    String?        @db.Uuid
+  status          MatchStatus   @default(COMPLETED)
+  winnerUserId    String?       @db.Uuid
   startedAt       DateTime
   endedAt         DateTime
   durationSeconds Int
-  createdAt       DateTime       @default(now())
-  winner          User?          @relation("MatchWinner", fields: [winnerUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  winner          User?         @relation("MatchWinner", fields: [winnerUserId], references: [id], onDelete: SetNull)
   players         MatchPlayer[]
   rewards         RewardLog[]
+
+  @@index([endedAt])
+  @@index([winnerUserId])
 }
 
 model MatchPlayer {
-  id           String   @id @default(uuid()) @db.Uuid
-  matchId      String   @db.Uuid
-  userId       String   @db.Uuid
-  placement    Int
-  kills        Int      @default(0)
-  deaths       Int      @default(0)
-  damageDealt  Int      @default(0)
-  damageTaken  Int      @default(0)
-  winner       Boolean  @default(false)
-  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id          String  @id @default(uuid()) @db.Uuid
+  matchId     String  @db.Uuid
+  playerId    String
+  userId      String? @db.Uuid
+  placement   Int
+  kills       Int     @default(0)
+  deaths      Int     @default(0)
+  damageDealt Int     @default(0)
+  damageTaken Int     @default(0)
+  winner      Boolean @default(false)
+  match       Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user        User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
 
+  @@unique([matchId, playerId])
   @@unique([matchId, userId])
+  @@index([matchId, placement])
   @@index([userId])
 }
 
 model RewardLog {
-  id            String       @id @default(uuid()) @db.Uuid
-  matchId       String       @db.Uuid
-  userId        String       @db.Uuid
-  walletAddress String
-  amount        Decimal      @db.Decimal(20, 8)
-  asset         String
-  status        RewardStatus @default(PENDING)
-  transactionId String?
-  errorMessage  String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  match         Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  user          User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id                   String                     @id @default(uuid()) @db.Uuid
+  matchId              String                     @db.Uuid
+  userId               String?                    @db.Uuid
+  placement            Int
+  walletAddress        String?
+  potentialAmount      Decimal                    @default(0) @db.Decimal(20, 8)
+  amount               Decimal                    @default(0) @db.Decimal(20, 8)
+  mint                 String                     @default("")
+  tokenDecimals        Int?
+  tokenBalanceChecked  Decimal?                   @db.Decimal(30, 8)
+  eligible             Boolean                    @default(false)
+  eligibilityCheckedAt DateTime?
+  ineligibilityReason  RewardIneligibilityReason?
+  status               RewardStatus               @default(PENDING)
+  idempotencyKey       String                     @unique
+  transactionSignature String?                    @unique
+  processingStartedAt  DateTime?
+  submittedAt          DateTime?
+  confirmedAt          DateTime?
+  failedAt             DateTime?
+  retryable            Boolean                    @default(false)
+  retryCount           Int                        @default(0)
+  nextRetryAt          DateTime?
+  errorCode            String?
+  errorMessage         String?
+  asset                String                     @default("")
+  transactionId        String?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  match                Match                      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user                 User?                      @relation(fields: [userId], references: [id], onDelete: Restrict)
 
-  @@unique([matchId, userId])
+  @@unique([matchId, placement])
   @@index([status])
+  @@index([userId, createdAt])
+  @@index([matchId])
+  @@index([createdAt])
+  @@index([status, nextRetryAt])
+  @@index([walletAddress])
+}
+
+model DailyRewardLimit {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  walletAddress   String
+  mint            String
+  rewardDate      DateTime @db.Date
+  reservedAmount  Decimal  @default(0) @db.Decimal(20, 8)
+  sentAmount      Decimal  @default(0) @db.Decimal(20, 8)
+  cancelledAmount Decimal  @default(0) @db.Decimal(20, 8)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, walletAddress, mint, rewardDate])
+  @@index([userId, rewardDate])
+  @@index([walletAddress, rewardDate])
+  @@index([mint, rewardDate])
 }

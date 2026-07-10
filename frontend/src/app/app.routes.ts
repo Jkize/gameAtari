@@ -34,6 +34,22 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./map-editor/map-editor.component').then(module => module.MapEditorComponent),
   },
+  {
+    path: 'rewards/me',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./rewards/my-matches.component').then(module => module.MyMatchesComponent),
+  },
+  {
+    path: 'matches/recent',
+    loadComponent: () =>
+      import('./rewards/recent-matches.component').then(module => module.RecentMatchesComponent),
+  },
+  {
+    path: 'matches/:matchId',
+    loadComponent: () =>
+      import('./rewards/match-detail.component').then(module => module.MatchDetailComponent),
+  },
   { path: '', pathMatch: 'full', redirectTo: environment.devGameMode ? 'game/salatest' : 'auth' },
   { path: '**', redirectTo: environment.devGameMode ? 'game/salatest' : 'auth' },
 ];

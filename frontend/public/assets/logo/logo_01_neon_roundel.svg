@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title desc">
+  <title id="title">Tank Arena core roundel logo</title>
+  <desc id="desc">Circular neon arena mark with a top-down tank, crosshair ticks, and small power-up sparks.</desc>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="44%" r="62%">
+      <stop offset="0%" stop-color="#17212b"/>
+      <stop offset="58%" stop-color="#071016"/>
+      <stop offset="100%" stop-color="#010406"/>
+    </radialGradient>
+    <linearGradient id="redArmor" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffd2c8"/>
+      <stop offset="24%" stop-color="#ff5948"/>
+      <stop offset="66%" stop-color="#b6281f"/>
+      <stop offset="100%" stop-color="#4c0906"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#555b64"/>
+      <stop offset="52%" stop-color="#22272f"/>
+      <stop offset="100%" stop-color="#090b0f"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#3b4148"/>
+      <stop offset="54%" stop-color="#15191f"/>
+      <stop offset="100%" stop-color="#050608"/>
+    </linearGradient>
+    <filter id="redGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.86  0 0 0 0 0.16  0 0 0 0 0.08  0 0 0 0.82 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="10" flood-color="#000" flood-opacity=".55"/>
+    </filter>
+    <style>
+      .outline{stroke:#130304;stroke-width:8;stroke-linejoin:round}
+      .fine{stroke:#130304;stroke-width:4;stroke-linejoin:round}
+      .tick{stroke-linecap:square;stroke-width:8}
+    </style>
+  </defs>
+
+  <circle cx="256" cy="256" r="218" fill="#020607"/>
+  <circle cx="256" cy="256" r="198" fill="none" stroke="#ff4637" stroke-width="22" opacity=".82" filter="url(#redGlow)"/>
+  <circle cx="256" cy="256" r="168" fill="url(#bg)" stroke="#ffd8d1" stroke-width="3"/>
+  <circle cx="256" cy="256" r="125" fill="none" stroke="#1ecfff" stroke-width="4" opacity=".5"/>
+
+  <g fill="none" filter="url(#redGlow)">
+    <path class="tick" stroke="#ff4637" d="M256 35v45M256 432v45M35 256h45M432 256h45"/>
+    <path class="tick" stroke="#25dfff" opacity=".78" d="M100 100l32 32M412 100l-32 32M100 412l32-32M412 412l-32-32"/>
+  </g>
+
+  <g opacity=".85">
+    <circle cx="153" cy="176" r="18" fill="#00ff96" stroke="#c8ffe9" stroke-width="4"/>
+    <path d="M146 176h14m-7-7v14" stroke="#00381f" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="359" cy="174" r="18" fill="#ff9b20" stroke="#fff1c8" stroke-width="4"/>
+    <path d="M351 174h16" stroke="#471600" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="256" cy="386" r="18" fill="#17d9ff" stroke="#dcfbff" stroke-width="4"/>
+    <path d="M247 393l18-18" stroke="#003847" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <ellipse cx="256" cy="365" rx="100" ry="29" fill="#000" opacity=".38"/>
+    <rect x="151" y="179" width="53" height="197" rx="17" fill="url(#track)" class="outline"/>
+    <rect x="308" y="179" width="53" height="197" rx="17" fill="url(#track)" class="outline"/>
+    <g fill="#080a0d" opacity=".85">
+      <rect x="161" y="193" width="33" height="17" rx="5"/><rect x="161" y="220" width="33" height="17" rx="5"/>
+      <rect x="161" y="247" width="33" height="17" rx="5"/><rect x="161" y="274" width="33" height="17" rx="5"/>
+      <rect x="161" y="301" width="33" height="17" rx="5"/><rect x="161" y="328" width="33" height="17" rx="5"/>
+      <rect x="318" y="193" width="33" height="17" rx="5"/><rect x="318" y="220" width="33" height="17" rx="5"/>
+      <rect x="318" y="247" width="33" height="17" rx="5"/><rect x="318" y="274" width="33" height="17" rx="5"/>
+      <rect x="318" y="301" width="33" height="17" rx="5"/><rect x="318" y="328" width="33" height="17" rx="5"/>
+    </g>
+    <path d="M213 166h86l35 38v153l-35 38h-86l-35-38V204z" fill="url(#redArmor)" class="outline"/>
+    <path d="M225 191h62l23 25v126l-23 25h-62l-23-25V216z" fill="#151a21" class="fine"/>
+    <rect x="236" y="76" width="40" height="146" rx="14" fill="url(#redArmor)" class="outline"/>
+    <rect x="229" y="192" width="54" height="34" rx="12" fill="#170304"/>
+    <circle cx="256" cy="236" r="55" fill="url(#redArmor)" class="outline"/>
+    <circle cx="256" cy="236" r="25" fill="url(#steel)" class="fine"/>
+    <path d="M205 208h102M218 360h76" stroke="#ffe4dd" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+  </g>
+</svg>

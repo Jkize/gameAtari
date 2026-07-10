@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title desc">
+  <title id="title">Tank Arena beveled T roundel logo</title>
+  <desc id="desc">Refined Tank Arena logo using the combined v5 tank over a beveled red T and square arena frame.</desc>
+  <defs>
+    <linearGradient id="bg" x1="62" x2="450" y1="58" y2="454" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#172436"/>
+      <stop offset="100%" stop-color="#04070d"/>
+    </linearGradient>
+    <linearGradient id="tRed" x1="132" x2="380" y1="128" y2="408" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff6b58"/>
+      <stop offset="46%" stop-color="#e54637"/>
+      <stop offset="100%" stop-color="#8b1711"/>
+    </linearGradient>
+    <linearGradient id="tankRed" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffb199"/>
+      <stop offset="45%" stop-color="#e54637"/>
+      <stop offset="100%" stop-color="#5c130d"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#555b64"/>
+      <stop offset="100%" stop-color="#10141a"/>
+    </linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="12" stdDeviation="9" flood-color="#000" flood-opacity=".5"/>
+    </filter>
+  </defs>
+
+  <rect x="52" y="52" width="408" height="408" rx="88" fill="#020408"/>
+  <rect x="82" y="82" width="348" height="348" rx="30" fill="url(#bg)" stroke="#314456" stroke-width="10"/>
+  <path d="M122 122h72M318 122h72M122 390h72M318 390h72M122 122v72M390 122v72M122 318v72M390 318v72" fill="none" stroke="#21ddff" stroke-width="12" stroke-linecap="round"/>
+
+  <path d="M139 155h234l27 31-27 39h-78v171l-39 28-39-28V225h-78l-27-39z" fill="#3a0906" opacity=".72"/>
+  <path d="M136 146h240l22 28-22 42h-86v175l-34 24-34-24V216h-86l-22-42z" fill="url(#tRed)"/>
+  <path d="M163 169h186l-12 22h-74v172l-7 5-7-5V191h-74z" fill="#ffb0a5" opacity=".32"/>
+  <path d="M256 116v-50" stroke="#ffcc39" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="256" cy="49" r="15" fill="#ffcc39"/>
+
+  <g transform="translate(256 292) scale(.34) rotate(-10) translate(-256 -256)" filter="url(#shadow)">
+    <rect x="74" y="62" width="78" height="388" rx="22" fill="#17181b" stroke="#3a0906" stroke-width="8"/>
+    <rect x="360" y="62" width="78" height="388" rx="22" fill="#17181b" stroke="#3a0906" stroke-width="8"/>
+    <path d="M178 52 L334 52 L382 110 L382 406 L330 458 L182 458 L130 406 L130 110 Z" fill="url(#tankRed)" stroke="#3a0906" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M194 72 L318 72 L354 114 L354 394 L320 430 L192 430 L158 394 L158 114 Z" fill="#17181c" stroke="#3a0906" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="184" y="152" width="144" height="174" rx="12" fill="url(#tankRed)" stroke="#3a0906" stroke-width="7"/>
+    <rect x="204" y="176" width="104" height="126" rx="10" fill="url(#steel)" stroke="#3a0906" stroke-width="4"/>
+    <rect x="240" y="-22" width="32" height="178" rx="16" fill="url(#tankRed)" stroke="#3a0906" stroke-width="8"/>
+    <path d="M154 126 L210 84 L302 84 L358 126 L380 220 L336 282 L256 304 L176 282 L132 220 Z" fill="url(#tankRed)" stroke="#3a0906" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M194 146 L318 146 L342 174 L318 218 L194 218 L170 174 Z" fill="#e54637" stroke="#3a0906" stroke-width="4"/>
+    <path d="M210 208 L302 208 L318 250 L256 280 L194 250 Z" fill="url(#steel)" stroke="#3a0906" stroke-width="4"/>
+    <circle cx="256" cy="186" r="28" fill="#7d828c" stroke="#3a0906" stroke-width="5"/>
+  </g>
+</svg>

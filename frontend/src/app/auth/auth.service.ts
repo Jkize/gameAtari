@@ -3,7 +3,7 @@ import { Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import bs58 from 'bs58';
 import { environment } from '../../environments/environment';
-import { AuthUser, LoginResponse, PhantomProvider } from './auth.models';
+import { AccountStatus, AuthProvider, AuthUser, LoginResponse, PhantomProvider } from './auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -23,21 +23,39 @@ export class AuthService {
   }
 
   async loginPhantom(): Promise<LoginResponse> {
-    const provider = this.phantomProvider();
-    const connection = await provider.connect();
-    const publicKey = connection.publicKey.toString();
-    const challenge = await firstValueFrom(this.http.post<{ message: string }>(
-      `${environment.backendUrl}/auth/phantom/challenge`,
-      { publicKey },
-      { withCredentials: true },
-    ));
-    const signed = await provider.signMessage(new TextEncoder().encode(challenge.message), 'utf8');
-    const signature = bs58.encode(signed.signature);
+    const { publicKey, message, signature } = await this.signPhantomChallenge();
     return this.acceptLogin(await firstValueFrom(this.http.post<LoginResponse>(
       `${environment.backendUrl}/auth/phantom/verify`,
-      { publicKey, message: challenge.message, signature },
+      { publicKey, message, signature },
       { withCredentials: true },
     )));
+  }
+
+  async linkPhantom(): Promise<AccountStatus> {
+    const token = this.accessToken();
+    if (!token) throw new Error('Missing access token');
+    const { publicKey, message, signature } = await this.signPhantomChallenge();
+    return firstValueFrom(this.http.post<AccountStatus>(
+      `${environment.backendUrl}/wallets/phantom/link`,
+      { publicKey, message, signature },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      },
+    ));
+  }
+
+  async linkGoogle(idToken: string): Promise<AccountStatus> {
+    const token = this.accessToken();
+    if (!token) throw new Error('Missing access token');
+    return firstValueFrom(this.http.post<AccountStatus>(
+      `${environment.backendUrl}/account/google/link`,
+      { idToken },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      },
+    ));
   }
 
   async completeProfile(username: string): Promise<void> {
@@ -106,6 +124,17 @@ export class AuthService {
     return response;
   }
 
+  currentProvider(): AuthProvider | null {
+    const token = this.accessToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(this.decodeJwtPart(token.split('.')[1])) as { provider?: AuthProvider };
+      return payload.provider === 'GOOGLE' || payload.provider === 'PHANTOM' ? payload.provider : null;
+    } catch {
+      return null;
+    }
+  }
+
   private isAccessTokenUsable(token: string | null): boolean {
     if (!token) return false;
     try {
@@ -125,6 +154,23 @@ export class AuthService {
         .map(character => `%${character.charCodeAt(0).toString(16).padStart(2, '0')}`)
         .join(''),
     );
+  }
+
+  private async signPhantomChallenge(): Promise<{ publicKey: string; message: string; signature: string }> {
+    const provider = this.phantomProvider();
+    const connection = await provider.connect();
+    const publicKey = connection.publicKey.toString();
+    const challenge = await firstValueFrom(this.http.post<{ message: string }>(
+      `${environment.backendUrl}/auth/phantom/challenge`,
+      { publicKey },
+      { withCredentials: true },
+    ));
+    const signed = await provider.signMessage(new TextEncoder().encode(challenge.message), 'utf8');
+    return {
+      publicKey,
+      message: challenge.message,
+      signature: bs58.encode(signed.signature),
+    };
   }
 
   private phantomProvider(): PhantomProvider {

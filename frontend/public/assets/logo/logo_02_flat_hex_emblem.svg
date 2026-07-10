@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title desc">
+  <title id="title">Tank Arena hex emblem logo</title>
+  <desc id="desc">Compact hexagonal app icon with a tank crossing an arena grid and power-up nodes.</desc>
+  <defs>
+    <linearGradient id="plate" x1="82" x2="430" y1="50" y2="462" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#25323a"/>
+      <stop offset="48%" stop-color="#0c1419"/>
+      <stop offset="100%" stop-color="#030506"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="90" x2="420" y1="70" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#39e9ff"/>
+      <stop offset="42%" stop-color="#ff4b3b"/>
+      <stop offset="100%" stop-color="#ffb12a"/>
+    </linearGradient>
+    <linearGradient id="tank" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fff0d0"/>
+      <stop offset="24%" stop-color="#ffba2f"/>
+      <stop offset="62%" stop-color="#e3472e"/>
+      <stop offset="100%" stop-color="#5a0a05"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#5d6671"/>
+      <stop offset="55%" stop-color="#20262d"/>
+      <stop offset="100%" stop-color="#06080b"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#23dfff" flood-opacity=".34"/>
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".55"/>
+    </filter>
+    <style>
+      .dark{stroke:#07090b;stroke-width:8;stroke-linejoin:round}
+      .fine{stroke:#07090b;stroke-width:4;stroke-linejoin:round}
+    </style>
+  </defs>
+
+  <path d="M256 34l178 103v238L256 478 78 375V137z" fill="#020405"/>
+  <path d="M256 50l163 94v224L256 462 93 368V144z" fill="url(#edge)"/>
+  <path d="M256 76l140 81v198L256 436 116 355V157z" fill="url(#plate)"/>
+
+  <g fill="none" opacity=".5">
+    <path d="M133 187h246M133 256h246M133 325h246M178 126v260M256 83v348M334 126v260" stroke="#6a7780" stroke-width="3"/>
+    <path d="M116 157l280 198M396 157L116 355" stroke="#18242a" stroke-width="5"/>
+  </g>
+
+  <g filter="url(#glow)">
+    <circle cx="154" cy="170" r="18" fill="#00df92" stroke="#e0fff2" stroke-width="4"/>
+    <path d="M145 170h18m-9-9v18" stroke="#003822" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="358" cy="170" r="18" fill="#18cfff" stroke="#e4fbff" stroke-width="4"/>
+    <path d="M349 179l18-18" stroke="#003641" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="358" cy="342" r="18" fill="#ff9c23" stroke="#fff0c9" stroke-width="4"/>
+    <path d="M350 342h16" stroke="#4b1900" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g transform="rotate(-28 256 262)" filter="url(#glow)">
+    <ellipse cx="257" cy="346" rx="107" ry="30" fill="#000" opacity=".34"/>
+    <rect x="150" y="195" width="49" height="176" rx="15" fill="url(#track)" class="dark"/>
+    <rect x="313" y="195" width="49" height="176" rx="15" fill="url(#track)" class="dark"/>
+    <path d="M211 178h90l34 36v136l-34 36h-90l-34-36V214z" fill="url(#tank)" class="dark"/>
+    <path d="M224 202h64l22 23v113l-22 23h-64l-22-23V225z" fill="#171d24" class="fine"/>
+    <rect x="238" y="88" width="36" height="136" rx="13" fill="url(#tank)" class="dark"/>
+    <circle cx="256" cy="241" r="50" fill="url(#tank)" class="dark"/>
+    <circle cx="256" cy="241" r="19" fill="#20262d" class="fine"/>
+    <path d="M220 197h73M210 350h92" stroke="#fff1d7" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+  </g>
+</svg>

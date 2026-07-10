@@ -50,6 +50,22 @@ export class PhantomAuthService {
   }
 
   async verify(publicKey: string, message: string, signature: string) {
+    await this.verifyChallenge(publicKey, message, signature);
+    const user = await this.users.upsertPhantom(publicKey);
+    if (!user.username) {
+      return {
+        requiresUsername: true,
+        onboardingToken: await this.tokens.issueOnboarding(user.id, AuthProvider.PHANTOM),
+      };
+    }
+    return {
+      requiresUsername: false,
+      ...(await this.tokens.issueSession(user, AuthProvider.PHANTOM)),
+      user,
+    };
+  }
+
+  async verifyChallenge(publicKey: string, message: string, signature: string): Promise<void> {
     const nonce = this.extractLine(message, 'Nonce: ');
     const uri = this.extractLine(message, 'URI: ');
     const allowedDomains = this.config
@@ -88,19 +104,6 @@ export class PhantomAuthService {
     });
     if (consumed.count !== 1) throw new UnauthorizedException('Challenge was already used');
     await this.redis.client.del(`auth:phantom:${nonceHash}`);
-
-    const user = await this.users.upsertPhantom(publicKey);
-    if (!user.username) {
-      return {
-        requiresUsername: true,
-        onboardingToken: await this.tokens.issueOnboarding(user.id, AuthProvider.PHANTOM),
-      };
-    }
-    return {
-      requiresUsername: false,
-      ...(await this.tokens.issueSession(user, AuthProvider.PHANTOM)),
-      user,
-    };
   }
 
   private extractLine(message: string, prefix: string): string {

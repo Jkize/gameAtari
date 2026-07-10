@@ -154,6 +154,39 @@ Important files:
 - `DEV_MANUAL_START` exists, but default flow is authoritative countdown, not ENTER manual start.
 - Frontend HUD listens to room countdown events and can display `STARTING IN Ns`.
 
+## SPL Token Rewards
+
+Tank Arena has an SPL token reward system for completed matches.
+
+- Rewards are production-oriented. Guest/local testing players can play but are not eligible for production rewards.
+- On match completion, backend persists `Match`, `MatchPlayer`, and top-3 `RewardLog` rows idempotently.
+- Reward idempotency key format: `MATCH_REWARD:{matchId}:{placement}`. Use placement, not only user id, because top placement is the reward slot.
+- Fixed prizes: 1st = 700 tokens, 2nd = 300 tokens, 3rd = 100 tokens. Prizes are never redistributed.
+- Eligibility is checked at match end before payment: authenticated user, verified linked Phantom wallet, configured mint balance >= 10,000 tokens, daily limit not exceeded.
+- `RewardLog` is both audit/elegibility record and payment lifecycle record. Retry failed recoverable payments on the same row; do not create duplicate rewards.
+- `DailyRewardLimit` reserves/sends/releases daily reward amounts. PostgreSQL is the consistency source of truth; Redis is not used for reward idempotency.
+- Solana/Helius access is centralized in `backend/src/solana`; network selection is centralized there (`production` => mainnet-beta, otherwise devnet).
+- `RewardsModule` owns reward controllers/services and must be in the active Nest module graph. A previous 404 was caused by `RewardsHistoryController` existing but `RewardsModule` not being imported by an active module.
+- `GameModule` should import `RewardsModule` instead of manually re-declaring reward providers, to avoid duplicate schedulers/processors.
+
+Reward HTTP API:
+
+- `GET /wallets/me`: authenticated wallet/account status and informational holder check.
+- `POST /wallets/phantom/link`: authenticated Phantom linking; verifies signed challenge without changing current login session.
+- `POST /account/google/link`: authenticated Google linking; no automatic merge if account is linked elsewhere.
+- `GET /rewards/me/history`: authenticated personal history, max 50 per page, cursor pagination.
+- `GET /rewards/matches/recent`: public recent matches, max 50 per page, cursor pagination.
+- `GET /rewards/matches/:matchId`: public full match detail.
+- Backend generates Solscan URLs. Devnet uses `?cluster=devnet`; frontend must not build these URLs from user-controlled values.
+
+Frontend reward UI:
+
+- Lobby notice is non-blocking; Quick Play remains available.
+- Use `AuthService.linkPhantom()` for linking. Do not use `loginPhantom()` from the lobby/account popup because it replaces the session.
+- Show `Vincular Phantom` only for Google sessions without verified Phantom.
+- `frontend/src/app/rewards/` contains histories, status badge, Solscan link, and eligibility notice.
+- `frontend/src/app/account/account-settings.component.ts` contains the account linking popup.
+
 ## Backend Notes
 
 Important files:

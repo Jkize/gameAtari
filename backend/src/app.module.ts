@@ -9,6 +9,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { SettingsModule } from './settings/settings.module';
 import { StatsModule } from './stats/stats.module';
+import { ThrottlerRedisModule } from './throttler/throttler.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -20,11 +23,18 @@ import { StatsModule } from './stats/stats.module';
     DevelopmentSettingsModule,
     PrismaModule,
     RedisModule,
+    ThrottlerRedisModule,
     AuthModule,
     HealthModule,
     GameModule,
     StatsModule,
     SettingsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

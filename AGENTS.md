@@ -52,6 +52,18 @@ Frequent `gameState` payloads are intentionally small:
 
 Full maps are sent only in `gameJoined` / `watchJoined`. Obstacle damage/destruction is synced through `obstacle:damaged` and `obstacle:destroyed`.
 
+## Token Rewards Context
+
+Tank Arena has an SPL token rewards system layered on top of completed matches.
+
+- Rewards are for authenticated registered users only. Local/dev guest-style players may exist for testing, but they are not eligible for production rewards.
+- On match completion, backend persists `Match`, `MatchPlayer`, and top-3 `RewardLog` rows idempotently. Reward idempotency keys use `MATCH_REWARD:{matchId}:{placement}`.
+- Eligibility is checked at match end, before payment: verified Phantom wallet, configured mint balance of at least 10,000 tokens, and daily reward limit availability.
+- Prizes are fixed: 1st = 700, 2nd = 300, 3rd = 100. Prizes are never redistributed.
+- Solana/Helius config is centralized in `backend/src/solana`; `NODE_ENV=production` uses mainnet-beta, all other environments use devnet.
+- Reward history endpoints live under `/rewards`: personal history, recent public matches, and match detail. They return backend-generated Solscan URLs and paginate at 50 items.
+- Frontend reward UI lives in `frontend/src/app/rewards`; account/wallet linking UI lives in `frontend/src/app/account`.
+
 ## Commands
 
 Backend, from `backend/`:

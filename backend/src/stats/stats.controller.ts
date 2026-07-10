@@ -1,21 +1,14 @@
-import { Controller, Get, Req } from '@nestjs/common';
-import { Request } from 'express';
-import { PublicRateLimiterService } from './public-rate-limiter.service';
+import { Controller, Get } from '@nestjs/common';
+import { seconds, Throttle } from '@nestjs/throttler';
 import { StatsService } from './stats.service';
 
 @Controller('stats')
 export class StatsController {
-  constructor(
-    private readonly stats: StatsService,
-    private readonly rateLimiter: PublicRateLimiterService,
-  ) {}
+  constructor(private readonly stats: StatsService) {}
 
   @Get('public')
-  getPublic(@Req() req: Request) {
-    const ip = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim()
-      ?? req.socket.remoteAddress
-      ?? 'unknown';
-    this.rateLimiter.check(ip);
+  @Throttle({ default: { limit: 30, ttl: seconds(60) } })
+  getPublic() {
     return this.stats.getPublicStats();
   }
 }

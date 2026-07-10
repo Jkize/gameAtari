@@ -8,6 +8,8 @@ import { SOCKET_EVENTS } from '../network/socket-events';
 import { LanguageSwitcherComponent } from '../shared/language-switcher.component';
 import { PublicStatsComponent } from '../stats/public-stats.component';
 import { environment } from '../../environments/environment';
+import { RewardEligibilityNoticeComponent } from '../rewards/reward-eligibility-notice.component';
+import { AccountSettingsComponent } from '../account/account-settings.component';
 
 interface RoomState {
   id: string;
@@ -22,7 +24,13 @@ interface RoomState {
 @Component({
   selector: 'app-lobby',
   standalone: true,
-  imports: [PublicStatsComponent, TranslocoPipe, LanguageSwitcherComponent],
+  imports: [
+    PublicStatsComponent,
+    TranslocoPipe,
+    LanguageSwitcherComponent,
+    RewardEligibilityNoticeComponent,
+    AccountSettingsComponent,
+  ],
   template: `
     <main class="lobby">
       <header>
@@ -33,14 +41,18 @@ interface RoomState {
         <div class="pilot">
           {{ auth.user()?.username ?? ('lobby.guestUsername' | transloco) }}
           <app-lang-switcher></app-lang-switcher>
+          <button type="button" (click)="openAccount()">Cuenta</button>
           <button (click)="logout()">{{ 'lobby.leave' | transloco }}</button>
         </div>
       </header>
 
       <app-public-stats [compact]="true"></app-public-stats>
+      <app-reward-eligibility-notice [refreshKey]="accountRefreshKey()"></app-reward-eligibility-notice>
 
       <section class="actions">
         <button class="primary" (click)="quickPlay()" [disabled]="!!currentRoom()">{{ 'lobby.quickPlay' | transloco }}</button>
+        <button type="button" (click)="goToMyMatches()">Mis partidas</button>
+        <button type="button" (click)="goToRecentMatches()">Últimas partidas</button>
       </section>
 
       @if (currentRoom()) {
@@ -63,6 +75,12 @@ interface RoomState {
 
       @if (notice()) { <p class="notice">{{ notice() }}</p> }
       @if (error()) { <p class="error">{{ error() }}</p> }
+
+      <app-account-settings
+        [open]="accountOpen()"
+        (closed)="accountOpen.set(false)"
+        (accountChanged)="onAccountChanged()"
+      ></app-account-settings>
     </main>
   `,
   styles: [`
@@ -90,6 +108,8 @@ export class LobbyComponent implements OnInit, OnDestroy {
   readonly currentRoom = signal<RoomState | null>(null);
   readonly notice = signal('');
   readonly error = signal('');
+  readonly accountOpen = signal(false);
+  readonly accountRefreshKey = signal(0);
   private socket!: Socket;
 
   private readonly transloco = inject(TranslocoService);
@@ -150,6 +170,10 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   quickPlay(): void { this.socket.emit(SOCKET_EVENTS.LOBBY.QUICK_PLAY); }
   leaveRoom(): void { this.socket.emit(SOCKET_EVENTS.LOBBY.LEAVE_ROOM); }
+  goToMyMatches(): void { void this.router.navigateByUrl('/rewards/me'); }
+  goToRecentMatches(): void { void this.router.navigateByUrl('/matches/recent'); }
+  openAccount(): void { this.accountOpen.set(true); }
+  onAccountChanged(): void { this.accountRefreshKey.update(value => value + 1); }
 
   private restoreStoredNotice(): void {
     const key = 'tank-arena:lobby-notice';
