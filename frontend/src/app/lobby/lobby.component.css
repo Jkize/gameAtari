@@ -8,7 +8,13 @@ h1 { margin: 0 0 14px; font-size: 1.4rem; font-weight: 500; color: var(--color-t
   gap: 16px;
 }
 
-.lobby-main { display: flex; flex-direction: column; justify-content: center; flex: 1.6; min-width: 0; }
+.lobby-main { 
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 30px;
+  min-width: 0;
+}
+
 .lobby-side { display: grid; gap: 16px; flex: 1; min-width: 0; }
 
 .notice {

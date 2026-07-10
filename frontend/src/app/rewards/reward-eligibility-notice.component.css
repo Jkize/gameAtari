@@ -6,7 +6,7 @@
   margin: 22px 0 28px;
   border-radius: var(--radius-card);
   border: 0.5px solid var(--color-border);
-  background: var(--color-bg-surface);
+  background: var(--color-bg-inset);
 }
 .eyebrow { margin: 0; color: var(--color-text-muted); font-size: .72rem; letter-spacing: .5px; }
 h2 { margin: 0; font-size: 1.1rem; font-weight: 500; }

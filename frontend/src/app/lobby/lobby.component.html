@@ -1,25 +1,22 @@
 <main class="lobby">
-  <div class="page-heading">
-    <p class="eyebrow">{{ 'lobby.eyebrow' | transloco }}</p>
-    <h1>{{ 'lobby.heading' | transloco }}</h1>
-  </div>
-
   <div class="lobby-grid">
     <div class="lobby-main">
-      <app-quick-play-card
-        [currentRoom]="currentRoom()"
-        [searching]="searching()"
-        [errorMessage]="error()"
-        (play)="quickPlay()"
-        (cancel)="leaveRoom()"
-        (retry)="quickPlay()"
-      >
-        <app-public-stats [compact]="true"></app-public-stats>
-      </app-quick-play-card>
-      @if (notice()) { <p class="notice">{{ notice() }}</p> }
+      <div>
+        <div class="page-heading">
+          <p class="eyebrow">{{ 'lobby.eyebrow' | transloco }}</p>
+          <h1>{{ 'lobby.heading' | transloco }}</h1>
+        </div>
+        <app-quick-play-card [currentRoom]="currentRoom()" [searching]="searching()" [errorMessage]="error()"
+          (play)="quickPlay()" (cancel)="leaveRoom()" (retry)="quickPlay()">
+          <app-public-stats [compact]="true"></app-public-stats>
+        </app-quick-play-card>
+        @if (notice()) { <p class="notice">{{ notice() }}</p> }
+      </div>
+
+      <div>
+        <app-reward-eligibility-notice [refreshKey]="accountRefresh.key()"></app-reward-eligibility-notice>
+      </div>
     </div>
-    <aside class="lobby-side">
-      <app-reward-eligibility-notice [refreshKey]="accountRefresh.key()"></app-reward-eligibility-notice>
-    </aside>
+
   </div>
 </main>
