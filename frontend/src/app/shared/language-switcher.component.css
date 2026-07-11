@@ -6,18 +6,22 @@
   border-radius: 2px;
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23d4ff5f'/%3E%3C/svg%3E")
-    no-repeat right 10px center / 10px 6px,
+      no-repeat right 10px center / 10px 6px,
     var(--color-bg-surface);
   color: var(--color-text-primary);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
   cursor: pointer;
-  opacity: .85;
-  transition: opacity .15s, border-color .15s;
+  opacity: 0.85;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s;
 }
-.lang-select:hover { opacity: 1; }
+.lang-select:hover {
+  opacity: 1;
+}
 .lang-select:focus {
   opacity: 1;
   outline: none;

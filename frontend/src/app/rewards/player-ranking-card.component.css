@@ -8,21 +8,71 @@
   border-radius: var(--radius-card);
   background: var(--color-bg-surface);
 }
-.card.current-user { background: var(--color-bg-surface-hover); box-shadow: inset 3px 0 0 var(--color-accent); }
-.card.winner { background: var(--color-gold-bg); }
-.card.winner.current-user { box-shadow: inset 3px 0 0 var(--color-accent); }
+.card.current-user {
+  background: var(--color-bg-surface-hover);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+.card.winner {
+  background: var(--color-gold-bg);
+}
+.card.winner.current-user {
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
 
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.placement { color: var(--color-text-secondary); font-weight: 500; font-size: .85rem; }
-.card.winner .placement { color: var(--color-gold-text); }
-.card.winner .placement i.ti-trophy { color: var(--color-gold-strong); margin-right: 2px; }
-.result { color: var(--color-text-muted); font-size: .85rem; }
-.pilot { margin: 0; font-size: 1.05rem; font-weight: 500; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.placement {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+.card.winner .placement {
+  color: var(--color-gold-text);
+}
+.card.winner .placement i.ti-trophy {
+  color: var(--color-gold-strong);
+  margin-right: 2px;
+}
+.result {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+.pilot {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
 
-.stats { display: flex; gap: 16px; }
-.stat { display: flex; flex-direction: column; gap: 2px; }
-.stat .label { color: var(--color-text-tertiary); font-size: .72rem; font-weight: 500; }
-.stat .value { font-weight: 500; font-family: var(--font-mono); }
+.stats {
+  display: flex;
+  gap: 16px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat .label {
+  color: var(--color-text-tertiary);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+.stat .value {
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
 
-.card-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 8px; }
-.card-footer .reward { font-family: var(--font-mono); font-weight: 500; }
+.card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 8px;
+}
+.card-footer .reward {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}

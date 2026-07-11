@@ -1,6 +1,6 @@
-<main class="page">
-  <nav><a routerLink="/lobby">{{ 'rewards.common.backToLobby' | transloco }}</a></nav>
-  <h1>{{ 'rewards.recentMatches.title' | transloco }}</h1>
+<main class="ui-page">
+  <nav><a class="ui-back-link" routerLink="/lobby">{{ 'rewards.common.backToLobby' | transloco }}</a></nav>
+  <h1 class="ui-page-title">{{ 'rewards.recentMatches.title' | transloco }}</h1>
 
   @if (loading() && !items().length) {
     <app-loading-skeleton [rows]="2" [ariaLabel]="'rewards.recentMatches.loadingAriaLabel' | transloco" />
@@ -39,7 +39,7 @@
       }
     </section>
     @if (nextCursor()) {
-      <button class="more" type="button" (click)="load()" [disabled]="loading()">{{ 'rewards.common.loadMore' | transloco }}</button>
+      <button class="more ui-button ui-button--primary" type="button" (click)="load()" [disabled]="loading()">{{ 'rewards.common.loadMore' | transloco }}</button>
     }
   }
 </main>

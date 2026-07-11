@@ -1,14 +1,45 @@
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 780px; }
-th, td { padding: 12px; text-align: left; }
-th { color: var(--color-text-tertiary); font-size: 12px; font-weight: 500; }
-td.num { font-family: var(--font-mono); }
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 780px;
+}
+th,
+td {
+  padding: 12px;
+  text-align: left;
+}
+th {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+}
+td.num {
+  font-family: var(--font-mono);
+}
 
-tr.current-user { background: var(--color-bg-surface-hover); }
-tr.current-user td:first-child { box-shadow: inset 3px 0 0 var(--color-accent); }
+tr.current-user {
+  background: var(--color-bg-surface-hover);
+}
+tr.current-user td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
 
-tr.winner { background: var(--color-gold-bg); }
-tr.winner td:first-child { border-radius: 8px 0 0 8px; }
-tr.winner td:last-child { border-radius: 0 8px 8px 0; }
-tr.winner td { color: var(--color-gold-text); }
-tr.winner i.ti-trophy { color: var(--color-gold-strong); margin-right: 4px; }
+tr.winner {
+  background: var(--color-gold-bg);
+}
+tr.winner td:first-child {
+  border-radius: 8px 0 0 8px;
+}
+tr.winner td:last-child {
+  border-radius: 0 8px 8px 0;
+}
+tr.winner td {
+  color: var(--color-gold-text);
+}
+tr.winner i.ti-trophy {
+  color: var(--color-gold-strong);
+  margin-right: 4px;
+}

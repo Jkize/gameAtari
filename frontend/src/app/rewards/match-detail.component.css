@@ -1,17 +1,14 @@
-:host { display: block; min-height: 100vh; color: var(--color-text-primary); background: var(--color-bg-surface); }
-.page { width: min(1100px, calc(100% - 40px)); margin: auto; padding: 42px 0; }
-
-nav { margin-bottom: 14px; }
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--color-accent);
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 500;
+:host {
+  display: block;
+  min-height: 100%;
 }
-.back-link i { font-size: 12px; }
+
+nav {
+  margin-bottom: 14px;
+}
+.ui-back-link i {
+  font-size: 12px;
+}
 
 .detail-card {
   background: var(--color-bg-surface);
@@ -20,9 +17,22 @@ nav { margin-bottom: 14px; }
   padding: 20px;
 }
 
-header { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-bottom: 14px; }
-h1 { margin: 0 0 2px; font-size: 1.4rem; font-weight: 500; }
-time { color: var(--color-text-muted); font-size: .8rem; }
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+h1 {
+  margin: 0 0 2px;
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+time {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
 
 .participants-pill {
   display: inline-flex;
@@ -35,12 +45,23 @@ time { color: var(--color-text-muted); font-size: .8rem; }
   border-radius: var(--radius-pill);
   padding: 3px 12px;
 }
-.participants-pill i { font-size: 14px; }
+.participants-pill i {
+  font-size: 14px;
+}
 
-.ranking-table { display: block; }
-.ranking-cards { display: none; }
+.ranking-table {
+  display: block;
+}
+.ranking-cards {
+  display: none;
+}
 
 @media (max-width: 720px) {
-  .ranking-table { display: none; }
-  .ranking-cards { display: grid; gap: 12px; }
+  .ranking-table {
+    display: none;
+  }
+  .ranking-cards {
+    display: grid;
+    gap: 12px;
+  }
 }

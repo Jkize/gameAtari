@@ -21,15 +21,4 @@
 
 .empty-state .action {
   margin-top: 16px;
-  padding: 10px 28px;
-  border: none;
-  border-radius: var(--radius-control);
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.empty-state .action:hover {
-  background: var(--color-accent-hover);
 }

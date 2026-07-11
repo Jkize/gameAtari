@@ -2,12 +2,17 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
 }
 
 .app-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  color: inherit;
+  background: inherit;
 }
 
 .app-scroll--locked {

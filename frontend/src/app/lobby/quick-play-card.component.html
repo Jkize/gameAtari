@@ -1,7 +1,7 @@
 <section class="quick-play-card">
   @if (errorMessage) {
     <p class="error">{{ errorMessage }}</p>
-    <button class="primary" (click)="retry.emit()">{{ 'lobby.errorRetry' | transloco }}</button>
+    <button class="primary ui-button ui-button--primary" (click)="retry.emit()">{{ 'lobby.errorRetry' | transloco }}</button>
   } @else if (currentRoom) {
     <p>{{ 'lobby.searching' | transloco }}</p>
     <h2>{{ currentRoom.name }}</h2>
@@ -16,7 +16,7 @@
     <p>{{ 'lobby.searching' | transloco }}</p>
     <button (click)="cancel.emit()">{{ 'lobby.cancel' | transloco }}</button>
   } @else {
-    <button class="primary" (click)="play.emit()">{{ 'lobby.quickPlay' | transloco }}</button>
+    <button class="primary ui-button ui-button--primary" (click)="play.emit()">{{ 'lobby.quickPlay' | transloco }}</button>
     <p class="empty">{{ 'lobby.emptyQueue' | transloco }}</p>
   }
   <ng-content></ng-content>

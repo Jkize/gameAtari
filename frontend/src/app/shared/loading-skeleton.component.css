@@ -1,7 +1,12 @@
 .skeleton {
   height: 108px;
   margin-bottom: 12px;
-  background: linear-gradient(90deg, var(--color-bg-surface), var(--color-bg-surface-hover), var(--color-bg-surface));
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-surface),
+    var(--color-bg-surface-hover),
+    var(--color-bg-surface)
+  );
   border: 1px solid var(--color-bg-surface-hover);
 }
 

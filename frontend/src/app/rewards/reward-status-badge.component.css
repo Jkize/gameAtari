@@ -4,12 +4,27 @@
   gap: 4px;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 500;
   white-space: nowrap;
 }
-.badge i { font-size: 13px; }
-.ok { background: var(--color-success-bg); color: var(--color-success-text); }
-.pending { background: var(--color-pending-bg); color: var(--color-pending); }
-.warn { background: var(--color-error-bg); color: var(--color-error); }
-.muted { background: var(--color-bg-inset); color: var(--color-text-tertiary); border: 1px solid var(--color-border-strong); }
+.badge i {
+  font-size: 13px;
+}
+.ok {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+.pending {
+  background: var(--color-pending-bg);
+  color: var(--color-pending);
+}
+.warn {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+.muted {
+  background: var(--color-bg-inset);
+  color: var(--color-text-tertiary);
+  border: 1px solid var(--color-border-strong);
+}

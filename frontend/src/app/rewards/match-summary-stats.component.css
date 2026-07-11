@@ -50,10 +50,14 @@
 .caption {
   margin: 0 0 22px;
   color: var(--color-text-tertiary);
-  font-size: .78rem;
+  font-size: 0.78rem;
 }
 
 @media (max-width: 520px) {
-  .stat { padding: 10px 8px; }
-  .stat strong { font-size: 18px; }
+  .stat {
+    padding: 10px 8px;
+  }
+  .stat strong {
+    font-size: 18px;
+  }
 }

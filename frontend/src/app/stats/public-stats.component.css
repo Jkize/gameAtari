@@ -29,7 +29,7 @@
 .stats span {
   margin-top: 5px;
   color: var(--color-text-muted);
-  font-size: .78rem;
+  font-size: 0.78rem;
 }
 
 .stats.compact {
@@ -52,18 +52,18 @@
 }
 
 .stats.compact div:nth-child(1) {
-  color: #007c68;
-  background: #e2f4ee;
+  color: var(--color-online);
+  background: var(--color-online-bg);
 }
 
 .stats.compact div:nth-child(2) {
-  color: #b0125b;
-  background: #f8e5ed;
+  color: var(--color-battle);
+  background: var(--color-battle-bg);
 }
 
 .stats.compact div:nth-child(3) {
-  color: #3927a0;
-  background: #eceafa;
+  color: var(--color-room);
+  background: var(--color-room-bg);
 }
 
 .stats.compact i {
@@ -79,13 +79,13 @@
 }
 
 .stats.compact strong {
-  font-size: .82rem;
+  font-size: 0.82rem;
   font-weight: 500;
   color: inherit;
 }
 
 .stats.compact span {
-  font-size: .78rem;
+  font-size: 0.78rem;
   color: inherit;
 }
 
@@ -93,7 +93,12 @@
   height: 52px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  background: linear-gradient(90deg, var(--color-bg-surface), var(--color-bg-surface-hover), var(--color-bg-surface));
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-surface),
+    var(--color-bg-surface-hover),
+    var(--color-bg-surface)
+  );
 }
 
 .stats.compact .skeleton {
@@ -103,8 +108,16 @@
 }
 
 @media (max-width: 520px) {
-  .stats div { padding: 10px 6px; }
-  .stats strong { font-size: 1.1rem; }
-  .stats span { font-size: .68rem; }
-  .stats .skeleton { height: 44px; }
+  .stats div {
+    padding: 10px 6px;
+  }
+  .stats strong {
+    font-size: 1.1rem;
+  }
+  .stats span {
+    font-size: 0.68rem;
+  }
+  .stats .skeleton {
+    height: 44px;
+  }
 }

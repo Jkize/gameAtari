@@ -64,6 +64,11 @@ h2 {
 }
 
 @media (max-width: 720px) {
-  .row { grid-template-columns: 1fr; }
-  .reward { justify-items: start; text-align: left; }
+  .row {
+    grid-template-columns: 1fr;
+  }
+  .reward {
+    justify-items: start;
+    text-align: left;
+  }
 }

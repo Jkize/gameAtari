@@ -6,6 +6,6 @@
     <p>{{ message }}</p>
   }
   @if (actionLabel) {
-    <button class="action" type="button" (click)="action.emit()">{{ actionLabel }}</button>
+    <button class="action ui-button ui-button--primary" type="button" (click)="action.emit()">{{ actionLabel }}</button>
   }
 </section>
