@@ -1,0 +1,49 @@
+<main class="auth-shell">
+  <section class="panel">
+    <div class="panel-top">
+      <div class="brand">
+        <img src="/assets/logo/logo.svg" alt="" aria-hidden="true" />
+        <span class="wordmark">Tank Arena</span>
+      </div>
+      <app-lang-switcher></app-lang-switcher>
+    </div>
+
+    <h1>{{ 'auth.heading' | transloco }}</h1>
+    <p class="copy">{{ 'auth.description' | transloco }}</p>
+
+    <div style="margin: 25px 0px;">
+      <app-public-stats [compact]="true"></app-public-stats>
+    </div>
+
+    @if (!auth.onboardingToken()) {
+      <div class="methods">
+        <div #googleButton class="google-button"></div>
+        <button class="secondary" type="button" (click)="loginPhantom()" [disabled]="busy()">
+          <img src="/assets/logo/logo_phantom.svg" alt="" aria-hidden="true" />
+          {{ 'auth.connectPhantom' | transloco }}
+        </button>
+      </div>
+    } @else {
+      <form (ngSubmit)="completeProfile()">
+        <label for="username">{{ 'auth.usernameLabel' | transloco }}</label>
+        <input
+          id="username"
+          name="username"
+          [(ngModel)]="username"
+          minlength="3"
+          maxlength="20"
+          pattern="[A-Za-z0-9_]+"
+          required
+          autocomplete="username"
+        />
+        <button class="primary" type="submit" [disabled]="busy()">
+          {{ 'auth.createPilot' | transloco }}
+        </button>
+      </form>
+    }
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </section>
+</main>

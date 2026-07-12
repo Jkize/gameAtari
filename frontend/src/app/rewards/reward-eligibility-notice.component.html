@@ -4,20 +4,36 @@
   <p class="copy">{{ 'rewards.eligibility.description' | transloco }}</p>
 
   <ol class="prizes" [attr.aria-label]="'rewards.eligibility.prizesAriaLabel' | transloco">
-    <li class="place-1"><strong><i class="ti ti-trophy" aria-hidden="true"></i> 1{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 700 } }}</span></li>
-    <li class="place-2"><strong>2{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 300 } }}</span></li>
-    <li class="place-3"><strong>3{{ 'rewards.common.ordinalSuffix' | transloco }}</strong><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 100 } }}</span></li>
+    <li class="place-1">
+      <strong
+        ><i class="ti ti-trophy" aria-hidden="true"></i> 1{{
+          'rewards.common.ordinalSuffix' | transloco
+        }}</strong
+      ><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 700 } }}</span>
+    </li>
+    <li class="place-2">
+      <strong>2{{ 'rewards.common.ordinalSuffix' | transloco }}</strong
+      ><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 300 } }}</span>
+    </li>
+    <li class="place-3">
+      <strong>3{{ 'rewards.common.ordinalSuffix' | transloco }}</strong
+      ><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 100 } }}</span>
+    </li>
   </ol>
 
   <div class="state">
     @if (!auth.user()) {
-      <a class="action-link" routerLink="/auth">{{ 'rewards.eligibility.login' | transloco }}</a>
+      <a class="action-link" routerLink="/login">{{ 'rewards.eligibility.login' | transloco }}</a>
     } @else if (walletStatus() === null) {
       <p class="status-loading">{{ 'rewards.eligibility.checking' | transloco }}</p>
     } @else if (walletStatus()!.holder.status === 'unavailable') {
-      <p class="status-title warn">{{ 'rewards.eligibility.verificationFailedTitle' | transloco }}</p>
+      <p class="status-title warn">
+        {{ 'rewards.eligibility.verificationFailedTitle' | transloco }}
+      </p>
       <p class="status-hint">{{ 'rewards.eligibility.verificationFailedHint' | transloco }}</p>
-      <button class="action" type="button" (click)="retryCheck()">{{ 'rewards.eligibility.retry' | transloco }}</button>
+      <button class="action" type="button" (click)="retryCheck()">
+        {{ 'rewards.eligibility.retry' | transloco }}
+      </button>
     } @else if (walletStatus()!.holder.status === 'insufficient') {
       <p class="status-title warn">{{ 'rewards.eligibility.insufficientTitle' | transloco }}</p>
       <p class="status-hint">{{ 'rewards.eligibility.insufficientHint' | transloco }}</p>
@@ -28,11 +44,19 @@
         {{ 'rewards.eligibility.configureWallet' | transloco }}
       </button>
     } @else if (walletStatus()!.holder.status === 'eligible' && walletStatus()!.phantom.verified) {
-      <p class="check"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ 'rewards.eligibility.walletVerified' | transloco }}</p>
-      <p class="check"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ 'rewards.eligibility.balanceSufficient' | transloco }}</p>
+      <p class="check">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        {{ 'rewards.eligibility.walletVerified' | transloco }}
+      </p>
+      <p class="check">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        {{ 'rewards.eligibility.balanceSufficient' | transloco }}
+      </p>
     } @else {
       <span class="neutral">{{ 'rewards.eligibility.configureAccount' | transloco }}</span>
     }
-    @if (error()) { <p class="error">{{ error() }}</p> }
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
   </div>
 </section>

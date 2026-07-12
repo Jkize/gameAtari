@@ -11,6 +11,6 @@ export class SessionExitService {
   async signOut(): Promise<void> {
     socketManager.disconnect();
     await this.auth.logout();
-    await this.router.navigateByUrl('/auth');
+    await this.router.navigateByUrl('/login');
   }
 }

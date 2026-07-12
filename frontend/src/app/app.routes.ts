@@ -5,33 +5,34 @@ import { rootGuard } from './auth/root.guard';
 
 export const routes: Routes = [
   {
-    path: 'auth',
+    path: 'login',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./auth/auth.component').then(module => module.AuthComponent),
+      import('./auth/login/login.component').then((module) => module.LoginComponent),
   },
+  { path: 'auth', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'game',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./game/game-host.component').then(module => module.GameHostComponent),
+      import('./game/game-host.component').then((module) => module.GameHostComponent),
   },
   {
     path: 'game/:roomId',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./game/game-host.component').then(module => module.GameHostComponent),
+      import('./game/game-host.component').then((module) => module.GameHostComponent),
   },
   {
     path: 'custom',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./map-editor/map-editor.component').then(module => module.MapEditorComponent),
+      import('./map-editor/map-editor.component').then((module) => module.MapEditorComponent),
   },
   {
     path: '',
     loadComponent: () =>
-      import('./layout/app-layout.component').then(module => module.AppLayoutComponent),
+      import('./layout/app-layout.component').then((module) => module.AppLayoutComponent),
     children: [
       {
         path: '',
@@ -42,23 +43,25 @@ export const routes: Routes = [
         path: 'lobby',
         canActivate: [authGuard],
         loadComponent: () =>
-          import('./lobby/lobby.component').then(module => module.LobbyComponent),
+          import('./lobby/lobby.component').then((module) => module.LobbyComponent),
       },
       {
         path: 'matches/me',
         canActivate: [authGuard],
         loadComponent: () =>
-          import('./rewards/my-matches.component').then(module => module.MyMatchesComponent),
+          import('./rewards/my-matches.component').then((module) => module.MyMatchesComponent),
       },
       {
         path: 'matches/recent',
         loadComponent: () =>
-          import('./rewards/recent-matches.component').then(module => module.RecentMatchesComponent),
+          import('./rewards/recent-matches.component').then(
+            (module) => module.RecentMatchesComponent,
+          ),
       },
       {
         path: 'matches/:matchId',
         loadComponent: () =>
-          import('./rewards/match-detail.component').then(module => module.MatchDetailComponent),
+          import('./rewards/match-detail.component').then((module) => module.MatchDetailComponent),
       },
     ],
   },

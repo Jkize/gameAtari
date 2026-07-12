@@ -8,5 +8,5 @@ export const rootGuard: CanActivateFn = async () => {
   if (environment.devGameMode) return router.createUrlTree(['/lobby']);
   const auth = inject(AuthService);
   const authenticated = await auth.ensureSession();
-  return router.createUrlTree([authenticated ? '/lobby' : '/auth']);
+  return router.createUrlTree([authenticated ? '/lobby' : '/login']);
 };
