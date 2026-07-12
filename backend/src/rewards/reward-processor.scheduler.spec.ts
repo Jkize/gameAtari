@@ -15,6 +15,7 @@ describe('RewardProcessorScheduler', () => {
       processBatch: jest.fn(() => new Promise<void>(resolve => { release = resolve; })),
     };
     const config = {
+      rewardsEnabled: jest.fn(() => true),
       rewardProcessorEnabled: jest.fn(() => false),
       rewardProcessorIntervalMs: jest.fn(() => 5000),
     };
@@ -36,6 +37,7 @@ describe('RewardProcessorScheduler', () => {
       processBatch: jest.fn(async () => 0),
     };
     const config = {
+      rewardsEnabled: jest.fn(() => true),
       rewardProcessorEnabled: jest.fn(() => false),
       rewardProcessorIntervalMs: jest.fn(() => 5000),
     };
@@ -47,5 +49,27 @@ describe('RewardProcessorScheduler', () => {
     await scheduler.tick();
 
     expect(processor.processBatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not start the interval when rewards are disabled', () => {
+    jest.useFakeTimers();
+    const processor = { processBatch: jest.fn(async () => 0) };
+    const config = {
+      rewardsEnabled: jest.fn(() => false),
+      rewardProcessorEnabled: jest.fn(() => true),
+      rewardProcessorIntervalMs: jest.fn(() => 5000),
+    };
+    const scheduler = new RewardProcessorScheduler(
+      config as unknown as SolanaConfigService,
+      processor as unknown as RewardProcessorService,
+    );
+
+    scheduler.onModuleInit();
+    jest.advanceTimersByTime(15_000);
+
+    expect(processor.processBatch).not.toHaveBeenCalled();
+    expect(config.rewardProcessorIntervalMs).not.toHaveBeenCalled();
+    scheduler.onModuleDestroy();
+    jest.useRealTimers();
   });
 });

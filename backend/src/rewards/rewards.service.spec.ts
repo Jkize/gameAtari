@@ -25,6 +25,7 @@ describe('RewardsService eligibility', () => {
       tryReserveDailyAmount: jest.fn(async () => true),
     };
     const solanaConfig = {
+      rewardsEnabled: jest.fn(() => true),
       mint: jest.fn(() => 'mint-1'),
     };
     const solana = {
@@ -40,8 +41,28 @@ describe('RewardsService eligibility', () => {
       solana as unknown as SolanaGateway,
     );
 
-    return { repository, solana, service };
+    return { repository, solana, solanaConfig, service };
   };
+
+  it('records candidates as not eligible without wallet or Helius checks when rewards are disabled', async () => {
+    const { repository, solana, solanaConfig, service } = createHarness();
+    solanaConfig.rewardsEnabled.mockReturnValue(false);
+
+    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+
+    expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
+      status: RewardStatus.REWARDS_DISABLED,
+      ineligibilityReason: null,
+      eligible: false,
+      amount: 0,
+    }));
+    expect(repository.upsertRewardLog).toHaveBeenCalledWith(expect.objectContaining({
+      potentialAmount: 0,
+      amount: 0,
+    }));
+    expect(repository.findVerifiedWallet).not.toHaveBeenCalled();
+    expect(solana.getTokenBalance).not.toHaveBeenCalled();
+  });
 
   it('marks an unauthenticated first place as not eligible', async () => {
     const { repository, service } = createHarness();

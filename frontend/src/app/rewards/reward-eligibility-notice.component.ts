@@ -16,6 +16,8 @@ export class RewardEligibilityNoticeComponent implements OnInit, OnChanges {
   @Input() refreshKey = 0;
   readonly walletStatus = signal<WalletStatus | null>(null);
   readonly prizes = signal<RewardsConfig['prizes']>([]);
+  readonly rewardsEnabled = signal<boolean | null>(null);
+  readonly configUnavailable = signal(false);
   readonly busy = signal(false);
   readonly error = signal('');
 
@@ -28,13 +30,22 @@ export class RewardEligibilityNoticeComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.rewards.getConfig().subscribe({
-      next: config => this.prizes.set(config.prizes),
+      next: config => {
+        this.rewardsEnabled.set(config.enabled);
+        if (!config.enabled) return;
+        this.prizes.set(config.prizes);
+        this.loadStatus();
+      },
+      error: () => this.configUnavailable.set(true),
     });
-    this.loadStatus();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['refreshKey'] && !changes['refreshKey'].firstChange) this.loadStatus();
+    if (
+      changes['refreshKey']
+      && !changes['refreshKey'].firstChange
+      && this.rewardsEnabled() === true
+    ) this.loadStatus();
   }
 
   canLinkPhantom(): boolean {

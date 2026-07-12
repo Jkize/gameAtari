@@ -1,4 +1,15 @@
 <section class="notice" aria-labelledby="reward-notice-title">
+  @if (rewardsEnabled() !== true) {
+    <p class="disabled-message">
+      @if (configUnavailable()) {
+        {{ 'rewards.disabled.unavailable' | transloco }}
+      } @else if (rewardsEnabled() === false) {
+        {{ 'rewards.disabled.message' | transloco }}
+      } @else {
+        {{ 'rewards.disabled.checking' | transloco }}
+      }
+    </p>
+  } @else {
   <p class="ui-eyebrow">{{ 'rewards.eligibility.eyebrow' | transloco }}</p>
   <h2 id="reward-notice-title">{{ 'rewards.eligibility.title' | transloco }}</h2>
   <p class="copy">{{ 'rewards.eligibility.description' | transloco }}</p>
@@ -55,4 +66,5 @@
       <p class="error">{{ error() }}</p>
     }
   </div>
+  }
 </section>

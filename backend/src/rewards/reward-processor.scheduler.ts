@@ -19,7 +19,7 @@ export class RewardProcessorScheduler implements OnModuleInit, OnModuleDestroy {
 
   /** Starts the interval timer if reward processing is enabled for this environment. */
   onModuleInit(): void {
-    if (!this.config.rewardProcessorEnabled()) return;
+    if (!this.config.rewardsEnabled() || !this.config.rewardProcessorEnabled()) return;
     this.timer = setInterval(() => void this.tick(), this.config.rewardProcessorIntervalMs());
   }
 

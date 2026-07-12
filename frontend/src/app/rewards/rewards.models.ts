@@ -1,4 +1,5 @@
 export type RewardStatus =
+  | 'REWARDS_DISABLED'
   | 'NOT_ELIGIBLE'
   | 'DAILY_LIMIT_REACHED'
   | 'PENDING'
@@ -17,6 +18,7 @@ export type RewardIneligibilityReason =
   | 'DAILY_LIMIT_REACHED';
 
 export interface RewardsConfig {
+  enabled: boolean;
   prizes: Array<{
     placement: number;
     amount: number;

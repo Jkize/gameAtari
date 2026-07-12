@@ -33,6 +33,9 @@ const es = {
   'rewards.eligibility.balanceSufficient': 'Saldo suficiente',
   'rewards.eligibility.linkPhantomError': 'No se pudo vincular Phantom',
   'rewards.eligibility.linkPhantom': 'Vincular Phantom',
+  'rewards.disabled.message': 'Las recompensas están temporalmente desactivadas.',
+  'rewards.disabled.checking': 'Consultando el estado de las recompensas...',
+  'rewards.disabled.unavailable': 'No pudimos consultar el estado de las recompensas.',
 };
 
 describe('RewardEligibilityNoticeComponent', () => {
@@ -51,6 +54,7 @@ describe('RewardEligibilityNoticeComponent', () => {
     user: unknown,
     wallet: WalletStatus | Subject<WalletStatus> = walletStatus,
     currentProvider: 'GOOGLE' | 'PHANTOM' | null = 'GOOGLE',
+    rewardsEnabled = true,
   ) => {
     const auth = {
       user: () => user,
@@ -63,6 +67,7 @@ describe('RewardEligibilityNoticeComponent', () => {
     };
     const rewards = {
       getConfig: vi.fn().mockReturnValue(of({
+        enabled: rewardsEnabled,
         prizes: [
           { placement: 1, amount: 1000 },
           { placement: 2, amount: 400 },
@@ -89,6 +94,22 @@ describe('RewardEligibilityNoticeComponent', () => {
     fixture.detectChanges();
     return { fixture, auth, rewards };
   };
+
+  it('shows only the disabled message and skips wallet checks when rewards are disabled', async () => {
+    const { fixture, rewards } = await setup(
+      { id: 'u1', username: 'Pilot' },
+      walletStatus,
+      'GOOGLE',
+      false,
+    );
+    const text = fixture.nativeElement.textContent;
+
+    expect(text).toContain('Las recompensas están temporalmente desactivadas.');
+    expect(text).not.toContain('Premios en tokens');
+    expect(text).not.toContain('1000 tokens');
+    expect(text).not.toContain('Wallet no vinculada');
+    expect(rewards.getWalletStatus).not.toHaveBeenCalled();
+  });
 
   it('shows login action for guest users', async () => {
     const { fixture } = await setup(null);

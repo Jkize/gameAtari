@@ -20,7 +20,7 @@ async function bootstrap(): Promise<void> {
   });
   app.enableShutdownHooks();
   const port = config.get<number>('PORT', 3000);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Game backend running on http://localhost:${port}`);
   if (developmentSettings.isDevGameMode()) {
     console.warn('[DEV GAME MODE] Authentication and persistent infrastructure are bypassed.');

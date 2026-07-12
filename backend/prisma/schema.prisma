@@ -17,6 +17,7 @@ enum MatchStatus {
 }
 
 enum RewardStatus {
+  REWARDS_DISABLED
   NOT_ELIGIBLE
   DAILY_LIMIT_REACHED
   PENDING
@@ -29,6 +30,7 @@ enum RewardStatus {
 }
 
 enum RewardIneligibilityReason {
+  REWARDS_DISABLED
   USER_NOT_AUTHENTICATED
   WALLET_NOT_LINKED
   WALLET_NOT_VERIFIED

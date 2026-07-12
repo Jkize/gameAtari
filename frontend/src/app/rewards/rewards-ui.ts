@@ -2,6 +2,7 @@ import { RewardIneligibilityReason, RewardStatus } from './rewards.models';
 
 export function rewardStatusLabel(status?: RewardStatus | null): string {
   switch (status) {
+    case 'REWARDS_DISABLED': return 'rewards.status.rewardsDisabled';
     case 'NOT_ELIGIBLE': return 'rewards.status.notEligible';
     case 'DAILY_LIMIT_REACHED': return 'rewards.status.dailyLimitReached';
     case 'PENDING': return 'rewards.status.pending';
@@ -24,6 +25,7 @@ export function rewardStatusClass(status?: RewardStatus | null): string {
     case 'FAILED':
     case 'MANUAL_REVIEW': return 'warn';
     case 'NOT_ELIGIBLE':
+    case 'REWARDS_DISABLED':
     case 'DAILY_LIMIT_REACHED':
     case 'CANCELLED': return 'muted';
     default: return 'muted';
@@ -42,6 +44,7 @@ export function ineligibilityReasonLabel(reason?: RewardIneligibilityReason | nu
 }
 
 export function publicRewardLabel(status?: RewardStatus | null): string {
+  if (status === 'REWARDS_DISABLED') return 'rewards.status.rewardsDisabled';
   if (status === 'SENT') return 'rewards.status.sent';
   if (status === 'PENDING' || status === 'PROCESSING' || status === 'SUBMITTED') return 'rewards.publicStatus.pending';
   if (status === 'FAILED' || status === 'MANUAL_REVIEW') return 'rewards.status.manualReview';

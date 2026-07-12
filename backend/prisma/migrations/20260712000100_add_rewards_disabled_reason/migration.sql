@@ -1,0 +1,1 @@
+ALTER TYPE "RewardIneligibilityReason" ADD VALUE IF NOT EXISTS 'REWARDS_DISABLED';

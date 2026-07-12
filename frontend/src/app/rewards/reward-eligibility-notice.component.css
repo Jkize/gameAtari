@@ -8,6 +8,12 @@
   border: 0.5px solid var(--color-border);
   background: var(--color-bg-inset);
 }
+.disabled-message {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
 h2 {
   margin: 0;
   font-size: 1.1rem;

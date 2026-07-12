@@ -160,7 +160,11 @@
   "rewards.status.none": "No reward",
 
   "rewards.publicStatus.pending": "Pending",
+  "rewards.disabled.message": "Rewards are temporarily disabled.",
+  "rewards.disabled.checking": "Checking reward availability...",
+  "rewards.disabled.unavailable": "We could not check reward availability.",
 
+  "rewards.status.rewardsDisabled": "Rewards disabled",
   "rewards.ineligibility.userNotAuthenticated": "You must sign in.",
   "rewards.ineligibility.walletNotLinked": "Phantom wallet not linked.",
   "rewards.ineligibility.walletNotVerified": "Wallet not verified.",

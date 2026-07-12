@@ -160,7 +160,11 @@
   "rewards.status.none": "Sin premio",
 
   "rewards.publicStatus.pending": "Pendiente",
+  "rewards.disabled.message": "Las recompensas están temporalmente desactivadas.",
+  "rewards.disabled.checking": "Consultando el estado de las recompensas...",
+  "rewards.disabled.unavailable": "No pudimos consultar el estado de las recompensas.",
 
+  "rewards.status.rewardsDisabled": "Recompensas desactivadas",
   "rewards.ineligibility.userNotAuthenticated": "Debes iniciar sesion.",
   "rewards.ineligibility.walletNotLinked": "Wallet Phantom no vinculada.",
   "rewards.ineligibility.walletNotVerified": "Wallet no verificada.",

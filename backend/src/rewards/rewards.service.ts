@@ -46,7 +46,10 @@ export class RewardsService {
    * instead of being treated as insufficient balance.
    */
   private async registerAndEvaluate(candidate: RewardCandidate): Promise<void> {
-    const potentialAmount = REWARD_AMOUNTS_BY_PLACEMENT[candidate.placement];
+    const rewardsEnabled = this.solanaConfig.rewardsEnabled();
+    const potentialAmount = rewardsEnabled
+      ? REWARD_AMOUNTS_BY_PLACEMENT[candidate.placement]
+      : 0;
     const mint = this.solanaConfig.mint();
 
     await this.rewards.upsertRewardLog({
@@ -70,6 +73,18 @@ export class RewardsService {
     if (!claim) return;
 
     const checkedAt = new Date();
+    if (!rewardsEnabled) {
+      await this.rewards.completeRewardEvaluation(claim.id, {
+        walletAddress: null,
+        amount: 0,
+        eligible: false,
+        eligibilityCheckedAt: checkedAt,
+        ineligibilityReason: null,
+        status: RewardStatus.REWARDS_DISABLED,
+      });
+      return;
+    }
+
     if (!candidate.userId) {
       await this.rewards.completeRewardEvaluation(claim.id, {
         walletAddress: null,
