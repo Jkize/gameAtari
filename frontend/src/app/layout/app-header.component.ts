@@ -8,6 +8,7 @@ import { MobileNavStateService } from './mobile-nav-state.service';
 import { AccountSettingsComponent } from '../account/account-settings.component';
 import { AccountModalStateService } from '../account/account-modal-state.service';
 import { AccountRefreshService } from '../account/account-refresh.service';
+import { TokenCaComponent } from '../shared/token-ca.component';
 
 @Component({
   selector: 'app-header',
@@ -20,6 +21,7 @@ import { AccountRefreshService } from '../account/account-refresh.service';
     UserMenuComponent,
     MobileNavigationComponent,
     AccountSettingsComponent,
+    TokenCaComponent,
   ],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.css',

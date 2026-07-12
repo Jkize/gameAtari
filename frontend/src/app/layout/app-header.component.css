@@ -18,6 +18,7 @@
 
 .brand {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
 }
@@ -35,8 +36,20 @@
   color: var(--color-text-primary);
 }
 
+.header-ca {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.header-ca app-token-ca {
+  width: min(100%, 440px);
+}
+
 .desktop-nav {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 24px;
 }
@@ -90,6 +103,25 @@
 }
 
 @media (max-width: 720px) {
+  .app-header {
+    gap: 10px;
+    padding-inline: 14px;
+  }
+
+  .brand .wordmark {
+    display: none;
+  }
+
+  .header-ca {
+    flex: 1;
+    margin-left: 0;
+  }
+
+  .header-ca app-token-ca {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .desktop-nav {
     display: none;
   }

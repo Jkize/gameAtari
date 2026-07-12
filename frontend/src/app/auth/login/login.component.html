@@ -11,7 +11,8 @@
     <h1>{{ 'auth.heading' | transloco }}</h1>
     <p class="copy">{{ 'auth.description' | transloco }}</p>
 
-    <div style="margin: 25px 0px;">
+    <div class="public-overview">
+      <app-token-ca></app-token-ca>
       <app-public-stats [compact]="true"></app-public-stats>
     </div>
 

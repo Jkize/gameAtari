@@ -1,0 +1,15 @@
+@if (address) {
+  <button
+    type="button"
+    class="token-ca"
+    [class.compact]="compact"
+    (click)="copyAddress()"
+    [attr.aria-label]="copied() ? 'CA copied' : 'Copy token contract address'"
+    [attr.title]="copied() ? 'Copied!' : address"
+  >
+    <span class="label">CA</span>
+    <span class="address">{{ address }}</span>
+    <i [class]="copied() ? 'ti ti-check' : 'ti ti-copy'" aria-hidden="true"></i>
+    <span class="feedback" aria-live="polite">{{ copied() ? 'Copied!' : '' }}</span>
+  </button>
+}

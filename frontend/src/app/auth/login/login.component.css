@@ -64,6 +64,12 @@ h1 {
   line-height: 1.4;
 }
 
+.public-overview {
+  display: grid;
+  gap: 12px;
+  margin: 25px 0;
+}
+
 .methods {
   display: grid;
   gap: 10px;

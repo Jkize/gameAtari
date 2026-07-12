@@ -6,6 +6,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../environments/environment';
 import { LanguageSwitcherComponent } from '../../shared/language-switcher.component';
 import { PublicStatsComponent } from '../../stats/public-stats.component';
+import { TokenCaComponent } from '../../shared/token-ca.component';
 import { AuthService } from '../auth.service';
 
 declare global {
@@ -27,7 +28,7 @@ declare global {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, PublicStatsComponent, TranslocoPipe, LanguageSwitcherComponent],
+  imports: [FormsModule, PublicStatsComponent, TranslocoPipe, LanguageSwitcherComponent, TokenCaComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
