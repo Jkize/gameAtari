@@ -13,6 +13,20 @@
   @if (menuOpen()) {
     <div class="dropdown" role="menu">
       <button type="button" role="menuitem" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
+      <div class="theme-setting">
+        <button
+          type="button"
+          class="theme-toggle"
+          role="switch"
+          [attr.aria-checked]="theme.current() === 'dark'"
+          [attr.aria-label]="(theme.current() === 'dark' ? 'settings.switchToLight' : 'settings.switchToDark') | transloco"
+          (click)="toggleTheme()"
+        >
+          <i class="ti ti-sun sun" aria-hidden="true"></i>
+          <i class="ti ti-moon moon" aria-hidden="true"></i>
+          <span class="toggle-thumb" aria-hidden="true"></span>
+        </button>
+      </div>
       <button type="button" role="menuitem" (click)="logout()">{{ 'nav.signOut' | transloco }}</button>
     </div>
   }

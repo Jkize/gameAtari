@@ -3,6 +3,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
 import { SessionExitService } from './session-exit.service';
 import { AccountModalStateService } from '../account/account-modal-state.service';
+import { ThemeService } from '../shared/theme.service';
 
 @Component({
   selector: 'app-user-menu',
@@ -13,6 +14,7 @@ import { AccountModalStateService } from '../account/account-modal-state.service
 })
 export class UserMenuComponent {
   readonly menuOpen = signal(false);
+  readonly theme = inject(ThemeService);
 
   private readonly sessionExit = inject(SessionExitService);
   private readonly accountModal = inject(AccountModalStateService);
@@ -29,6 +31,10 @@ export class UserMenuComponent {
   openAccount(): void {
     this.menuOpen.set(false);
     this.accountModal.show();
+  }
+
+  toggleTheme(): void {
+    this.theme.toggle();
   }
 
   async logout(): Promise<void> {

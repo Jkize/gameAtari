@@ -181,7 +181,8 @@ html {
   align-items: center;
   gap: 4px;
   color: var(--color-accent);
-  font-size: 12px;
+  min-height: 32px;
+  font-size: clamp(0.9rem, 0.25vw + 0.85rem, 1rem);
   font-weight: 500;
   text-decoration: none;
 }
