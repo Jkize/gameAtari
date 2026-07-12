@@ -16,6 +16,13 @@ export type RewardIneligibilityReason =
   | 'INSUFFICIENT_TOKEN_BALANCE'
   | 'DAILY_LIMIT_REACHED';
 
+export interface RewardsConfig {
+  prizes: Array<{
+    placement: number;
+    amount: number;
+  }>;
+}
+
 export interface RewardSummary {
   placement: number;
   potentialAmount: number;

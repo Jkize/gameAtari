@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
 import { RewardsService } from './rewards.service';
-import { WalletStatus } from './rewards.models';
+import { RewardsConfig, WalletStatus } from './rewards.models';
 
 @Component({
   selector: 'app-reward-eligibility-notice',
@@ -15,6 +15,7 @@ import { WalletStatus } from './rewards.models';
 export class RewardEligibilityNoticeComponent implements OnInit, OnChanges {
   @Input() refreshKey = 0;
   readonly walletStatus = signal<WalletStatus | null>(null);
+  readonly prizes = signal<RewardsConfig['prizes']>([]);
   readonly busy = signal(false);
   readonly error = signal('');
 
@@ -26,6 +27,9 @@ export class RewardEligibilityNoticeComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
+    this.rewards.getConfig().subscribe({
+      next: config => this.prizes.set(config.prizes),
+    });
     this.loadStatus();
   }
 

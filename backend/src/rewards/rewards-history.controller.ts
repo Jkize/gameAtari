@@ -4,6 +4,7 @@ import { RequestUser } from '../common/request-user.decorator';
 import { AuthenticatedUser } from '../common/auth.types';
 import { AccessTokenGuard } from '../auth/access-token.guard';
 import { RewardsHistoryService } from './rewards-history.service';
+import { REWARD_AMOUNTS_BY_PLACEMENT } from './rewards.config';
 
 const MAX_CURSOR_LENGTH = 512;
 const CURSOR_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -13,6 +14,18 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 @Controller('rewards')
 export class RewardsHistoryController {
   constructor(private readonly history: RewardsHistoryService) {}
+
+  /** Public reward values used by clients when presenting the current prize podium. */
+  @Get('config')
+  @Throttle({ default: { limit: 120, ttl: seconds(60) } })
+  config() {
+    return {
+      prizes: Object.entries(REWARD_AMOUNTS_BY_PLACEMENT).map(([placement, amount]) => ({
+        placement: Number(placement),
+        amount,
+      })),
+    };
+  }
 
   /** Authenticated caller's personal match/reward history, including user-facing ineligibility reasons. */
   @Get('me/history')

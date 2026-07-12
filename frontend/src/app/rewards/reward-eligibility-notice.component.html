@@ -4,21 +4,17 @@
   <p class="copy">{{ 'rewards.eligibility.description' | transloco }}</p>
 
   <ol class="prizes" [attr.aria-label]="'rewards.eligibility.prizesAriaLabel' | transloco">
-    <li class="place-1">
-      <strong
-        ><i class="ti ti-trophy" aria-hidden="true"></i> 1{{
-          'rewards.common.ordinalSuffix' | transloco
-        }}</strong
-      ><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 700 } }}</span>
-    </li>
-    <li class="place-2">
-      <strong>2{{ 'rewards.common.ordinalSuffix' | transloco }}</strong
-      ><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 300 } }}</span>
-    </li>
-    <li class="place-3">
-      <strong>3{{ 'rewards.common.ordinalSuffix' | transloco }}</strong
-      ><span>{{ 'rewards.common.tokensAmount' | transloco: { amount: 100 } }}</span>
-    </li>
+    @for (prize of prizes(); track prize.placement) {
+      <li [class]="'place-' + prize.placement">
+        <strong>
+          @if (prize.placement === 1) {
+            <i class="ti ti-trophy" aria-hidden="true"></i>
+          }
+          {{ prize.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}
+        </strong>
+        <span>{{ 'rewards.common.tokensAmount' | transloco: { amount: prize.amount } }}</span>
+      </li>
+    }
   </ol>
 
   <div class="state">

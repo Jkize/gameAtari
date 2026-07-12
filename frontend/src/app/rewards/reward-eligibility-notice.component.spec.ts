@@ -29,6 +29,8 @@ const es = {
   'rewards.eligibility.configureWallet': 'Configurar wallet',
   'rewards.eligibility.eligibleTitle': 'Elegible para recompensas',
   'rewards.eligibility.eligibleHint': 'Wallet conectada · Saldo suficiente',
+  'rewards.eligibility.walletVerified': 'Elegible para recompensas',
+  'rewards.eligibility.balanceSufficient': 'Saldo suficiente',
   'rewards.eligibility.linkPhantomError': 'No se pudo vincular Phantom',
   'rewards.eligibility.linkPhantom': 'Vincular Phantom',
 };
@@ -60,6 +62,13 @@ describe('RewardEligibilityNoticeComponent', () => {
       }),
     };
     const rewards = {
+      getConfig: vi.fn().mockReturnValue(of({
+        prizes: [
+          { placement: 1, amount: 1000 },
+          { placement: 2, amount: 400 },
+          { placement: 3, amount: 250 },
+        ],
+      })),
       getWalletStatus: vi.fn().mockReturnValue(wallet instanceof Subject ? wallet.asObservable() : of(wallet)),
     };
     await TestBed.configureTestingModule({
@@ -85,6 +94,9 @@ describe('RewardEligibilityNoticeComponent', () => {
     const { fixture } = await setup(null);
 
     expect(fixture.nativeElement.textContent).toContain('Premios en tokens');
+    expect(fixture.nativeElement.textContent).toContain('1000 tokens');
+    expect(fixture.nativeElement.textContent).toContain('400 tokens');
+    expect(fixture.nativeElement.textContent).toContain('250 tokens');
     expect(fixture.nativeElement.textContent).toContain('Iniciar');
   });
 

@@ -8,6 +8,7 @@ import {
   PersonalMatchHistoryItem,
   PublicMatchDetail,
   PublicMatchHistoryItem,
+  RewardsConfig,
   WalletStatus,
 } from './rewards.models';
 
@@ -17,6 +18,10 @@ export class RewardsService {
     private readonly http: HttpClient,
     private readonly auth: AuthService,
   ) {}
+
+  getConfig(): Observable<RewardsConfig> {
+    return this.http.get<RewardsConfig>(`${environment.backendUrl}/rewards/config`);
+  }
 
   getWalletStatus(): Observable<WalletStatus> {
     return this.http.get<WalletStatus>(`${environment.backendUrl}/wallets/me`, {
