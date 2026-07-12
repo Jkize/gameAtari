@@ -110,7 +110,7 @@
   "rewards.recentMatches.loadError": "No se pudieron cargar las partidas recientes.",
   "rewards.recentMatches.loadErrorTitle": "No fue posible cargar la información",
 
-  "rewards.matchDetail.backLink": "← Volver",
+  "rewards.matchDetail.backLink": "Volver",
   "rewards.matchDetail.loadingAriaLabel": "Cargando detalle",
   "rewards.matchDetail.tableAriaLabel": "Detalle publico de partida",
   "rewards.matchDetail.columnPosition": "Posición",
