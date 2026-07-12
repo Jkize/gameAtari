@@ -9,6 +9,8 @@
   "lobby.eyebrow": "CENTRO DE COMANDO",
   "lobby.heading": "Lobby publico",
   "lobby.quickPlay": "Jugar ahora",
+  "lobby.preparing": "Preparando juego… {{progress}}%",
+  "lobby.prepareFailed": "No se pudieron cargar todos los archivos del juego. Inténtalo nuevamente.",
   "lobby.searching": "Buscando partida…",
   "lobby.cancel": "Cancelar",
   "lobby.errorFallback": "Error de lobby",

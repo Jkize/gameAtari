@@ -1,22 +1,43 @@
 <section class="quick-play-card">
-  @if (errorMessage) {
-    <p class="error">{{ errorMessage }}</p>
-    <button class="primary ui-button ui-button--primary" (click)="retry.emit()">{{ 'lobby.errorRetry' | transloco }}</button>
-  } @else if (currentRoom) {
+  @if (currentRoom) {
     <p>{{ 'lobby.searching' | transloco }}</p>
     <h2>{{ currentRoom.name }}</h2>
-    <strong>{{ 'lobby.capacityPlayers' | transloco: { current: currentRoom.playerCount, max: currentRoom.maxPlayers } }}</strong>
+    <strong>{{
+      'lobby.capacityPlayers'
+        | transloco: { current: currentRoom.playerCount, max: currentRoom.maxPlayers }
+    }}</strong>
     @if (currentRoom.countdownSeconds !== null) {
-      <span>{{ 'lobby.battleCountdown' | transloco: { seconds: currentRoom.countdownSeconds } }}</span>
+      <span>{{
+        'lobby.battleCountdown' | transloco: { seconds: currentRoom.countdownSeconds }
+      }}</span>
     } @else {
-      <span>{{ 'lobby.waitingPlayers' | transloco: { current: currentRoom.playerCount, min: currentRoom.minPlayers } }}</span>
+      <span>{{
+        'lobby.waitingPlayers'
+          | transloco: { current: currentRoom.playerCount, min: currentRoom.minPlayers }
+      }}</span>
     }
     <button (click)="cancel.emit()">{{ 'lobby.cancel' | transloco }}</button>
+  } @else if (preparing) {
+    <div class="preparation" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <strong>{{ 'lobby.preparing' | transloco: { progress: preparationProgress } }}</strong>
+      <div class="progress-track" aria-hidden="true">
+        <span [style.width.%]="preparationProgress"></span>
+      </div>
+      <button (click)="cancel.emit()">{{ 'lobby.cancel' | transloco }}</button>
+    </div>
+  } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    <button class="primary ui-button ui-button--primary" (click)="retry.emit()">
+      {{ 'lobby.errorRetry' | transloco }}
+    </button>
   } @else if (searching) {
     <p>{{ 'lobby.searching' | transloco }}</p>
     <button (click)="cancel.emit()">{{ 'lobby.cancel' | transloco }}</button>
   } @else {
-    <button class="primary ui-button ui-button--primary" (click)="play.emit()">{{ 'lobby.quickPlay' | transloco }}</button>
+    <button class="primary ui-button ui-button--primary" (click)="play.emit()">
+      {{ 'lobby.quickPlay' | transloco }}
+    </button>
     <p class="empty">{{ 'lobby.emptyQueue' | transloco }}</p>
   }
   <ng-content></ng-content>

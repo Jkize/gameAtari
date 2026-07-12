@@ -6,17 +6,28 @@
           <p class="ui-eyebrow">{{ 'lobby.eyebrow' | transloco }}</p>
           <h1>{{ 'lobby.heading' | transloco }}</h1>
         </div>
-        <app-quick-play-card [currentRoom]="currentRoom()" [searching]="searching()" [errorMessage]="error()"
-          (play)="quickPlay()" (cancel)="leaveRoom()" (retry)="quickPlay()">
+        <app-quick-play-card
+          [currentRoom]="currentRoom()"
+          [preparing]="preparing()"
+          [preparationProgress]="preparationProgress()"
+          [searching]="searching()"
+          [errorMessage]="error()"
+          (play)="quickPlay()"
+          (cancel)="leaveRoom()"
+          (retry)="quickPlay()"
+        >
           <app-public-stats [compact]="true"></app-public-stats>
         </app-quick-play-card>
-        @if (notice()) { <p class="notice">{{ notice() }}</p> }
+        @if (notice()) {
+          <p class="notice">{{ notice() }}</p>
+        }
       </div>
 
       <div>
-        <app-reward-eligibility-notice [refreshKey]="accountRefresh.key()"></app-reward-eligibility-notice>
+        <app-reward-eligibility-notice
+          [refreshKey]="accountRefresh.key()"
+        ></app-reward-eligibility-notice>
       </div>
     </div>
-
   </div>
 </main>

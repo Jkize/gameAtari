@@ -18,6 +18,8 @@ export interface QuickPlayRoom {
 })
 export class QuickPlayCardComponent {
   @Input() currentRoom: QuickPlayRoom | null = null;
+  @Input() preparing = false;
+  @Input() preparationProgress = 0;
   @Input() searching = false;
   @Input() errorMessage = '';
 

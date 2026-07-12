@@ -1,8 +1,5 @@
 import Phaser from 'phaser';
-import {
-  GameSettingsChangedEvent,
-  readStoredGameSettings,
-} from '../../game/game-settings.types';
+import { GameSettingsChangedEvent, readStoredGameSettings } from '../../game/game-settings.types';
 
 export type WeaponFireSound = 'standard' | 'triple_shot' | 'shotgun';
 export type BulletImpactSound = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror';
@@ -54,12 +51,12 @@ const LOCAL_PLAYER_VOLUME_BOOST = 1.18;
 
 export class AudioManager {
   private lastFireSoundAt = 0;
-  private sfxVolume = readStoredGameSettings().sfxVolume;
   private readonly onSettingsChanged = (event: Event): void => {
-    this.sfxVolume = (event as GameSettingsChangedEvent).detail.sfxVolume;
+    this.setVolume((event as GameSettingsChangedEvent).detail.sfxVolume);
   };
 
   constructor(private readonly scene: Phaser.Scene) {
+    this.setVolume(readStoredGameSettings().sfxVolume);
     window.addEventListener('tank-arena:settings-changed', this.onSettingsChanged);
   }
 
@@ -134,14 +131,7 @@ export class AudioManager {
   }
 
   playDash(origin: SoundPoint, listener: SoundPoint, isLocalPlayer: boolean): void {
-    this.playSpatialSound(
-      'player-dash',
-      DASH_VOLUME,
-      origin,
-      listener,
-      isLocalPlayer,
-      0,
-    );
+    this.playSpatialSound('player-dash', DASH_VOLUME, origin, listener, isLocalPlayer, 0);
   }
 
   playReloadStart(): void {
@@ -196,9 +186,13 @@ export class AudioManager {
   }
 
   private playSound(key: string, volume: number): void {
-    const scaledVolume = Phaser.Math.Clamp(volume * this.sfxVolume, 0, 1);
-    if (scaledVolume <= 0) return;
-    this.scene.sound.play(key, { volume: scaledVolume });
+    const soundVolume = Phaser.Math.Clamp(volume, 0, 1);
+    if (soundVolume <= 0 || this.scene.sound.volume <= 0) return;
+    this.scene.sound.play(key, { volume: soundVolume });
+  }
+
+  private setVolume(volume: number): void {
+    this.scene.sound.volume = Phaser.Math.Clamp(volume, 0, 1);
   }
 
   private getDistanceVolume(
@@ -215,7 +209,8 @@ export class AudioManager {
     if (distance <= FULL_VOLUME_DISTANCE) return baseVolume;
     if (distance >= MAX_AUDIBLE_DISTANCE) return 0;
 
-    const fade = 1 - (distance - FULL_VOLUME_DISTANCE) / (MAX_AUDIBLE_DISTANCE - FULL_VOLUME_DISTANCE);
+    const fade =
+      1 - (distance - FULL_VOLUME_DISTANCE) / (MAX_AUDIBLE_DISTANCE - FULL_VOLUME_DISTANCE);
     const easedFade = fade * fade;
     const volume = baseVolume * Math.max(MIN_AUDIBLE_VOLUME, easedFade);
 

@@ -9,6 +9,8 @@
   "lobby.eyebrow": "COMMAND CENTER",
   "lobby.heading": "Public Lobby",
   "lobby.quickPlay": "Quick Play",
+  "lobby.preparing": "Preparing game… {{progress}}%",
+  "lobby.prepareFailed": "Some game files could not be loaded. Please try again.",
   "lobby.searching": "Searching for a match…",
   "lobby.cancel": "Cancel",
   "lobby.errorFallback": "Lobby error",

@@ -9,6 +9,7 @@ import { PublicStatsComponent } from '../stats/public-stats.component';
 import { environment } from '../../environments/environment';
 import { RewardEligibilityNoticeComponent } from '../rewards/reward-eligibility-notice.component';
 import { AccountRefreshService } from '../account/account-refresh.service';
+import { GameAssetPreloaderService } from '../game/game-asset-preloader.service';
 import { QuickPlayCardComponent } from './quick-play-card.component';
 
 interface RoomState {
@@ -38,8 +39,12 @@ export class LobbyComponent implements OnInit, OnDestroy {
   readonly currentRoom = signal<RoomState | null>(null);
   readonly notice = signal('');
   readonly error = signal('');
+  readonly preparing = signal(false);
   readonly searching = signal(false);
+  private readonly gameAssets = inject(GameAssetPreloaderService);
   private socket!: Socket;
+  private destroyed = false;
+  private preparationCancelled = false;
 
   private readonly transloco = inject(TranslocoService);
 
@@ -49,36 +54,40 @@ export class LobbyComponent implements OnInit, OnDestroy {
     private readonly router: Router,
   ) {}
 
+  readonly preparationProgress = this.gameAssets.progress;
+
   ngOnInit(): void {
     this.socket = socketManager.connect(this.auth.accessToken()!);
-    this.socket.on(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, rooms => this.rooms.set(rooms));
-    this.socket.on(SOCKET_EVENTS.ROOM.JOINED, room => {
+    this.socket.on(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, (rooms) => this.rooms.set(rooms));
+    this.socket.on(SOCKET_EVENTS.ROOM.JOINED, (room) => {
       this.currentRoom.set(room);
       this.searching.set(false);
+      void this.gameAssets.prepare().catch(() => undefined);
     });
-    this.socket.on(SOCKET_EVENTS.ROOM.STATE_UPDATED, room => {
+    this.socket.on(SOCKET_EVENTS.ROOM.STATE_UPDATED, (room) => {
       if (this.currentRoom()?.id === room.id) {
         this.currentRoom.set(room);
         this.searching.set(false);
       }
     });
-    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_STARTED, room => {
+    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_STARTED, (room) => {
       this.currentRoom.set(room);
       this.searching.set(false);
     });
-    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_UPDATED, room => {
+    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_UPDATED, (room) => {
       this.currentRoom.set(room);
       this.searching.set(false);
     });
-    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, room => {
+    this.socket.on(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, (room) => {
       this.currentRoom.set(room);
       this.searching.set(false);
     });
     this.socket.on(SOCKET_EVENTS.ROOM.RETURNED_TO_LOBBY, () => this.currentRoom.set(null));
     this.socket.on(SOCKET_EVENTS.ROOM.LEFT, () => this.currentRoom.set(null));
-    this.socket.on(SOCKET_EVENTS.SESSION.CLAIMED, data =>
-      this.notice.set(this.transloco.translate(data?.message ?? 'session.claimed')));
-    this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, data => {
+    this.socket.on(SOCKET_EVENTS.SESSION.CLAIMED, (data) =>
+      this.notice.set(this.transloco.translate(data?.message ?? 'session.claimed')),
+    );
+    this.socket.on(SOCKET_EVENTS.SESSION.REPLACED, (data) => {
       this.currentRoom.set(null);
       this.error.set('');
       this.notice.set(this.transloco.translate(data?.message ?? 'session.replaced'));
@@ -91,7 +100,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
       }
       void this.router.navigateByUrl('/game');
     });
-    this.socket.on(SOCKET_EVENTS.GAME.ERROR, data => {
+    this.socket.on(SOCKET_EVENTS.GAME.ERROR, (data) => {
       this.error.set(data?.message ?? this.transloco.translate('lobby.errorFallback'));
       this.searching.set(false);
     });
@@ -101,6 +110,8 @@ export class LobbyComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.gameAssets.cancel();
     this.socket?.off(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED);
     this.socket?.off(SOCKET_EVENTS.ROOM.JOINED);
     this.socket?.off(SOCKET_EVENTS.ROOM.STATE_UPDATED);
@@ -115,13 +126,31 @@ export class LobbyComponent implements OnInit, OnDestroy {
     this.socket?.off(SOCKET_EVENTS.GAME.ERROR);
   }
 
-  quickPlay(): void {
-    this.searching.set(true);
+  async quickPlay(): Promise<void> {
+    if (this.preparing() || this.searching() || this.currentRoom()) return;
+    this.preparationCancelled = false;
+    this.preparing.set(true);
     this.error.set('');
-    this.socket.emit(SOCKET_EVENTS.LOBBY.QUICK_PLAY);
+    try {
+      await this.gameAssets.prepare();
+      if (this.destroyed) return;
+      this.preparing.set(false);
+      this.searching.set(true);
+      this.socket.emit(SOCKET_EVENTS.LOBBY.QUICK_PLAY);
+    } catch {
+      if (this.destroyed || this.preparationCancelled) return;
+      this.preparing.set(false);
+      this.error.set(this.transloco.translate('lobby.prepareFailed'));
+    }
   }
 
   leaveRoom(): void {
+    if (this.preparing()) {
+      this.preparationCancelled = true;
+      this.gameAssets.cancel();
+      this.preparing.set(false);
+      return;
+    }
     this.socket.emit(SOCKET_EVENTS.LOBBY.LEAVE_ROOM);
     this.searching.set(false);
   }
