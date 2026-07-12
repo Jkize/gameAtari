@@ -59,3 +59,31 @@ describe('UsersService account linking', () => {
     });
   });
 });
+
+describe('UsersService username errors', () => {
+  const createUsernameService = (existing: { id: string } | null = null) => {
+    const prisma = {
+      user: {
+        findFirst: jest.fn(async () => existing),
+        update: jest.fn(async ({ data }: { data: object }) => ({ id: 'user-1', ...data })),
+      },
+    };
+    return new UsersService(prisma as unknown as PrismaService);
+  };
+
+  it('returns an i18n key for an invalid username', async () => {
+    const action = createUsernameService().setUsername('user-1', 'no spaces');
+
+    await expect(action).rejects.toMatchObject({
+      response: expect.objectContaining({ message: 'auth.usernameInvalid' }),
+    });
+  });
+
+  it('returns an i18n key for a username already in use', async () => {
+    const action = createUsernameService({ id: 'user-2' }).setUsername('user-1', 'Pilot_1');
+
+    await expect(action).rejects.toMatchObject({
+      response: expect.objectContaining({ message: 'auth.usernameInUse' }),
+    });
+  });
+});

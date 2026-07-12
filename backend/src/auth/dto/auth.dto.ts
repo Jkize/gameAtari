@@ -32,7 +32,7 @@ export class PhantomVerifyDto extends PhantomChallengeDto {
 }
 
 export class CompleteProfileDto {
-  @IsString()
-  @Matches(/^[A-Za-z0-9_]{3,20}$/)
+  @IsString({ message: 'auth.usernameInvalid' })
+  @Matches(/^[A-Za-z0-9_]{3,20}$/, { message: 'auth.usernameInvalid' })
   username!: string;
 }

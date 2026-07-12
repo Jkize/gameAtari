@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -92,11 +93,23 @@ export class LoginComponent implements AfterViewInit {
     try {
       await action();
     } catch (error) {
-      this.error.set(
-        error instanceof Error ? error.message : this.transloco.translate('auth.errorFallback'),
-      );
+      this.error.set(this.authErrorMessage(error));
     } finally {
       this.busy.set(false);
     }
+  }
+
+  private authErrorMessage(error: unknown): string {
+    const responseMessage = error instanceof HttpErrorResponse ? error.error?.message : null;
+    const key = typeof responseMessage === 'string'
+      ? responseMessage
+      : Array.isArray(responseMessage) && typeof responseMessage[0] === 'string'
+        ? responseMessage[0]
+        : null;
+    if (key?.startsWith('auth.')) {
+      const translated = this.transloco.translate(key);
+      if (translated !== key) return translated;
+    }
+    return this.transloco.translate('auth.errorFallback');
   }
 }

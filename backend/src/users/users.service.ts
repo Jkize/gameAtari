@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AuthProvider, User } from '@prisma/client';
+import { AuthProvider, Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface GoogleIdentity {
@@ -254,17 +254,24 @@ export class UsersService {
     const username = rawUsername.trim();
     const usernameNormalized = username.toLowerCase();
     if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
-      throw new ConflictException('Username must be 3-20 characters using letters, numbers or underscore');
+      throw new ConflictException('auth.usernameInvalid');
     }
     const existing = await this.prisma.user.findFirst({
       where: { usernameNormalized, NOT: { id: userId } },
       select: { id: true },
     });
-    if (existing) throw new ConflictException('Username is already in use');
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { username, usernameNormalized },
-    });
+    if (existing) throw new ConflictException('auth.usernameInUse');
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data: { username, usernameNormalized },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('auth.usernameInUse');
+      }
+      throw error;
+    }
   }
 
   async phantomWallet(userId: string): Promise<string | null> {

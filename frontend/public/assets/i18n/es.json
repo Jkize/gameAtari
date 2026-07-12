@@ -5,6 +5,8 @@
   "auth.createPilot": "Crear piloto",
   "auth.connectPhantom": "Conectar Phantom",
   "auth.errorFallback": "No fue posible autenticar",
+  "auth.usernameInvalid": "El username debe tener entre 3 y 20 caracteres y usar solo letras, números o guion bajo.",
+  "auth.usernameInUse": "Este username ya está en uso.",
 
   "lobby.eyebrow": "CENTRO DE COMANDO",
   "lobby.heading": "Lobby publico",
