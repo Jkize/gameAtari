@@ -11,6 +11,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
 import { WalletStatus } from '../rewards/rewards.models';
@@ -104,9 +105,10 @@ export class AccountSettingsComponent implements OnChanges, AfterViewChecked {
         }),
       });
       google.accounts.id.renderButton(this.googleButton.nativeElement, {
+        type: 'icon',
         theme: 'filled_black',
-        size: 'medium',
-        width: 180,
+        size: 'large',
+        shape: 'square',
       });
     };
     if ((window as Window & { google?: GoogleIdentityApi }).google) return render();
@@ -123,9 +125,20 @@ export class AccountSettingsComponent implements OnChanges, AfterViewChecked {
     try {
       await action();
     } catch (error) {
-      this.error.set(error instanceof Error ? error.message : this.transloco.translate('account.updateError'));
+      this.error.set(this.accountErrorMessage(error));
     } finally {
       this.busy.set(false);
     }
+  }
+
+  private accountErrorMessage(error: unknown): string {
+    const key = error instanceof HttpErrorResponse && typeof error.error?.message === 'string'
+      ? error.error.message
+      : null;
+    if (key?.startsWith('account.')) {
+      const translated = this.transloco.translate(key);
+      if (translated !== key) return translated;
+    }
+    return this.transloco.translate('account.updateError');
   }
 }

@@ -132,8 +132,9 @@ h2 {
 }
 
 .google-button {
-  min-width: 160px;
-  min-height: 36px;
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .token-balance {

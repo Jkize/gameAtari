@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -7,7 +8,7 @@ import { RewardsService } from '../rewards/rewards.service';
 import { AccountSettingsComponent } from './account-settings.component';
 
 const es = {
-  'account.eyebrow': 'ACCOUNT',
+  'account.eyebrow': 'CUENTA',
   'account.title': 'Cuenta',
   'account.closeAriaLabel': 'Cerrar',
   'account.linked': 'Vinculado',
@@ -17,6 +18,7 @@ const es = {
   'account.linkPhantom': 'Vincular Phantom',
   'account.loadError': 'No pudimos cargar tu cuenta.',
   'account.updateError': 'No se pudo actualizar la cuenta.',
+  'account.accountInUse': 'La cuenta que quieres vincular ya está en uso.',
 };
 
 describe('AccountSettingsComponent', () => {
@@ -31,7 +33,7 @@ describe('AccountSettingsComponent', () => {
     },
   };
 
-  const setup = async () => {
+  const setup = async (initialStatus = status) => {
     const auth = {
       linkPhantom: vi.fn().mockResolvedValue({
         ...status,
@@ -41,7 +43,7 @@ describe('AccountSettingsComponent', () => {
       linkGoogle: vi.fn(),
     };
     const rewards = {
-      getWalletStatus: vi.fn().mockReturnValue(of(status)),
+      getWalletStatus: vi.fn().mockReturnValue(of(initialStatus)),
     };
     await TestBed.configureTestingModule({
       imports: [
@@ -75,5 +77,33 @@ describe('AccountSettingsComponent', () => {
 
     expect(auth.linkPhantom).toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Wallet verificada');
+  });
+
+  it('keeps the Google identity and status beside the sign-in button', async () => {
+    const { fixture } = await setup({
+      ...status,
+      google: { linked: false },
+    });
+
+    const method = fixture.nativeElement.querySelector('.method');
+    expect(method.querySelector('.ti-brand-google')).toBeTruthy();
+    expect(method.querySelector('.method-info').textContent).toContain('Google');
+    expect(method.querySelector('.method-info').textContent).toContain('No vinculado');
+    expect(method.querySelector('.google-button')).toBeTruthy();
+  });
+
+  it('translates an account error key returned by the backend', async () => {
+    const { fixture, auth } = await setup();
+    auth.linkPhantom.mockRejectedValueOnce(new HttpErrorResponse({
+      status: 409,
+      error: { message: 'account.accountInUse' },
+    }));
+
+    fixture.nativeElement.querySelector('.action').click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent)
+      .toContain('La cuenta que quieres vincular ya está en uso.');
   });
 });

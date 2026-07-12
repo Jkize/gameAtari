@@ -127,7 +127,7 @@ export class UsersService {
         select: { userId: true },
       });
       if (linkedElsewhere && linkedElsewhere.userId !== userId) {
-        throw new ConflictException('This Google account is already linked to another user');
+        throw new ConflictException('account.accountInUse');
       }
 
       const existingGoogle = await tx.authAccount.findFirst({
@@ -135,7 +135,7 @@ export class UsersService {
         select: { providerAccountId: true },
       });
       if (existingGoogle && existingGoogle.providerAccountId !== identity.subject) {
-        throw new ConflictException('This user already has a Google account linked');
+        throw new ConflictException('account.googleAlreadyLinked');
       }
 
       await tx.authAccount.upsert({
@@ -172,7 +172,7 @@ export class UsersService {
         select: { userId: true },
       });
       if (linkedWallet && linkedWallet.userId !== userId) {
-        throw new ConflictException('This Phantom wallet is already linked to another user');
+        throw new ConflictException('account.accountInUse');
       }
 
       const linkedAccount = await tx.authAccount.findUnique({
@@ -185,7 +185,7 @@ export class UsersService {
         select: { userId: true },
       });
       if (linkedAccount && linkedAccount.userId !== userId) {
-        throw new ConflictException('This Phantom wallet is already linked to another user');
+        throw new ConflictException('account.accountInUse');
       }
 
       const userWallet = await tx.wallet.findUnique({
@@ -198,7 +198,7 @@ export class UsersService {
         select: { address: true, verifiedAt: true },
       });
       if (userWallet && userWallet.address !== walletAddress) {
-        throw new ConflictException('This user already has a verified Phantom wallet');
+        throw new ConflictException('account.phantomAlreadyLinked');
       }
 
       const userPhantomAccount = await tx.authAccount.findFirst({
@@ -206,7 +206,7 @@ export class UsersService {
         select: { providerAccountId: true },
       });
       if (userPhantomAccount && userPhantomAccount.providerAccountId !== walletAddress) {
-        throw new ConflictException('This user already has a Phantom account linked');
+        throw new ConflictException('account.phantomAlreadyLinked');
       }
 
       await tx.wallet.upsert({

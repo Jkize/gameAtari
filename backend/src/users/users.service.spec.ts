@@ -51,7 +51,11 @@ describe('UsersService account linking', () => {
       linkedWallet: { userId: 'user-2' },
     });
 
-    await expect(service.linkPhantomWallet('user-1', 'wallet-1', 'message-1'))
-      .rejects.toBeInstanceOf(ConflictException);
+    const action = service.linkPhantomWallet('user-1', 'wallet-1', 'message-1');
+
+    await expect(action).rejects.toBeInstanceOf(ConflictException);
+    await expect(action).rejects.toMatchObject({
+      response: expect.objectContaining({ message: 'account.accountInUse' }),
+    });
   });
 });

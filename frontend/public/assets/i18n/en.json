@@ -175,6 +175,9 @@
   "account.linkPhantom": "Link Phantom",
   "account.loadError": "We couldn't load your account.",
   "account.updateError": "Couldn't update the account.",
+  "account.accountInUse": "The account you want to link is already in use.",
+  "account.googleAlreadyLinked": "You already have a Google account linked.",
+  "account.phantomAlreadyLinked": "You already have a Phantom account linked.",
 
   "stats.ariaLabel": "Public game status",
   "stats.online": "online",

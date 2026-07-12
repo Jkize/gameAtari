@@ -165,7 +165,7 @@
 
   "rewards.solscan.viewLink": "Ver en Solscan",
 
-  "account.eyebrow": "ACCOUNT",
+  "account.eyebrow": "CUENTA",
   "account.title": "Cuenta",
   "account.closeAriaLabel": "Cerrar",
   "account.linked": "Vinculado",
@@ -175,6 +175,9 @@
   "account.linkPhantom": "Vincular Phantom",
   "account.loadError": "No pudimos cargar tu cuenta.",
   "account.updateError": "No se pudo actualizar la cuenta.",
+  "account.accountInUse": "La cuenta que quieres vincular ya está en uso.",
+  "account.googleAlreadyLinked": "Ya tienes una cuenta de Google vinculada.",
+  "account.phantomAlreadyLinked": "Ya tienes una cuenta de Phantom vinculada.",
 
   "stats.ariaLabel": "Estado publico del juego",
   "stats.online": "online",

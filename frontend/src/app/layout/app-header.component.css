@@ -22,9 +22,11 @@
   gap: 6px;
 }
 
-.brand i {
-  font-size: 18px;
-  color: var(--color-accent);
+.brand img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
 }
 
 .brand .wordmark {
