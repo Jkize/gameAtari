@@ -1,5 +1,0 @@
-
-
-1. The icons superpower is not looking good. We maybe make in frontend a little more big (see image)
-4. Improve when the tank is down
- ere
