@@ -136,6 +136,10 @@ body {
   font-family: var(--font-sans);
 }
 
+html {
+  font-size: clamp(16px, calc(0.55vw + 9.5px), 20px);
+}
+
 .ui-page {
   width: min(var(--ui-page-max-width, 1060px), calc(100% - 40px));
   margin-inline: auto;
@@ -145,6 +149,13 @@ body {
 .ui-page--compact {
   --ui-page-max-width: 980px;
   --ui-page-padding: 48px;
+}
+
+@media (min-width: 1440px) {
+  .ui-page--compact {
+    --ui-page-max-width: 1220px;
+    --ui-page-padding: 64px;
+  }
 }
 
 .ui-page--wide {

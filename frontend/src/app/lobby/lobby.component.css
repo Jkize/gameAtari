@@ -42,10 +42,8 @@ h1 {
 }
 
 @media (max-width: 900px) {
-  .lobby-grid {
-    flex-direction: column;
-  }
   .lobby-main {
-    justify-content: flex-start;
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
