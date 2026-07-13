@@ -7,12 +7,13 @@ const THUMB_RADIUS = 26;
 const MOVE_DEAD_ZONE = 8;
 const AIM_DEAD_ZONE = 14;
 
-const FIRE_RADIUS = 44;
-const FIRE_HIT_RADIUS = 52;
+const FIRE_RADIUS = 40;
+const FIRE_HIT_RADIUS = 48;
 const ACTION_RADIUS = 26;
 // Touch targets must be at least 56 px wide, so hit radius stays >= 28.
 const ACTION_HIT_RADIUS = 32;
-const ARC_RADIUS = 106;
+// Distance from the aim-stick center to every action-button center.
+const BUTTON_ARC_RADIUS = 118;
 
 const NORMAL_ALPHA = 0.6;
 const PRESSED_ALPHA = 0.95;
@@ -39,20 +40,30 @@ interface TouchLayout {
 }
 
 // Left-handed support later only needs `mirrored: true` plumbed in here.
+// Standard twin-stick layout: both sticks mirrored at the same offsets, and
+// the action cluster arcs over the aim stick from top toward screen center:
+// FIRE (top), then DASH, SHIELD, RELOAD.
 function buildLayout(width: number, mirrored: boolean): TouchLayout {
   const rightX = (fromEdge: number): number => (mirrored ? fromEdge : width - fromEdge);
   const leftX = (fromEdge: number): number => (mirrored ? width - fromEdge : fromEdge);
-  const inward = mirrored ? 1 : -1;
-  const fire: Placement = { x: rightX(112), y: GAME_VIEW_HEIGHT - 128 };
-  const diagonal = Math.SQRT1_2 * ARC_RADIUS;
+  const stickY = GAME_VIEW_HEIGHT - 160;
+  const aimAnchor: Placement = { x: rightX(170), y: stickY };
+  const inward = mirrored ? -1 : 1;
+  const arcAt = (deg: number): Placement => {
+    const rad = Phaser.Math.DegToRad(deg);
+    return {
+      x: aimAnchor.x + Math.cos(rad) * BUTTON_ARC_RADIUS * inward,
+      y: aimAnchor.y - Math.sin(rad) * BUTTON_ARC_RADIUS,
+    };
+  };
   return {
-    moveAnchor: { x: leftX(170), y: GAME_VIEW_HEIGHT - 160 },
-    aimAnchor: { x: rightX(330), y: GAME_VIEW_HEIGHT - 170 },
-    fire,
+    moveAnchor: { x: leftX(170), y: stickY },
+    aimAnchor,
+    fire: arcAt(90),
     actions: {
-      reload: { x: fire.x + ARC_RADIUS * inward, y: fire.y },
-      shield: { x: fire.x + diagonal * inward, y: fire.y - diagonal },
-      dash: { x: fire.x, y: fire.y - ARC_RADIUS },
+      dash: arcAt(128),
+      shield: arcAt(166),
+      reload: arcAt(204),
     },
   };
 }
