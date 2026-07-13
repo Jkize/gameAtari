@@ -1,0 +1,30 @@
+BACKEND: Ejecutar
+
+docker compose build backend (en el host con deploy)
+docker compose up -d backend (iniciar)
+curl --fail http://127.0.0.1:3000/health (Check)
+curl --fail https://api.playtankarena.com/health  *check
+
+Cada ez al subir cambios
+
+git pull --ff-only
+docker compose build backend
+docker compose run --rm backend npm run prisma:deploy
+docker compose up -d backend
+docker compose logs --tail=100 backend
+
+#si se actualiza caddyfile
+
+sudo cp Caddyfile /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+
+#MODIFICACION CODIGO BACKEND 
+git pull --ff-only
+docker compose up -d --build backend
+
+#si modifique prisma
+git pull --ff-only
+docker compose build backend
+docker compose run --rm backend npm run prisma:deploy
+docker compose up -d backend
