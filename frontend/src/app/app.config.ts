@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideTransloco } from '@jsverse/transloco';
 import { routes } from './app.routes';
 import { TranslocoHttpLoader } from './transloco-loader';
+import { provideServiceWorker } from '@angular/service-worker';
 
 const storedLang = typeof localStorage !== 'undefined'
   ? (localStorage.getItem('tank-arena:lang') ?? 'en')
@@ -22,6 +23,9 @@ export const appConfig: ApplicationConfig = {
         prodMode: !isDevMode(),
       },
       loader: TranslocoHttpLoader,
-    }),
+    }), provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          }),
   ]
 };

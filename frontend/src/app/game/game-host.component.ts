@@ -53,6 +53,12 @@ import { GameSettingsService } from './game-settings.service';
           <div class="panel-footer">{{ saveLabelKey | transloco }}</div>
         </section>
       }
+
+      <div class="rotate-overlay" aria-hidden="true">
+        <span class="rotate-icon">⟳</span>
+        <strong>{{ 'game.rotateTitle' | transloco }}</strong>
+        <span>{{ 'game.rotateHint' | transloco }}</span>
+      </div>
     </div>
   `,
   styles: [`
@@ -61,6 +67,7 @@ import { GameSettingsService } from './game-settings.service';
       display: flex;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       padding: 5vh 5vw;
       align-items: center;
       justify-content: center;
@@ -86,7 +93,45 @@ import { GameSettingsService } from './game-settings.service';
 
     @media (pointer: coarse) {
       :host {
-        padding: 0;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+    }
+
+    .rotate-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      color: #f6ead1;
+      background: rgba(24, 19, 14, 0.97);
+    }
+
+    .rotate-overlay strong {
+      color: #83e5ef;
+      font-size: 20px;
+      letter-spacing: 0.08em;
+    }
+
+    .rotate-icon {
+      font-size: 56px;
+      color: #ffd98a;
+      animation: rotate-nudge 1.6s ease-in-out infinite;
+    }
+
+    @keyframes rotate-nudge {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-90deg); }
+    }
+
+    @media (pointer: coarse) and (orientation: portrait) {
+      .rotate-overlay {
+        display: flex;
       }
     }
 
@@ -173,6 +218,26 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     void this.router.navigateByUrl('/lobby');
   };
 
+  // Best-effort on the first touch: Android honors fullscreen + landscape
+  // lock; iOS Safari supports neither, so failures stay silent and the
+  // portrait rotate overlay covers that case.
+  private readonly tryFullscreenLandscape = (): void => {
+    this.containerRef.nativeElement.removeEventListener('pointerdown', this.tryFullscreenLandscape);
+    void (async () => {
+      try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+        }
+        const orientation = screen.orientation as ScreenOrientation & {
+          lock?: (orientation: string) => Promise<void>;
+        };
+        await orientation.lock?.('landscape');
+      } catch {
+        // Unsupported (iOS) or rejected; nothing to do.
+      }
+    })();
+  };
+
   private readonly transloco = inject(TranslocoService);
 
   constructor(
@@ -184,6 +249,9 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     registerTranslate((key: string, params?: Record<string, unknown>) => this.transloco.translate(key, params));
     window.addEventListener('tank-arena:return-lobby', this.returnToLobby);
+    if (window.matchMedia?.('(pointer: coarse)').matches) {
+      this.containerRef.nativeElement.addEventListener('pointerdown', this.tryFullscreenLandscape);
+    }
     socketManager.connect(this.auth.accessToken() ?? undefined);
 
     this.langLoad = this.transloco.load(this.transloco.getActiveLang()).subscribe(() => {
@@ -196,6 +264,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     this.langLoad?.unsubscribe();
     if (this.saveTimer !== undefined) window.clearTimeout(this.saveTimer);
     window.removeEventListener('tank-arena:return-lobby', this.returnToLobby);
+    this.containerRef.nativeElement.removeEventListener('pointerdown', this.tryFullscreenLandscape);
     this.game?.destroy(true);
   }
 

@@ -33,6 +33,9 @@
   "nav.userMenu": "Menú de usuario",
   "nav.selectLanguage": "Seleccionar idioma",
 
+  "game.rotateTitle": "Gira tu dispositivo",
+  "game.rotateHint": "Juega en horizontal para una mejor experiencia",
+
   "settings.menu": "MENU",
   "settings.close": "Cerrar configuracion",
   "settings.soundEffects": "Efectos de sonido",
