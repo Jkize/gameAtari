@@ -7,6 +7,7 @@
     [attr.aria-label]="'nav.userMenu' | transloco"
   >
     <div class="panel-header">
+      <span class="panel-title">{{ 'settings.menu' | transloco }}</span>
       <button
         #closeButton
         type="button"
@@ -24,6 +25,24 @@
       <a routerLink="/matches/recent" routerLinkActive="active" (click)="close()">{{ 'nav.recentMatches' | transloco }}</a>
       <button type="button" class="action-link" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
     </nav>
+
+    <div class="theme-row">
+      <span>{{
+        (theme.current() === 'dark' ? 'settings.switchToLight' : 'settings.switchToDark') | transloco
+      }}</span>
+      <button
+        type="button"
+        class="theme-toggle"
+        role="switch"
+        [attr.aria-checked]="theme.current() === 'dark'"
+        [attr.aria-label]="(theme.current() === 'dark' ? 'settings.switchToLight' : 'settings.switchToDark') | transloco"
+        (click)="toggleTheme()"
+      >
+        <i class="ti ti-sun sun" aria-hidden="true"></i>
+        <i class="ti ti-moon moon" aria-hidden="true"></i>
+        <span class="toggle-thumb" aria-hidden="true"></span>
+      </button>
+    </div>
 
     <app-lang-switcher />
 

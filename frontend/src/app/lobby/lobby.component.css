@@ -22,6 +22,7 @@ h1 {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 30px;
+  flex: 1;
   min-width: 0;
 }
 

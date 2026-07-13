@@ -6,6 +6,7 @@ import { LanguageSwitcherComponent } from '../shared/language-switcher.component
 import { MobileNavStateService } from './mobile-nav-state.service';
 import { SessionExitService } from './session-exit.service';
 import { AccountModalStateService } from '../account/account-modal-state.service';
+import { ThemeService } from '../shared/theme.service';
 
 @Component({
   selector: 'app-mobile-nav',
@@ -19,6 +20,7 @@ export class MobileNavigationComponent {
 
   private readonly sessionExit = inject(SessionExitService);
   private readonly accountModal = inject(AccountModalStateService);
+  readonly theme = inject(ThemeService);
 
   constructor(
     readonly mobileNavState: MobileNavStateService,
@@ -38,6 +40,10 @@ export class MobileNavigationComponent {
   openAccount(): void {
     this.close();
     this.accountModal.show();
+  }
+
+  toggleTheme(): void {
+    this.theme.toggle();
   }
 
   async logout(): Promise<void> {
