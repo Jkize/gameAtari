@@ -9,11 +9,15 @@ const AIM_DEAD_ZONE = 14;
 
 const FIRE_RADIUS = 40;
 const FIRE_HIT_RADIUS = 48;
-const ACTION_RADIUS = 26;
+const ACTION_RADIUS = 32;
 // Touch targets must be at least 56 px wide, so hit radius stays >= 28.
-const ACTION_HIT_RADIUS = 32;
+const ACTION_HIT_RADIUS = 38;
 // Distance from the aim-stick center to every action-button center.
-const BUTTON_ARC_RADIUS = 118;
+const BUTTON_ARC_RADIUS = 126;
+const SETTINGS_RADIUS = 18;
+const SETTINGS_HIT_RADIUS = 26;
+// Sits just below the HP panel (210x56, top-left corner of the HUD).
+const SETTINGS_POSITION = { x: 30, y: 86 };
 
 const NORMAL_ALPHA = 0.6;
 const PRESSED_ALPHA = 0.95;
@@ -93,6 +97,8 @@ export class TouchControls {
 
   private gfx!: Phaser.GameObjects.Graphics;
   private fireIcon: Phaser.GameObjects.Image | null = null;
+  private settingsIcon: Phaser.GameObjects.Text | null = null;
+  private settingsPointerId: number | null = null;
   private layout!: TouchLayout;
   private visible = false;
   private lastAimAngle: number | null = null;
@@ -109,6 +115,15 @@ export class TouchControls {
 
   private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
     if (!this.visible || pointer.y > GAME_VIEW_HEIGHT) return;
+
+    const distToSettings = Phaser.Math.Distance.Between(
+      pointer.x, pointer.y, SETTINGS_POSITION.x, SETTINGS_POSITION.y,
+    );
+    if (distToSettings <= SETTINGS_HIT_RADIUS) {
+      this.settingsPointerId = pointer.id;
+      window.dispatchEvent(new CustomEvent('tank-arena:open-settings'));
+      return;
+    }
 
     const distToFire = Phaser.Math.Distance.Between(
       pointer.x, pointer.y, this.layout.fire.x, this.layout.fire.y,
@@ -148,6 +163,10 @@ export class TouchControls {
   };
 
   private readonly onPointerUp = (pointer: Phaser.Input.Pointer): void => {
+    if (pointer.id === this.settingsPointerId) {
+      this.settingsPointerId = null;
+      return;
+    }
     if (pointer.id === this.firePointerId) {
       this.firePointerId = null;
       return;
@@ -180,6 +199,14 @@ export class TouchControls {
         : this.createIcon(`hud-${key}`, placement, ACTION_RADIUS * 1.35);
       this.buttons.push({ key, x: placement.x, y: placement.y, icon, pressedPointerId: null });
     }
+
+    this.settingsIcon = this.scene.add.text(
+      SETTINGS_POSITION.x, SETTINGS_POSITION.y, '⚙', {
+        fontSize: '20px',
+        color: '#83e5ef',
+      },
+    ).setOrigin(0.5).setDepth(CONTROLS_DEPTH + 1).setScrollFactor(0)
+      .setAlpha(NORMAL_ALPHA).setVisible(false);
 
     this.scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown);
     this.scene.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove);
@@ -223,6 +250,8 @@ export class TouchControls {
     this.gfx?.destroy();
     this.fireIcon?.destroy();
     this.fireIcon = null;
+    this.settingsIcon?.destroy();
+    this.settingsIcon = null;
     for (const button of this.buttons) button.icon?.destroy();
     this.buttons.length = 0;
   }
@@ -250,11 +279,13 @@ export class TouchControls {
     if (this.visible === visible) return;
     this.visible = visible;
     this.fireIcon?.setVisible(visible);
+    this.settingsIcon?.setVisible(visible);
     for (const button of this.buttons) button.icon?.setVisible(visible);
     if (!visible) {
       this.resetStick(this.moveStick);
       this.resetStick(this.aimStick);
       this.firePointerId = null;
+      this.settingsPointerId = null;
       this.pendingActions.dash = false;
       this.pendingActions.shield = false;
       this.pendingActions.reload = false;
@@ -269,6 +300,7 @@ export class TouchControls {
     this.drawStick(this.moveStick, this.layout.moveAnchor);
     this.drawStick(this.aimStick, this.layout.aimAnchor);
     this.drawFireButton();
+    this.drawSettingsButton();
 
     for (const button of this.buttons) {
       const pressed = button.pressedPointerId !== null;
@@ -305,6 +337,16 @@ export class TouchControls {
       this.gfx.fillStyle(ICON_COLOR, alpha);
       this.gfx.fillCircle(x, y, 2.5);
     }
+  }
+
+  private drawSettingsButton(): void {
+    const pressed = this.settingsPointerId !== null;
+    const alpha = pressed ? PRESSED_ALPHA : NORMAL_ALPHA;
+    this.gfx.fillStyle(BUTTON_FILL_COLOR, alpha * 0.75);
+    this.gfx.fillCircle(SETTINGS_POSITION.x, SETTINGS_POSITION.y, SETTINGS_RADIUS);
+    this.gfx.lineStyle(2, BUTTON_BORDER_COLOR, alpha);
+    this.gfx.strokeCircle(SETTINGS_POSITION.x, SETTINGS_POSITION.y, SETTINGS_RADIUS);
+    this.settingsIcon?.setAlpha(alpha);
   }
 
   private drawReloadIcon(x: number, y: number, alpha: number): void {

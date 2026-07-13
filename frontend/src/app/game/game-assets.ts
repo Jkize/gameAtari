@@ -6,7 +6,9 @@ export interface GameTextureSize {
 export interface PhaserGameAsset {
   readonly type: 'audio' | 'image' | 'svg';
   readonly key: string;
-  readonly path: string;
+  // Audio entries list one URL per format; the loader picks the first one
+  // the browser can decode (iOS Safari cannot play OGG, so MP3 is required).
+  readonly path: string | string[];
   readonly textureSize?: GameTextureSize;
 }
 
@@ -122,7 +124,10 @@ export const PHASER_GAME_ASSETS: readonly PhaserGameAsset[] = [
   ].map(([key, file]) => ({
     type: 'audio' as const,
     key,
-    path: `assets/sounds/${file}`,
+    path: [
+      `assets/sounds/${file}`,
+      `assets/sounds/${file.replace(/\.ogg$/, '.mp3')}`,
+    ],
   })),
 ];
 
@@ -147,7 +152,7 @@ export const WEAPON_OVERLAY_TEMPLATE_PATHS = {
 } as const;
 
 export const GAME_PUBLIC_ASSET_PATHS = [
-  ...PHASER_GAME_ASSETS.map((asset) => asset.path),
+  ...PHASER_GAME_ASSETS.flatMap((asset) => (Array.isArray(asset.path) ? asset.path : [asset.path])),
   ...Object.values(TANK_TEMPLATE_PATHS),
   SHIELD_TEMPLATE_PATH,
   ...Object.values(WEAPON_OVERLAY_TEMPLATE_PATHS),

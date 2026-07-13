@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AppHeaderComponent } from './app-header.component';
 import { MobileNavStateService } from './mobile-nav-state.service';
+import { APP_AUTHOR, APP_VERSION } from '../shared/app-version';
 
 @Component({
   selector: 'app-layout',
@@ -11,5 +12,8 @@ import { MobileNavStateService } from './mobile-nav-state.service';
   styleUrl: './app-layout.component.css',
 })
 export class AppLayoutComponent {
+  protected readonly appVersion = APP_VERSION;
+  protected readonly appAuthor = APP_AUTHOR;
+
   constructor(readonly mobileNavState: MobileNavStateService) {}
 }

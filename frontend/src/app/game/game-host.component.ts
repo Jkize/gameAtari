@@ -218,6 +218,10 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     void this.router.navigateByUrl('/lobby');
   };
 
+  private readonly openSettingsFromGame = (): void => {
+    this.toggleSettings(true);
+  };
+
   // Best-effort on the first touch: Android honors fullscreen + landscape
   // lock; iOS Safari supports neither, so failures stay silent and the
   // portrait rotate overlay covers that case.
@@ -258,6 +262,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     registerTranslate((key: string, params?: Record<string, unknown>) => this.transloco.translate(key, params));
     window.addEventListener('tank-arena:return-lobby', this.returnToLobby);
+    window.addEventListener('tank-arena:open-settings', this.openSettingsFromGame);
     if (window.matchMedia?.('(pointer: coarse)').matches) {
       this.containerRef.nativeElement.addEventListener('pointerdown', this.tryFullscreenLandscape);
     }
@@ -276,6 +281,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     this.langLoad?.unsubscribe();
     if (this.saveTimer !== undefined) window.clearTimeout(this.saveTimer);
     window.removeEventListener('tank-arena:return-lobby', this.returnToLobby);
+    window.removeEventListener('tank-arena:open-settings', this.openSettingsFromGame);
     this.containerRef.nativeElement.removeEventListener('pointerdown', this.tryFullscreenLandscape);
     window.removeEventListener('resize', this.refreshScale);
     window.removeEventListener('orientationchange', this.refreshScale);

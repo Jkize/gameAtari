@@ -10,8 +10,8 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     PHASER_GAME_ASSETS.forEach((asset) => {
       if (asset.type === 'audio') this.load.audio(asset.key, asset.path);
-      else if (asset.type === 'image') this.load.image(asset.key, asset.path);
-      else this.load.svg(asset.key, asset.path, asset.textureSize);
+      else if (asset.type === 'image') this.load.image(asset.key, asset.path as string);
+      else this.load.svg(asset.key, asset.path as string, asset.textureSize);
     });
   }
 
