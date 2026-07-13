@@ -238,6 +238,15 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     })();
   };
 
+  // iOS Safari reports stale viewport sizes right after rotation or browser
+  // bar collapse, leaving the FIT-scaled canvas larger than its container and
+  // clipping the HUD edges. Re-measuring shortly after the event fixes it.
+  private readonly refreshScale = (): void => {
+    if (this.scaleRefreshTimer !== undefined) window.clearTimeout(this.scaleRefreshTimer);
+    this.scaleRefreshTimer = window.setTimeout(() => this.game?.scale.refresh(), 250);
+  };
+  private scaleRefreshTimer?: number;
+
   private readonly transloco = inject(TranslocoService);
 
   constructor(
@@ -252,6 +261,9 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     if (window.matchMedia?.('(pointer: coarse)').matches) {
       this.containerRef.nativeElement.addEventListener('pointerdown', this.tryFullscreenLandscape);
     }
+    window.addEventListener('resize', this.refreshScale);
+    window.addEventListener('orientationchange', this.refreshScale);
+    window.visualViewport?.addEventListener('resize', this.refreshScale);
     socketManager.connect(this.auth.accessToken() ?? undefined);
 
     this.langLoad = this.transloco.load(this.transloco.getActiveLang()).subscribe(() => {
@@ -265,6 +277,10 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     if (this.saveTimer !== undefined) window.clearTimeout(this.saveTimer);
     window.removeEventListener('tank-arena:return-lobby', this.returnToLobby);
     this.containerRef.nativeElement.removeEventListener('pointerdown', this.tryFullscreenLandscape);
+    window.removeEventListener('resize', this.refreshScale);
+    window.removeEventListener('orientationchange', this.refreshScale);
+    window.visualViewport?.removeEventListener('resize', this.refreshScale);
+    if (this.scaleRefreshTimer !== undefined) window.clearTimeout(this.scaleRefreshTimer);
     this.game?.destroy(true);
   }
 

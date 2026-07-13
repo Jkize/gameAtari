@@ -5,7 +5,9 @@
       "PowerShell(npm run build --prefix e:\\\\PROJECTS\\\\gameAtari\\\\frontend)",
       "mcp__plugin_engram_engram__mem_save",
       "mcp__plugin_engram_engram__mem_session_summary",
-      "PowerShell(\\(Get-Content e:\\\\PROJECTS\\\\gameAtari\\\\frontend\\\\public\\\\manifest.webmanifest -Raw\\) -replace '\"purpose\": \"maskable any\"', '\"purpose\": \"any\"' | Set-Content e:\\\\PROJECTS\\\\gameAtari\\\\frontend\\\\public\\\\manifest.webmanifest -Encoding utf8 -NoNewline)"
+      "PowerShell(\\(Get-Content e:\\\\PROJECTS\\\\gameAtari\\\\frontend\\\\public\\\\manifest.webmanifest -Raw\\) -replace '\"purpose\": \"maskable any\"', '\"purpose\": \"any\"' | Set-Content e:\\\\PROJECTS\\\\gameAtari\\\\frontend\\\\public\\\\manifest.webmanifest -Encoding utf8 -NoNewline)",
+      "Skill(code-review)",
+      "Skill(code-review:*)"
     ]
   }
 }
