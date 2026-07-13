@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, inject, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { TankGame } from './TankGame';
@@ -18,7 +18,7 @@ import { GameSettingsService } from './game-settings.service';
     <div class="game-wrapper" [class]="scenarioClass">
       <div #gameContainer id="game-container"></div>
 
-      @if (settingsOpen) {
+      @if (settingsOpen()) {
         <section
           class="settings-panel"
           aria-label="Game settings"
@@ -38,7 +38,7 @@ import { GameSettingsService } from './game-settings.service';
 
           <label class="volume-control" for="sfx-volume">
             <span>{{ 'settings.soundEffects' | transloco }}</span>
-            <strong>{{ sfxPercent }}%</strong>
+            <strong>{{ sfxPercent() }}%</strong>
           </label>
           <input
             id="sfx-volume"
@@ -46,11 +46,11 @@ import { GameSettingsService } from './game-settings.service';
             min="0"
             max="100"
             step="1"
-            [value]="sfxPercent"
+            [value]="sfxPercent()"
             (input)="onSfxVolumeInput($event)"
           >
 
-          <div class="panel-footer">{{ saveLabelKey | transloco }}</div>
+          <div class="panel-footer">{{ saveLabelKey() | transloco }}</div>
         </section>
       }
 
@@ -202,10 +202,12 @@ import { GameSettingsService } from './game-settings.service';
 })
 export class GameHostComponent implements AfterViewInit, OnDestroy {
   protected readonly scenarioClass = ACTIVE_BACKGROUND_SCENARIO.cssClass;
-  protected settingsOpen = false;
+  // Signals: this app is zoneless, and these fields are mutated from
+  // non-template contexts (window events from Phaser, async saves).
+  protected readonly settingsOpen = signal(false);
   protected settings: GameSettings = { ...DEFAULT_GAME_SETTINGS };
-  protected sfxPercent = Math.round(DEFAULT_GAME_SETTINGS.sfxVolume * 100);
-  protected saveLabelKey = 'settings.saved';
+  protected readonly sfxPercent = signal(Math.round(DEFAULT_GAME_SETTINGS.sfxVolume * 100));
+  protected readonly saveLabelKey = signal('settings.saved');
 
   @ViewChild('gameContainer', { static: true })
   private containerRef!: ElementRef<HTMLDivElement>;
@@ -294,11 +296,11 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   protected onWindowKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Escape') return;
     event.preventDefault();
-    this.toggleSettings(!this.settingsOpen);
+    this.toggleSettings(!this.settingsOpen());
   }
 
   protected toggleSettings(open: boolean): void {
-    this.settingsOpen = open;
+    this.settingsOpen.set(open);
     window.dispatchEvent(new CustomEvent('tank-arena:settings-menu', {
       detail: { open },
     }));
@@ -307,7 +309,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   protected onSfxVolumeInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.applySettings({ ...this.settings, sfxVolume: clampVolume(Number(input.value) / 100) });
-    this.saveLabelKey = 'settings.saving';
+    this.saveLabelKey.set('settings.saving');
     if (this.saveTimer !== undefined) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
       void this.saveSettings();
@@ -326,16 +328,16 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   private async saveSettings(): Promise<void> {
     try {
       await this.gameSettings.save(this.settings, this.auth.accessToken());
-      this.saveLabelKey = this.auth.accessToken() ? 'settings.savedAccount' : 'settings.savedDevice';
+      this.saveLabelKey.set(this.auth.accessToken() ? 'settings.savedAccount' : 'settings.savedDevice');
     } catch {
       this.gameSettings.storeLocal(this.settings);
-      this.saveLabelKey = 'settings.savedDevice';
+      this.saveLabelKey.set('settings.savedDevice');
     }
   }
 
   private applySettings(settings: GameSettings): void {
     this.settings = { sfxVolume: clampVolume(settings.sfxVolume) };
-    this.sfxPercent = Math.round(this.settings.sfxVolume * 100);
+    this.sfxPercent.set(Math.round(this.settings.sfxVolume * 100));
     window.dispatchEvent(new CustomEvent('tank-arena:settings-changed', {
       detail: this.settings,
     }));

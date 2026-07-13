@@ -8,7 +8,8 @@
       "PowerShell(\\(Get-Content e:\\\\PROJECTS\\\\gameAtari\\\\frontend\\\\public\\\\manifest.webmanifest -Raw\\) -replace '\"purpose\": \"maskable any\"', '\"purpose\": \"any\"' | Set-Content e:\\\\PROJECTS\\\\gameAtari\\\\frontend\\\\public\\\\manifest.webmanifest -Encoding utf8 -NoNewline)",
       "Skill(code-review)",
       "Skill(code-review:*)",
-      "PowerShell(ffmpeg -version)"
+      "PowerShell(ffmpeg -version)",
+      "PowerShell(Set-Location e:\\\\PROJECTS\\\\gameAtari; git log --oneline -3; git ls-files frontend/public/assets/sounds | Select-Object -First 4; \\(git ls-files frontend/public/assets/sounds | Measure-Object -Line\\).Lines; git status --short | Select-Object -First 10)"
     ]
   }
 }

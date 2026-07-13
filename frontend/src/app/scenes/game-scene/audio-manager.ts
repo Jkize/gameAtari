@@ -55,13 +55,29 @@ export class AudioManager {
     this.setVolume((event as GameSettingsChangedEvent).detail.sfxVolume);
   };
 
+  // iOS keeps the WebAudio context suspended until a user gesture and
+  // suspends it again after backgrounding; resume it on both signals.
+  private readonly resumeAudioContext = (): void => {
+    const context = (this.scene.sound as { context?: AudioContext }).context;
+    if (context && context.state !== 'running') {
+      void context.resume();
+    }
+  };
+  private readonly onVisibilityChange = (): void => {
+    if (!document.hidden) this.resumeAudioContext();
+  };
+
   constructor(private readonly scene: Phaser.Scene) {
     this.setVolume(readStoredGameSettings().sfxVolume);
     window.addEventListener('tank-arena:settings-changed', this.onSettingsChanged);
+    this.scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.resumeAudioContext);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   destroy(): void {
     window.removeEventListener('tank-arena:settings-changed', this.onSettingsChanged);
+    this.scene.input.off(Phaser.Input.Events.POINTER_DOWN, this.resumeAudioContext);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   playGrenadeLaunch(origin: SoundPoint, listener: SoundPoint, isLocalPlayer: boolean): void {
