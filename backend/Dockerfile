@@ -13,7 +13,7 @@ COPY src ./src
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm run prisma:generate \
     && npm run build
 
-FROM node:22-alpine AS runtime
+FROM node:22-alpine AS production-dependencies
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -25,7 +25,18 @@ RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm ci --omit=dev
     && DATABASE_URL=postgresql://build:build@localhost:5432/build npm run prisma:generate \
     && npm cache clean --force
 
-COPY --from=build /app/dist ./dist
+FROM node:22-alpine AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    NODE_OPTIONS=--max-old-space-size=640
+
+COPY --chown=node:node package*.json ./
+COPY --chown=node:node --from=production-dependencies /app/node_modules ./node_modules
+COPY --chown=node:node --from=production-dependencies /app/prisma ./prisma
+COPY --chown=node:node --from=production-dependencies /app/prisma.config.ts ./prisma.config.ts
+COPY --chown=node:node --from=build /app/dist ./dist
 
 EXPOSE 3000
 

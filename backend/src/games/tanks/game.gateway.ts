@@ -60,7 +60,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     });
     server.use(async (socket, next) => {
       try {
-        const ip = socket.handshake.address;
+        const ip = this.clientIp(socket);
         if (!this.rateLimiter.isConnectionAllowed(ip)) {
           next(new Error('Too many connections from this IP'));
           return;
@@ -90,14 +90,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleConnection(client: AuthenticatedSocket): void {
-    this.rateLimiter.addConnection(client.handshake.address, client.id);
+    this.rateLimiter.addConnection(this.clientIp(client), client.id);
     client.join('lobby');
     client.emit(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, this.rooms.list());
     console.log(`[connect] ${client.id} user=${client.data.auth.userId}`);
   }
 
   handleDisconnect(client: AuthenticatedSocket): void {
-    this.rateLimiter.removeConnection(client.handshake.address, client.id);
+    this.rateLimiter.removeConnection(this.clientIp(client), client.id);
     const auth = client.data.auth;
     if (auth) void this.rooms.disconnect(auth.userId, client.id);
   }
@@ -276,6 +276,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   private isDevGameMode(): boolean {
     return this.developmentSettings.isDevGameMode();
+  }
+
+  private clientIp(client: Socket): string {
+    const forwardedFor = client.handshake.headers['x-forwarded-for'];
+    const forwardedValue = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+    const forwardedIp = forwardedValue?.split(',')[0]?.trim();
+    return forwardedIp || client.handshake.address;
   }
 
   private emitDevelopmentWaitingState(

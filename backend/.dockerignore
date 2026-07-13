@@ -1,11 +1,16 @@
 node_modules
 dist
 coverage
+.nyc_output
 .git
 .codegraph
 .vscode
+.idea
 .env
 .env.*
 !.env.example
 *.log
 npm-debug.log*
+Dockerfile*
+README*
+src/**/*.spec.ts
