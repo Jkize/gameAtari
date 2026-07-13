@@ -16,12 +16,16 @@ export class RedisService implements OnModuleDestroy {
           maxRetriesPerRequest: 2,
         })
       : this.createMemoryClient('REDIS_URL is not configured');
+    if (!this.usingMemoryFallback) {
+      this.client.on('error', () => undefined);
+    }
   }
 
   async ensureConnected(): Promise<void> {
     if (this.usingMemoryFallback) return;
     try {
       if (this.client.status === 'wait') await this.client.connect();
+      await this.client.ping();
     } catch (error) {
       this.client.disconnect();
       this.client = this.createMemoryClient(error instanceof Error ? error.message : 'Redis connection failed');

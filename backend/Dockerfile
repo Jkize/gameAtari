@@ -22,6 +22,7 @@ COPY package*.json ./
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm ci --omit=dev \
+    && DATABASE_URL=postgresql://build:build@localhost:5432/build npm run prisma:generate \
     && npm cache clean --force
 
 COPY --from=build /app/dist ./dist

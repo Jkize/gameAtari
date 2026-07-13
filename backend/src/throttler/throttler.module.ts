@@ -15,7 +15,9 @@ import { RedisService } from '../redis/redis.service';
             { name: 'burst', limit: 30, ttl: seconds(20) },
             { name: 'sustained', limit: 300, ttl: seconds(600) },
           ],
-          storage: new ThrottlerStorageRedisService(redis.client),
+          ...(redis.mode() === 'redis'
+            ? { storage: new ThrottlerStorageRedisService(redis.client) }
+            : {}),
           errorMessage: 'Too many requests',
         };
       },

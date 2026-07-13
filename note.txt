@@ -28,3 +28,29 @@ spl-token transfer \
   --fund-recipient
 
 solana transfer "$DW1" 0.2 --allow-unfunded-recipient
+
+
+
+//FLY.io
+
+flyctl version
+flyctl auth login
+flyctl auth whoami
+
+Lanzar a organizacion
+flyctl apps create tank-arena-backend --org tank-game
+
+flyctl launch --no-deploy --ha=false --org tank-game
+
+
+#CUando ya lo tenga
+flyctl deploy --ha=false (--ha=false solo crea una maquina)
+
+flyctl logs                 # Logs en vivo
+flyctl status               # Estado del despliegue
+flyctl checks list          # Health checks
+flyctl releases             # Historial de releases
+flyctl deploy               #  Redesplegar
+
+flyctl machine list         #Comando para ver maquinas
+flyctl scale count 1        # Comando para obligar a 1 maquina
