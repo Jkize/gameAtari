@@ -1,1 +1,8 @@
 <router-outlet />
+
+@if (updateReady()) {
+  <div class="update-banner" role="status">
+    <span>{{ 'app.updateReady' | transloco }}</span>
+    <button type="button" (click)="reloadForUpdate()">{{ 'app.updateNow' | transloco }}</button>
+  </div>
+}

@@ -33,6 +33,9 @@
   "nav.userMenu": "User menu",
   "nav.selectLanguage": "Select language",
 
+  "app.updateReady": "A new version is available",
+  "app.updateNow": "Update",
+
   "game.rotateTitle": "Rotate your device",
   "game.rotateHint": "Play in landscape for the best experience",
 
