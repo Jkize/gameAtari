@@ -2,6 +2,9 @@
   display: block;
   width: 100vw;
   height: 100vh;
+  /* iOS: 100vh includes the space behind Safari's collapsing toolbar and
+     hides the bottom of the page; dvh tracks the real visible height. */
+  height: 100dvh;
 }
 
 .update-banner {
