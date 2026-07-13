@@ -48,36 +48,111 @@ const FULL_VOLUME_DISTANCE = 340;
 const MAX_AUDIBLE_DISTANCE = 920;
 const MIN_AUDIBLE_VOLUME = 0.045;
 const LOCAL_PLAYER_VOLUME_BOOST = 1.18;
+const IOS_FOREGROUND_RECOVERY_DELAY_MS = 200;
+
+type SafariAudioContext = AudioContext & { state: AudioContextState | 'interrupted' };
+type AudioSessionNavigator = Navigator & {
+  audioSession?: { type: 'auto' | 'ambient' | 'playback' | 'transient' | 'transient-solo' };
+};
 
 export class AudioManager {
   private lastFireSoundAt = 0;
+  private foregroundRecoveryTimer?: number;
+  private needsForegroundRecovery = false;
   private readonly onSettingsChanged = (event: Event): void => {
     this.setVolume((event as GameSettingsChangedEvent).detail.sfxVolume);
   };
 
-  // iOS keeps the WebAudio context suspended until a user gesture and
-  // suspends it again after backgrounding; resume it on both signals.
-  private readonly resumeAudioContext = (): void => {
-    const context = (this.scene.sound as { context?: AudioContext }).context;
-    if (context && context.state !== 'running') {
-      void context.resume();
+  private readonly unlockAudioFromGesture = (): void => {
+    if (this.foregroundRecoveryTimer !== undefined) {
+      window.clearTimeout(this.foregroundRecoveryTimer);
+      this.foregroundRecoveryTimer = undefined;
     }
+    void this.recoverAudioContext(this.needsForegroundRecovery);
   };
   private readonly onVisibilityChange = (): void => {
-    if (!document.hidden) this.resumeAudioContext();
+    if (document.hidden) this.markAudioBackgrounded();
+    else this.scheduleForegroundRecovery();
   };
+  private readonly onPageHide = (): void => this.markAudioBackgrounded();
+  private readonly onPageShow = (): void => this.scheduleForegroundRecovery();
 
   constructor(private readonly scene: Phaser.Scene) {
     this.setVolume(readStoredGameSettings().sfxVolume);
+    this.configureAudioSession();
     window.addEventListener('tank-arena:settings-changed', this.onSettingsChanged);
-    this.scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.resumeAudioContext);
+    // Capture gestures globally: after restoring an iOS PWA, the first tap can
+    // land on an Angular overlay and never reach Phaser's scene input plugin.
+    window.addEventListener('pointerdown', this.unlockAudioFromGesture, { capture: true, passive: true });
+    window.addEventListener('touchend', this.unlockAudioFromGesture, { capture: true, passive: true });
+    window.addEventListener('keydown', this.unlockAudioFromGesture, true);
+    window.addEventListener('pagehide', this.onPageHide);
+    window.addEventListener('pageshow', this.onPageShow);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   destroy(): void {
     window.removeEventListener('tank-arena:settings-changed', this.onSettingsChanged);
-    this.scene.input.off(Phaser.Input.Events.POINTER_DOWN, this.resumeAudioContext);
+    window.removeEventListener('pointerdown', this.unlockAudioFromGesture, true);
+    window.removeEventListener('touchend', this.unlockAudioFromGesture, true);
+    window.removeEventListener('keydown', this.unlockAudioFromGesture, true);
+    window.removeEventListener('pagehide', this.onPageHide);
+    window.removeEventListener('pageshow', this.onPageShow);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    if (this.foregroundRecoveryTimer !== undefined) {
+      window.clearTimeout(this.foregroundRecoveryTimer);
+    }
+  }
+
+  private configureAudioSession(): void {
+    const audioSession = (navigator as AudioSessionNavigator).audioSession;
+    if (!audioSession) return;
+    try {
+      // Treat game SFX as intentional playback instead of ambient audio. On
+      // supporting iOS versions this also avoids the hardware silent switch.
+      audioSession.type = 'playback';
+    } catch {
+      // Experimental Safari API; WebAudio recovery still works without it.
+    }
+  }
+
+  private markAudioBackgrounded(): void {
+    this.needsForegroundRecovery = true;
+    if (this.foregroundRecoveryTimer !== undefined) {
+      window.clearTimeout(this.foregroundRecoveryTimer);
+      this.foregroundRecoveryTimer = undefined;
+    }
+  }
+
+  private scheduleForegroundRecovery(): void {
+    if (!this.needsForegroundRecovery) return;
+    if (this.foregroundRecoveryTimer !== undefined) {
+      window.clearTimeout(this.foregroundRecoveryTimer);
+    }
+    // iOS 17/18 can report `running` while the audio device is silent. A
+    // delayed suspend/resume cycle restores the device without audio artifacts.
+    this.foregroundRecoveryTimer = window.setTimeout(() => {
+      this.foregroundRecoveryTimer = undefined;
+      void this.recoverAudioContext(true);
+    }, IOS_FOREGROUND_RECOVERY_DELAY_MS);
+  }
+
+  private async recoverAudioContext(forceRestart: boolean): Promise<void> {
+    const context = (this.scene.sound as { context?: SafariAudioContext }).context;
+    if (!context || context.state === 'closed') {
+      this.needsForegroundRecovery = false;
+      return;
+    }
+
+    try {
+      if (forceRestart && context.state === 'running') await context.suspend();
+      if (context.state !== 'running') await context.resume();
+      this.needsForegroundRecovery = context.state !== 'running';
+    } catch {
+      // Safari can reject recovery outside a user activation. Keep the flag so
+      // the next captured pointer/touch/key gesture retries synchronously.
+      this.needsForegroundRecovery = true;
+    }
   }
 
   playGrenadeLaunch(origin: SoundPoint, listener: SoundPoint, isLocalPlayer: boolean): void {
