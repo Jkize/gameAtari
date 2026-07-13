@@ -99,6 +99,8 @@ export class TouchControls {
   private fireIcon: Phaser.GameObjects.Image | null = null;
   private settingsIcon: Phaser.GameObjects.Text | null = null;
   private settingsPointerId: number | null = null;
+  // Dragging while holding FIRE aims too (one-thumb fire-and-aim).
+  private fireDragAngle: number | null = null;
   private layout!: TouchLayout;
   private visible = false;
   private lastAimAngle: number | null = null;
@@ -159,6 +161,13 @@ export class TouchControls {
       if (Math.hypot(this.aimStick.dx, this.aimStick.dy) > AIM_DEAD_ZONE) {
         this.lastAimAngle = Math.atan2(this.aimStick.dy, this.aimStick.dx);
       }
+    } else if (pointer.id === this.firePointerId) {
+      const dx = pointer.x - this.layout.fire.x;
+      const dy = pointer.y - this.layout.fire.y;
+      if (Math.hypot(dx, dy) > AIM_DEAD_ZONE) {
+        this.lastAimAngle = Math.atan2(dy, dx);
+        this.fireDragAngle = this.lastAimAngle;
+      }
     }
   };
 
@@ -169,6 +178,7 @@ export class TouchControls {
     }
     if (pointer.id === this.firePointerId) {
       this.firePointerId = null;
+      this.fireDragAngle = null;
       return;
     }
     if (pointer.id === this.moveStick.pointerId) {
@@ -285,6 +295,7 @@ export class TouchControls {
       this.resetStick(this.moveStick);
       this.resetStick(this.aimStick);
       this.firePointerId = null;
+      this.fireDragAngle = null;
       this.settingsPointerId = null;
       this.pendingActions.dash = false;
       this.pendingActions.shield = false;
@@ -324,6 +335,13 @@ export class TouchControls {
     this.gfx.fillCircle(x, y, radius);
     this.gfx.lineStyle(pressed ? 4 : 3, FIRE_BORDER_COLOR, alpha);
     this.gfx.strokeCircle(x, y, radius);
+    if (this.fireDragAngle !== null) {
+      // Aim-direction marker while fire-dragging.
+      const markerX = x + Math.cos(this.fireDragAngle) * (radius + 9);
+      const markerY = y + Math.sin(this.fireDragAngle) * (radius + 9);
+      this.gfx.fillStyle(FIRE_BORDER_COLOR, PRESSED_ALPHA);
+      this.gfx.fillCircle(markerX, markerY, 5);
+    }
     if (this.fireIcon) {
       this.fireIcon.setAlpha(alpha);
     } else {
