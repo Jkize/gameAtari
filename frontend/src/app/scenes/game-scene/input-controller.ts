@@ -4,6 +4,7 @@ import { GameState } from '../../types/game-state.types';
 import { PlayerInput } from '../../types/input.types';
 import { environment } from '../../../environments/environment';
 import { SOCKET_EVENTS } from '../../network/socket-events';
+import { TouchControls } from './touch-controls';
 
 type SceneState = {
   getGameState(): GameState | null;
@@ -35,6 +36,7 @@ export class InputController {
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly state: SceneState,
+    private readonly touchControls: TouchControls | null = null,
   ) {
     window.addEventListener('tank-arena:settings-menu', this.onSettingsMenu);
   }
@@ -91,30 +93,48 @@ export class InputController {
 
     if (gameState.status !== 'playing') return;
 
+    const touch = this.touchControls;
+    const touchMove = touch?.getMove() ?? { x: 0, y: 0 };
+    const touchFiring = touch?.isFiring() ?? false;
+    const touchDash = touch?.consumeAction('dash') ?? false;
+    const touchReload = touch?.consumeAction('reload') ?? false;
+    const touchShield = touch?.consumeAction('shield') ?? false;
+
     let moveX = 0;
     let moveY = 0;
     if (!this.inputBlocked) {
-      if (this.keys.W.isDown) moveY -= 1;
-      if (this.keys.S.isDown) moveY += 1;
-      if (this.keys.A.isDown) moveX -= 1;
-      if (this.keys.D.isDown) moveX += 1;
+      if (touchMove.x !== 0 || touchMove.y !== 0) {
+        moveX = touchMove.x;
+        moveY = touchMove.y;
+      } else {
+        if (this.keys.W.isDown) moveY -= 1;
+        if (this.keys.S.isDown) moveY += 1;
+        if (this.keys.A.isDown) moveX -= 1;
+        if (this.keys.D.isDown) moveX += 1;
+      }
     }
 
     const me = gameState.players.find(p => p.id === myPlayerId);
-    let aimAngle = 0;
-    if (me) {
+    let aimAngle = me?.aimAngle ?? 0;
+    if (touch) {
+      aimAngle = touch.getAimAngle() ?? aimAngle;
+    } else if (me) {
       const ptr = this.scene.input.activePointer;
       aimAngle = Phaser.Math.Angle.Between(me.x, me.y, ptr.worldX, ptr.worldY);
     }
+
+    // On touch devices pointer.isDown is any stick drag, so shooting comes
+    // exclusively from the dedicated fire button.
+    const shoot = touch ? touchFiring : this.scene.input.activePointer.isDown;
 
     const input: PlayerInput = {
       moveX,
       moveY,
       aimAngle,
-      shoot: !this.inputBlocked && this.scene.input.activePointer.isDown,
-      dash: !this.inputBlocked && this.pendingDash,
-      reload: !this.inputBlocked && this.pendingReload,
-      shield: !this.inputBlocked && this.pendingShield,
+      shoot: !this.inputBlocked && shoot,
+      dash: !this.inputBlocked && (this.pendingDash || touchDash),
+      reload: !this.inputBlocked && (this.pendingReload || touchReload),
+      shield: !this.inputBlocked && (this.pendingShield || touchShield),
     };
     this.pendingDash = false;
     this.pendingReload = false;

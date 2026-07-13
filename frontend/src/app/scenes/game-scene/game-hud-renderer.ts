@@ -79,7 +79,12 @@ export class GameHudRenderer {
   private readonly centerTexts: Phaser.GameObjects.Text[] = [];
   private shieldCountdownText!: Phaser.GameObjects.Text;
 
-  constructor(private readonly scene: Phaser.Scene) {}
+  // Compact mode shrinks the bottom panel on touch devices so it does not
+  // compete with the on-screen controls.
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly compact = false,
+  ) {}
 
   create(): void {
     const W = this.scene.scale.width;
@@ -288,7 +293,9 @@ export class GameHudRenderer {
   private drawBottomHud(player: PlayerPublicState | undefined, time: number): void {
     const W = this.scene.scale.width;
     const panelW = W;
-    const panelH = HUD_HEIGHT * (HUD_SVG_TOTAL_UNITS / HUD_SVG_BOTTOM_RECT_UNITS);
+    const panelH = HUD_HEIGHT
+      * (HUD_SVG_TOTAL_UNITS / HUD_SVG_BOTTOM_RECT_UNITS)
+      * (this.compact ? 0.78 : 1);
     const panelX = (W - panelW) / 2;
     const visualHudTop = GAME_VIEW_HEIGHT + HUD_HEIGHT - panelH;
     const slotSize = panelH * HUD_SLOT_HEIGHT_RATIO;

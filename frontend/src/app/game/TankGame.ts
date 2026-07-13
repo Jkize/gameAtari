@@ -21,6 +21,10 @@ export class TankGame extends Phaser.Game {
         antialias: true,
         pixelArt: false,
       },
+      input: {
+        // Move stick + aim stick + action button pressed simultaneously.
+        activePointers: 4,
+      },
       fps: {
         target: 60,
       },

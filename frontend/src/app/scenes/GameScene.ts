@@ -17,6 +17,7 @@ import { ObstacleRenderer } from './game-scene/obstacle-renderer';
 import { PlayerRenderer } from './game-scene/player-renderer';
 import { PowerUpRenderer } from './game-scene/power-up-renderer';
 import { StateChangeTracker } from './game-scene/state-change-tracker';
+import { TouchControls } from './game-scene/touch-controls';
 import { environment } from '../../environments/environment';
 
 type RoomCountdownState = {
@@ -44,6 +45,7 @@ export class GameScene extends Phaser.Scene {
   private dangerZoneRenderer!: DangerZoneRenderer;
   private hudRenderer!: GameHudRenderer;
   private inputController!: InputController;
+  private touchControls: TouchControls | null = null;
   private effectSpawner!: EffectSpawner;
   private audioManager!: AudioManager;
   private stateChangeTracker!: StateChangeTracker;
@@ -156,6 +158,9 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
 
     this.createHelpers();
+    // Touch control objects must exist before the HUD camera computes its
+    // ignore list, so only the main (screen-fixed) camera renders them.
+    this.touchControls?.create();
     this.hudRenderer.create();
     this.inputController.setup();
     this.setupSocket();
@@ -194,6 +199,7 @@ export class GameScene extends Phaser.Scene {
     this.bulletRenderer.draw(renderState.bullets, time);
 
     this.followLocalPlayer(renderState);
+    this.touchControls?.update(this.gameState.status);
     this.inputController.sendInput(time);
     this.updateRttProbe(time, this.gameState.status);
     this.hudRenderer.update(this.gameState, this.myPlayerId, time, this.networkRttMs);
@@ -227,12 +233,13 @@ export class GameScene extends Phaser.Scene {
     this.playerRenderer = new PlayerRenderer(this, this.layers);
     this.bulletRenderer = new BulletRenderer(this.layers);
     this.dangerZoneRenderer = new DangerZoneRenderer(this.layers.dangerZoneGfx);
-    this.hudRenderer = new GameHudRenderer(this);
+    this.touchControls = TouchControls.isSupported(this.game) ? new TouchControls(this) : null;
+    this.hudRenderer = new GameHudRenderer(this, this.touchControls !== null);
     this.inputController = new InputController(this, {
       getGameState: () => this.gameState,
       getMyPlayerId: () => this.myPlayerId,
       getSocket: () => this.socket,
-    });
+    }, this.touchControls);
     this.stateChangeTracker = new StateChangeTracker(
       this,
       this.effectSpawner,
@@ -306,6 +313,7 @@ export class GameScene extends Phaser.Scene {
     this.socket.off(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
     this.socket.io.off(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
     this.inputController.destroy();
+    this.touchControls?.destroy();
     this.audioManager.destroy();
   }
 

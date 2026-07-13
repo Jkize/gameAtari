@@ -80,6 +80,16 @@ import { GameSettingsService } from './game-settings.service';
       position: relative;
     }
 
+    #game-container ::ng-deep canvas {
+      touch-action: none;
+    }
+
+    @media (pointer: coarse) {
+      :host {
+        padding: 0;
+      }
+    }
+
     .settings-panel {
       position: absolute;
       top: 50%;

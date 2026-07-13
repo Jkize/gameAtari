@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(rg -n \"^\\\\s*\\(//|/\\\\*\\)\" frontend/src/app/layout frontend/src/app/lobby/lobby.component.ts frontend/src/app/account/account-refresh.service.ts -g '*.ts')"
+      "Bash(rg -n \"^\\\\s*\\(//|/\\\\*\\)\" frontend/src/app/layout frontend/src/app/lobby/lobby.component.ts frontend/src/app/account/account-refresh.service.ts -g '*.ts')",
+      "PowerShell(npm run build --prefix e:\\\\PROJECTS\\\\gameAtari\\\\frontend)",
+      "mcp__plugin_engram_engram__mem_save",
+      "mcp__plugin_engram_engram__mem_session_summary"
     ]
   }
 }

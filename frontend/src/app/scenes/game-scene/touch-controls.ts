@@ -1,0 +1,339 @@
+import Phaser from 'phaser';
+import { GAME_VIEW_HEIGHT } from '../../game/viewport.config';
+
+const CONTROLS_DEPTH = 900;
+const STICK_RADIUS = 64;
+const THUMB_RADIUS = 26;
+const MOVE_DEAD_ZONE = 8;
+const AIM_DEAD_ZONE = 14;
+
+const FIRE_RADIUS = 44;
+const FIRE_HIT_RADIUS = 52;
+const ACTION_RADIUS = 26;
+// Touch targets must be at least 56 px wide, so hit radius stays >= 28.
+const ACTION_HIT_RADIUS = 32;
+const ARC_RADIUS = 106;
+
+const NORMAL_ALPHA = 0.6;
+const PRESSED_ALPHA = 0.95;
+
+const STICK_BASE_COLOR = 0x83e5ef;
+const STICK_THUMB_COLOR = 0xf2cf8f;
+const BUTTON_FILL_COLOR = 0x2b1d10;
+const BUTTON_BORDER_COLOR = 0x83e5ef;
+const FIRE_BORDER_COLOR = 0xffd98a;
+const ICON_COLOR = 0x83e5ef;
+
+type ActionKey = 'dash' | 'shield' | 'reload';
+
+interface Placement {
+  x: number;
+  y: number;
+}
+
+interface TouchLayout {
+  moveAnchor: Placement;
+  aimAnchor: Placement;
+  fire: Placement;
+  actions: Record<ActionKey, Placement>;
+}
+
+// Left-handed support later only needs `mirrored: true` plumbed in here.
+function buildLayout(width: number, mirrored: boolean): TouchLayout {
+  const rightX = (fromEdge: number): number => (mirrored ? fromEdge : width - fromEdge);
+  const leftX = (fromEdge: number): number => (mirrored ? width - fromEdge : fromEdge);
+  const inward = mirrored ? 1 : -1;
+  const fire: Placement = { x: rightX(112), y: GAME_VIEW_HEIGHT - 128 };
+  const diagonal = Math.SQRT1_2 * ARC_RADIUS;
+  return {
+    moveAnchor: { x: leftX(170), y: GAME_VIEW_HEIGHT - 160 },
+    aimAnchor: { x: rightX(330), y: GAME_VIEW_HEIGHT - 170 },
+    fire,
+    actions: {
+      reload: { x: fire.x + ARC_RADIUS * inward, y: fire.y },
+      shield: { x: fire.x + diagonal * inward, y: fire.y - diagonal },
+      dash: { x: fire.x, y: fire.y - ARC_RADIUS },
+    },
+  };
+}
+
+interface StickState {
+  pointerId: number | null;
+  baseX: number;
+  baseY: number;
+  dx: number;
+  dy: number;
+}
+
+interface ActionButton {
+  key: ActionKey;
+  x: number;
+  y: number;
+  icon: Phaser.GameObjects.Image | null;
+  pressedPointerId: number | null;
+}
+
+export class TouchControls {
+  static isSupported(game: Phaser.Game): boolean {
+    const coarsePointer = typeof window.matchMedia === 'function'
+      && window.matchMedia('(pointer: coarse)').matches;
+    return game.device.input.touch && coarsePointer;
+  }
+
+  private gfx!: Phaser.GameObjects.Graphics;
+  private fireIcon: Phaser.GameObjects.Image | null = null;
+  private layout!: TouchLayout;
+  private visible = false;
+  private lastAimAngle: number | null = null;
+  private firePointerId: number | null = null;
+  private readonly mirrored = false;
+  private readonly pendingActions: Record<ActionKey, boolean> = {
+    dash: false,
+    shield: false,
+    reload: false,
+  };
+  private readonly moveStick: StickState = { pointerId: null, baseX: 0, baseY: 0, dx: 0, dy: 0 };
+  private readonly aimStick: StickState = { pointerId: null, baseX: 0, baseY: 0, dx: 0, dy: 0 };
+  private readonly buttons: ActionButton[] = [];
+
+  private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
+    if (!this.visible || pointer.y > GAME_VIEW_HEIGHT) return;
+
+    const distToFire = Phaser.Math.Distance.Between(
+      pointer.x, pointer.y, this.layout.fire.x, this.layout.fire.y,
+    );
+    if (distToFire <= FIRE_HIT_RADIUS) {
+      if (this.firePointerId === null) this.firePointerId = pointer.id;
+      return;
+    }
+
+    const button = this.buttons.find(
+      btn => Phaser.Math.Distance.Between(pointer.x, pointer.y, btn.x, btn.y) <= ACTION_HIT_RADIUS,
+    );
+    if (button) {
+      button.pressedPointerId = pointer.id;
+      this.pendingActions[button.key] = true;
+      return;
+    }
+
+    const stick = this.isMoveSide(pointer.x) ? this.moveStick : this.aimStick;
+    if (stick.pointerId !== null) return;
+    stick.pointerId = pointer.id;
+    stick.baseX = pointer.x;
+    stick.baseY = pointer.y;
+    stick.dx = 0;
+    stick.dy = 0;
+  };
+
+  private readonly onPointerMove = (pointer: Phaser.Input.Pointer): void => {
+    if (pointer.id === this.moveStick.pointerId) {
+      this.updateStickVector(this.moveStick, pointer);
+    } else if (pointer.id === this.aimStick.pointerId) {
+      this.updateStickVector(this.aimStick, pointer);
+      if (Math.hypot(this.aimStick.dx, this.aimStick.dy) > AIM_DEAD_ZONE) {
+        this.lastAimAngle = Math.atan2(this.aimStick.dy, this.aimStick.dx);
+      }
+    }
+  };
+
+  private readonly onPointerUp = (pointer: Phaser.Input.Pointer): void => {
+    if (pointer.id === this.firePointerId) {
+      this.firePointerId = null;
+      return;
+    }
+    if (pointer.id === this.moveStick.pointerId) {
+      this.resetStick(this.moveStick);
+      return;
+    }
+    if (pointer.id === this.aimStick.pointerId) {
+      this.resetStick(this.aimStick);
+      return;
+    }
+    for (const button of this.buttons) {
+      if (button.pressedPointerId === pointer.id) button.pressedPointerId = null;
+    }
+  };
+
+  constructor(private readonly scene: Phaser.Scene) {}
+
+  create(): void {
+    this.layout = buildLayout(this.scene.scale.width, this.mirrored);
+    this.gfx = this.scene.add.graphics().setDepth(CONTROLS_DEPTH).setScrollFactor(0);
+
+    this.fireIcon = this.createIcon('hud-shot', this.layout.fire, FIRE_RADIUS * 1.1);
+    const actionKeys: ActionKey[] = ['dash', 'shield', 'reload'];
+    for (const key of actionKeys) {
+      const placement = this.layout.actions[key];
+      const icon = key === 'reload'
+        ? null // No reload asset exists; its icon is drawn as a vector in draw().
+        : this.createIcon(`hud-${key}`, placement, ACTION_RADIUS * 1.35);
+      this.buttons.push({ key, x: placement.x, y: placement.y, icon, pressedPointerId: null });
+    }
+
+    this.scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown);
+    this.scene.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove);
+    this.scene.input.on(Phaser.Input.Events.POINTER_UP, this.onPointerUp);
+    this.scene.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp);
+  }
+
+  update(status: string): void {
+    this.setVisible(status === 'playing');
+    this.draw();
+  }
+
+  getMove(): { x: number; y: number } {
+    const { pointerId, dx, dy } = this.moveStick;
+    if (pointerId === null) return { x: 0, y: 0 };
+    const len = Math.hypot(dx, dy);
+    if (len < MOVE_DEAD_ZONE) return { x: 0, y: 0 };
+    const scale = Math.min(len, STICK_RADIUS) / STICK_RADIUS / len;
+    return { x: dx * scale, y: dy * scale };
+  }
+
+  getAimAngle(): number | null {
+    return this.lastAimAngle;
+  }
+
+  isFiring(): boolean {
+    return this.firePointerId !== null;
+  }
+
+  consumeAction(key: ActionKey): boolean {
+    const pending = this.pendingActions[key];
+    this.pendingActions[key] = false;
+    return pending;
+  }
+
+  destroy(): void {
+    this.scene.input.off(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown);
+    this.scene.input.off(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove);
+    this.scene.input.off(Phaser.Input.Events.POINTER_UP, this.onPointerUp);
+    this.scene.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp);
+    this.gfx?.destroy();
+    this.fireIcon?.destroy();
+    this.fireIcon = null;
+    for (const button of this.buttons) button.icon?.destroy();
+    this.buttons.length = 0;
+  }
+
+  private createIcon(
+    textureKey: string,
+    placement: Placement,
+    size: number,
+  ): Phaser.GameObjects.Image | null {
+    if (!this.scene.textures.exists(textureKey)) return null;
+    return this.scene.add.image(placement.x, placement.y, textureKey)
+      .setDisplaySize(size, size)
+      .setDepth(CONTROLS_DEPTH + 1)
+      .setScrollFactor(0)
+      .setAlpha(NORMAL_ALPHA)
+      .setVisible(false);
+  }
+
+  private isMoveSide(x: number): boolean {
+    const half = this.scene.scale.width / 2;
+    return this.mirrored ? x > half : x < half;
+  }
+
+  private setVisible(visible: boolean): void {
+    if (this.visible === visible) return;
+    this.visible = visible;
+    this.fireIcon?.setVisible(visible);
+    for (const button of this.buttons) button.icon?.setVisible(visible);
+    if (!visible) {
+      this.resetStick(this.moveStick);
+      this.resetStick(this.aimStick);
+      this.firePointerId = null;
+      this.pendingActions.dash = false;
+      this.pendingActions.shield = false;
+      this.pendingActions.reload = false;
+      for (const button of this.buttons) button.pressedPointerId = null;
+    }
+  }
+
+  private draw(): void {
+    this.gfx.clear();
+    if (!this.visible) return;
+
+    this.drawStick(this.moveStick, this.layout.moveAnchor);
+    this.drawStick(this.aimStick, this.layout.aimAnchor);
+    this.drawFireButton();
+
+    for (const button of this.buttons) {
+      const pressed = button.pressedPointerId !== null;
+      const alpha = pressed ? PRESSED_ALPHA : NORMAL_ALPHA;
+      const radius = pressed ? ACTION_RADIUS * 1.12 : ACTION_RADIUS;
+      this.gfx.fillStyle(BUTTON_FILL_COLOR, alpha * 0.75);
+      this.gfx.fillCircle(button.x, button.y, radius);
+      this.gfx.lineStyle(pressed ? 3 : 2, BUTTON_BORDER_COLOR, alpha);
+      this.gfx.strokeCircle(button.x, button.y, radius);
+      button.icon?.setAlpha(alpha);
+      if (button.key === 'reload') this.drawReloadIcon(button.x, button.y, alpha);
+    }
+  }
+
+  private drawFireButton(): void {
+    const { x, y } = this.layout.fire;
+    const pressed = this.firePointerId !== null;
+    const alpha = pressed ? PRESSED_ALPHA : NORMAL_ALPHA;
+    const radius = pressed ? FIRE_RADIUS * 1.08 : FIRE_RADIUS;
+    this.gfx.fillStyle(BUTTON_FILL_COLOR, alpha * 0.75);
+    this.gfx.fillCircle(x, y, radius);
+    this.gfx.lineStyle(pressed ? 4 : 3, FIRE_BORDER_COLOR, alpha);
+    this.gfx.strokeCircle(x, y, radius);
+    if (this.fireIcon) {
+      this.fireIcon.setAlpha(alpha);
+    } else {
+      // Fallback crosshair when the hud-shot texture is unavailable.
+      this.gfx.lineStyle(2, ICON_COLOR, alpha);
+      this.gfx.strokeCircle(x, y, 14);
+      this.gfx.lineBetween(x - 22, y, x - 10, y);
+      this.gfx.lineBetween(x + 10, y, x + 22, y);
+      this.gfx.lineBetween(x, y - 22, x, y - 10);
+      this.gfx.lineBetween(x, y + 10, x, y + 22);
+      this.gfx.fillStyle(ICON_COLOR, alpha);
+      this.gfx.fillCircle(x, y, 2.5);
+    }
+  }
+
+  private drawReloadIcon(x: number, y: number, alpha: number): void {
+    const radius = 10;
+    const gapStart = -Math.PI / 2;
+    this.gfx.lineStyle(2.5, ICON_COLOR, alpha);
+    this.gfx.beginPath();
+    this.gfx.arc(x, y, radius, gapStart + 0.6, gapStart + Math.PI * 2 - 0.35);
+    this.gfx.strokePath();
+    const tipAngle = gapStart + 0.6;
+    const tipX = x + Math.cos(tipAngle) * radius;
+    const tipY = y + Math.sin(tipAngle) * radius;
+    this.gfx.fillStyle(ICON_COLOR, alpha);
+    this.gfx.fillTriangle(tipX - 5, tipY - 3, tipX + 4, tipY - 6, tipX + 1, tipY + 5);
+  }
+
+  private drawStick(stick: StickState, anchor: Placement): void {
+    const engaged = stick.pointerId !== null;
+    const baseX = engaged ? stick.baseX : anchor.x;
+    const baseY = engaged ? stick.baseY : anchor.y;
+
+    this.gfx.lineStyle(2, STICK_BASE_COLOR, engaged ? 0.6 : 0.25);
+    this.gfx.strokeCircle(baseX, baseY, STICK_RADIUS);
+
+    const len = Math.hypot(stick.dx, stick.dy);
+    const clamp = len > STICK_RADIUS ? STICK_RADIUS / len : 1;
+    const thumbX = baseX + stick.dx * clamp;
+    const thumbY = baseY + stick.dy * clamp;
+    this.gfx.fillStyle(STICK_THUMB_COLOR, engaged ? 0.55 : 0.2);
+    this.gfx.fillCircle(thumbX, thumbY, THUMB_RADIUS);
+  }
+
+  private updateStickVector(stick: StickState, pointer: Phaser.Input.Pointer): void {
+    stick.dx = pointer.x - stick.baseX;
+    stick.dy = pointer.y - stick.baseY;
+  }
+
+  private resetStick(stick: StickState): void {
+    stick.pointerId = null;
+    stick.dx = 0;
+    stick.dy = 0;
+  }
+}
