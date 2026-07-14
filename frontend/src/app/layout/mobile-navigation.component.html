@@ -20,9 +20,9 @@
     </div>
 
     <nav class="links" aria-label="Main navigation">
-      <a routerLink="/lobby" routerLinkActive="active" (click)="close()">{{ 'nav.play' | transloco }}</a>
-      <a routerLink="/matches/me" routerLinkActive="active" (click)="close()">{{ 'nav.myMatches' | transloco }}</a>
-      <a routerLink="/matches/recent" routerLinkActive="active" (click)="close()">{{ 'nav.recentMatches' | transloco }}</a>
+      @for (tab of nav.visibleTabs(); track tab.path) {
+        <a [routerLink]="tab.path" routerLinkActive="active" (click)="close()">{{ tab.labelKey | transloco }}</a>
+      }
       <button type="button" class="action-link" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
     </nav>
 

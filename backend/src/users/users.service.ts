@@ -8,9 +8,80 @@ interface GoogleIdentity {
   avatarUrl?: string;
 }
 
+const LIST_PAGE_SIZE = 50;
+
+interface UserListCursor {
+  createdAt: string;
+  id: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Admin listing of users, newest registrations first. Cursor-paginated by `(createdAt DESC, id DESC)`, capped at `LIST_PAGE_SIZE` rows per page. */
+  async list(cursor?: string | null) {
+    const rows = await this.prisma.user.findMany({
+      where: this.listCursorWhere(cursor),
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+        role: true,
+        active: true,
+        createdAt: true,
+        accounts: { select: { provider: true } },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: LIST_PAGE_SIZE + 1,
+    });
+    const items = rows.slice(0, LIST_PAGE_SIZE);
+    return {
+      items: items.map(({ accounts, ...user }) => ({
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+        providers: [...new Set(accounts.map(account => account.provider))],
+      })),
+      nextCursor: this.listNextCursor(items, rows.length > LIST_PAGE_SIZE),
+    };
+  }
+
+  /** Translates an opaque page cursor into a Prisma `WHERE` clause that continues strictly after that cursor's `(createdAt, id)`. */
+  private listCursorWhere(cursor?: string | null): Prisma.UserWhereInput | undefined {
+    const decoded = this.decodeListCursor(cursor);
+    if (!decoded) return undefined;
+    return {
+      OR: [
+        { createdAt: { lt: new Date(decoded.createdAt) } },
+        {
+          createdAt: new Date(decoded.createdAt),
+          id: { lt: decoded.id },
+        },
+      ],
+    };
+  }
+
+  /** Builds the opaque base64url cursor for the next page from the last item on the current page, or `null` if there is no next page. */
+  private listNextCursor(items: { id: string; createdAt: Date }[], hasNext: boolean): string | null {
+    if (!hasNext || !items.length) return null;
+    const last = items[items.length - 1];
+    return Buffer.from(JSON.stringify({
+      createdAt: last.createdAt.toISOString(),
+      id: last.id,
+    } satisfies UserListCursor)).toString('base64url');
+  }
+
+  /** Parses and validates an opaque cursor, returning `null` for missing/malformed/invalid input rather than throwing. */
+  private decodeListCursor(cursor?: string | null): UserListCursor | null {
+    if (!cursor) return null;
+    try {
+      const parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<UserListCursor>;
+      if (!parsed.id || !parsed.createdAt || Number.isNaN(new Date(parsed.createdAt).getTime())) return null;
+      return { id: parsed.id, createdAt: parsed.createdAt };
+    } catch {
+      return null;
+    }
+  }
 
   findById(id: string) {
     return this.prisma.user.findUnique({

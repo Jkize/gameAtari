@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AuthProvider } from '@prisma/client';
+import { AuthProvider, UserRole } from '@prisma/client';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
@@ -44,7 +44,7 @@ export class TokensService {
   }
 
   async issueSession(
-    user: { id: string; username: string | null },
+    user: { id: string; username: string | null; role: UserRole },
     provider: AuthProvider,
     sessionId: string = randomUUID(),
   ): Promise<{ accessToken: string; refreshCookie: RefreshCookieDescriptor }> {
@@ -62,7 +62,7 @@ export class TokensService {
       'EX',
       this.refreshTtlSeconds,
     );
-    const accessToken = await this.signAccess(user.id, user.username, provider, sessionId);
+    const accessToken = await this.signAccess(user.id, user.username, provider, user.role, sessionId);
     return {
       accessToken,
       refreshCookie: {
@@ -105,6 +105,7 @@ export class TokensService {
       sessionId: payload.sid,
       username: payload.username,
       provider: payload.provider,
+      role: payload.role ?? UserRole.USER,
     };
   }
 
@@ -118,9 +119,9 @@ export class TokensService {
     ]);
   }
 
-  private signAccess(userId: string, username: string, provider: AuthProvider, sid: string) {
+  private signAccess(userId: string, username: string, provider: AuthProvider, role: UserRole, sid: string) {
     return this.jwt.signAsync(
-      { sub: userId, username, provider, sid, type: 'access' } satisfies AccessTokenPayload,
+      { sub: userId, username, provider, role, sid, type: 'access' } satisfies AccessTokenPayload,
       {
         secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
         expiresIn: this.config.get<string>('JWT_ACCESS_TTL', '15m') as never,

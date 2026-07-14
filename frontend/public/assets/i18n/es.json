@@ -49,6 +49,8 @@
   "users.inactive": "Inactivo",
   "users.role.USER": "Usuario",
   "users.role.ADMIN": "Admin",
+  "users.provider.GOOGLE": "Google",
+  "users.provider.PHANTOM": "Phantom",
 
   "app.updateReady": "Hay una nueva versión disponible",
   "app.updateNow": "Actualizar",

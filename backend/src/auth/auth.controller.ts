@@ -8,7 +8,6 @@ import {
   Req,
   Res,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { seconds, Throttle } from '@nestjs/throttler';
@@ -16,7 +15,7 @@ import { Request, Response } from 'express';
 import { RequestUser } from '../common/request-user.decorator';
 import { AuthenticatedUser } from '../common/auth.types';
 import { UsersService } from '../users/users.service';
-import { AccessTokenGuard } from './access-token.guard';
+import { Public } from './decorators/public.decorator';
 import { CompleteProfileDto, GoogleLoginDto, PhantomChallengeDto, PhantomVerifyDto } from './dto/auth.dto';
 import { GoogleAuthService } from './google-auth.service';
 import { PhantomAuthService } from './phantom-auth.service';
@@ -35,6 +34,7 @@ export class AuthController {
     private readonly config: ConfigService,
   ) {}
 
+  @Public()
   @Post('google')
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: seconds(60) } })
@@ -43,12 +43,14 @@ export class AuthController {
     return this.withRefreshCookie(res, result);
   }
 
+  @Public()
   @Post('phantom/challenge')
   @Throttle({ default: { limit: 10, ttl: seconds(60) } })
   async phantomChallenge(@Body() dto: PhantomChallengeDto) {
     return this.phantom.challenge(dto.publicKey);
   }
 
+  @Public()
   @Post('phantom/verify')
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: seconds(60) } })
@@ -57,6 +59,7 @@ export class AuthController {
     return this.withRefreshCookie(res, result);
   }
 
+  @Public()
   @Post('complete-profile')
   @Throttle({ default: { limit: 10, ttl: seconds(60) } })
   async completeProfile(
@@ -74,6 +77,7 @@ export class AuthController {
     return { accessToken: result.accessToken, user };
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(200)
   @Throttle({ default: { limit: 30, ttl: seconds(60) } })
@@ -86,6 +90,7 @@ export class AuthController {
     return { accessToken: result.accessToken };
   }
 
+  @Public()
   @Post('logout')
   @HttpCode(200)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -98,7 +103,6 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(AccessTokenGuard)
   async me(@RequestUser() auth: AuthenticatedUser) {
     return this.users.requireById(auth.userId);
   }

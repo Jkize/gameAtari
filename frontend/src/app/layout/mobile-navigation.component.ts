@@ -4,6 +4,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
 import { LanguageSwitcherComponent } from '../shared/language-switcher.component';
 import { MobileNavStateService } from './mobile-nav-state.service';
+import { NavigationService } from './navigation.service';
 import { SessionExitService } from './session-exit.service';
 import { AccountModalStateService } from '../account/account-modal-state.service';
 import { ThemeService } from '../shared/theme.service';
@@ -21,6 +22,7 @@ export class MobileNavigationComponent {
   private readonly sessionExit = inject(SessionExitService);
   private readonly accountModal = inject(AccountModalStateService);
   readonly theme = inject(ThemeService);
+  readonly nav = inject(NavigationService);
 
   constructor(
     readonly mobileNavState: MobileNavStateService,

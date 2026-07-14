@@ -41,6 +41,7 @@ coverage/
 **/coverage/
 .nyc_output/
 __screenshots__/
+artifacts/
 
 # TypeScript / Node runtime artifacts
 *.tsbuildinfo

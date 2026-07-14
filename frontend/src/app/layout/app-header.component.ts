@@ -8,6 +8,7 @@ import { MobileNavStateService } from './mobile-nav-state.service';
 import { AccountSettingsComponent } from '../account/account-settings.component';
 import { AccountModalStateService } from '../account/account-modal-state.service';
 import { AccountRefreshService } from '../account/account-refresh.service';
+import { NavigationService } from './navigation.service';
 import { TokenCaComponent } from '../shared/token-ca.component';
 
 @Component({
@@ -29,6 +30,7 @@ import { TokenCaComponent } from '../shared/token-ca.component';
 export class AppHeaderComponent {
   readonly accountModal = inject(AccountModalStateService);
   readonly accountRefresh = inject(AccountRefreshService);
+  readonly nav = inject(NavigationService);
 
   constructor(readonly mobileNavState: MobileNavStateService) {}
 }

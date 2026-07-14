@@ -1,8 +1,8 @@
-import { BadRequestException, Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
 import { seconds, Throttle } from '@nestjs/throttler';
 import { RequestUser } from '../common/request-user.decorator';
 import { AuthenticatedUser } from '../common/auth.types';
-import { AccessTokenGuard } from '../auth/access-token.guard';
+import { Public } from '../auth/decorators/public.decorator';
 import { SolanaConfigService } from '../solana/solana-config.service';
 import { RewardsHistoryService } from './rewards-history.service';
 import { REWARD_AMOUNTS_BY_PLACEMENT } from './rewards.config';
@@ -20,6 +20,7 @@ export class RewardsHistoryController {
   ) {}
 
   /** Public reward values used by clients when presenting the current prize podium. */
+  @Public()
   @Get('config')
   @Throttle({ default: { limit: 120, ttl: seconds(60) } })
   config() {
@@ -34,7 +35,6 @@ export class RewardsHistoryController {
 
   /** Authenticated caller's personal match/reward history, including user-facing ineligibility reasons. */
   @Get('me/history')
-  @UseGuards(AccessTokenGuard)
   @Throttle({ default: { limit: 60, ttl: seconds(60) } })
   personalHistory(@RequestUser() auth: AuthenticatedUser, @Query('cursor') cursor?: string) {
     this.assertValidCursor(cursor);
@@ -42,6 +42,7 @@ export class RewardsHistoryController {
   }
 
   /** Public feed of recent matches with podium/reward info. Unauthenticated. */
+  @Public()
   @Get('matches/recent')
   @Throttle({ default: { limit: 60, ttl: seconds(60) } })
   recentMatches(@Query('cursor') cursor?: string) {
@@ -50,6 +51,7 @@ export class RewardsHistoryController {
   }
 
   /** Public detail view of a single match's players and rewards. Unauthenticated. */
+  @Public()
   @Get('matches/:matchId')
   @Throttle({ default: { limit: 120, ttl: seconds(60) } })
   matchDetail(@Param('matchId') matchId: string) {

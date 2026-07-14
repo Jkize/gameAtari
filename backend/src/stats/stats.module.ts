@@ -2,13 +2,12 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { GameModule } from '../games/tanks/game.module';
 import { AdminStatsController } from './admin-stats.controller';
-import { AdminGuard } from './admin.guard';
 import { StatsController } from './stats.controller';
 import { StatsService } from './stats.service';
 
 @Module({
   imports: [GameModule, AuthModule],
   controllers: [StatsController, AdminStatsController],
-  providers: [StatsService, AdminGuard],
+  providers: [StatsService],
 })
 export class StatsModule {}

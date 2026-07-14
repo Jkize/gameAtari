@@ -1,15 +1,17 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import bs58 from 'bs58';
 import { environment } from '../../environments/environment';
-import { AccountStatus, AuthProvider, AuthUser, LoginResponse, PhantomProvider } from './auth.models';
+import { AccountStatus, AuthProvider, AuthUser, EAuth, LoginResponse, PhantomProvider } from './auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly user = signal<AuthUser | null>(null);
   readonly accessToken = signal<string | null>(null);
   readonly onboardingToken = signal<string | null>(null);
+  readonly role = computed<EAuth>(() => this.user()?.role ?? EAuth.USER);
+  readonly isAdmin = computed(() => this.role() === EAuth.ADMIN);
   private sessionRestorePromise: Promise<boolean> | null = null;
 
   constructor(private readonly http: HttpClient) {}

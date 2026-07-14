@@ -1,6 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Put } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { AccessTokenGuard } from '../auth/access-token.guard';
 import { AuthenticatedUser } from '../common/auth.types';
 import { RequestUser } from '../common/request-user.decorator';
 import { UpsertSettingDto } from './dto/upsert-setting.dto';
@@ -10,7 +9,6 @@ const KEY_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 const MAX_DATA_LENGTH = 10_000;
 
 @Controller('settings')
-@UseGuards(AccessTokenGuard)
 export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
 

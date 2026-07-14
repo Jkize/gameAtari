@@ -1,0 +1,65 @@
+<main class="ui-page">
+  <nav><a class="ui-back-link" routerLink="/lobby">{{ 'users.backToLobby' | transloco }}</a></nav>
+  <h1 class="ui-page-title">{{ 'users.title' | transloco }}</h1>
+
+  @if (loading() && !items().length) {
+    <app-loading-skeleton [rows]="4" [ariaLabel]="'users.loadingAriaLabel' | transloco" />
+  } @else if (error()) {
+    <app-empty-state
+      [title]="'users.loadErrorTitle' | transloco"
+      [message]="error()"
+      [actionLabel]="'users.retry' | transloco"
+      (action)="load()"
+    />
+  } @else if (!items().length) {
+    <app-empty-state
+      [title]="'users.empty' | transloco"
+      [message]="'users.emptyHint' | transloco"
+    />
+  } @else {
+    <section class="list" [attr.aria-label]="'users.title' | transloco">
+      @for (user of items(); track user.id) {
+        <article class="user">
+          <div class="identity">
+            @if (user.avatarUrl) {
+              <img class="avatar" [src]="user.avatarUrl" alt="" aria-hidden="true" />
+            } @else {
+              <span class="avatar avatar--fallback" aria-hidden="true">
+                <i class="ti ti-user"></i>
+              </span>
+            }
+            <div>
+              <h2>{{ user.username || ('users.usernameFallback' | transloco) }}</h2>
+              <p class="meta">
+                <span>{{ 'users.joined' | transloco }}</span>
+                <time>{{ user.createdAt | date:'mediumDate' }}</time>
+              </p>
+            </div>
+          </div>
+          <div class="badges">
+            @for (provider of user.providers; track provider) {
+              <span class="badge badge--provider">
+                <i
+                  class="ti"
+                  [class.ti-brand-google]="provider === 'GOOGLE'"
+                  [class.ti-wallet]="provider === 'PHANTOM'"
+                  aria-hidden="true"
+                ></i>
+                {{ 'users.provider.' + provider | transloco }}
+              </span>
+            }
+            <span class="badge" [class.badge--admin]="user.role === 'ADMIN'">
+              {{ 'users.role.' + user.role | transloco }}
+            </span>
+            <span class="badge" [class.badge--inactive]="!user.active">
+              {{ (user.active ? 'users.active' : 'users.inactive') | transloco }}
+            </span>
+          </div>
+        </article>
+      }
+    </section>
+    @if (nextCursor()) {
+      <button class="more ui-button ui-button--primary" type="button" (click)="load()" [disabled]="loading()">{{ 'users.loadMore' | transloco }}</button>
+    }
+  }
+</main>

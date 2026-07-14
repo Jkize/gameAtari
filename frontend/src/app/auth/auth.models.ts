@@ -1,9 +1,15 @@
 export type AuthProvider = 'GOOGLE' | 'PHANTOM';
 
+export enum EAuth {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+
 export interface AuthUser {
   id: string;
   username: string;
   avatarUrl?: string;
+  role?: EAuth;
   wallet?: {
     linked: boolean;
     verified: boolean;

@@ -11,6 +11,11 @@ enum AuthProvider {
   PHANTOM
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 enum MatchStatus {
   COMPLETED
   ABORTED
@@ -44,6 +49,7 @@ model User {
   usernameNormalized String?            @unique
   avatarUrl          String?
   active             Boolean            @default(true)
+  role               UserRole           @default(USER)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   accounts           AuthAccount[]
