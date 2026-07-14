@@ -83,7 +83,7 @@ export class PlayerRenderer {
     if (revealUntil !== undefined) this.playerRevealUntil.set(player.id, revealUntil);
 
     if (!this.playerNameTexts.has(player.id)) {
-      const txt = this.scene.add.text(player.x, player.y, player.id.slice(0, 8), {
+      const txt = this.scene.add.text(player.x, player.y, player.username ?? player.id.slice(0, 8), {
         fontSize: '11px', fontFamily: MONO,
         color: colorToCss(player.color),
         stroke: '#000000', strokeThickness: 3,
@@ -111,7 +111,7 @@ export class PlayerRenderer {
 
       const txt = this.playerNameTexts.get(p.id);
       if (txt) {
-        const nameLabel = p.id.slice(0, 8);
+        const nameLabel = p.username ?? p.id.slice(0, 8);
         const label = isLocal ? nameLabel : `${nameLabel}\n${p.hp}hp`;
         txt.setText(label);
         txt.setPosition(p.x, p.y - p.radius * PLAYER_LABEL_OFFSET);

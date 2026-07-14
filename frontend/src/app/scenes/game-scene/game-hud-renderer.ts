@@ -669,9 +669,10 @@ export class GameHudRenderer {
       .setColor(isWinner ? '#00ff88' : '#ff4444');
 
     if (survivors.length === 1) {
-      const winnerId = survivors[0].id;
+      const winner = survivors[0];
+      const winnerName = winner.username ?? winner.id.slice(0, 8);
       this.centerSub.setAlpha(1).setText(
-        winnerId === myPlayerId ? t('hud.youWin') : t('hud.winner', { id: winnerId.slice(0, 8) }),
+        winner.id === myPlayerId ? t('hud.youWin') : t('hud.winner', { name: winnerName }),
       );
     } else {
       this.centerSub.setAlpha(1).setText(t('hud.noSurvivors'));

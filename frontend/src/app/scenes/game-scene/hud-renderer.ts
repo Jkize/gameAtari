@@ -196,8 +196,9 @@ export class HudRenderer {
 
       this.centerBig.setAlpha(1).setColor(labelColor).setText(label);
       if (survivors.length === 1) {
-        const wId = survivors[0].id;
-        const tag = wId === myPlayerId ? 'YOU WIN' : `WINNER: ${wId.slice(0, 8)}`;
+        const winner = survivors[0];
+        const winnerName = winner.username ?? winner.id.slice(0, 8);
+        const tag = winner.id === myPlayerId ? 'YOU WIN' : `WINNER: ${winnerName}`;
         this.centerSub.setAlpha(1).setText(tag);
       } else {
         this.centerSub.setAlpha(1).setText('NO SURVIVORS');
