@@ -292,6 +292,21 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     })();
   };
 
+  private releaseCombatDisplayMode(): void {
+    try {
+      const orientation = screen.orientation as ScreenOrientation & {
+        unlock?: () => void;
+      };
+      orientation.unlock?.();
+    } catch {
+      // Unsupported (iOS) or already unlocked.
+    }
+
+    if (document.fullscreenElement && document.exitFullscreen) {
+      void document.exitFullscreen().catch(() => undefined);
+    }
+  }
+
   // iOS Safari reports stale viewport sizes right after rotation or browser
   // bar collapse, leaving the FIT-scaled canvas larger than its container and
   // clipping the HUD edges. Re-measuring shortly after the event fixes it.
@@ -339,6 +354,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     window.removeEventListener('orientationchange', this.refreshScale);
     window.visualViewport?.removeEventListener('resize', this.refreshScale);
     if (this.scaleRefreshTimer !== undefined) window.clearTimeout(this.scaleRefreshTimer);
+    this.releaseCombatDisplayMode();
     this.game?.destroy(true);
   }
 

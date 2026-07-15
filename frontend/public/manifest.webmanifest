@@ -5,7 +5,6 @@
   "id": "/",
   "categories": ["games", "entertainment"],
   "display": "fullscreen",
-  "orientation": "landscape",
   "scope": "/",
   "start_url": "/",
   "background_color": "#20170d",
