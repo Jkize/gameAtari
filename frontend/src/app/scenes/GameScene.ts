@@ -19,6 +19,7 @@ import { PowerUpRenderer } from './game-scene/power-up-renderer';
 import { StateChangeTracker } from './game-scene/state-change-tracker';
 import { SpectatorCameraController } from './game-scene/spectator-camera-controller';
 import { findAliveSpectatorTarget, SpectatorDirection } from './game-scene/spectator-follow';
+import { shouldUseSpectatorMode } from './game-scene/spectator-mode';
 import { TouchControls } from './game-scene/touch-controls';
 import { environment } from '../../environments/environment';
 
@@ -53,6 +54,8 @@ export class GameScene extends Phaser.Scene {
   private stateChangeTracker!: StateChangeTracker;
   private spectatorCamera!: SpectatorCameraController;
   private spectatorMode = false;
+  private joinedAsWatcher = false;
+  private localPlayerEliminated = false;
   private spectatedPlayerId: string | null = null;
   private spectatorFreeCamera = false;
   private returnToLobbyTimer?: number;
@@ -65,13 +68,18 @@ export class GameScene extends Phaser.Scene {
     data: { playerId: string; map: GameMap; status: GameState['status'] },
   ): void => {
     this.resetRoundRenderState();
+    this.joinedAsWatcher = false;
     this.myPlayerId = data.playerId;
     this.initializeMap(data.map, data.status);
   };
   private readonly onWatchJoined = (
     data: { watcherId: string; map: GameMap; status: GameState['status'] },
   ): void => {
+    // A delayed watch response must not replace a player identity established
+    // by gameJoined on the same long-lived socket.
+    if (this.myPlayerId) return;
     this.resetRoundRenderState();
+    this.joinedAsWatcher = true;
     this.myPlayerId = '';
     this.initializeMap(data.map, data.status);
     void data.watcherId;
@@ -186,10 +194,15 @@ export class GameScene extends Phaser.Scene {
 
     // Authoritative state for input, HUD, events, sounds, HP, kills, power-ups, etc.
     this.gameState = latest;
-    const localPlayer = this.gameState.players.find(player => player.id === this.myPlayerId);
-    const spectatorMode = this.gameState.status === 'playing'
-      && Boolean(this.myPlayerId)
-      && (!localPlayer || localPlayer.alive === false);
+    const spectatorMode = shouldUseSpectatorMode(
+      this.gameState,
+      this.myPlayerId,
+      this.joinedAsWatcher,
+      this.localPlayerEliminated,
+    );
+    if (!this.joinedAsWatcher && spectatorMode) {
+      this.localPlayerEliminated = true;
+    }
     this.setSpectatorMode(spectatorMode);
 
     // Interpolated state for visual rendering only.
@@ -353,6 +366,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private resetRoundRenderState(): void {
+    this.localPlayerEliminated = false;
     this.setSpectatorMode(false);
     this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
     this.snapshotInterpolator.clear();

@@ -15,7 +15,8 @@
       "PowerShell(npm run build)",
       "mcp__plugin_engram_engram__mem_judge",
       "Bash(curl -s -o /dev/null -w \"index: %{http_code} %{time_total}s\\\\n\" https://playtankarena.com/)",
-      "Bash(curl -s -X POST https://api.playtankarena.com/auth/refresh -H \"Origin: https://playtankarena.com\" -H \"Content-Type: application/json\" -d '{}' -o /dev/null -w \"refresh: %{http_code} %{time_total}s\\\\n\")"
+      "Bash(curl -s -X POST https://api.playtankarena.com/auth/refresh -H \"Origin: https://playtankarena.com\" -H \"Content-Type: application/json\" -d '{}' -o /dev/null -w \"refresh: %{http_code} %{time_total}s\\\\n\")",
+      "PowerShell(git -C e:\\\\PROJECTS\\\\gameAtari diff -- frontend/src/app/scenes/GameScene.ts)"
     ]
   }
 }
