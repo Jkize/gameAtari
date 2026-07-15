@@ -12,6 +12,7 @@ import { RewardEligibilityNoticeComponent } from '../rewards/reward-eligibility-
 import { AccountRefreshService } from '../account/account-refresh.service';
 import { GameAssetPreloaderService } from '../game/game-asset-preloader.service';
 import { QuickPlayCardComponent } from './quick-play-card.component';
+import { PwaInstallPromptComponent } from '../pwa/pwa-install-prompt.component';
 
 @Component({
   selector: 'app-lobby',
@@ -21,6 +22,7 @@ import { QuickPlayCardComponent } from './quick-play-card.component';
     TranslocoPipe,
     RewardEligibilityNoticeComponent,
     QuickPlayCardComponent,
+    PwaInstallPromptComponent,
   ],
   templateUrl: './lobby.component.html',
   styleUrl: './lobby.component.css',

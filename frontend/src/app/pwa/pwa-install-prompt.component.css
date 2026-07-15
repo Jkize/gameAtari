@@ -1,0 +1,212 @@
+.install-launcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-bg-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 32%, var(--color-border));
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.install-launcher i {
+  font-size: 1rem;
+}
+
+.install-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(3, 6, 15, 0.76);
+  backdrop-filter: blur(5px);
+}
+
+.install-dialog {
+  position: fixed;
+  z-index: 101;
+  top: 50%;
+  left: 50%;
+  width: min(430px, calc(100% - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  padding: 28px;
+  color: var(--color-text-primary);
+  background:
+    radial-gradient(circle at 50% 0, rgba(131, 229, 239, 0.14), transparent 42%),
+    var(--color-bg-surface);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
+  border-radius: 22px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.close-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-inset);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.app-icon {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 18px;
+  padding: 2px;
+  background: linear-gradient(145deg, rgba(131, 229, 239, 0.2), rgba(255, 217, 138, 0.12));
+  border: 1px solid rgba(131, 229, 239, 0.35);
+  border-radius: 22px;
+  box-shadow: 0 12px 34px rgba(3, 6, 15, 0.3);
+}
+
+.app-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ui-eyebrow {
+  margin: 0 0 6px;
+  color: var(--color-accent);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+}
+
+h2 {
+  margin: 0;
+  font-size: clamp(1.55rem, 6vw, 2rem);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.description {
+  margin: 14px auto 20px;
+  color: var(--color-text-secondary);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.benefits,
+.install-steps {
+  display: grid;
+  gap: 9px;
+  padding: 0;
+  margin: 0 0 22px;
+  list-style: none;
+  text-align: left;
+}
+
+.benefits li,
+.install-steps li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-bg-inset) 78%, transparent);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: 0.85rem;
+}
+
+.benefits i {
+  color: var(--color-accent);
+  font-size: 1.1rem;
+}
+
+.install-steps {
+  counter-reset: install-step;
+}
+
+.install-steps li {
+  counter-increment: install-step;
+}
+
+.step-icon {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--color-accent);
+  background: rgba(131, 229, 239, 0.1);
+  border-radius: 10px;
+  font-size: 1.1rem;
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+}
+
+.primary-action,
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 18px;
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-action {
+  color: #071015;
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  box-shadow: 0 8px 24px rgba(131, 229, 239, 0.18);
+}
+
+.primary-action:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.secondary-action {
+  min-height: 40px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 520px) {
+  .install-dialog {
+    padding: 24px 20px 20px;
+    border-radius: 18px;
+  }
+
+  .app-icon {
+    width: 82px;
+    height: 82px;
+    margin-bottom: 14px;
+  }
+}

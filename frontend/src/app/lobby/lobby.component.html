@@ -6,6 +6,7 @@
           <p class="ui-eyebrow">{{ 'lobby.eyebrow' | transloco }}</p>
           <h1>{{ 'lobby.heading' | transloco }}</h1>
         </div>
+        <app-pwa-install-prompt />
         <app-quick-play-card
           [currentRoom]="currentRoom()"
           [preparing]="preparing()"

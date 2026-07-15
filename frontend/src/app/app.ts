@@ -7,6 +7,7 @@ import { MatchStartRedirectService } from './network/match-start-redirect.servic
 import { QueueCountdownButtonComponent } from './network/queue-countdown-button.component';
 import { QueueStatusService } from './network/queue-status.service';
 import { ThemeService } from './shared/theme.service';
+import { PwaInstallService } from './pwa/pwa-install.service';
 
 @Component({
   selector: 'app-root',
@@ -20,10 +21,12 @@ export class App {
   private readonly swUpdate = inject(SwUpdate);
   private readonly matchStartRedirect = inject(MatchStartRedirectService);
   private readonly queueStatus = inject(QueueStatusService);
+  private readonly pwaInstall = inject(PwaInstallService);
 
   protected readonly updateReady = signal(false);
 
   constructor() {
+    this.pwaInstall.initialize();
     this.matchStartRedirect.start();
     this.queueStatus.start();
     if (this.swUpdate.isEnabled) {

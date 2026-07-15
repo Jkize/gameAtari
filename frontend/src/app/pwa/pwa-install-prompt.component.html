@@ -1,0 +1,102 @@
+@if (canOfferInstall() && !visible()) {
+  <button class="install-launcher" type="button" aria-haspopup="dialog" (click)="openManually()">
+    <i class="ti ti-device-mobile-down" aria-hidden="true"></i>
+    {{ 'pwaInstall.installApplication' | transloco }}
+  </button>
+}
+
+@if (visible()) {
+  <div class="install-backdrop" role="presentation" (click)="dismiss()"></div>
+  <section
+    class="install-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pwa-install-title"
+    aria-describedby="pwa-install-description"
+  >
+    <button
+      class="close-button"
+      type="button"
+      [attr.aria-label]="'pwaInstall.close' | transloco"
+      (click)="dismiss()"
+    >
+      <i class="ti ti-x" aria-hidden="true"></i>
+    </button>
+
+    <div class="app-icon" aria-hidden="true">
+      <img src="icons/icon-192x192.png" alt="">
+    </div>
+
+    @if (showingInstructions()) {
+      @if (platform() === 'ios') {
+        <p class="ui-eyebrow">{{ 'pwaInstall.iosEyebrow' | transloco }}</p>
+        <h2 id="pwa-install-title">{{ 'pwaInstall.iosTitle' | transloco }}</h2>
+        <p id="pwa-install-description" class="description">
+          {{ 'pwaInstall.iosDescription' | transloco }}
+        </p>
+
+        <ol class="install-steps">
+          <li>
+            <span class="step-icon"><i class="ti ti-brand-safari" aria-hidden="true"></i></span>
+            <span>{{ 'pwaInstall.iosStepSafari' | transloco }}</span>
+          </li>
+          <li>
+            <span class="step-icon"><i class="ti ti-share-2" aria-hidden="true"></i></span>
+            <span>{{ 'pwaInstall.iosStepShare' | transloco }}</span>
+          </li>
+          <li>
+            <span class="step-icon"><i class="ti ti-square-rounded-plus" aria-hidden="true"></i></span>
+            <span>{{ 'pwaInstall.iosStepAdd' | transloco }}</span>
+          </li>
+        </ol>
+      } @else {
+        <p class="ui-eyebrow">{{ 'pwaInstall.androidEyebrow' | transloco }}</p>
+        <h2 id="pwa-install-title">{{ 'pwaInstall.androidTitle' | transloco }}</h2>
+        <p id="pwa-install-description" class="description">
+          {{ 'pwaInstall.androidDescription' | transloco }}
+        </p>
+
+        <ol class="install-steps">
+          <li>
+            <span class="step-icon"><i class="ti ti-dots-vertical" aria-hidden="true"></i></span>
+            <span>{{ 'pwaInstall.androidStepMenu' | transloco }}</span>
+          </li>
+          <li>
+            <span class="step-icon"><i class="ti ti-device-mobile-down" aria-hidden="true"></i></span>
+            <span>{{ 'pwaInstall.androidStepInstall' | transloco }}</span>
+          </li>
+          <li>
+            <span class="step-icon"><i class="ti ti-circle-check" aria-hidden="true"></i></span>
+            <span>{{ 'pwaInstall.androidStepConfirm' | transloco }}</span>
+          </li>
+        </ol>
+      }
+
+      <button class="primary-action" type="button" (click)="dismiss()">
+        {{ 'pwaInstall.understood' | transloco }}
+      </button>
+    } @else {
+      <p class="ui-eyebrow">{{ 'pwaInstall.eyebrow' | transloco }}</p>
+      <h2 id="pwa-install-title">{{ 'pwaInstall.title' | transloco }}</h2>
+      <p id="pwa-install-description" class="description">
+        {{ 'pwaInstall.description' | transloco }}
+      </p>
+
+      <ul class="benefits">
+        <li><i class="ti ti-maximize" aria-hidden="true"></i> {{ 'pwaInstall.fullscreen' | transloco }}</li>
+        <li><i class="ti ti-device-gamepad-2" aria-hidden="true"></i> {{ 'pwaInstall.controls' | transloco }}</li>
+        <li><i class="ti ti-bolt" aria-hidden="true"></i> {{ 'pwaInstall.quickAccess' | transloco }}</li>
+      </ul>
+
+      <div class="actions">
+        <button class="primary-action" type="button" (click)="install()" [disabled]="installing()">
+          <i class="ti ti-download" aria-hidden="true"></i>
+          {{ (mode() === 'native' ? 'pwaInstall.install' : 'pwaInstall.showHow') | transloco }}
+        </button>
+        <button class="secondary-action" type="button" (click)="dismiss()">
+          {{ 'pwaInstall.notNow' | transloco }}
+        </button>
+      </div>
+    }
+  </section>
+}

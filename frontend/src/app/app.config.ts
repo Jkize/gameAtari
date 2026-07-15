@@ -5,10 +5,14 @@ import { provideTransloco } from '@jsverse/transloco';
 import { routes } from './app.routes';
 import { TranslocoHttpLoader } from './transloco-loader';
 import { provideServiceWorker } from '@angular/service-worker';
+import {
+  APP_LANGUAGES,
+  applyDocumentLanguage,
+  resolveInitialLanguage,
+} from './shared/language.config';
 
-const storedLang = typeof localStorage !== 'undefined'
-  ? (localStorage.getItem('tank-arena:lang') ?? 'en')
-  : 'en';
+const initialLanguage = resolveInitialLanguage();
+applyDocumentLanguage(initialLanguage);
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,8 +21,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideTransloco({
       config: {
-        availableLangs: ['en', 'es'],
-        defaultLang: storedLang,
+        availableLangs: APP_LANGUAGES.map(language => language.code),
+        defaultLang: initialLanguage,
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
       },

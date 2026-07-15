@@ -1,7 +1,9 @@
 ﻿{
   "name": "Tank Arena",
   "short_name": "Tank Arena",
-  "description": "Real-time multiplayer tank battles",
+  "description": "Immersive real-time tank battles with fullscreen action and mobile-optimized controls.",
+  "id": "/",
+  "categories": ["games", "entertainment"],
   "display": "fullscreen",
   "orientation": "landscape",
   "scope": "/",
