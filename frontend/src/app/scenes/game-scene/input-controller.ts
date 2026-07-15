@@ -13,6 +13,7 @@ type SceneState = {
 };
 
 export class InputController {
+  private readonly pressedMovementCodes = new Set<string>();
   private keys!: {
     W: Phaser.Input.Keyboard.Key;
     A: Phaser.Input.Keyboard.Key;
@@ -32,6 +33,15 @@ export class InputController {
   private readonly onSettingsMenu = (event: Event): void => {
     this.inputBlocked = Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open);
   };
+  private readonly onNativeKeyDown = (event: KeyboardEvent): void => {
+    if (this.isMovementCode(event.code)) this.pressedMovementCodes.add(event.code);
+  };
+  private readonly onNativeKeyUp = (event: KeyboardEvent): void => {
+    this.pressedMovementCodes.delete(event.code);
+  };
+  private readonly onWindowBlur = (): void => {
+    this.pressedMovementCodes.clear();
+  };
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -39,10 +49,17 @@ export class InputController {
     private readonly touchControls: TouchControls | null = null,
   ) {
     window.addEventListener('tank-arena:settings-menu', this.onSettingsMenu);
+    window.addEventListener('keydown', this.onNativeKeyDown);
+    window.addEventListener('keyup', this.onNativeKeyUp);
+    window.addEventListener('blur', this.onWindowBlur);
   }
 
   destroy(): void {
     window.removeEventListener('tank-arena:settings-menu', this.onSettingsMenu);
+    window.removeEventListener('keydown', this.onNativeKeyDown);
+    window.removeEventListener('keyup', this.onNativeKeyUp);
+    window.removeEventListener('blur', this.onWindowBlur);
+    this.pressedMovementCodes.clear();
   }
 
   setup(): void {
@@ -115,10 +132,10 @@ export class InputController {
         moveX = touchMove.x;
         moveY = touchMove.y;
       } else {
-        if (this.keys.W.isDown) moveY -= 1;
-        if (this.keys.S.isDown) moveY += 1;
-        if (this.keys.A.isDown) moveX -= 1;
-        if (this.keys.D.isDown) moveX += 1;
+        if (this.keys.W.isDown || this.pressedMovementCodes.has('KeyW')) moveY -= 1;
+        if (this.keys.S.isDown || this.pressedMovementCodes.has('KeyS')) moveY += 1;
+        if (this.keys.A.isDown || this.pressedMovementCodes.has('KeyA')) moveX -= 1;
+        if (this.keys.D.isDown || this.pressedMovementCodes.has('KeyD')) moveX += 1;
       }
     }
 
@@ -147,5 +164,9 @@ export class InputController {
     this.pendingReload = false;
     this.pendingShield = false;
     this.state.getSocket().emit(SOCKET_EVENTS.GAME.PLAYER_INPUT, input);
+  }
+
+  private isMovementCode(code: string): boolean {
+    return code === 'KeyW' || code === 'KeyA' || code === 'KeyS' || code === 'KeyD';
   }
 }

@@ -17,7 +17,7 @@ vi.mock('phaser', () => ({
   },
 }));
 
-describe('InputController spectator guard', () => {
+describe('InputController', () => {
   it('does not emit player input after the local player is eliminated', () => {
     const keyboard = {
       addKey: vi.fn(() => ({ isDown: false })),
@@ -48,6 +48,47 @@ describe('InputController spectator guard', () => {
     controller.sendInput(20);
 
     expect(socket.emit).not.toHaveBeenCalled();
+    controller.destroy();
+  });
+
+  it('reads WASD from native events even when another SPA listener prevented the event', () => {
+    const keyboard = {
+      addKey: vi.fn(() => ({ isDown: false })),
+      on: vi.fn(),
+    };
+    const scene = {
+      input: {
+        keyboard,
+        activePointer: { isDown: false, worldX: 300, worldY: 300 },
+      },
+    } as unknown as Phaser.Scene;
+    const socket = { emit: vi.fn() } as unknown as Socket;
+    const gameState = {
+      status: 'playing',
+      players: [{ id: 'me', alive: true, aimAngle: 0, x: 100, y: 100 }],
+      bullets: [],
+      powerUps: [],
+      impactEvents: [],
+      map: { width: 1600, height: 1200, obstacles: [], powerUps: [] },
+    } as unknown as GameState;
+    const controller = new InputController(scene, {
+      getGameState: () => gameState,
+      getMyPlayerId: () => 'me',
+      getSocket: () => socket,
+    });
+
+    controller.setup();
+    const keyDown = new KeyboardEvent('keydown', { code: 'KeyW', cancelable: true });
+    keyDown.preventDefault();
+    window.dispatchEvent(keyDown);
+    controller.sendInput(20);
+
+    expect(socket.emit).toHaveBeenCalledWith(
+      'playerInput',
+      expect.objectContaining({ moveX: 0, moveY: -1 }),
+    );
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW' }));
     controller.destroy();
   });
 });
