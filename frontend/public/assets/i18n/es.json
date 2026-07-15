@@ -21,6 +21,11 @@
   "lobby.waitingPlayers": "{{current}}/{{min}} jugadores para iniciar",
   "lobby.capacityPlayers": "{{current}}/{{max}} jugadores",
   "lobby.emptyQueue": "Entra a la cola publica y te asignaremos a la mejor sala disponible.",
+  "lobby.matchInProgress": "Tienes una partida en curso",
+  "lobby.reconnect": "Reconectar",
+  "lobby.eliminated": "Fuiste eliminado de esta partida",
+  "queueFloating.countdown": "La batalla comienza en {{seconds}}s",
+  "queueFloating.players": "{{current}}/{{max}} jugadores",
 
   "nav.play": "Jugar",
   "nav.myMatches": "Mis partidas",

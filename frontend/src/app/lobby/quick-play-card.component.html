@@ -1,5 +1,16 @@
 <section class="quick-play-card">
-  @if (currentRoom) {
+  @if (reconnectEnabled && currentRoom && currentRoom.status === 'in_game') {
+    <p>{{ 'lobby.matchInProgress' | transloco }}</p>
+    <h2>{{ currentRoom.name }}</h2>
+    @if (canReconnect) {
+      <button class="primary ui-button ui-button--primary" (click)="reconnect.emit()">
+        {{ 'lobby.reconnect' | transloco }}
+      </button>
+    } @else {
+      <span>{{ 'lobby.eliminated' | transloco }}</span>
+    }
+    <button (click)="cancel.emit()">{{ 'lobby.cancel' | transloco }}</button>
+  } @else if (currentRoom) {
     <p>{{ 'lobby.searching' | transloco }}</p>
     <h2>{{ currentRoom.name }}</h2>
     <strong>{{

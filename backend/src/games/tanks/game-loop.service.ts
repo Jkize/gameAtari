@@ -139,6 +139,10 @@ export class GameLoopService implements OnModuleDestroy {
     return Boolean(this.sessions.get(roomId));
   }
 
+  isPlayerAlive(roomId: string, userId: string): boolean {
+    return this.sessions.get(roomId)?.players.get(userId)?.alive ?? false;
+  }
+
   addPlayer(roomId: string, userId: string, username: string): void {
     this.sessions.run(roomId, () => this.gameService.addPlayer(userId, username));
   }

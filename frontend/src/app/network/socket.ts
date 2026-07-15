@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 class SocketManager {
   private socket: Socket | null = null;
   private readonly guestId = crypto.randomUUID();
+  private readonly createdCallbacks = new Set<(socket: Socket) => void>();
 
   connect(accessToken?: string): Socket {
     if (this.socket) {
@@ -22,7 +23,16 @@ class SocketManager {
       reconnectionDelayMax: 5000,
     });
 
+    for (const callback of this.createdCallbacks) callback(this.socket);
+
     return this.socket;
+  }
+
+  // Runs once per socket instance, so route-independent listeners survive
+  // component destruction and full disconnect/reconnect cycles.
+  onCreated(callback: (socket: Socket) => void): void {
+    this.createdCallbacks.add(callback);
+    if (this.socket) callback(this.socket);
   }
 
   get(): Socket | null {

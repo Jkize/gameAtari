@@ -77,7 +77,7 @@ export class LoginComponent implements AfterViewInit {
       window.google.accounts.id.renderButton(this.googleButton.nativeElement, {
         theme: 'outline',
         size: 'large',
-        width: 360,
+        width: Math.min(360, this.googleButton.nativeElement.clientWidth),
       });
     };
     if (window.google) return render();

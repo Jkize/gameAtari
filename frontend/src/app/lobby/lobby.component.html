@@ -15,6 +15,9 @@
           (play)="quickPlay()"
           (cancel)="leaveRoom()"
           (retry)="quickPlay()"
+          [reconnectEnabled]="reconnectEnabled"
+          [canReconnect]="canReconnect()"
+          (reconnect)="reconnectToMatch()"
         >
           <app-public-stats [compact]="true"></app-public-stats>
         </app-quick-play-card>

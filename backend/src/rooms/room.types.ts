@@ -26,5 +26,5 @@ export interface RoomPublicState {
   minPlayers: number;
   maxPlayers: number;
   countdownSeconds: number | null;
-  players: Array<{ userId: string; username: string; connected: boolean }>;
+  players: Array<{ userId: string; username: string; connected: boolean; alive: boolean }>;
 }

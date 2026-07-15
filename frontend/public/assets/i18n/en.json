@@ -21,6 +21,11 @@
   "lobby.waitingPlayers": "{{current}}/{{min}} players to start",
   "lobby.capacityPlayers": "{{current}}/{{max}} players",
   "lobby.emptyQueue": "Join the public queue and we'll assign you to the best available room.",
+  "lobby.matchInProgress": "You have a match in progress",
+  "lobby.reconnect": "Reconnect",
+  "lobby.eliminated": "You were eliminated from this match",
+  "queueFloating.countdown": "Battle starts in {{seconds}}s",
+  "queueFloating.players": "{{current}}/{{max}} players",
 
   "nav.play": "Play",
   "nav.myMatches": "My Matches",

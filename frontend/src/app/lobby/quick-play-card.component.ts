@@ -1,13 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { RoomState } from '../network/room-state';
 
-export interface QuickPlayRoom {
-  name: string;
-  playerCount: number;
-  minPlayers: number;
-  maxPlayers: number;
-  countdownSeconds: number | null;
-}
+export type QuickPlayRoom = RoomState;
 
 @Component({
   selector: 'app-quick-play-card',
@@ -22,8 +17,11 @@ export class QuickPlayCardComponent {
   @Input() preparationProgress = 0;
   @Input() searching = false;
   @Input() errorMessage = '';
+  @Input() reconnectEnabled = false;
+  @Input() canReconnect = false;
 
   @Output() play = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
   @Output() retry = new EventEmitter<void>();
+  @Output() reconnect = new EventEmitter<void>();
 }

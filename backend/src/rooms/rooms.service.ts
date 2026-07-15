@@ -14,7 +14,9 @@ const COUNTDOWN_TIERS = [
   { minPlayers: 8, seconds: 20 },
   { minPlayers: 4, seconds: 40 },
 ];
-const RECONNECT_GRACE_MS = 15_000;
+// Production allows time to reopen the app and hit Reconnect. Keep the
+// original shorter timeout in local/dev environments used for game testing.
+const RECONNECT_GRACE_MS = process.env.NODE_ENV === 'production' ? 60_000 : 15_000;
 const ROUND_RESET_MS = 5_000;
 
 @Injectable()
@@ -349,6 +351,9 @@ export class RoomsService {
         userId: member.userId,
         username: member.username,
         connected: member.socketId !== null,
+        alive: room.status === 'in_game'
+          ? this.gameLoop.isPlayerAlive(room.id, member.userId)
+          : true,
       })),
     };
   }

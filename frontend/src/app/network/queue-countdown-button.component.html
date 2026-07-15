@@ -1,0 +1,21 @@
+@if (visible(); as isVisible) {
+  @if (isVisible && room(); as activeRoom) {
+    <button
+      type="button"
+      class="queue-countdown"
+      aria-live="polite"
+      aria-atomic="true"
+      (click)="goToLobby()"
+    >
+      <strong>
+        {{ 'queueFloating.countdown' | transloco: { seconds: activeRoom.countdownSeconds } }}
+      </strong>
+      <small>
+        {{
+          'queueFloating.players'
+            | transloco: { current: activeRoom.playerCount, max: activeRoom.maxPlayers }
+        }}
+      </small>
+    </button>
+  }
+}

@@ -11,6 +11,7 @@ describe('RoomsService', () => {
       prepare: jest.fn(),
       start: jest.fn(),
       buildState: jest.fn(),
+      isPlayerAlive: jest.fn(() => true),
     };
     const redis = {
       set: jest.fn(async () => undefined),
