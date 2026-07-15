@@ -224,8 +224,8 @@ export class TouchControls {
     this.scene.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp);
   }
 
-  update(status: string): void {
-    this.setVisible(status === 'playing');
+  update(status: string, enabled = true): void {
+    this.setVisible(status === 'playing' && enabled);
     this.draw();
   }
 

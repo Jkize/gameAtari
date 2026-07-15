@@ -54,6 +54,18 @@ import { GameSettingsService } from './game-settings.service';
         </section>
       }
 
+      @if (spectatorMode()) {
+        <button
+          type="button"
+          class="spectator-lobby-button"
+          (pointerdown)="stopGamePointer($event)"
+          (pointerup)="stopGamePointer($event)"
+          (click)="leaveSpectator($event)"
+        >
+          {{ 'hud.spectatorGoToLobby' | transloco }}
+        </button>
+      }
+
       <div class="rotate-overlay" aria-hidden="true">
         <span class="rotate-icon">⟳</span>
         <strong>{{ 'game.rotateTitle' | transloco }}</strong>
@@ -149,6 +161,36 @@ import { GameSettingsService } from './game-settings.service';
       z-index: 10;
     }
 
+    .spectator-lobby-button {
+      position: absolute;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+      z-index: 12;
+      transform: translateX(-50%);
+      min-width: 170px;
+      padding: 11px 20px;
+      color: #201207;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid #ffd08a;
+      border-radius: 9px;
+      background: #ff9f43;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+      cursor: pointer;
+    }
+
+    .spectator-lobby-button:hover {
+      background: #ffb15f;
+    }
+
+    .spectator-lobby-button:focus-visible {
+      outline: 3px solid #fff2d7;
+      outline-offset: 3px;
+    }
+
     .settings-panel header,
     .volume-control,
     .panel-footer {
@@ -205,6 +247,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   // Signals: this app is zoneless, and these fields are mutated from
   // non-template contexts (window events from Phaser, async saves).
   protected readonly settingsOpen = signal(false);
+  protected readonly spectatorMode = signal(false);
   protected settings: GameSettings = { ...DEFAULT_GAME_SETTINGS };
   protected readonly sfxPercent = signal(Math.round(DEFAULT_GAME_SETTINGS.sfxVolume * 100));
   protected readonly saveLabelKey = signal('settings.saved');
@@ -222,6 +265,11 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
 
   private readonly openSettingsFromGame = (): void => {
     this.toggleSettings(true);
+  };
+
+  private readonly spectatorModeChanged = (event: Event): void => {
+    const active = Boolean((event as CustomEvent<{ active?: boolean }>).detail?.active);
+    this.spectatorMode.set(active);
   };
 
   // Best-effort on the first touch: Android honors fullscreen + landscape
@@ -265,6 +313,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     registerTranslate((key: string, params?: Record<string, unknown>) => this.transloco.translate(key, params));
     window.addEventListener('tank-arena:return-lobby', this.returnToLobby);
     window.addEventListener('tank-arena:open-settings', this.openSettingsFromGame);
+    window.addEventListener('tank-arena:spectator-mode', this.spectatorModeChanged);
     if (window.matchMedia?.('(pointer: coarse)').matches) {
       this.containerRef.nativeElement.addEventListener('pointerdown', this.tryFullscreenLandscape);
     }
@@ -284,6 +333,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     if (this.saveTimer !== undefined) window.clearTimeout(this.saveTimer);
     window.removeEventListener('tank-arena:return-lobby', this.returnToLobby);
     window.removeEventListener('tank-arena:open-settings', this.openSettingsFromGame);
+    window.removeEventListener('tank-arena:spectator-mode', this.spectatorModeChanged);
     this.containerRef.nativeElement.removeEventListener('pointerdown', this.tryFullscreenLandscape);
     window.removeEventListener('resize', this.refreshScale);
     window.removeEventListener('orientationchange', this.refreshScale);
@@ -318,6 +368,11 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
 
   protected stopGamePointer(event: Event): void {
     event.stopPropagation();
+  }
+
+  protected leaveSpectator(event: Event): void {
+    event.stopPropagation();
+    this.returnToLobby();
   }
 
   private async loadSettings(): Promise<void> {

@@ -89,6 +89,11 @@
   "hud.noSurvivors": "NO SURVIVORS",
   "hud.returningToLobby": "RETURNING TO LOBBY IN {{seconds}}s",
   "hud.returningToLobbyDev": "RETURNING TO LOBBY IN {{seconds}}s · [ENTER] DEV RESTART",
+  "hud.spectatorStatus": "SPECTATOR MODE · DRAG TO EXPLORE",
+  "hud.spectatorFollowing": "SPECTATOR · FOLLOWING {{name}} · DRAG TO EXPLORE",
+  "hud.spectatorPrevious": "‹ PREVIOUS",
+  "hud.spectatorNext": "NEXT ›",
+  "hud.spectatorGoToLobby": "Go to lobby",
 
   "hud.zone.outsideReceivingDamage": "OUT OF ZONE\nTAKING DAMAGE",
   "hud.zone.closingIn": "ZONE CLOSES IN {{seconds}}s",

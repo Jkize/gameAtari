@@ -17,6 +17,8 @@ import { ObstacleRenderer } from './game-scene/obstacle-renderer';
 import { PlayerRenderer } from './game-scene/player-renderer';
 import { PowerUpRenderer } from './game-scene/power-up-renderer';
 import { StateChangeTracker } from './game-scene/state-change-tracker';
+import { SpectatorCameraController } from './game-scene/spectator-camera-controller';
+import { findAliveSpectatorTarget, SpectatorDirection } from './game-scene/spectator-follow';
 import { TouchControls } from './game-scene/touch-controls';
 import { environment } from '../../environments/environment';
 
@@ -49,6 +51,10 @@ export class GameScene extends Phaser.Scene {
   private effectSpawner!: EffectSpawner;
   private audioManager!: AudioManager;
   private stateChangeTracker!: StateChangeTracker;
+  private spectatorCamera!: SpectatorCameraController;
+  private spectatorMode = false;
+  private spectatedPlayerId: string | null = null;
+  private spectatorFreeCamera = false;
   private returnToLobbyTimer?: number;
   private networkRttMs: number | null = null;
   private lastRttPingAt = 0;
@@ -180,9 +186,16 @@ export class GameScene extends Phaser.Scene {
 
     // Authoritative state for input, HUD, events, sounds, HP, kills, power-ups, etc.
     this.gameState = latest;
+    const localPlayer = this.gameState.players.find(player => player.id === this.myPlayerId);
+    const spectatorMode = this.gameState.status === 'playing'
+      && Boolean(this.myPlayerId)
+      && (!localPlayer || localPlayer.alive === false);
+    this.setSpectatorMode(spectatorMode);
 
     // Interpolated state for visual rendering only.
     const renderState = this.snapshotInterpolator.buildRenderState() ?? this.gameState;
+
+    if (this.spectatorMode) this.updateSpectatorFollow(this.gameState, renderState);
 
     // Authoritative: sounds, explosions, HP tracking, impact events, kill events.
     this.stateChangeTracker.check(this.gameState, this.myPlayerId);
@@ -198,11 +211,18 @@ export class GameScene extends Phaser.Scene {
     this.playerRenderer.draw(renderState.players, renderState.map, this.myPlayerId, time);
     this.bulletRenderer.draw(renderState.bullets, time);
 
-    this.followLocalPlayer(renderState);
-    this.touchControls?.update(this.gameState.status);
+    if (!this.spectatorMode) this.followLocalPlayer(renderState);
+    this.touchControls?.update(this.gameState.status, !this.spectatorMode);
     this.inputController.sendInput(time);
     this.updateRttProbe(time, this.gameState.status);
-    this.hudRenderer.update(this.gameState, this.myPlayerId, time, this.networkRttMs);
+    this.hudRenderer.update(
+      this.gameState,
+      this.myPlayerId,
+      time,
+      this.networkRttMs,
+      this.spectatorMode,
+      this.getSpectatedPlayerName(),
+    );
   }
 
   private updateRttProbe(time: number, status: GameState['status']): void {
@@ -234,7 +254,12 @@ export class GameScene extends Phaser.Scene {
     this.bulletRenderer = new BulletRenderer(this.layers);
     this.dangerZoneRenderer = new DangerZoneRenderer(this.layers.dangerZoneGfx);
     this.touchControls = TouchControls.isSupported(this.game) ? new TouchControls(this) : null;
-    this.hudRenderer = new GameHudRenderer(this, this.touchControls !== null);
+    this.hudRenderer = new GameHudRenderer(
+      this,
+      this.touchControls !== null,
+      () => this.cycleSpectatorTarget(-1),
+      () => this.cycleSpectatorTarget(1),
+    );
     this.inputController = new InputController(this, {
       getGameState: () => this.gameState,
       getMyPlayerId: () => this.myPlayerId,
@@ -248,6 +273,14 @@ export class GameScene extends Phaser.Scene {
       this.playerRenderer,
       this.audioManager,
     );
+    this.spectatorCamera = new SpectatorCameraController(this, () => ({
+      width: this.mapW,
+      height: this.mapH,
+    }), () => {
+      if (!this.spectatorMode) return;
+      this.spectatorFreeCamera = true;
+      this.spectatedPlayerId = null;
+    });
   }
 
   private setupSocket(): void {
@@ -312,12 +345,16 @@ export class GameScene extends Phaser.Scene {
     this.socket.off(SOCKET_EVENTS.NETWORK.PONG, this.onNetworkPong);
     this.socket.off(SOCKET_EVENTS.TRANSPORT.CONNECT, this.onConnect);
     this.socket.io.off(SOCKET_EVENTS.TRANSPORT.RECONNECT_FAILED, this.onReconnectFailed);
+    this.setSpectatorMode(false);
+    this.spectatorCamera.destroy();
     this.inputController.destroy();
     this.touchControls?.destroy();
     this.audioManager.destroy();
   }
 
   private resetRoundRenderState(): void {
+    this.setSpectatorMode(false);
+    this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
     this.snapshotInterpolator.clear();
     this.networkRttMs = null;
     this.lastRttPingAt = 0;
@@ -331,8 +368,61 @@ export class GameScene extends Phaser.Scene {
 
   private followLocalPlayer(state: GameState): void {
     const me = state.players.find(p => p.id === this.myPlayerId);
-    if (me) {
+    if (me?.alive) {
       this.camTarget.setPosition(me.x, me.y);
     }
+  }
+
+  private setSpectatorMode(active: boolean): void {
+    if (this.spectatorMode === active) return;
+    this.spectatorMode = active;
+    this.spectatedPlayerId = null;
+    this.spectatorFreeCamera = false;
+    this.spectatorCamera.setActive(active);
+    window.dispatchEvent(new CustomEvent('tank-arena:spectator-mode', {
+      detail: { active },
+    }));
+  }
+
+  private updateSpectatorFollow(authoritativeState: GameState, renderState: GameState): void {
+    if (this.spectatorFreeCamera) return;
+
+    let target = authoritativeState.players.find(player => player.id === this.spectatedPlayerId);
+    const needsNewTarget = !target?.alive;
+    if (needsNewTarget) {
+      target = findAliveSpectatorTarget(authoritativeState.players, this.spectatedPlayerId);
+      this.spectatedPlayerId = target?.id ?? null;
+    }
+
+    if (!target) {
+      this.cameras.main.stopFollow();
+      return;
+    }
+
+    const renderedTarget = renderState.players.find(player => player.id === target?.id) ?? target;
+    this.camTarget.setPosition(renderedTarget.x, renderedTarget.y);
+    if (needsNewTarget) {
+      this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
+    }
+  }
+
+  private cycleSpectatorTarget(direction: SpectatorDirection): void {
+    if (!this.spectatorMode || !this.gameState) return;
+    const target = findAliveSpectatorTarget(
+      this.gameState.players,
+      this.spectatedPlayerId,
+      direction,
+    );
+    if (!target) return;
+
+    this.spectatorFreeCamera = false;
+    this.spectatedPlayerId = target.id;
+    this.camTarget.setPosition(target.x, target.y);
+    this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
+  }
+
+  private getSpectatedPlayerName(): string | undefined {
+    const target = this.gameState?.players.find(player => player.id === this.spectatedPlayerId);
+    return target ? target.username ?? target.id.slice(0, 8) : undefined;
   }
 }

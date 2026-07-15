@@ -89,6 +89,11 @@
   "hud.noSurvivors": "SIN SUPERVIVIENTES",
   "hud.returningToLobby": "VOLVIENDO AL LOBBY EN {{seconds}}s",
   "hud.returningToLobbyDev": "VOLVIENDO AL LOBBY EN {{seconds}}s · [ENTER] REINICIO DEV",
+  "hud.spectatorStatus": "MODO ESPECTADOR · ARRASTRA PARA EXPLORAR",
+  "hud.spectatorFollowing": "ESPECTADOR · SIGUIENDO A {{name}} · ARRASTRA PARA EXPLORAR",
+  "hud.spectatorPrevious": "‹ ANTERIOR",
+  "hud.spectatorNext": "SIGUIENTE ›",
+  "hud.spectatorGoToLobby": "Ir al lobby",
 
   "hud.zone.outsideReceivingDamage": "FUERA DE ZONA\nRECIBIENDO DAÑO",
   "hud.zone.closingIn": "LA ZONA SE CIERRA EN {{seconds}}s",

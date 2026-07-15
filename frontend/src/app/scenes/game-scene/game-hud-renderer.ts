@@ -67,6 +67,8 @@ export class GameHudRenderer {
   private rttText!: Phaser.GameObjects.Text;
   private playersText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
+  private spectatorPreviousButton!: Phaser.GameObjects.Text;
+  private spectatorNextButton!: Phaser.GameObjects.Text;
   private zoneAlertText!: Phaser.GameObjects.Text;
   private centerBig!: Phaser.GameObjects.Text;
   private centerSub!: Phaser.GameObjects.Text;
@@ -84,6 +86,8 @@ export class GameHudRenderer {
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly compact = false,
+    private readonly onPreviousSpectator: () => void = () => undefined,
+    private readonly onNextSpectator: () => void = () => undefined,
   ) {}
 
   create(): void {
@@ -139,6 +143,46 @@ export class GameHudRenderer {
       fontFamily: MONO,
       color: '#ffee00',
     }).setOrigin(0.5, 1).setDepth(HUD_DEPTH + 3).setScrollFactor(0));
+
+    const spectatorButtonStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontSize: this.compact ? '12px' : '14px',
+      fontFamily: MONO,
+      color: '#1a0c02',
+      backgroundColor: '#ff9f32',
+      stroke: '#120a03',
+      strokeThickness: 1,
+      padding: { x: this.compact ? 9 : 13, y: 7 },
+    };
+    this.spectatorPreviousButton = this.add(this.scene.add.text(
+      18,
+      GAME_VIEW_HEIGHT - 16,
+      t('hud.spectatorPrevious'),
+      spectatorButtonStyle,
+    ).setOrigin(0, 1).setDepth(HUD_DEPTH + 10).setScrollFactor(0).setVisible(false).setInteractive({
+      useHandCursor: true,
+    }));
+    this.spectatorNextButton = this.add(this.scene.add.text(
+      W - 18,
+      GAME_VIEW_HEIGHT - 16,
+      t('hud.spectatorNext'),
+      spectatorButtonStyle,
+    ).setOrigin(1, 1).setDepth(HUD_DEPTH + 10).setScrollFactor(0).setVisible(false).setInteractive({
+      useHandCursor: true,
+    }));
+    this.spectatorPreviousButton.on(
+      Phaser.Input.Events.POINTER_DOWN,
+      (_pointer: Phaser.Input.Pointer, _localX: number, _localY: number, event: Phaser.Types.Input.EventData) => {
+        event.stopPropagation();
+        this.onPreviousSpectator();
+      },
+    );
+    this.spectatorNextButton.on(
+      Phaser.Input.Events.POINTER_DOWN,
+      (_pointer: Phaser.Input.Pointer, _localX: number, _localY: number, event: Phaser.Types.Input.EventData) => {
+        event.stopPropagation();
+        this.onNextSpectator();
+      },
+    );
 
     this.zoneAlertText = this.add(this.scene.add.text(W / 2, 76, '', {
       fontSize: '22px',
@@ -219,16 +263,28 @@ export class GameHudRenderer {
     this.centerBig.setText(t('hud.connecting')).setColor('#79eaff').setAlpha(1);
     this.centerSub.setAlpha(0);
     this.centerHint.setAlpha(0);
+    this.spectatorPreviousButton.setVisible(false);
+    this.spectatorNextButton.setVisible(false);
   }
 
-  update(state: GameState, myPlayerId: string, time: number, rttMs: number | null): void {
+  update(
+    state: GameState,
+    myPlayerId: string,
+    time: number,
+    rttMs: number | null,
+    spectatorMode = false,
+    spectatedPlayerName?: string,
+  ): void {
     const me = state.players.find(p => p.id === myPlayerId);
 
     this.syncCameraIgnores();
     this.drawStaticFrame();
     this.drawTopPanels(me, Boolean(myPlayerId), state.players.length, rttMs);
-    this.drawBottomHud(me, time);
-    this.updateOverlay(state, myPlayerId, me, time);
+    if (spectatorMode) this.hideBottomHud();
+    else this.drawBottomHud(me, time);
+    this.spectatorPreviousButton.setVisible(spectatorMode);
+    this.spectatorNextButton.setVisible(spectatorMode);
+    this.updateOverlay(state, myPlayerId, me, time, spectatorMode, spectatedPlayerName);
   }
 
   setReturnToLobbyCountdown(durationMs: number): void {
@@ -323,6 +379,17 @@ export class GameHudRenderer {
     });
 
     this.drawAmmo(player, startX + slotsWidth + gap, cy, ammoWidth, panelH);
+  }
+
+  private hideBottomHud(): void {
+    this.bottomPanelImage.setVisible(false);
+    this.bottomGfx.clear();
+    this.cooldownGfx.clear();
+    this.ammoGfx.clear();
+    this.ammoText.setAlpha(0);
+    this.shieldCountdownText.setAlpha(0);
+    for (const image of this.iconImages) image.setVisible(false);
+    for (const text of [...this.keyTexts, ...this.nameTexts, ...this.centerTexts]) text.setAlpha(0);
   }
 
   private getSlots(player: PlayerPublicState | undefined): SlotState[] {
@@ -540,7 +607,8 @@ export class GameHudRenderer {
     this.ammoText
       .setText(`${ammo}/${maxAmmo}`)
       .setFontSize(visualHudHeight <= 80 ? 15 : 18)
-      .setPosition(x + width / 2, cy + visualHudHeight * 0.24);
+      .setPosition(x + width / 2, cy + visualHudHeight * 0.24)
+      .setAlpha(1);
   }
 
   private drawConsolePanel(gfx: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number): void {
@@ -625,6 +693,8 @@ export class GameHudRenderer {
     myPlayerId: string,
     me: PlayerPublicState | undefined,
     time: number,
+    spectatorMode: boolean,
+    spectatedPlayerName?: string,
   ): void {
     const W = this.scene.scale.width;
 
@@ -651,10 +721,26 @@ export class GameHudRenderer {
       this.centerBig.setAlpha(0);
       this.centerSub.setAlpha(0);
       this.centerHint.setAlpha(0);
-      this.updateZoneAlert(state, me, time);
-      this.statusText
-        .setText(this.getPlayingStatusText(state, me))
-        .setColor(this.isOutsideDangerZone(state, me) ? '#ff5a1f' : '#ffee00');
+      this.updateZoneAlert(state, spectatorMode ? undefined : me, time);
+      if (spectatorMode) {
+        this.statusText
+          .setText(spectatedPlayerName
+            ? t('hud.spectatorFollowing', { name: spectatedPlayerName })
+            : t('hud.spectatorStatus'))
+          .setColor('#ffd166')
+          .setFontSize(16)
+          .setStroke('#120a03', 5)
+          .setBackgroundColor('rgba(10, 7, 4, 0.78)')
+          .setPadding(10, 5, 10, 5);
+      } else {
+        this.statusText
+          .setText(this.getPlayingStatusText(state, me))
+          .setColor(this.isOutsideDangerZone(state, me) ? '#ff5a1f' : '#ffee00')
+          .setFontSize(13)
+          .setStroke('#000000', 0)
+          .setBackgroundColor('rgba(0, 0, 0, 0)')
+          .setPadding(0);
+      }
       return;
     }
 

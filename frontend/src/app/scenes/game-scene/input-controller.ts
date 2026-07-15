@@ -93,6 +93,14 @@ export class InputController {
 
     if (gameState.status !== 'playing') return;
 
+    const me = gameState.players.find(p => p.id === myPlayerId);
+    if (!me?.alive) {
+      this.pendingDash = false;
+      this.pendingReload = false;
+      this.pendingShield = false;
+      return;
+    }
+
     const touch = this.touchControls;
     const touchMove = touch?.getMove() ?? { x: 0, y: 0 };
     const touchFiring = touch?.isFiring() ?? false;
@@ -114,11 +122,10 @@ export class InputController {
       }
     }
 
-    const me = gameState.players.find(p => p.id === myPlayerId);
-    let aimAngle = me?.aimAngle ?? 0;
+    let aimAngle = me.aimAngle;
     if (touch) {
       aimAngle = touch.getAimAngle() ?? aimAngle;
-    } else if (me) {
+    } else {
       const ptr = this.scene.input.activePointer;
       aimAngle = Phaser.Math.Angle.Between(me.x, me.y, ptr.worldX, ptr.worldY);
     }
