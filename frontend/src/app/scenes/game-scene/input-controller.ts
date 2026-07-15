@@ -35,6 +35,10 @@ export class InputController {
   };
   private readonly onNativeKeyDown = (event: KeyboardEvent): void => {
     if (this.isMovementCode(event.code)) this.pressedMovementCodes.add(event.code);
+    if (event.repeat) return;
+    if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') this.pendingDash = true;
+    if (event.code === 'KeyR') this.pendingReload = true;
+    if (event.code === 'KeyQ') this.pendingShield = true;
   };
   private readonly onNativeKeyUp = (event: KeyboardEvent): void => {
     this.pressedMovementCodes.delete(event.code);

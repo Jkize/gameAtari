@@ -91,4 +91,59 @@ describe('InputController', () => {
     window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW' }));
     controller.destroy();
   });
+
+  it('reads dash, reload and shield from native events when Phaser listeners do not fire', () => {
+    const keyboard = {
+      addKey: vi.fn(() => ({ isDown: false })),
+      on: vi.fn(),
+    };
+    const scene = {
+      input: {
+        keyboard,
+        activePointer: { isDown: false, worldX: 300, worldY: 300 },
+      },
+    } as unknown as Phaser.Scene;
+    const socket = { emit: vi.fn() } as unknown as Socket;
+    const gameState = {
+      status: 'playing',
+      players: [{ id: 'me', alive: true, aimAngle: 0, x: 100, y: 100 }],
+      bullets: [],
+      powerUps: [],
+      impactEvents: [],
+      map: { width: 1600, height: 1200, obstacles: [], powerUps: [] },
+    } as unknown as GameState;
+    const controller = new InputController(scene, {
+      getGameState: () => gameState,
+      getMyPlayerId: () => 'me',
+      getSocket: () => socket,
+    });
+
+    controller.setup();
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ShiftLeft' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyR' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyQ' }));
+    controller.sendInput(20);
+
+    expect(socket.emit).toHaveBeenNthCalledWith(
+      1,
+      'playerInput',
+      expect.objectContaining({
+        moveY: -1,
+        dash: true,
+        reload: true,
+        shield: true,
+      }),
+    );
+
+    controller.sendInput(40);
+    expect(socket.emit).toHaveBeenNthCalledWith(
+      2,
+      'playerInput',
+      expect.objectContaining({ dash: false, reload: false, shield: false }),
+    );
+
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW' }));
+    controller.destroy();
+  });
 });
