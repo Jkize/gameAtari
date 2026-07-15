@@ -74,6 +74,7 @@ function buildLayout(width: number, mirrored: boolean): TouchLayout {
 
 interface StickState {
   pointerId: number | null;
+  touchId: number | null;
   baseX: number;
   baseY: number;
   dx: number;
@@ -111,9 +112,55 @@ export class TouchControls {
     shield: false,
     reload: false,
   };
-  private readonly moveStick: StickState = { pointerId: null, baseX: 0, baseY: 0, dx: 0, dy: 0 };
-  private readonly aimStick: StickState = { pointerId: null, baseX: 0, baseY: 0, dx: 0, dy: 0 };
+  private readonly moveStick: StickState = {
+    pointerId: null, touchId: null, baseX: 0, baseY: 0, dx: 0, dy: 0,
+  };
+  private readonly aimStick: StickState = {
+    pointerId: null, touchId: null, baseX: 0, baseY: 0, dx: 0, dy: 0,
+  };
   private readonly buttons: ActionButton[] = [];
+  private fireTouchId: number | null = null;
+
+  // Phaser intentionally stops updating a touch Pointer once elementFromPoint
+  // is outside the canvas. Track active touches at window level as a fallback
+  // so wide-screen letterboxing does not interrupt a stick drag.
+  private readonly onWindowTouchMove = (event: TouchEvent): void => {
+    if (!this.visible) return;
+    for (let index = 0; index < event.changedTouches.length; index++) {
+      const touch = event.changedTouches[index];
+      const x = this.scene.scale.transformX(touch.pageX);
+      const y = this.scene.scale.transformY(touch.pageY);
+
+      if (touch.identifier === this.moveStick.touchId) {
+        this.updateStickVectorAt(this.moveStick, x, y);
+      } else if (touch.identifier === this.aimStick.touchId) {
+        this.updateStickVectorAt(this.aimStick, x, y);
+        if (Math.hypot(this.aimStick.dx, this.aimStick.dy) > AIM_DEAD_ZONE) {
+          this.lastAimAngle = Math.atan2(this.aimStick.dy, this.aimStick.dx);
+        }
+      } else if (touch.identifier === this.fireTouchId) {
+        const dx = x - this.layout.fire.x;
+        const dy = y - this.layout.fire.y;
+        if (Math.hypot(dx, dy) > AIM_DEAD_ZONE) {
+          this.lastAimAngle = Math.atan2(dy, dx);
+          this.fireDragAngle = this.lastAimAngle;
+        }
+      }
+    }
+  };
+
+  private readonly onWindowTouchEnd = (event: TouchEvent): void => {
+    for (let index = 0; index < event.changedTouches.length; index++) {
+      const touchId = event.changedTouches[index].identifier;
+      if (touchId === this.moveStick.touchId) this.resetStick(this.moveStick);
+      if (touchId === this.aimStick.touchId) this.resetStick(this.aimStick);
+      if (touchId === this.fireTouchId) {
+        this.firePointerId = null;
+        this.fireTouchId = null;
+        this.fireDragAngle = null;
+      }
+    }
+  };
 
   private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
     if (!this.visible || pointer.y > GAME_VIEW_HEIGHT) return;
@@ -131,7 +178,10 @@ export class TouchControls {
       pointer.x, pointer.y, this.layout.fire.x, this.layout.fire.y,
     );
     if (distToFire <= FIRE_HIT_RADIUS) {
-      if (this.firePointerId === null) this.firePointerId = pointer.id;
+      if (this.firePointerId === null) {
+        this.firePointerId = pointer.id;
+        this.fireTouchId = pointer.wasTouch ? pointer.identifier : null;
+      }
       return;
     }
 
@@ -147,6 +197,7 @@ export class TouchControls {
     const stick = this.isMoveSide(pointer.x) ? this.moveStick : this.aimStick;
     if (stick.pointerId !== null) return;
     stick.pointerId = pointer.id;
+    stick.touchId = pointer.wasTouch ? pointer.identifier : null;
     stick.baseX = pointer.x;
     stick.baseY = pointer.y;
     stick.dx = 0;
@@ -178,6 +229,7 @@ export class TouchControls {
     }
     if (pointer.id === this.firePointerId) {
       this.firePointerId = null;
+      this.fireTouchId = null;
       this.fireDragAngle = null;
       return;
     }
@@ -222,6 +274,9 @@ export class TouchControls {
     this.scene.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove);
     this.scene.input.on(Phaser.Input.Events.POINTER_UP, this.onPointerUp);
     this.scene.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp);
+    window.addEventListener('touchmove', this.onWindowTouchMove, { passive: true });
+    window.addEventListener('touchend', this.onWindowTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', this.onWindowTouchEnd, { passive: true });
   }
 
   update(status: string, enabled = true): void {
@@ -257,6 +312,9 @@ export class TouchControls {
     this.scene.input.off(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove);
     this.scene.input.off(Phaser.Input.Events.POINTER_UP, this.onPointerUp);
     this.scene.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp);
+    window.removeEventListener('touchmove', this.onWindowTouchMove);
+    window.removeEventListener('touchend', this.onWindowTouchEnd);
+    window.removeEventListener('touchcancel', this.onWindowTouchEnd);
     this.gfx?.destroy();
     this.fireIcon?.destroy();
     this.fireIcon = null;
@@ -295,6 +353,7 @@ export class TouchControls {
       this.resetStick(this.moveStick);
       this.resetStick(this.aimStick);
       this.firePointerId = null;
+      this.fireTouchId = null;
       this.fireDragAngle = null;
       this.settingsPointerId = null;
       this.pendingActions.dash = false;
@@ -398,12 +457,17 @@ export class TouchControls {
   }
 
   private updateStickVector(stick: StickState, pointer: Phaser.Input.Pointer): void {
-    stick.dx = pointer.x - stick.baseX;
-    stick.dy = pointer.y - stick.baseY;
+    this.updateStickVectorAt(stick, pointer.x, pointer.y);
+  }
+
+  private updateStickVectorAt(stick: StickState, x: number, y: number): void {
+    stick.dx = x - stick.baseX;
+    stick.dy = y - stick.baseY;
   }
 
   private resetStick(stick: StickState): void {
     stick.pointerId = null;
+    stick.touchId = null;
     stick.dx = 0;
     stick.dy = 0;
   }
