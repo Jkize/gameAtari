@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="headFur" cx="38%" cy="27%" r="78%">
+      <stop offset="0" stop-color="#cbd0d2"/>
+      <stop offset="0.52" stop-color="#8b959a"/>
+      <stop offset="1" stop-color="#4a555b"/>
+    </radialGradient>
+    <radialGradient id="ear" cx="45%" cy="42%" r="58%">
+      <stop offset="0" stop-color="#ffc2cb"/>
+      <stop offset="1" stop-color="#c76d80"/>
+    </radialGradient>
+    <linearGradient id="barrel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#252a2e"/>
+      <stop offset="0.5" stop-color="#7b858a"/>
+      <stop offset="1" stop-color="#202529"/>
+    </linearGradient>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="180%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".36"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- Slightly reduced around the turret pivot so the head does not cover as much of the chassis. -->
+    <g transform="translate(23.04 23.04) scale(.91)">
+    <!-- Large round ears -->
+    <circle cx="139" cy="158" r="78" fill="#59646a" stroke="#242b2f" stroke-width="9"/>
+    <circle cx="373" cy="158" r="78" fill="#59646a" stroke="#242b2f" stroke-width="9"/>
+    <circle cx="139" cy="158" r="54" fill="url(#ear)" stroke="#854958" stroke-width="6"/>
+    <circle cx="373" cy="158" r="54" fill="url(#ear)" stroke="#854958" stroke-width="6"/>
+
+    <!-- Head/turret. Pivot is visually centered around 256,256. -->
+    <path d="M256 95 C169 95 114 157 126 245 C135 312 188 354 256 364 C324 354 377 312 386 245 C398 157 343 95 256 95 Z"
+          fill="url(#headFur)" stroke="#252d31" stroke-width="10"/>
+    <path d="M151 226l-35 17 38 7-30 26 42-3M361 226l35 17-38 7 30 26-42-3"
+          fill="none" stroke="#d5d9da" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Exaggerated expressive eyes -->
+    <ellipse cx="205" cy="214" rx="47" ry="59" fill="#f8fbfc" stroke="#263035" stroke-width="8"/>
+    <ellipse cx="307" cy="214" rx="47" ry="59" fill="#f8fbfc" stroke="#263035" stroke-width="8"/>
+    <ellipse cx="218" cy="229" rx="23" ry="31" fill="#20282c"/>
+    <ellipse cx="294" cy="229" rx="23" ry="31" fill="#20282c"/>
+    <circle cx="226" cy="217" r="9" fill="#fff"/>
+    <circle cx="302" cy="217" r="9" fill="#fff"/>
+    <path d="M167 166q39-27 73-3M345 166q-39-27-73-3" fill="none" stroke="#414b50" stroke-width="12" stroke-linecap="round"/>
+
+    <!-- Muzzle and characteristic pink nose -->
+    <ellipse cx="256" cy="298" rx="82" ry="61" fill="#b7bdbe" stroke="#4a555a" stroke-width="6"/>
+    <path d="M220 289 Q256 265 292 289 Q284 327 256 335 Q228 327 220 289Z"
+          fill="#f08fa2" stroke="#753d4b" stroke-width="7"/>
+    <ellipse cx="243" cy="296" rx="7" ry="5" fill="#7d4350"/>
+    <ellipse cx="269" cy="296" rx="7" ry="5" fill="#7d4350"/>
+
+    <!-- Whiskers -->
+    <g fill="none" stroke="#eff3f4" stroke-width="6" stroke-linecap="round">
+      <path d="M212 310L84 286M210 326L72 329M218 340L102 379"/>
+      <path d="M300 310L428 286M302 326L440 329M294 340L410 379"/>
+    </g>
+
+    <!-- Buck teeth sit above the cannon collar. -->
+    <path d="M232 330h24v49q-13 12-24 0zM256 330h24v49q-11 12-24 0z"
+          fill="#fff4d8" stroke="#776c56" stroke-width="5"/>
+    </g>
+
+    <!-- Cannon disguised as a chunky cheese launcher, pointing down like the current template. -->
+    <rect x="224" y="361" width="64" height="128" rx="22" fill="url(#barrel)" stroke="#171c1f" stroke-width="8"/>
+    <rect x="214" y="463" width="84" height="38" rx="14" fill="#d49a2b" stroke="#5f4215" stroke-width="8"/>
+    <ellipse cx="256" cy="497" rx="27" ry="12" fill="#171a1c"/>
+    <circle cx="236" cy="475" r="6" fill="#8b5b19"/>
+    <circle cx="279" cy="483" r="8" fill="#8b5b19"/>
+  </g>
+</svg>

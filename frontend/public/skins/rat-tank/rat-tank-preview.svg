@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 620" width="760" height="620">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+      <stop offset="0" stop-color="#233139"/>
+      <stop offset="1" stop-color="#080c0f"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <rect width="760" height="620" rx="28" fill="url(#bg)"/>
+  <g stroke="#9cc3bc" stroke-opacity=".08" stroke-width="2">
+    <path d="M0 100h760M0 200h760M0 300h760M0 400h760M0 500h760"/>
+    <path d="M80 0v620M180 0v620M280 0v620M380 0v620M480 0v620M580 0v620M680 0v620"/>
+  </g>
+  <ellipse cx="380" cy="335" rx="225" ry="205" fill="#74cba7" opacity=".16" filter="url(#glow)"/>
+
+  <g transform="translate(124 54)">
+    <image href="rat-tank-body.svg" width="512" height="512"/>
+    <!-- Demo animation only. Phaser should rotate this layer using aimAngle. -->
+    <g transform-origin="256px 256px">
+      <animateTransform attributeName="transform" type="rotate"
+                        values="-8 256 256;8 256 256;-8 256 256"
+                        dur="3.2s" repeatCount="indefinite"/>
+      <image href="rat-tank-turret.svg" width="512" height="512"/>
+    </g>
+  </g>
+
+  <g font-family="system-ui, sans-serif" text-anchor="middle">
+    <text x="380" y="42" fill="#f2d190" font-size="25" font-weight="800" letter-spacing="4">RAT TANK</text>
+    <text x="380" y="596" fill="#a9bbb8" font-size="15" letter-spacing="2">SKIN CONCEPT · BODY + ROTATING TURRET</text>
+  </g>
+</svg>

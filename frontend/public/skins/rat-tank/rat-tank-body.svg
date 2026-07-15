@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="furArmor" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#aab1b6"/>
+      <stop offset="0.48" stop-color="#69737a"/>
+      <stop offset="1" stop-color="#353d43"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#34383b"/>
+      <stop offset="0.5" stop-color="#171a1c"/>
+      <stop offset="1" stop-color="#080a0b"/>
+    </linearGradient>
+    <linearGradient id="pinkTail" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb1bd"/>
+      <stop offset="1" stop-color="#b95f72"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#000" flood-opacity=".38"/>
+    </filter>
+  </defs>
+
+  <!-- Long rat tail, kept on the body layer so it turns with the chassis. -->
+  <path d="M255 428 C248 485 315 498 366 463 C425 423 415 354 375 356 C345 358 345 398 371 405"
+        fill="none" stroke="#5d3340" stroke-width="25" stroke-linecap="round"/>
+  <path d="M255 428 C248 485 315 498 366 463 C425 423 415 354 375 356 C345 358 345 398 371 405"
+        fill="none" stroke="url(#pinkTail)" stroke-width="17" stroke-linecap="round"/>
+
+  <g filter="url(#shadow)">
+    <!-- Tracks -->
+    <rect x="62" y="70" width="92" height="372" rx="35" fill="url(#track)" stroke="#090b0d" stroke-width="8"/>
+    <rect x="358" y="70" width="92" height="372" rx="35" fill="url(#track)" stroke="#090b0d" stroke-width="8"/>
+    <g fill="#50565a" stroke="#111416" stroke-width="4">
+      <path d="M78 102h60v32H78zM78 151h60v32H78zM78 200h60v32H78zM78 249h60v32H78zM78 298h60v32H78zM78 347h60v32H78zM78 396h60v28H78z"/>
+      <path d="M374 102h60v32h-60zM374 151h60v32h-60zM374 200h60v32h-60zM374 249h60v32h-60zM374 298h60v32h-60zM374 347h60v32h-60zM374 396h60v28h-60z"/>
+    </g>
+
+    <!-- Rounded furry armor silhouette -->
+    <path d="M183 62 Q256 30 329 62 L370 117 L367 392 Q326 452 256 456 Q186 452 145 392 L142 117 Z"
+          fill="url(#furArmor)" stroke="#20272b" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M184 87 Q256 57 328 87 L344 121 L337 378 Q303 416 256 420 Q209 416 175 378 L168 121 Z"
+          fill="#7c878d" stroke="#3a444a" stroke-width="5"/>
+
+    <!-- Fur tufts make the chassis read as a rat even from above. -->
+    <path d="M173 143l-27 18 28 9-23 22 30 3-18 27 32-5M339 143l27 18-28 9 23 22-30 3 18 27-32-5"
+          fill="none" stroke="#bcc3c6" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Armored back plate -->
+    <path d="M198 142 Q256 114 314 142 L327 326 Q301 359 256 365 Q211 359 185 326 Z"
+          fill="#4c575d" stroke="#222a2e" stroke-width="7"/>
+    <path d="M212 163 Q256 143 300 163 L306 307 Q284 332 256 336 Q228 332 206 307 Z"
+          fill="#626e74" stroke="#899399" stroke-width="4"/>
+
+    <!-- Cheese-shaped engine cover -->
+    <path d="M205 346 L307 346 L330 400 L182 400 Z" fill="#e6ad35" stroke="#6c4815" stroke-width="7"/>
+    <circle cx="220" cy="372" r="12" fill="#9b671d"/>
+    <circle cx="280" cy="382" r="9" fill="#9b671d"/>
+    <circle cx="305" cy="361" r="6" fill="#9b671d"/>
+
+    <!-- Tiny paws gripping the side armor -->
+    <g fill="#efa2ae" stroke="#6f3c48" stroke-width="5">
+      <ellipse cx="169" cy="280" rx="25" ry="18" transform="rotate(-15 169 280)"/>
+      <ellipse cx="343" cy="280" rx="25" ry="18" transform="rotate(15 343 280)"/>
+    </g>
+    <g stroke="#a75b6a" stroke-width="4" stroke-linecap="round">
+      <path d="M151 276l14 4m-8-13 12 9M361 276l-14 4m8-13-12 9"/>
+    </g>
+
+    <!-- Rivets and highlights -->
+    <g fill="#d9dfe1" stroke="#333c41" stroke-width="3">
+      <circle cx="189" cy="112" r="7"/><circle cx="323" cy="112" r="7"/>
+      <circle cx="190" cy="418" r="7"/><circle cx="322" cy="418" r="7"/>
+    </g>
+    <path d="M191 91 Q256 68 321 91" fill="none" stroke="#e4e8e9" stroke-opacity=".55" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

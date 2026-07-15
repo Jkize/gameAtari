@@ -14,6 +14,7 @@ import {
 import { GameSceneLayers } from './game-scene-layers';
 import {
   ensureTankSvgTextures,
+  STANDARD_TANK_TURRET_ORIGIN_Y,
   TANK_BODY_ROTATION_OFFSET,
   TANK_TURRET_ORIGIN_X,
   TANK_TURRET_ORIGIN_Y,
@@ -162,7 +163,7 @@ export class PlayerRenderer {
           .setOrigin(TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y)
           .setDepth(7),
         weapon: this.scene.add.image(x, y, textureKeys.turret)
-          .setOrigin(TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y)
+          .setOrigin(TANK_TURRET_ORIGIN_X, STANDARD_TANK_TURRET_ORIGIN_Y)
           .setDepth(8)
           .setVisible(false),
       };

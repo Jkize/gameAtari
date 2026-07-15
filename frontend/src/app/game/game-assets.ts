@@ -142,6 +142,11 @@ export const TANK_TEMPLATE_PATHS = {
   destroyedTurret: '/assets/tanks/tank_pistol_destroyed_template.svg',
 } as const;
 
+export const RAT_TANK_TEMPLATE_PATHS = {
+  body: '/skins/rat-tank/rat-tank-body.svg',
+  turret: '/skins/rat-tank/rat-tank-turret.svg',
+} as const;
+
 export const SHIELD_TEMPLATE_PATH = '/assets/tanks/tank_shield_template.svg';
 
 export const WEAPON_OVERLAY_TEMPLATE_PATHS = {
@@ -154,6 +159,7 @@ export const WEAPON_OVERLAY_TEMPLATE_PATHS = {
 export const GAME_PUBLIC_ASSET_PATHS = [
   ...PHASER_GAME_ASSETS.flatMap((asset) => (Array.isArray(asset.path) ? asset.path : [asset.path])),
   ...Object.values(TANK_TEMPLATE_PATHS),
+  ...Object.values(RAT_TANK_TEMPLATE_PATHS),
   SHIELD_TEMPLATE_PATH,
   ...Object.values(WEAPON_OVERLAY_TEMPLATE_PATHS),
 ] as const;

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { TANK_TEMPLATE_PATHS } from '../../game/game-assets';
+import { environment } from '../../../environments/environment';
+import { RAT_TANK_TEMPLATE_PATHS, TANK_TEMPLATE_PATHS } from '../../game/game-assets';
 import { applyTankColor, colorToKeyPart, loadSvgTexture } from './svg-texture-utils';
 
 export interface TankTextureKeys {
@@ -14,9 +15,25 @@ export interface TankTextureKeys {
 }
 
 export const TANK_TURRET_ORIGIN_X = 256 / 512;
-export const TANK_TURRET_ORIGIN_Y = 150 / 512;
+export const STANDARD_TANK_TURRET_ORIGIN_Y = 150 / 512;
+export const TANK_TURRET_ORIGIN_Y = environment.devGameMode
+  ? 256 / 512
+  : STANDARD_TANK_TURRET_ORIGIN_Y;
 export const TANK_BODY_ROTATION_OFFSET = Math.PI / 2;
 export const TANK_TURRET_ROTATION_OFFSET = -Math.PI / 2;
+
+const ACTIVE_TANK_TEMPLATE_PATHS = environment.devGameMode
+  ? {
+      body: RAT_TANK_TEMPLATE_PATHS.body,
+      turret: RAT_TANK_TEMPLATE_PATHS.turret,
+      hurtBody: RAT_TANK_TEMPLATE_PATHS.body,
+      hurtTurret: RAT_TANK_TEMPLATE_PATHS.turret,
+      criticalBody: RAT_TANK_TEMPLATE_PATHS.body,
+      criticalTurret: RAT_TANK_TEMPLATE_PATHS.turret,
+      destroyedBody: RAT_TANK_TEMPLATE_PATHS.body,
+      destroyedTurret: RAT_TANK_TEMPLATE_PATHS.turret,
+    }
+  : TANK_TEMPLATE_PATHS;
 
 interface TankSvgTemplates {
   body: string;
@@ -33,14 +50,14 @@ let tankSvgTemplatesPromise: Promise<TankSvgTemplates> | null = null;
 
 function getTankSvgTemplates(): Promise<TankSvgTemplates> {
   tankSvgTemplatesPromise ??= Promise.all([
-    fetch(TANK_TEMPLATE_PATHS.body).then((response) => response.text()),
-    fetch(TANK_TEMPLATE_PATHS.turret).then((response) => response.text()),
-    fetch(TANK_TEMPLATE_PATHS.hurtBody).then((response) => response.text()),
-    fetch(TANK_TEMPLATE_PATHS.hurtTurret).then((response) => response.text()),
-    fetch(TANK_TEMPLATE_PATHS.criticalBody).then((response) => response.text()),
-    fetch(TANK_TEMPLATE_PATHS.criticalTurret).then((response) => response.text()),
-    fetch(TANK_TEMPLATE_PATHS.destroyedBody).then((response) => response.text()),
-    fetch(TANK_TEMPLATE_PATHS.destroyedTurret).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.body).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.turret).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.hurtBody).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.hurtTurret).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.criticalBody).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.criticalTurret).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.destroyedBody).then((response) => response.text()),
+    fetch(ACTIVE_TANK_TEMPLATE_PATHS.destroyedTurret).then((response) => response.text()),
   ]).then(
     ([
       body,
