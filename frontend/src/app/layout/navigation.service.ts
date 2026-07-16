@@ -11,6 +11,7 @@ export interface NavTab {
 
 const NAV_TABS: NavTab[] = [
   { path: '/lobby', labelKey: 'nav.play', roles: [EAuth.USER] },
+  { path: '/tutorial', labelKey: 'nav.tutorial', roles: [EAuth.USER] },
   { path: '/matches/me', labelKey: 'nav.myMatches', roles: [EAuth.USER] },
   { path: '/matches/recent', labelKey: 'nav.recentMatches', roles: [EAuth.USER] },
   { path: '/users', labelKey: 'nav.users', roles: [EAuth.ADMIN] },

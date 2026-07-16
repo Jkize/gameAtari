@@ -52,14 +52,14 @@ export class LoginComponent implements AfterViewInit {
   async loginPhantom(): Promise<void> {
     await this.run(async () => {
       const result = await this.auth.loginPhantom();
-      if (!result.requiresUsername) await this.router.navigateByUrl('/lobby');
+      if (!result.requiresUsername) await this.router.navigateByUrl(this.auth.authenticatedHomeUrl());
     });
   }
 
   async completeProfile(): Promise<void> {
     await this.run(async () => {
       await this.auth.completeProfile(this.username);
-      await this.router.navigateByUrl('/lobby');
+      await this.router.navigateByUrl(this.auth.authenticatedHomeUrl());
     });
   }
 
@@ -71,7 +71,9 @@ export class LoginComponent implements AfterViewInit {
         callback: (result) =>
           void this.run(async () => {
             const response = await this.auth.loginGoogle(result.credential);
-            if (!response.requiresUsername) await this.router.navigateByUrl('/lobby');
+            if (!response.requiresUsername) {
+              await this.router.navigateByUrl(this.auth.authenticatedHomeUrl());
+            }
           }),
       });
       window.google.accounts.id.renderButton(this.googleButton.nativeElement, {

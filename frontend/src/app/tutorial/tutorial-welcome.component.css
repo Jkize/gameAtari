@@ -1,0 +1,88 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(131, 229, 239, 0.09), transparent 34%),
+    linear-gradient(145deg, #17110b, #2b1d10 58%, #17110b);
+}
+
+.welcome-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(24px, env(safe-area-inset-left));
+}
+
+.welcome-card {
+  width: min(540px, 100%);
+  padding: clamp(28px, 6vw, 52px);
+  text-align: center;
+  color: #f6ead1;
+  border: 1px solid rgba(131, 229, 239, 0.62);
+  border-radius: 18px;
+  background: rgba(24, 18, 12, 0.94);
+  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.56);
+}
+
+.welcome-logo {
+  width: clamp(124px, 12vw, 148px);
+  height: clamp(124px, 12vw, 148px);
+  margin-bottom: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(131, 229, 239, 0.2));
+}
+
+.eyebrow {
+  display: block;
+  color: #83e5ef;
+  font: 800 0.72rem/1 'JetBrains Mono', monospace;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  margin: 12px 0 0;
+  color: #ffd98a;
+  font: 800 clamp(1.8rem, 6vw, 3rem)/1.08 'JetBrains Mono', monospace;
+}
+
+p {
+  max-width: 410px;
+  margin: 18px auto 0;
+  color: #cbb99c;
+  font-size: clamp(0.95rem, 2.5vw, 1.08rem);
+  line-height: 1.55;
+}
+
+.start-button {
+  display: inline-flex;
+  min-height: 48px;
+  margin-top: 30px;
+  padding: 0 24px;
+  align-items: center;
+  justify-content: center;
+  color: #201207;
+  font: 800 0.82rem/1 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  border: 1px solid #ffe0a8;
+  border-radius: 9px;
+  background: #ffad55;
+  box-shadow: 0 10px 28px rgba(255, 157, 67, 0.22);
+}
+
+.start-button:hover { background: #ffbd72; }
+.start-button:focus-visible { outline: 3px solid #83e5ef; outline-offset: 4px; }
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .welcome-card { width: min(680px, 100%); padding: 22px 34px; }
+  .welcome-logo { width: 82px; height: 82px; margin-bottom: 12px; }
+  h1 { font-size: 1.7rem; }
+  p { margin-top: 10px; }
+  .start-button { margin-top: 18px; }
+}

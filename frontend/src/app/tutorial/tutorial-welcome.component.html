@@ -1,0 +1,11 @@
+<main class="welcome-shell">
+  <section class="welcome-card">
+    <img class="welcome-logo" src="assets/logo/logo_v10_01_clean_app_t_tank.svg" alt="" aria-hidden="true">
+    <span class="eyebrow">{{ 'tutorialWelcome.eyebrow' | transloco }}</span>
+    <h1>{{ 'tutorialWelcome.title' | transloco: { name: auth.user()?.username ?? ('tutorial.playerFallback' | transloco) } }}</h1>
+    <p>{{ 'tutorialWelcome.description' | transloco }}</p>
+    <a routerLink="/tutorial" class="start-button">
+      {{ 'tutorialWelcome.start' | transloco }}
+    </a>
+  </section>
+</main>

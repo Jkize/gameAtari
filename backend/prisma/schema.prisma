@@ -16,6 +16,13 @@ enum UserRole {
   ADMIN
 }
 
+enum TutorialStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+  EXEMPT
+}
+
 enum MatchStatus {
   COMPLETED
   ABORTED
@@ -50,6 +57,8 @@ model User {
   avatarUrl          String?
   active             Boolean            @default(true)
   role               UserRole           @default(USER)
+  tutorialStatus     TutorialStatus      @default(PENDING)
+  tutorialFinishedAt DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   accounts           AuthAccount[]

@@ -3,6 +3,7 @@ import { EAuth } from './auth/auth.models';
 import { guestGuard } from './auth/guest.guard';
 import { roleGuard } from './auth/role.guard';
 import { rootGuard } from './auth/root.guard';
+import { tutorialFinishedGuard, tutorialWelcomeGuard } from './auth/tutorial.guard';
 
 export const routes: Routes = [
   {
@@ -14,15 +15,27 @@ export const routes: Routes = [
   { path: 'auth', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'game',
-    canActivate: [roleGuard],
+    canActivate: [roleGuard, tutorialFinishedGuard],
     loadComponent: () =>
       import('./game/game-host.component').then((module) => module.GameHostComponent),
   },
   {
     path: 'game/:roomId',
-    canActivate: [roleGuard],
+    canActivate: [roleGuard, tutorialFinishedGuard],
     loadComponent: () =>
       import('./game/game-host.component').then((module) => module.GameHostComponent),
+  },
+  {
+    path: 'welcome',
+    canActivate: [roleGuard, tutorialWelcomeGuard],
+    loadComponent: () =>
+      import('./tutorial/tutorial-welcome.component').then((module) => module.TutorialWelcomeComponent),
+  },
+  {
+    path: 'tutorial',
+    canActivate: [roleGuard],
+    loadComponent: () =>
+      import('./tutorial/tutorial.component').then((module) => module.TutorialComponent),
   },
   {
     path: 'custom',
@@ -42,7 +55,7 @@ export const routes: Routes = [
       },
       {
         path: 'lobby',
-        canActivate: [roleGuard],
+        canActivate: [roleGuard, tutorialFinishedGuard],
         loadComponent: () =>
           import('./lobby/lobby.component').then((module) => module.LobbyComponent),
       },

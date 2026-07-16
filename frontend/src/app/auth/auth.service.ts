@@ -3,7 +3,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import bs58 from 'bs58';
 import { environment } from '../../environments/environment';
-import { AccountStatus, AuthProvider, AuthUser, EAuth, LoginResponse, PhantomProvider } from './auth.models';
+import { AccountStatus, AuthProvider, AuthUser, EAuth, LoginResponse, PhantomProvider, TutorialStatus } from './auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -12,6 +12,7 @@ export class AuthService {
   readonly onboardingToken = signal<string | null>(null);
   readonly role = computed<EAuth>(() => this.user()?.role ?? EAuth.USER);
   readonly isAdmin = computed(() => this.role() === EAuth.ADMIN);
+  readonly tutorialPending = computed(() => this.user()?.tutorialStatus === 'PENDING');
   private sessionRestorePromise: Promise<boolean> | null = null;
 
   constructor(private readonly http: HttpClient) {}
@@ -74,6 +75,29 @@ export class AuthService {
     this.onboardingToken.set(null);
     this.accessToken.set(response.accessToken);
     this.user.set(response.user);
+  }
+
+  authenticatedHomeUrl(): '/welcome' | '/lobby' {
+    return this.tutorialPending() ? '/welcome' : '/lobby';
+  }
+
+  async finishTutorial(tutorialStatus: Extract<TutorialStatus, 'COMPLETED' | 'SKIPPED'>): Promise<void> {
+    const token = this.accessToken();
+    if (environment.devGameMode && !token) {
+      this.user.update(user => user ? { ...user, tutorialStatus } : user);
+      return;
+    }
+    if (!token) throw new Error('Missing access token');
+
+    const endpoint = tutorialStatus === 'COMPLETED' ? 'complete' : 'skip';
+    const response = await firstValueFrom(this.http.post<{
+      tutorialStatus: TutorialStatus;
+      tutorialFinishedAt: string;
+    }>(`${environment.backendUrl}/tutorial/${endpoint}`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }));
+    this.user.update(user => user ? { ...user, ...response } : user);
   }
 
   async ensureSession(): Promise<boolean> {

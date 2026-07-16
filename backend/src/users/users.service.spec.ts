@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { AuthProvider, UserRole } from '@prisma/client';
+import { AuthProvider, TutorialStatus, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
 
@@ -86,6 +86,34 @@ describe('UsersService username errors', () => {
       response: expect.objectContaining({ message: 'auth.usernameInUse' }),
     });
   });
+});
+
+describe('UsersService tutorial onboarding', () => {
+  it.each([TutorialStatus.COMPLETED, TutorialStatus.SKIPPED])(
+    'persists %s with its finish time',
+    async tutorialStatus => {
+      const prisma = {
+        user: {
+          update: jest.fn(async ({ data }: { data: object }) => data),
+        },
+      };
+      const service = new UsersService(prisma as unknown as PrismaService);
+
+      await service.finishTutorial('user-1', tutorialStatus);
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: {
+          tutorialStatus,
+          tutorialFinishedAt: expect.any(Date),
+        },
+        select: {
+          tutorialStatus: true,
+          tutorialFinishedAt: true,
+        },
+      });
+    },
+  );
 });
 
 describe('UsersService list', () => {

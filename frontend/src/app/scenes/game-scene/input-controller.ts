@@ -12,39 +12,34 @@ type SceneState = {
   getSocket(): Socket;
 };
 
+type GameplayKeys = Record<
+  'up' | 'down' | 'left' | 'right' | 'dash' | 'reload' | 'shield' | 'start',
+  Phaser.Input.Keyboard.Key
+>;
+
+type KeyboardActions = {
+  dash: boolean;
+  reload: boolean;
+  shield: boolean;
+  start: boolean;
+};
+
 export class InputController {
-  private readonly pressedMovementCodes = new Set<string>();
-  private keys!: {
-    W: Phaser.Input.Keyboard.Key;
-    A: Phaser.Input.Keyboard.Key;
-    S: Phaser.Input.Keyboard.Key;
-    D: Phaser.Input.Keyboard.Key;
-    SHIFT: Phaser.Input.Keyboard.Key;
-    ENTER: Phaser.Input.Keyboard.Key;
-    R: Phaser.Input.Keyboard.Key;
-    Q: Phaser.Input.Keyboard.Key;
-  };
+  private keys!: GameplayKeys;
   private lastInputSend = 0;
   private readonly inputHz = 1000 / 60;
-  private pendingDash = false;
-  private pendingReload = false;
-  private pendingShield = false;
   private inputBlocked = false;
   private readonly onSettingsMenu = (event: Event): void => {
     this.inputBlocked = Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open);
+    const keyboard = this.scene.input.keyboard;
+    if (!keyboard) return;
+    keyboard.resetKeys();
+    keyboard.enabled = !this.inputBlocked;
+    if (this.inputBlocked) this.emitNeutralInput();
   };
-  private readonly onNativeKeyDown = (event: KeyboardEvent): void => {
-    if (this.isMovementCode(event.code)) this.pressedMovementCodes.add(event.code);
-    if (event.repeat) return;
-    if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') this.pendingDash = true;
-    if (event.code === 'KeyR') this.pendingReload = true;
-    if (event.code === 'KeyQ') this.pendingShield = true;
-  };
-  private readonly onNativeKeyUp = (event: KeyboardEvent): void => {
-    this.pressedMovementCodes.delete(event.code);
-  };
-  private readonly onWindowBlur = (): void => {
-    this.pressedMovementCodes.clear();
+  private readonly onPhaserInputSuspended = (): void => {
+    this.scene.input.keyboard?.resetKeys();
+    this.emitNeutralInput();
   };
 
   constructor(
@@ -53,81 +48,68 @@ export class InputController {
     private readonly touchControls: TouchControls | null = null,
   ) {
     window.addEventListener('tank-arena:settings-menu', this.onSettingsMenu);
-    window.addEventListener('keydown', this.onNativeKeyDown);
-    window.addEventListener('keyup', this.onNativeKeyUp);
-    window.addEventListener('blur', this.onWindowBlur);
   }
 
   destroy(): void {
     window.removeEventListener('tank-arena:settings-menu', this.onSettingsMenu);
-    window.removeEventListener('keydown', this.onNativeKeyDown);
-    window.removeEventListener('keyup', this.onNativeKeyUp);
-    window.removeEventListener('blur', this.onWindowBlur);
-    this.pressedMovementCodes.clear();
+    this.scene.game.events.off(Phaser.Core.Events.BLUR, this.onPhaserInputSuspended);
+    this.scene.events.off(Phaser.Scenes.Events.PAUSE, this.onPhaserInputSuspended);
+    this.scene.events.off(Phaser.Scenes.Events.SLEEP, this.onPhaserInputSuspended);
+    const keyboard = this.scene.input.keyboard;
+    if (keyboard) {
+      keyboard.resetKeys();
+      keyboard.enabled = true;
+    }
   }
 
   setup(): void {
     const kb = this.scene.input.keyboard!;
-    this.keys = {
-      W: kb.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-      A: kb.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-      S: kb.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-      D: kb.addKey(Phaser.Input.Keyboard.KeyCodes.D),
-      SHIFT: kb.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
-      ENTER: kb.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER),
-      R: kb.addKey(Phaser.Input.Keyboard.KeyCodes.R),
-      Q: kb.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
-    };
-
-    kb.on('keydown-ENTER', () => {
-      const gameState = this.state.getGameState();
-      const socket = this.state.getSocket();
-      if (gameState?.status === 'waiting' && this.state.getMyPlayerId()) {
-        socket.emit(SOCKET_EVENTS.GAME.START);
-      } else if (
-        environment.devGameMode &&
-        gameState?.status === 'finished'
-      ) {
-        socket.emit(SOCKET_EVENTS.GAME.RESTART);
-      }
-    });
-
-    kb.on('keydown-SHIFT', () => {
-      this.pendingDash = true;
-    });
-
-    kb.on('keydown-R', () => {
-      this.pendingReload = true;
-    });
-
-    kb.on('keydown-Q', () => {
-      this.pendingShield = true;
-    });
+    this.keys = kb.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.W,
+      down: Phaser.Input.Keyboard.KeyCodes.S,
+      left: Phaser.Input.Keyboard.KeyCodes.A,
+      right: Phaser.Input.Keyboard.KeyCodes.D,
+      dash: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+      reload: Phaser.Input.Keyboard.KeyCodes.R,
+      shield: Phaser.Input.Keyboard.KeyCodes.Q,
+      start: Phaser.Input.Keyboard.KeyCodes.ENTER,
+    }, true, false) as GameplayKeys;
+    this.scene.game.events.on(Phaser.Core.Events.BLUR, this.onPhaserInputSuspended);
+    this.scene.events.on(Phaser.Scenes.Events.PAUSE, this.onPhaserInputSuspended);
+    this.scene.events.on(Phaser.Scenes.Events.SLEEP, this.onPhaserInputSuspended);
   }
 
   sendInput(time: number): void {
+    if (time - this.lastInputSend < this.inputHz) return;
+    this.lastInputSend = time;
+
+    // Consume Phaser edge-triggered keys even outside active play so a key
+    // pressed during the countdown cannot leak into the first gameplay frame.
+    const keyboardActions = this.consumeKeyboardActions();
+    const touchDash = this.touchControls?.consumeAction('dash') ?? false;
+    const touchReload = this.touchControls?.consumeAction('reload') ?? false;
+    const touchShield = this.touchControls?.consumeAction('shield') ?? false;
+
     const myPlayerId = this.state.getMyPlayerId();
     const gameState = this.state.getGameState();
     if (!myPlayerId || !gameState) return;
-    if (time - this.lastInputSend < this.inputHz) return;
-    this.lastInputSend = time;
+
+    if (keyboardActions.start) {
+      if (gameState.status === 'waiting') {
+        this.state.getSocket().emit(SOCKET_EVENTS.GAME.START);
+      } else if (environment.devGameMode && gameState.status === 'finished') {
+        this.state.getSocket().emit(SOCKET_EVENTS.GAME.RESTART);
+      }
+    }
 
     if (gameState.status !== 'playing') return;
 
     const me = gameState.players.find(p => p.id === myPlayerId);
-    if (!me?.alive) {
-      this.pendingDash = false;
-      this.pendingReload = false;
-      this.pendingShield = false;
-      return;
-    }
+    if (!me?.alive) return;
 
     const touch = this.touchControls;
     const touchMove = touch?.getMove() ?? { x: 0, y: 0 };
     const touchFiring = touch?.isFiring() ?? false;
-    const touchDash = touch?.consumeAction('dash') ?? false;
-    const touchReload = touch?.consumeAction('reload') ?? false;
-    const touchShield = touch?.consumeAction('shield') ?? false;
 
     let moveX = 0;
     let moveY = 0;
@@ -135,11 +117,11 @@ export class InputController {
       if (touchMove.x !== 0 || touchMove.y !== 0) {
         moveX = touchMove.x;
         moveY = touchMove.y;
-      } else {
-        if (this.keys.W.isDown || this.pressedMovementCodes.has('KeyW')) moveY -= 1;
-        if (this.keys.S.isDown || this.pressedMovementCodes.has('KeyS')) moveY += 1;
-        if (this.keys.A.isDown || this.pressedMovementCodes.has('KeyA')) moveX -= 1;
-        if (this.keys.D.isDown || this.pressedMovementCodes.has('KeyD')) moveX += 1;
+      } else if (this.scene.input.keyboard?.enabled) {
+        if (this.keys.up.isDown) moveY -= 1;
+        if (this.keys.down.isDown) moveY += 1;
+        if (this.keys.left.isDown) moveX -= 1;
+        if (this.keys.right.isDown) moveX += 1;
       }
     }
 
@@ -160,17 +142,39 @@ export class InputController {
       moveY,
       aimAngle,
       shoot: !this.inputBlocked && shoot,
-      dash: !this.inputBlocked && (this.pendingDash || touchDash),
-      reload: !this.inputBlocked && (this.pendingReload || touchReload),
-      shield: !this.inputBlocked && (this.pendingShield || touchShield),
+      dash: !this.inputBlocked && (keyboardActions.dash || touchDash),
+      reload: !this.inputBlocked && (keyboardActions.reload || touchReload),
+      shield: !this.inputBlocked && (keyboardActions.shield || touchShield),
     };
-    this.pendingDash = false;
-    this.pendingReload = false;
-    this.pendingShield = false;
     this.state.getSocket().emit(SOCKET_EVENTS.GAME.PLAYER_INPUT, input);
   }
 
-  private isMovementCode(code: string): boolean {
-    return code === 'KeyW' || code === 'KeyA' || code === 'KeyS' || code === 'KeyD';
+  private consumeKeyboardActions(): KeyboardActions {
+    if (this.inputBlocked || !this.scene.input.keyboard?.enabled) {
+      return { dash: false, reload: false, shield: false, start: false };
+    }
+    return {
+      dash: Phaser.Input.Keyboard.JustDown(this.keys.dash),
+      reload: Phaser.Input.Keyboard.JustDown(this.keys.reload),
+      shield: Phaser.Input.Keyboard.JustDown(this.keys.shield),
+      start: Phaser.Input.Keyboard.JustDown(this.keys.start),
+    };
+  }
+
+  private emitNeutralInput(): void {
+    const myPlayerId = this.state.getMyPlayerId();
+    const gameState = this.state.getGameState();
+    if (!myPlayerId || gameState?.status !== 'playing') return;
+    const me = gameState.players.find(player => player.id === myPlayerId);
+    if (!me?.alive) return;
+    this.state.getSocket().emit(SOCKET_EVENTS.GAME.PLAYER_INPUT, {
+      moveX: 0,
+      moveY: 0,
+      aimAngle: me.aimAngle,
+      shoot: false,
+      dash: false,
+      reload: false,
+      shield: false,
+    } satisfies PlayerInput);
   }
 }

@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AuthProvider, Prisma, User } from '@prisma/client';
+import { AuthProvider, Prisma, TutorialStatus, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface GoogleIdentity {
@@ -343,6 +343,23 @@ export class UsersService {
       }
       throw error;
     }
+  }
+
+  async finishTutorial(
+    userId: string,
+    tutorialStatus: Extract<TutorialStatus, 'COMPLETED' | 'SKIPPED'>,
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        tutorialStatus,
+        tutorialFinishedAt: new Date(),
+      },
+      select: {
+        tutorialStatus: true,
+        tutorialFinishedAt: true,
+      },
+    });
   }
 
   async phantomWallet(userId: string): Promise<string | null> {

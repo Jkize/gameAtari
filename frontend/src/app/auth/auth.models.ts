@@ -1,4 +1,5 @@
 export type AuthProvider = 'GOOGLE' | 'PHANTOM';
+export type TutorialStatus = 'PENDING' | 'COMPLETED' | 'SKIPPED' | 'EXEMPT';
 
 export enum EAuth {
   USER = 'USER',
@@ -10,6 +11,8 @@ export interface AuthUser {
   username: string;
   avatarUrl?: string;
   role?: EAuth;
+  tutorialStatus?: TutorialStatus;
+  tutorialFinishedAt?: string;
   wallet?: {
     linked: boolean;
     verified: boolean;

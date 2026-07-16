@@ -30,6 +30,8 @@ const FIRE_BORDER_COLOR = 0xffd98a;
 const ICON_COLOR = 0x83e5ef;
 
 type ActionKey = 'dash' | 'shield' | 'reload';
+type TutorialHighlightTarget = 'move' | 'aim' | 'fire' | 'dash' | 'shield';
+export type TouchControlHighlight = TutorialHighlightTarget | 'move-dash' | null;
 
 interface Placement {
   x: number;
@@ -120,6 +122,9 @@ export class TouchControls {
   };
   private readonly buttons: ActionButton[] = [];
   private fireTouchId: number | null = null;
+  private tutorialHighlight: TouchControlHighlight = null;
+  private readonly reduceMotion = typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Phaser intentionally stops updating a touch Pointer once elementFromPoint
   // is outside the canvas. Track active touches at window level as a fallback
@@ -307,6 +312,10 @@ export class TouchControls {
     return pending;
   }
 
+  setTutorialHighlight(control: TouchControlHighlight): void {
+    this.tutorialHighlight = control;
+  }
+
   destroy(): void {
     this.scene.input.off(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown);
     this.scene.input.off(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove);
@@ -383,6 +392,60 @@ export class TouchControls {
       button.icon?.setAlpha(alpha);
       if (button.key === 'reload') this.drawReloadIcon(button.x, button.y, alpha);
     }
+
+    this.drawTutorialHighlight();
+  }
+
+  private drawTutorialHighlight(): void {
+    const control = this.tutorialHighlight;
+    if (!control) return;
+    const targets: TutorialHighlightTarget[] = control === 'move-dash'
+      ? ['move', 'dash']
+      : [control];
+    targets.forEach(target => this.drawTutorialHighlightTarget(target));
+  }
+
+  private drawTutorialHighlightTarget(control: TutorialHighlightTarget): void {
+    let placement: Placement;
+    let baseRadius: number;
+    if (control === 'move') {
+      placement = this.layout.moveAnchor;
+      baseRadius = STICK_RADIUS;
+    } else if (control === 'aim') {
+      placement = this.layout.aimAnchor;
+      baseRadius = STICK_RADIUS;
+    } else if (control === 'fire') {
+      placement = this.layout.fire;
+      baseRadius = FIRE_RADIUS;
+      this.fireIcon?.setAlpha(0.82);
+    } else {
+      const button = this.buttons.find(candidate => candidate.key === control);
+      if (!button) return;
+      placement = button;
+      baseRadius = ACTION_RADIUS;
+      button.icon?.setAlpha(0.82);
+    }
+
+    const phase = this.reduceMotion ? 0.5 : (Math.sin(this.scene.time.now * 0.007) + 1) / 2;
+    const cueColor = control === 'fire' ? FIRE_BORDER_COLOR : STICK_BASE_COLOR;
+    const outerRadius = baseRadius + 10 + phase * 12;
+    this.gfx.lineStyle(4, cueColor, 0.78 - phase * 0.24);
+    this.gfx.strokeCircle(placement.x, placement.y, outerRadius);
+    this.gfx.lineStyle(2, 0xffffff, 0.45 - phase * 0.16);
+    this.gfx.strokeCircle(placement.x, placement.y, outerRadius + 8);
+
+    if (control !== 'move' && control !== 'aim') return;
+    const animationTime = this.reduceMotion ? 0 : this.scene.time.now * 0.0045;
+    const offsetX = control === 'move'
+      ? Math.sin(animationTime) * 30
+      : Math.cos(animationTime) * 27;
+    const offsetY = control === 'move'
+      ? Math.cos(animationTime * 0.5) * 10
+      : Math.sin(animationTime) * 27;
+    this.gfx.lineStyle(3, cueColor, 0.52);
+    this.gfx.lineBetween(placement.x, placement.y, placement.x + offsetX, placement.y + offsetY);
+    this.gfx.fillStyle(STICK_THUMB_COLOR, 0.82);
+    this.gfx.fillCircle(placement.x + offsetX, placement.y + offsetY, 12);
   }
 
   private drawFireButton(): void {
