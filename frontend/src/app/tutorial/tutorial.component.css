@@ -1,4 +1,7 @@
 :host {
+  position: fixed;
+  top: var(--tank-arena-visible-viewport-top, 0);
+  left: var(--tank-arena-visible-viewport-left, 0);
   display: block;
   width: 100vw;
   width: var(--tank-arena-visible-viewport-width, 100vw);

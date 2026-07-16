@@ -77,6 +77,9 @@ import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
   styles: [`
     :host {
       --page-bg: #20170d;
+      position: fixed;
+      top: var(--tank-arena-visible-viewport-top, 0);
+      left: var(--tank-arena-visible-viewport-left, 0);
       display: flex;
       width: 100vw;
       width: var(--tank-arena-visible-viewport-width, 100vw);
