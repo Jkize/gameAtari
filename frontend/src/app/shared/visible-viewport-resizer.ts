@@ -1,7 +1,7 @@
 const VIEWPORT_WIDTH_PROPERTY = '--tank-arena-visible-viewport-width';
 const VIEWPORT_HEIGHT_PROPERTY = '--tank-arena-visible-viewport-height';
-const VIEWPORT_LEFT_PROPERTY = '--tank-arena-visible-viewport-left';
-const VIEWPORT_TOP_PROPERTY = '--tank-arena-visible-viewport-top';
+const LAYOUT_WIDTH_PROPERTY = '--tank-arena-layout-viewport-width';
+const LAYOUT_HEIGHT_PROPERTY = '--tank-arena-layout-viewport-height';
 const SETTLE_DELAY_MS = 250;
 
 export class VisibleViewportResizer {
@@ -36,13 +36,13 @@ export class VisibleViewportResizer {
     const viewport = window.visualViewport;
     const width = Math.round(viewport?.width ?? window.innerWidth);
     const height = Math.round(viewport?.height ?? window.innerHeight);
-    const left = Math.round(viewport?.offsetLeft ?? 0);
-    const top = Math.round(viewport?.offsetTop ?? 0);
+    const layoutWidth = Math.max(Math.round(window.innerWidth), width);
+    const layoutHeight = Math.max(Math.round(window.innerHeight), height);
 
     this.host.style.setProperty(VIEWPORT_WIDTH_PROPERTY, `${width}px`);
     this.host.style.setProperty(VIEWPORT_HEIGHT_PROPERTY, `${height}px`);
-    this.host.style.setProperty(VIEWPORT_LEFT_PROPERTY, `${left}px`);
-    this.host.style.setProperty(VIEWPORT_TOP_PROPERTY, `${top}px`);
+    this.host.style.setProperty(LAYOUT_WIDTH_PROPERTY, `${layoutWidth}px`);
+    this.host.style.setProperty(LAYOUT_HEIGHT_PROPERTY, `${layoutHeight}px`);
 
     if (this.animationFrame !== undefined) window.cancelAnimationFrame(this.animationFrame);
     this.animationFrame = window.requestAnimationFrame(() => {
