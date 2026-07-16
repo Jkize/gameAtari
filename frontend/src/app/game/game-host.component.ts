@@ -78,12 +78,13 @@ import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
     :host {
       --page-bg: #20170d;
       position: fixed;
-      inset: 0 auto auto 0;
+      top: var(--tank-arena-visible-viewport-top, 0);
+      left: var(--tank-arena-visible-viewport-left, 0);
       display: flex;
       width: 100vw;
-      width: var(--tank-arena-layout-viewport-width, 100vw);
+      width: var(--tank-arena-visible-viewport-width, 100vw);
       height: 100vh;
-      height: var(--tank-arena-layout-viewport-height, 100dvh);
+      height: var(--tank-arena-visible-viewport-height, 100dvh);
       padding: 5vh 5vw;
       align-items: center;
       justify-content: center;
@@ -110,12 +111,6 @@ import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
     @media (pointer: coarse) {
       :host {
         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      }
-
-      .game-wrapper {
-        width: min(100%, var(--tank-arena-visible-viewport-width, 100%));
-        height: min(100%, var(--tank-arena-visible-viewport-height, 100%));
-        flex: 0 1 auto;
       }
     }
 
