@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
 import { registerTranslate } from '../shared/translate-bridge';
+import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
 import { TutorialGame } from './tutorial-game';
 
 @Component({
@@ -29,32 +30,24 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
+  private readonly host = inject(ElementRef<HTMLElement>);
   private game?: TutorialGame;
-  private scaleRefreshTimer?: number;
-
-  // Mobile browsers, especially iOS Safari, can report the old viewport size
-  // briefly after the rotate overlay disappears. Re-measure once the browser
-  // chrome and visual viewport have settled so Phaser's FIT scale is correct.
-  private readonly refreshScale = (): void => {
-    if (this.scaleRefreshTimer !== undefined) window.clearTimeout(this.scaleRefreshTimer);
-    this.scaleRefreshTimer = window.setTimeout(() => this.game?.scale.refresh(), 250);
-  };
+  private viewportResizer?: VisibleViewportResizer;
 
   ngAfterViewInit(): void {
     registerTranslate((key: string, params?: Record<string, unknown>) => this.transloco.translate(key, params));
     this.isTouch.set(window.matchMedia?.('(pointer: coarse)').matches ?? false);
-    window.addEventListener('resize', this.refreshScale);
-    window.addEventListener('orientationchange', this.refreshScale);
-    window.visualViewport?.addEventListener('resize', this.refreshScale);
     this.createGame();
-    this.refreshScale();
+    this.viewportResizer = new VisibleViewportResizer(
+      this.host.nativeElement,
+      this.containerRef.nativeElement,
+      (width, height) => this.game?.scale.setParentSize(width, height),
+    );
+    this.viewportResizer.start();
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('resize', this.refreshScale);
-    window.removeEventListener('orientationchange', this.refreshScale);
-    window.visualViewport?.removeEventListener('resize', this.refreshScale);
-    if (this.scaleRefreshTimer !== undefined) window.clearTimeout(this.scaleRefreshTimer);
+    this.viewportResizer?.destroy();
     this.game?.destroy(true);
   }
 
@@ -72,6 +65,7 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
     this.step.set(0);
     this.game?.destroy(true);
     this.createGame();
+    this.viewportResizer?.refresh();
   }
 
   private createGame(): void {

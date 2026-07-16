@@ -1,8 +1,9 @@
 :host {
   display: block;
   width: 100vw;
+  width: var(--tank-arena-visible-viewport-width, 100vw);
   height: 100vh;
-  height: 100dvh;
+  height: var(--tank-arena-visible-viewport-height, 100dvh);
   overflow: hidden;
   background: #17110b;
 }

@@ -9,6 +9,7 @@ import { registerTranslate } from '../shared/translate-bridge';
 import { Router } from '@angular/router';
 import { clampVolume, DEFAULT_GAME_SETTINGS, GameSettings } from './game-settings.types';
 import { GameSettingsService } from './game-settings.service';
+import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
 
 @Component({
   selector: 'app-game-host',
@@ -78,8 +79,9 @@ import { GameSettingsService } from './game-settings.service';
       --page-bg: #20170d;
       display: flex;
       width: 100vw;
+      width: var(--tank-arena-visible-viewport-width, 100vw);
       height: 100vh;
-      height: 100dvh;
+      height: var(--tank-arena-visible-viewport-height, 100dvh);
       padding: 5vh 5vw;
       align-items: center;
       justify-content: center;
@@ -258,6 +260,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   private game?: TankGame;
   private langLoad?: Subscription;
   private saveTimer?: number;
+  private viewportResizer?: VisibleViewportResizer;
 
   private readonly returnToLobby = () => {
     void this.router.navigateByUrl('/lobby');
@@ -307,16 +310,8 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  // iOS Safari reports stale viewport sizes right after rotation or browser
-  // bar collapse, leaving the FIT-scaled canvas larger than its container and
-  // clipping the HUD edges. Re-measuring shortly after the event fixes it.
-  private readonly refreshScale = (): void => {
-    if (this.scaleRefreshTimer !== undefined) window.clearTimeout(this.scaleRefreshTimer);
-    this.scaleRefreshTimer = window.setTimeout(() => this.game?.scale.refresh(), 250);
-  };
-  private scaleRefreshTimer?: number;
-
   private readonly transloco = inject(TranslocoService);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   constructor(
     private readonly auth: AuthService,
@@ -332,13 +327,17 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     if (window.matchMedia?.('(pointer: coarse)').matches) {
       this.containerRef.nativeElement.addEventListener('pointerdown', this.tryFullscreenLandscape);
     }
-    window.addEventListener('resize', this.refreshScale);
-    window.addEventListener('orientationchange', this.refreshScale);
-    window.visualViewport?.addEventListener('resize', this.refreshScale);
+    this.viewportResizer = new VisibleViewportResizer(
+      this.host.nativeElement,
+      this.containerRef.nativeElement,
+      (width, height) => this.game?.scale.setParentSize(width, height),
+    );
+    this.viewportResizer.start();
     socketManager.connect(this.auth.accessToken() ?? undefined);
 
     this.langLoad = this.transloco.load(this.transloco.getActiveLang()).subscribe(() => {
       this.game = new TankGame(this.containerRef.nativeElement);
+      this.viewportResizer?.refresh();
       void this.loadSettings();
     });
   }
@@ -350,10 +349,7 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     window.removeEventListener('tank-arena:open-settings', this.openSettingsFromGame);
     window.removeEventListener('tank-arena:spectator-mode', this.spectatorModeChanged);
     this.containerRef.nativeElement.removeEventListener('pointerdown', this.tryFullscreenLandscape);
-    window.removeEventListener('resize', this.refreshScale);
-    window.removeEventListener('orientationchange', this.refreshScale);
-    window.visualViewport?.removeEventListener('resize', this.refreshScale);
-    if (this.scaleRefreshTimer !== undefined) window.clearTimeout(this.scaleRefreshTimer);
+    this.viewportResizer?.destroy();
     this.releaseCombatDisplayMode();
     this.game?.destroy(true);
   }
