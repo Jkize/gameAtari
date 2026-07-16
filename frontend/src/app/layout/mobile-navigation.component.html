@@ -24,6 +24,7 @@
         <a [routerLink]="tab.path" routerLinkActive="active" (click)="close()">{{ tab.labelKey | transloco }}</a>
       }
       <button type="button" class="action-link" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
+      <a routerLink="/tutorial" routerLinkActive="active" (click)="close()">{{ 'nav.howToPlay' | transloco }}</a>
     </nav>
 
     <div class="theme-row">

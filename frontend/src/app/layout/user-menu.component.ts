@@ -1,4 +1,5 @@
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth/auth.service';
 import { SessionExitService } from './session-exit.service';
@@ -8,7 +9,7 @@ import { ThemeService } from '../shared/theme.service';
 @Component({
   selector: 'app-user-menu',
   standalone: true,
-  imports: [TranslocoPipe],
+  imports: [RouterLink, TranslocoPipe],
   templateUrl: './user-menu.component.html',
   styleUrl: './user-menu.component.css',
 })
@@ -31,6 +32,10 @@ export class UserMenuComponent {
   openAccount(): void {
     this.menuOpen.set(false);
     this.accountModal.show();
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
   }
 
   toggleTheme(): void {

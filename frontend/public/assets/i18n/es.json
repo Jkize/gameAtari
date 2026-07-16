@@ -28,7 +28,7 @@
   "queueFloating.players": "{{current}}/{{max}} jugadores",
 
   "nav.play": "Jugar",
-  "nav.tutorial": "Tutorial",
+  "nav.howToPlay": "Cómo jugar",
   "nav.myMatches": "Mis partidas",
   "nav.recentMatches": "Historial global",
   "nav.account": "Mi cuenta",

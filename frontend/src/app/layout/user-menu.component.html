@@ -13,6 +13,7 @@
   @if (menuOpen()) {
     <div class="dropdown" role="menu">
       <button type="button" role="menuitem" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
+      <a routerLink="/tutorial" role="menuitem" (click)="closeMenu()">{{ 'nav.howToPlay' | transloco }}</a>
       <div class="theme-setting">
         <button
           type="button"
