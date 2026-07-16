@@ -11,6 +11,7 @@ nav a {
 .list {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 .user {
   display: flex;
@@ -21,11 +22,16 @@ nav a {
   border: 0.5px solid var(--color-border);
   background: var(--color-bg-surface);
   border-radius: var(--radius-card);
+  min-width: 0;
 }
 .identity {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+.identity > div {
+  flex: 1;
   min-width: 0;
 }
 .avatar {
@@ -61,6 +67,7 @@ h2 {
 }
 .badges {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
 }
@@ -91,4 +98,21 @@ h2 {
 }
 .more {
   margin-top: 18px;
+}
+
+@media (max-width: 640px) {
+  .user {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  .identity,
+  .badges {
+    width: 100%;
+  }
+
+  .badges {
+    flex-shrink: 1;
+  }
 }
