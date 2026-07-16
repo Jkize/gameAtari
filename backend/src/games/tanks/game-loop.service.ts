@@ -21,6 +21,8 @@ import {
   PowerUpSpawnService,
 } from './power-up-spawn.service';
 import { DangerZoneService } from './danger-zone.service';
+import { GameEventPublisherService } from './events/game-event-publisher.service';
+import { WatcherPresenceService } from './events/watcher-presence.service';
 
 const TICK_INTERVAL = 1000 / 60;
 const PLAYER_BROADCAST_INTERVAL = 1000 / 30;
@@ -67,6 +69,8 @@ export class GameLoopService implements OnModuleDestroy {
     private readonly powerUpSpawnService: PowerUpSpawnService,
     private readonly dangerZoneService: DangerZoneService,
     private readonly developmentSettings: DevelopmentSettingsService,
+    private readonly eventPublisher: GameEventPublisherService,
+    private readonly watcherPresence: WatcherPresenceService,
   ) {}
 
   setServer(server: Server): void {
@@ -202,6 +206,7 @@ export class GameLoopService implements OnModuleDestroy {
         this.processPlayers(roomId, deltaTime, now);
         this.processDangerZone(deltaTime, now);
         this.processBullets(roomId, deltaTime);
+        this.publishPendingEliminations(roomId);
         this.checkWinCondition(roomId);
       }
       runtime.pendingWatcherImpactEvents.push(...this.gameService.impactEvents.slice(impactStartIndex));
@@ -413,7 +418,12 @@ export class GameLoopService implements OnModuleDestroy {
         if (!this.collisionService.bulletVsPlayer(bullet, player)) continue;
         if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
         else {
-          this.gameService.damagePlayer(player, bullet.damage, bullet.ownerId);
+          this.gameService.damagePlayer(player, bullet.damage, {
+            attackerId: bullet.ownerId,
+            attackerName: bullet.ownerName,
+            cause: (bullet.reflectCount ?? 0) > 0 ? 'reflected_projectile' : 'projectile',
+            weapon: bullet.weapon ?? 'standard',
+          });
           this.recordBulletImpact(bullet, 'spark');
         }
         dead.add(bullet.id);
@@ -431,6 +441,12 @@ export class GameLoopService implements OnModuleDestroy {
       this.sessions.require(roomId).endedAt = new Date();
       void this.finishedHandler?.(roomId);
     }
+  }
+
+  private publishPendingEliminations(roomId: string): void {
+    const events = this.sessions.require(roomId).eliminationEvents.splice(0);
+    this.eventPublisher.publishEliminations(roomId, events);
+    if (events.length > 0) this.watcherPresence.refresh(roomId);
   }
 
   private broadcastState(roomId: string, runtime: LoopRuntime, now: number): void {

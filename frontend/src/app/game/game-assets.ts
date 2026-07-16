@@ -104,6 +104,12 @@ export const PHASER_GAME_ASSETS: readonly PhaserGameAsset[] = [
     path: 'assets/hud/hud-players-panel.svg',
     textureSize: { width: 220, height: 60 },
   },
+  {
+    type: 'svg',
+    key: 'hud-viewer-eye',
+    path: 'assets/hud/viewer-eye.svg',
+    textureSize: { width: 64, height: 40 },
+  },
   ...[
     ['weapon-standard-fire', 'weapon_standard_fire.ogg'],
     ['weapon-triple-shot-fire', 'weapon_triple_shot_fire.ogg'],

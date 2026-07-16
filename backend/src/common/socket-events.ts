@@ -30,6 +30,8 @@ export const SOCKET_EVENTS = {
     ENDED: 'game:ended',
     ERROR: 'game:error',
     PLAYER_DISCONNECTED: 'playerDisconnected',
+    PLAYER_ELIMINATED: 'game:playerEliminated',
+    VIEWER_COUNT_CHANGED: 'game:viewerCountChanged',
   },
   POWER_UP: { //Only infromational events, no actions are performed on the server
     SPAWNED: 'powerUp:spawned',

@@ -18,6 +18,9 @@ import { RewardsModule } from '../../rewards/rewards.module';
 import { SocketRateLimiterService } from './socket-rate-limiter.service';
 import { PowerUpSpawnService } from './power-up-spawn.service';
 import { DangerZoneService } from './danger-zone.service';
+import { EliminationService } from './events/elimination.service';
+import { GameEventPublisherService } from './events/game-event-publisher.service';
+import { WatcherPresenceService } from './events/watcher-presence.service';
 
 @Module({
   imports: [AuthModule, UsersModule, RewardsModule],
@@ -38,6 +41,9 @@ import { DangerZoneService } from './danger-zone.service';
     SocketRateLimiterService,
     PowerUpSpawnService,
     DangerZoneService,
+    EliminationService,
+    GameEventPublisherService,
+    WatcherPresenceService,
   ],
   exports: [GameSessionsService, GameLoopService, RoomsService],
 })

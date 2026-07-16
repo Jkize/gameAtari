@@ -9,7 +9,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { AuthProvider } from '@prisma/client';
+import { AuthProvider, UserRole } from '@prisma/client';
 import { TokensService } from '../../auth/tokens.service';
 import { AuthenticatedUser } from '../../common/auth.types';
 import { SOCKET_EVENTS } from '../../common/socket-events';
@@ -19,6 +19,8 @@ import { RoomsService } from '../../rooms/rooms.service';
 import { GameLoopService } from './game-loop.service';
 import { PlayerInput } from './types/player.types';
 import { SocketRateLimiterService } from './socket-rate-limiter.service';
+import { GameEventPublisherService } from './events/game-event-publisher.service';
+import { WatcherPresenceService } from './events/watcher-presence.service';
 
 type AuthenticatedSocket = Socket & {
   data: Socket['data'] & {
@@ -44,11 +46,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly matches: MatchesService,
     private readonly developmentSettings: DevelopmentSettingsService,
     private readonly rateLimiter: SocketRateLimiterService,
+    private readonly eventPublisher: GameEventPublisherService,
+    private readonly watcherPresence: WatcherPresenceService,
   ) {}
 
   afterInit(server: Server): void {
     this.gameLoop.setServer(server);
     this.rooms.setServer(server);
+    this.eventPublisher.setServer(server);
+    this.watcherPresence.setServer(server);
     this.gameLoop.onFinished(async roomId => {
       try {
         if (this.developmentSettings.shouldPersistMatches()) await this.matches.persist(roomId);
@@ -98,8 +104,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   handleDisconnect(client: AuthenticatedSocket): void {
     this.rateLimiter.removeConnection(this.clientIp(client), client.id);
+    this.watcherPresence.disconnected(client);
     const auth = client.data.auth;
-    if (auth) void this.rooms.disconnect(auth.userId, client.id);
+    if (auth) {
+      const roomId = this.rooms.roomForUser(auth.userId)?.id;
+      void this.rooms.disconnect(auth.userId, client.id)
+        .finally(() => {
+          if (roomId) this.watcherPresence.refresh(roomId);
+        });
+    }
   }
 
   @SubscribeMessage(SOCKET_EVENTS.LOBBY.LIST_ROOMS)
@@ -192,22 +205,31 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage(SOCKET_EVENTS.GAME.WATCH)
-  watchGame(
+  async watchGame(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() body: { roomId?: string },
-  ): void {
+  ): Promise<void> {
+    if (client.data.auth.role !== UserRole.ADMIN) {
+      client.emit(SOCKET_EVENTS.GAME.ERROR, {
+        code: 'WATCH_ADMIN_ONLY',
+        message: 'Watching games is currently restricted to administrators',
+      });
+      return;
+    }
     if (!body?.roomId || !this.gameLoop.hasSession(body.roomId)) {
       client.emit(SOCKET_EVENTS.GAME.ERROR, { code: 'ROOM_NOT_FOUND', message: 'Game room not found' });
       return;
     }
-    client.join(`game:${body.roomId}:watchers`);
+    await this.watcherPresence.join(client, body.roomId);
     const initial = this.gameLoop.buildInitialState(body.roomId);
     client.emit(SOCKET_EVENTS.GAME.WATCH_JOINED, {
       watcherId: client.data.auth.userId,
+      roomId: body.roomId,
       map: initial.map,
       status: initial.state.status,
     });
     client.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
+    this.watcherPresence.sendCurrent(client, body.roomId);
   }
 
   @SubscribeMessage(SOCKET_EVENTS.GAME.PLAYER_INPUT)

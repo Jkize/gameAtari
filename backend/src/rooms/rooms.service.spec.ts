@@ -31,9 +31,18 @@ describe('RoomsService', () => {
         ? { minPlayers: 1, countdownSeconds: 3 }
         : null),
     };
-    const rooms = new RoomsService(gameLoop as never, redis as never, developmentSettings as never);
+    const watcherPresence = {
+      stopWatching: jest.fn(),
+      sendCurrent: jest.fn(),
+    };
+    const rooms = new RoomsService(
+      gameLoop as never,
+      redis as never,
+      watcherPresence as never,
+      developmentSettings as never,
+    );
     rooms.setServer(server as never);
-    return { gameLoop, redis, server, roomEmit, rooms };
+    return { gameLoop, redis, server, roomEmit, watcherPresence, rooms };
   };
 
   it('uses the configured 2-15 player limits and sends player 16 to another quick-play room', async () => {

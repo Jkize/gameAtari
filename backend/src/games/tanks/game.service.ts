@@ -8,6 +8,8 @@ import { PowerUpSpawn } from './types/power-up.types';
 import { GameRuntimeContext } from './runtime/game-runtime-context.service';
 import { PowerUpSpawnService } from './power-up-spawn.service';
 import type { DangerZoneRuntimeState } from './danger-zone.service';
+import { DamageSource } from './events/elimination-event.types';
+import { EliminationService } from './events/elimination.service';
 
 const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
@@ -43,6 +45,7 @@ export class GameService {
     private readonly weaponService: WeaponService,
     private readonly runtime: GameRuntimeContext,
     private readonly powerUpSpawnService: PowerUpSpawnService,
+    private readonly eliminations: EliminationService,
   ) {}
 
   get players(): Map<string, Player> { return this.runtime.current().players; }
@@ -111,6 +114,7 @@ export class GameService {
       if (idx !== -1) this.usedColorIndices.delete(idx);
     }
     this.players.delete(userId);
+    this.runtime.current().recentExternalDamage.delete(userId);
   }
 
   private pickColorIndex(): number {
@@ -178,10 +182,14 @@ export class GameService {
     return true;
   }
 
-  damagePlayer(player: Player, amount: number, attackerId?: string): void {
+  damagePlayer(
+    player: Player,
+    amount: number,
+    source: DamageSource = { cause: 'projectile', weapon: 'standard' },
+    now = Date.now(),
+  ): void {
     if (!player.alive) return;
 
-    const now = Date.now();
     if (player.shieldHp > 0 && now < player.shieldUntil) {
       const absorbed = Math.min(player.shieldHp, amount);
       player.shieldHp -= absorbed;
@@ -190,29 +198,31 @@ export class GameService {
 
     if (amount <= 0) return;
 
-    this.applyHpDamage(player, amount, now, attackerId);
+    this.applyHpDamage(player, amount, now, source);
   }
 
   damagePlayerDirect(player: Player, amount: number, now = Date.now()): void {
     if (!player.alive || amount <= 0) return;
-    this.applyHpDamage(player, amount, now);
+    this.applyHpDamage(player, amount, now, { cause: 'danger_zone' });
   }
 
-  private applyHpDamage(player: Player, amount: number, now: number, attackerId?: string): void {
+  private applyHpDamage(player: Player, amount: number, now: number, source: DamageSource): void {
     const appliedDamage = Math.min(player.hp, amount);
     player.hp = Math.max(0, player.hp - amount);
     const victimStats = this.runtime.current().stats.get(player.id);
     if (victimStats) victimStats.damageTaken += appliedDamage;
-    if (attackerId && attackerId !== player.id) {
-      const attackerStats = this.runtime.current().stats.get(attackerId);
+    if (source.attackerId && source.attackerId !== player.id) {
+      const attackerStats = this.runtime.current().stats.get(source.attackerId);
       if (attackerStats) attackerStats.damageDealt += appliedDamage;
     }
+    this.eliminations.recordExternalDamage(player.id, source, now);
     if (player.hp === 0) {
       player.alive = false;
       player.destroyedAt = now;
       if (victimStats) victimStats.deaths += 1;
-      if (attackerId && attackerId !== player.id) {
-        const attackerStats = this.runtime.current().stats.get(attackerId);
+      const elimination = this.eliminations.recordElimination(player, source, now);
+      if (elimination.creditedKillerId) {
+        const attackerStats = this.runtime.current().stats.get(elimination.creditedKillerId);
         if (attackerStats) attackerStats.kills += 1;
       }
       this.runtime.current().eliminationOrder.push(player.id);
@@ -227,6 +237,8 @@ export class GameService {
     this.players.clear();
     this.bullets = [];
     this.impactEvents = [];
+    this.runtime.current().eliminationEvents = [];
+    this.runtime.current().recentExternalDamage.clear();
     this.map = null;
     this.status = 'waiting';
     this.usedColorIndices.clear();

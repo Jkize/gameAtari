@@ -4,6 +4,9 @@ import { GAME_VIEW_HEIGHT, HUD_HEIGHT } from '../../game/viewport.config';
 import { GameState, PlayerPublicState, PowerUpType } from '../../types/game-state.types';
 import { C, MONO } from './game-scene.constants';
 import { environment } from '../../../environments/environment';
+import { EliminationFeedRenderer } from './elimination-feed-renderer';
+import { countAlivePlayers, MatchStatusPanel } from './match-status-panel';
+import type { PlayerEliminatedEvent } from './match-notification.types';
 
 type HudObject = Phaser.GameObjects.GameObject;
 
@@ -61,11 +64,10 @@ export class GameHudRenderer {
   private overlayGfx!: Phaser.GameObjects.Graphics;
   private bottomPanelImage!: Phaser.GameObjects.Image;
   private hpPanelImage!: Phaser.GameObjects.Image;
-  private playersPanelImage!: Phaser.GameObjects.Image;
+  private matchStatusPanel!: MatchStatusPanel;
+  private eliminationFeed!: EliminationFeedRenderer;
 
   private hpText!: Phaser.GameObjects.Text;
-  private rttText!: Phaser.GameObjects.Text;
-  private playersText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
   private spectatorPreviousButton!: Phaser.GameObjects.Text;
   private spectatorNextButton!: Phaser.GameObjects.Text;
@@ -103,11 +105,10 @@ export class GameHudRenderer {
       .setDepth(HUD_DEPTH)
       .setScrollFactor(0)
       .setAlpha(0.8));
-    this.playersPanelImage = this.add(this.scene.add.image(W, 0, 'hud-players-panel')
-      .setOrigin(1, 0)
-      .setDepth(HUD_DEPTH)
-      .setScrollFactor(0)
-      .setAlpha(0.8));
+    this.matchStatusPanel = new MatchStatusPanel(this.scene, HUD_DEPTH + 3);
+    this.add(this.matchStatusPanel.gameObject());
+    this.eliminationFeed = new EliminationFeedRenderer(this.scene, HUD_DEPTH + 4);
+    this.add(this.eliminationFeed.gameObject());
     this.topGfx = this.add(this.scene.add.graphics().setDepth(HUD_DEPTH + 1).setScrollFactor(0));
     this.bottomPanelImage = this.add(this.scene.add.image(W / 2, H, 'hud-bottom-panel')
       .setOrigin(0.5, 1)
@@ -123,20 +124,6 @@ export class GameHudRenderer {
       fontFamily: MONO,
       color: '#00ff66',
     }).setDepth(HUD_DEPTH + 3).setScrollFactor(0).setAlpha(0.82));
-
-    this.playersText = this.add(this.scene.add.text(W - 10, 21, 'PLAYERS: -', {
-      fontSize: '12px',
-      fontFamily: MONO,
-      color: '#ffd98a',
-    }).setOrigin(1, 0.5).setDepth(HUD_DEPTH + 3).setScrollFactor(0).setAlpha(0.66));
-
-    this.rttText = this.add(this.scene.add.text(W - 94, 21, '', {
-      fontSize: '13px',
-      fontFamily: MONO,
-      color: '#00ff66',
-      stroke: '#00130b',
-      strokeThickness: 3,
-    }).setOrigin(1, 0.5).setDepth(HUD_DEPTH + 4).setScrollFactor(0).setAlpha(0.96));
 
     this.statusText = this.add(this.scene.add.text(W / 2, GAME_VIEW_HEIGHT - 16, '', {
       fontSize: '13px',
@@ -255,7 +242,7 @@ export class GameHudRenderer {
   showConnectingOverlay(): void {
     this.syncCameraIgnores();
     this.drawStaticFrame();
-    this.drawTopPanels(undefined, false, 0, null);
+    this.drawTopPanels(undefined, false, 0, 0, null);
     this.drawBottomHud(undefined, 0);
     this.overlayGfx.clear();
     this.overlayGfx.fillStyle(0x000000, 0.74);
@@ -274,12 +261,20 @@ export class GameHudRenderer {
     rttMs: number | null,
     spectatorMode = false,
     spectatedPlayerName?: string,
+    viewerCount = 0,
   ): void {
     const me = state.players.find(p => p.id === myPlayerId);
 
     this.syncCameraIgnores();
     this.drawStaticFrame();
-    this.drawTopPanels(me, Boolean(myPlayerId), state.players.length, rttMs);
+    this.drawTopPanels(
+      me,
+      Boolean(myPlayerId),
+      countAlivePlayers(state.players),
+      viewerCount,
+      rttMs,
+    );
+    this.eliminationFeed.update(time);
     if (spectatorMode) this.hideBottomHud();
     else this.drawBottomHud(me, time);
     this.spectatorPreviousButton.setVisible(spectatorMode);
@@ -293,6 +288,14 @@ export class GameHudRenderer {
 
   setWaitingCountdown(seconds: number | null): void {
     this.waitingCountdownSeconds = seconds;
+  }
+
+  showElimination(event: PlayerEliminatedEvent, localPlayerId: string): void {
+    this.eliminationFeed.push(event, localPlayerId);
+  }
+
+  resetNotifications(): void {
+    this.eliminationFeed.reset();
   }
 
   private add<T extends HudObject>(object: T): T {
@@ -313,7 +316,8 @@ export class GameHudRenderer {
   private drawTopPanels(
     player: PlayerPublicState | undefined,
     hasPlayerId: boolean,
-    players: number,
+    alivePlayers: number,
+    viewerCount: number,
     rttMs: number | null,
   ): void {
     const hp = player?.hp ?? 0;
@@ -323,10 +327,6 @@ export class GameHudRenderer {
     this.hpPanelImage
       .setVisible(this.scene.textures.exists('hud-hp-panel'))
       .setDisplaySize(210, 56);
-    this.playersPanelImage
-      .setVisible(this.scene.textures.exists('hud-players-panel'))
-      .setDisplaySize(220, 42);
-
     this.topGfx.clear();
 
     this.topGfx.fillStyle(0x00130b, 1);
@@ -339,11 +339,7 @@ export class GameHudRenderer {
     this.hpText
       .setText(player ? `HP  ${hp}` : hasPlayerId ? 'HP  DEAD' : 'HP  ---')
       .setColor(player ? '#00ff66' : hasPlayerId ? '#ff3355' : '#46606b');
-    this.playersText.setText(`PLAYERS: ${players || '-'}`);
-    this.rttText
-      .setText(rttMs === null ? '' : `${Math.round(rttMs)} ms`)
-      .setVisible(rttMs !== null)
-      .setPosition(this.playersText.x - this.playersText.width - 7, this.playersText.y);
+    this.matchStatusPanel.update(alivePlayers, viewerCount, rttMs);
   }
 
   private drawBottomHud(player: PlayerPublicState | undefined, time: number): void {

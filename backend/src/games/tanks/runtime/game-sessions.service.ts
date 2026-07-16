@@ -16,6 +16,8 @@ export class GameSessionsService {
       players: new Map(),
       bullets: [],
       impactEvents: [],
+      eliminationEvents: [],
+      recentExternalDamage: new Map(),
       map: null,
       status: 'waiting',
       usedColorIndices: new Set(),

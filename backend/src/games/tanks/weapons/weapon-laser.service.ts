@@ -109,7 +109,7 @@ export class WeaponLaserService {
 
     for (const player of players.values()) {
       if (!player.alive) continue;
-      if (segments.some(segment => this.beamVsPlayer(
+      const hitSegmentIndex = segments.findIndex(segment => this.beamVsPlayer(
         segment.x,
         segment.y,
         segment.dirX,
@@ -117,8 +117,14 @@ export class WeaponLaserService {
         segment.distance,
         bullet.radius,
         player,
-      ))) {
-        this.gameService.damagePlayer(player, damage, bullet.ownerId);
+      ));
+      if (hitSegmentIndex >= 0) {
+        this.gameService.damagePlayer(player, damage, {
+          attackerId: bullet.ownerId,
+          attackerName: bullet.ownerName,
+          cause: hitSegmentIndex > 0 ? 'reflected_projectile' : 'projectile',
+          weapon: bullet.weapon ?? 'laser',
+        });
       }
     }
 

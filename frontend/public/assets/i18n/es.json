@@ -166,6 +166,12 @@
   "hud.spectatorPrevious": "‹ ANTERIOR",
   "hud.spectatorNext": "SIGUIENTE ›",
   "hud.spectatorGoToLobby": "Ir al lobby",
+  "hud.alive": "VIVOS: {{count}}",
+  "hud.elimination.direct": "{{killer}} eliminó a {{victim}}",
+  "hud.elimination.recentDamage": "{{killer}} provocó la caída de {{victim}}",
+  "hud.elimination.self": "{{victim}} se eliminó",
+  "hud.elimination.environment": "{{victim}} cayó en la zona",
+  "hud.elimination.reflected": " · reflejado",
 
   "hud.zone.outsideReceivingDamage": "FUERA DE ZONA\nRECIBIENDO DAÑO",
   "hud.zone.closingIn": "LA ZONA SE CIERRA EN {{seconds}}s",

@@ -7,6 +7,7 @@ import { GameMap, Obstacle } from '../types/map.types';
 import { WeaponGrenadeService } from './weapon-grenade.service';
 import { WeaponLaserService } from './weapon-laser.service';
 import { WeaponService } from './weapon.service';
+import { EliminationService } from '../events/elimination.service';
 
 describe('weapon behavior', () => {
   let sessions: GameSessionsService;
@@ -20,7 +21,12 @@ describe('weapon behavior', () => {
     sessions = new GameSessionsService(context);
     sessions.create('test-room');
     weapons = new WeaponService();
-    game = new GameService(weapons, context, new PowerUpSpawnService());
+    game = new GameService(
+      weapons,
+      context,
+      new PowerUpSpawnService(),
+      new EliminationService(context),
+    );
     const collision = new CollisionService();
     laser = new WeaponLaserService(game, collision);
     grenade = new WeaponGrenadeService(game);
@@ -43,6 +49,7 @@ describe('weapon behavior', () => {
 
       expect(projectiles).toHaveLength(count);
       expect(projectiles.every(projectile => projectile.kind === kind)).toBe(true);
+      expect(projectiles.every(projectile => projectile.weapon === powerUp)).toBe(true);
     });
   });
 
@@ -141,6 +148,91 @@ describe('weapon behavior', () => {
         damageTaken: 5,
       });
       expect(sessions.require('test-room').stats.get('victim')?.kills).toBe(0);
+      expect(sessions.require('test-room').eliminationEvents[0]).toMatchObject({
+        victimId: 'victim',
+        creditedKillerId: null,
+        cause: 'danger_zone',
+        attribution: 'environment',
+      });
+    });
+  });
+
+  it('credits recent external damage when a player eliminates themselves within five seconds', () => {
+    sessions.run('test-room', () => {
+      game.map = createTestMap();
+      const attacker = game.addPlayer('attacker', 'Attacker');
+      const victim = game.addPlayer('victim', 'Victim');
+      victim.hp = 20;
+
+      game.damagePlayer(victim, 10, {
+        attackerId: attacker.id,
+        cause: 'projectile',
+        weapon: 'standard',
+      }, 1_000);
+      game.damagePlayer(victim, 10, {
+        attackerId: victim.id,
+        cause: 'reflected_projectile',
+        weapon: 'laser',
+      }, 5_500);
+
+      expect(sessions.require('test-room').stats.get(attacker.id)?.kills).toBe(1);
+      expect(sessions.require('test-room').eliminationEvents[0]).toMatchObject({
+        victimId: victim.id,
+        creditedKillerId: attacker.id,
+        lethalSourcePlayerId: victim.id,
+        attribution: 'recent_damage',
+        selfInflicted: true,
+        cause: 'reflected_projectile',
+        weapon: 'laser',
+      });
+    });
+  });
+
+  it('treats self damage as a suicide after the attribution window expires', () => {
+    sessions.run('test-room', () => {
+      game.map = createTestMap();
+      const attacker = game.addPlayer('attacker');
+      const victim = game.addPlayer('victim');
+      victim.hp = 20;
+
+      game.damagePlayer(victim, 10, {
+        attackerId: attacker.id,
+        cause: 'projectile',
+        weapon: 'standard',
+      }, 1_000);
+      game.damagePlayer(victim, 10, {
+        attackerId: victim.id,
+        cause: 'projectile',
+        weapon: 'grenade',
+      }, 6_001);
+
+      expect(sessions.require('test-room').stats.get(attacker.id)?.kills).toBe(0);
+      expect(sessions.require('test-room').eliminationEvents[0]).toMatchObject({
+        creditedKillerId: null,
+        attribution: 'self',
+        selfInflicted: true,
+      });
+    });
+  });
+
+  it('uses player ids when elimination participants do not have usernames', () => {
+    sessions.run('test-room', () => {
+      game.map = createTestMap();
+      const attacker = game.addPlayer('dev-attacker', '   ');
+      const victim = game.addPlayer('dev-victim');
+      victim.hp = 1;
+
+      game.damagePlayer(victim, 1, {
+        attackerId: attacker.id,
+        attackerName: attacker.username,
+        cause: 'projectile',
+        weapon: 'standard',
+      }, 1_000);
+
+      expect(sessions.require('test-room').eliminationEvents[0]).toMatchObject({
+        victimName: 'dev-victim',
+        creditedKillerName: 'dev-attacker',
+      });
     });
   });
 

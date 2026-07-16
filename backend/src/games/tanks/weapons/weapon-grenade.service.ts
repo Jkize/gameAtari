@@ -34,7 +34,12 @@ export class WeaponGrenadeService {
       this.gameService.damagePlayer(
         player,
         Math.ceil(bullet.damage * (0.45 + falloff * 0.55)),
-        bullet.ownerId,
+        {
+          attackerId: bullet.ownerId,
+          attackerName: bullet.ownerName,
+          cause: 'projectile',
+          weapon: bullet.weapon ?? 'grenade',
+        },
       );
     }
 

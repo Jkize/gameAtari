@@ -1,8 +1,12 @@
+import type { AttackWeapon } from '../events/elimination-event.types';
+
 export type BulletKind = 'standard' | 'grenade' | 'laser';
 
 export interface Bullet {
   id: string;
   ownerId: string;
+  ownerName?: string;
+  weapon?: AttackWeapon;
   kind?: BulletKind;
   x: number;
   y: number;

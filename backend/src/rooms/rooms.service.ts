@@ -4,6 +4,7 @@ import { Server, Socket } from 'socket.io';
 import { SESSION_MESSAGES, SESSION_REASONS, SOCKET_EVENTS } from '../common/socket-events';
 import { DevelopmentSettingsService } from '../config/development-settings.service';
 import { GameLoopService } from '../games/tanks/game-loop.service';
+import { WatcherPresenceService } from '../games/tanks/events/watcher-presence.service';
 import { RedisService } from '../redis/redis.service';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
 
@@ -28,6 +29,7 @@ export class RoomsService {
   constructor(
     private readonly gameLoop: GameLoopService,
     private readonly redis: RedisService,
+    private readonly watcherPresence: WatcherPresenceService,
     private readonly developmentSettings?: DevelopmentSettingsService,
   ) {}
 
@@ -104,6 +106,7 @@ export class RoomsService {
       username: auth.username,
       socketId: socket.id,
     });
+    this.watcherPresence.stopWatching(socket);
     this.userRoom.set(auth.userId, room.id);
     socket.join(this.playerSocketRoom(room.id));
     socket.data.roomId = room.id;
@@ -140,6 +143,7 @@ export class RoomsService {
       socketId: socket.id,
     };
     room.players.set(auth.userId, member);
+    this.watcherPresence.stopWatching(socket);
     this.userRoom.set(auth.userId, room.id);
     socket.join(this.playerSocketRoom(room.id));
     socket.data.roomId = room.id;
@@ -237,6 +241,7 @@ export class RoomsService {
     if (!member) throw new NotFoundException('Room membership not found');
     const previousSocketId = member.socketId;
     member.socketId = socket.id;
+    this.watcherPresence.stopWatching(socket);
     member.disconnectedAt = undefined;
     socket.data.roomId = room.id;
     socket.join(this.playerSocketRoom(room.id));
@@ -262,6 +267,7 @@ export class RoomsService {
         roomId: room.id,
       });
       socket.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
+      this.watcherPresence.sendCurrent(socket, room.id);
     }
     this.emitRoom(room);
     return this.publicState(room);
@@ -331,6 +337,7 @@ export class RoomsService {
         map: initial.map,
         status: initial.state.status,
       });
+      if (socket) this.watcherPresence.sendCurrent(socket, room.id);
     }
     this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.GAME.STARTED, { status: 'playing', roomId: room.id });
     this.emitRoom(room);

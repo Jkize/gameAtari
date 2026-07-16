@@ -223,6 +223,8 @@ export class WeaponService {
     return {
       id: uuidv4(),
       ownerId: player.id,
+      ownerName: player.username,
+      weapon: player.activePowerUp?.type ?? 'standard',
       kind,
       x,
       y,

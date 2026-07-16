@@ -166,6 +166,12 @@
   "hud.spectatorPrevious": "‹ PREVIOUS",
   "hud.spectatorNext": "NEXT ›",
   "hud.spectatorGoToLobby": "Go to lobby",
+  "hud.alive": "ALIVE: {{count}}",
+  "hud.elimination.direct": "{{killer}} eliminated {{victim}}",
+  "hud.elimination.recentDamage": "{{killer}} forced out {{victim}}",
+  "hud.elimination.self": "{{victim}} eliminated themselves",
+  "hud.elimination.environment": "{{victim}} fell to the zone",
+  "hud.elimination.reflected": " · reflected",
 
   "hud.zone.outsideReceivingDamage": "OUT OF ZONE\nTAKING DAMAGE",
   "hud.zone.closingIn": "ZONE CLOSES IN {{seconds}}s",

@@ -22,6 +22,10 @@ import { findAliveSpectatorTarget, SpectatorDirection } from './game-scene/spect
 import { shouldUseSpectatorMode } from './game-scene/spectator-mode';
 import { TouchControls } from './game-scene/touch-controls';
 import { environment } from '../../environments/environment';
+import type {
+  PlayerEliminatedEvent,
+  ViewerCountChangedEvent,
+} from './game-scene/match-notification.types';
 
 type RoomCountdownState = {
   status?: string;
@@ -55,6 +59,8 @@ export class GameScene extends Phaser.Scene {
   private spectatorCamera!: SpectatorCameraController;
   private spectatorMode = false;
   private joinedAsWatcher = false;
+  private currentRoomId = '';
+  private viewerCount = 0;
   private localPlayerEliminated = false;
   private spectatedPlayerId: string | null = null;
   private spectatorFreeCamera = false;
@@ -65,24 +71,33 @@ export class GameScene extends Phaser.Scene {
     enabled: environment.interpolationEnabled,
   });
   private readonly onGameJoined = (
-    data: { playerId: string; map: GameMap; status: GameState['status'] },
+    data: { playerId: string; roomId: string; map: GameMap; status: GameState['status'] },
   ): void => {
     this.resetRoundRenderState();
     this.joinedAsWatcher = false;
+    this.currentRoomId = data.roomId;
     this.myPlayerId = data.playerId;
     this.initializeMap(data.map, data.status);
   };
   private readonly onWatchJoined = (
-    data: { watcherId: string; map: GameMap; status: GameState['status'] },
+    data: { watcherId: string; roomId: string; map: GameMap; status: GameState['status'] },
   ): void => {
     // A delayed watch response must not replace a player identity established
     // by gameJoined on the same long-lived socket.
     if (this.myPlayerId) return;
     this.resetRoundRenderState();
     this.joinedAsWatcher = true;
+    this.currentRoomId = data.roomId;
     this.myPlayerId = '';
     this.initializeMap(data.map, data.status);
     void data.watcherId;
+  };
+  private readonly onPlayerEliminated = (event: PlayerEliminatedEvent): void => {
+    this.hudRenderer.showElimination(event, this.myPlayerId);
+  };
+  private readonly onViewerCountChanged = (event: ViewerCountChangedEvent): void => {
+    if (this.currentRoomId && event.roomId !== this.currentRoomId) return;
+    this.viewerCount = Math.max(0, event.count);
   };
   private initializeMap(map: GameMap, status: GameState['status']): void {
     this.currentMap = map;
@@ -235,6 +250,7 @@ export class GameScene extends Phaser.Scene {
       this.networkRttMs,
       this.spectatorMode,
       this.getSpectatedPlayerName(),
+      this.viewerCount,
     );
   }
 
@@ -303,6 +319,8 @@ export class GameScene extends Phaser.Scene {
     this.socket.on(SOCKET_EVENTS.GAME.WATCH_JOINED, this.onWatchJoined);
     this.socket.on(SOCKET_EVENTS.GAME.STATE, this.onGameState);
     this.socket.on(SOCKET_EVENTS.GAME.PLAYER_DISCONNECTED, this.onPlayerDisconnected);
+    this.socket.on(SOCKET_EVENTS.GAME.PLAYER_ELIMINATED, this.onPlayerEliminated);
+    this.socket.on(SOCKET_EVENTS.GAME.VIEWER_COUNT_CHANGED, this.onViewerCountChanged);
     this.socket.on(SOCKET_EVENTS.GAME.ENDED, this.onGameEnded);
     this.socket.on(SOCKET_EVENTS.OBSTACLE.DAMAGED, this.onObstacleDamaged);
     this.socket.on(SOCKET_EVENTS.OBSTACLE.DESTROYED, this.onObstacleDestroyed);
@@ -346,6 +364,8 @@ export class GameScene extends Phaser.Scene {
     this.socket.off(SOCKET_EVENTS.GAME.WATCH_JOINED, this.onWatchJoined);
     this.socket.off(SOCKET_EVENTS.GAME.STATE, this.onGameState);
     this.socket.off(SOCKET_EVENTS.GAME.PLAYER_DISCONNECTED, this.onPlayerDisconnected);
+    this.socket.off(SOCKET_EVENTS.GAME.PLAYER_ELIMINATED, this.onPlayerEliminated);
+    this.socket.off(SOCKET_EVENTS.GAME.VIEWER_COUNT_CHANGED, this.onViewerCountChanged);
     this.socket.off(SOCKET_EVENTS.GAME.ENDED, this.onGameEnded);
     this.socket.off(SOCKET_EVENTS.OBSTACLE.DAMAGED, this.onObstacleDamaged);
     this.socket.off(SOCKET_EVENTS.OBSTACLE.DESTROYED, this.onObstacleDestroyed);
@@ -371,6 +391,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.camTarget, true, 0.08, 0.08);
     this.snapshotInterpolator.clear();
     this.networkRttMs = null;
+    this.viewerCount = 0;
     this.lastRttPingAt = 0;
     this.obstacleRenderer.reset();
     this.powerUpRenderer.reset();
@@ -378,6 +399,7 @@ export class GameScene extends Phaser.Scene {
     this.stateChangeTracker.reset();
     this.currentMap = null;
     this.hudRenderer.setWaitingCountdown(null);
+    this.hudRenderer.resetNotifications();
   }
 
   private followLocalPlayer(state: GameState): void {
