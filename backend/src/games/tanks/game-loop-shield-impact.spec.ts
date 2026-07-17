@@ -100,6 +100,8 @@ function createPlayer(shieldHp: number, shieldUntil: number): Player {
     shieldHp,
     shieldUntil,
     lastShieldAt: 0,
+    lastCombatAt: 0,
+    healthRegenCarry: 0,
     alive: true,
   };
 }

@@ -62,6 +62,36 @@ export class EffectSpawner {
   }
 
   /**
+   * Floating health recovery text ("+1") above a tank. It mirrors damage
+   * text movement while using green feedback and no impact effects.
+   */
+  spawnRecoveryNumber(x: number, y: number, amount: number): void {
+    const jitterX = Phaser.Math.Between(-10, 10);
+    const text = this.scene.add.text(x + jitterX, y, `+${amount}`, {
+      fontSize: '20px',
+      fontFamily: MONO,
+      color: '#55e878',
+      stroke: '#06270f',
+      strokeThickness: 4,
+    }).setOrigin(0.5, 1).setDepth(12).setScale(0.5);
+
+    this.scene.tweens.add({
+      targets: text,
+      scale: 1,
+      duration: 140,
+      ease: 'Back.out',
+    });
+    this.scene.tweens.add({
+      targets: text,
+      y: y - 48,
+      alpha: 0,
+      duration: 1100,
+      ease: 'Quad.out',
+      onComplete: () => text.destroy(),
+    });
+  }
+
+  /**
    * Radial particle burst for a destroyed tank or a generic blast.
    *
    * @param large `true` for tank deaths/disconnects (bigger, hotter, longer

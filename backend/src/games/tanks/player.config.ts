@@ -1,0 +1,2 @@
+export const PLAYER_HEALTH_REGEN_DELAY_MS = 6_000;
+export const PLAYER_HEALTH_REGEN_PER_SECOND = 2;

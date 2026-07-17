@@ -32,6 +32,8 @@ export interface Player {
   shieldHp: number;
   shieldUntil: number;
   lastShieldAt: number;
+  lastCombatAt: number;
+  healthRegenCarry: number;
   alive: boolean;
   destroyedAt?: number;
   disconnectedAt?: number;

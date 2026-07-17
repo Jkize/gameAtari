@@ -39,14 +39,42 @@ describe('StateChangeTracker shield impact audio', () => {
       true,
     );
   });
+
+  it('shows green recovery feedback when authoritative HP increases', () => {
+    const { tracker, effects } = createTracker();
+    tracker.check(createState(0, [], 80), 'me');
+
+    tracker.check(createState(0, [], 81), 'me');
+
+    expect(effects.spawnRecoveryNumber).toHaveBeenCalledOnce();
+    expect(effects.spawnRecoveryNumber).toHaveBeenCalledWith(
+      100,
+      expect.any(Number),
+      1,
+    );
+    expect(effects.spawnHitDebris).not.toHaveBeenCalled();
+  });
+
+  it('does not reveal a player in a bush with recovery feedback', () => {
+    const { tracker, effects, playerRenderer } = createTracker(true);
+    tracker.check(createState(0, [], 80), 'me');
+
+    tracker.check(createState(0, [], 81), 'me');
+
+    expect(playerRenderer.isPlayerHiddenByBush).toHaveBeenCalled();
+    expect(effects.spawnRecoveryNumber).not.toHaveBeenCalled();
+  });
 });
 
-function createTracker() {
+function createTracker(hiddenByBush = false) {
   const scene = {
     time: { now: 1_000 },
     cameras: { main: { shake: vi.fn() } },
   } as unknown as Phaser.Scene;
   const effects = {
+    spawnDamageNumber: vi.fn(),
+    spawnRecoveryNumber: vi.fn(),
+    spawnHitDebris: vi.fn(),
     spawnExplosion: vi.fn(),
     spawnGrenadeExplosion: vi.fn(),
     spawnSpark: vi.fn(),
@@ -54,7 +82,11 @@ function createTracker() {
   };
   const obstacleRenderer = { ensure: vi.fn(), remove: vi.fn() };
   const powerUpRenderer = { ensure: vi.fn(), get: vi.fn(), remove: vi.fn() };
-  const playerRenderer = { recordPlayerState: vi.fn(), remove: vi.fn() };
+  const playerRenderer = {
+    recordPlayerState: vi.fn(),
+    remove: vi.fn(),
+    isPlayerHiddenByBush: vi.fn(() => hiddenByBush),
+  };
   const audio = {
     syncShieldLoops: vi.fn(),
     stopShieldLoop: vi.fn(),
@@ -79,19 +111,20 @@ function createTracker() {
     playerRenderer as never,
     audio as never,
   );
-  return { tracker, audio };
+  return { tracker, audio, effects, playerRenderer };
 }
 
 function createState(
   shieldHp: number,
   impactEvents: GameState['impactEvents'] = [],
+  hp = 100,
 ): GameState {
   const player: PlayerPublicState = {
     id: 'me',
     x: 100,
     y: 100,
     radius: 20,
-    hp: 100,
+    hp,
     maxHp: 100,
     bodyAngle: 0,
     aimAngle: 0,

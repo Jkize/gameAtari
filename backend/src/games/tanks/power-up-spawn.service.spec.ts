@@ -200,6 +200,8 @@ describe('PowerUpSpawnService', () => {
       shieldHp: 0,
       shieldUntil: 0,
       lastShieldAt: 0,
+      lastCombatAt: 0,
+      healthRegenCarry: 0,
       alive: true,
     };
   }

@@ -169,6 +169,7 @@ export class StateChangeTracker {
       const prevShieldHp = this.playerLastShieldHp.get(p.id);
       const prevShieldRemainingMs = this.playerLastShieldRemainingMs.get(p.id);
       const tookHpDamage = prevHp !== undefined && p.hp < prevHp;
+      const recoveredHp = prevHp !== undefined && p.hp > prevHp;
       const shieldExpiredNaturally =
         p.shieldHp === 0 &&
         p.shieldRemainingMs === 0 &&
@@ -187,14 +188,17 @@ export class StateChangeTracker {
       }
       // Spawn above the name label (which sits at radius * PLAYER_LABEL_OFFSET
       // and holds up to two lines) so the number never overlaps it.
-      const damageTextY = p.y - p.radius * PLAYER_LABEL_OFFSET - 30;
+      const combatTextY = p.y - p.radius * PLAYER_LABEL_OFFSET - 30;
       if (tookHpDamage) {
-        this.effects.spawnDamageNumber(p.x, damageTextY, prevHp - p.hp);
+        this.effects.spawnDamageNumber(p.x, combatTextY, prevHp - p.hp);
         this.effects.spawnHitDebris(p.x, p.y, p.color, p.radius + 4);
+      }
+      if (recoveredHp && !this.playerRenderer.isPlayerHiddenByBush(p, state.map)) {
+        this.effects.spawnRecoveryNumber(p.x, combatTextY, p.hp - prevHp);
       }
       if (tookShieldDamage) {
         this.effects.spawnDamageNumber(
-          p.x, damageTextY, prevShieldHp - p.shieldHp, '#33ccff', '#062033',
+          p.x, combatTextY, prevShieldHp - p.shieldHp, '#33ccff', '#062033',
         );
       }
       if (tookHpDamage || tookShieldDamage) {

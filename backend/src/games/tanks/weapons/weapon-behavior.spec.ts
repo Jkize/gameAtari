@@ -8,6 +8,7 @@ import { WeaponGrenadeService } from './weapon-grenade.service';
 import { WeaponLaserService } from './weapon-laser.service';
 import { WeaponService } from './weapon.service';
 import { EliminationService } from '../events/elimination.service';
+import { PLAYER_HEALTH_REGEN_DELAY_MS, PLAYER_HEALTH_REGEN_PER_SECOND } from '../player.config';
 
 describe('weapon behavior', () => {
   let sessions: GameSessionsService;
@@ -154,6 +155,58 @@ describe('weapon behavior', () => {
         cause: 'danger_zone',
         attribution: 'environment',
       });
+    });
+  });
+
+  it('marks both players in combat when an attacker deals damage', () => {
+    sessions.run('test-room', () => {
+      game.map = createTestMap();
+      const attacker = game.addPlayer('attacker');
+      const victim = game.addPlayer('victim');
+
+      game.damagePlayer(victim, 20, {
+        attackerId: attacker.id,
+        cause: 'projectile',
+        weapon: 'standard',
+      }, 1_000);
+
+      expect(attacker.lastCombatAt).toBe(1_000);
+      expect(victim.lastCombatAt).toBe(1_000);
+    });
+  });
+
+  it('counts shield damage as combat for both players', () => {
+    sessions.run('test-room', () => {
+      game.map = createTestMap();
+      const attacker = game.addPlayer('attacker');
+      const victim = game.addPlayer('victim');
+      victim.shieldHp = 35;
+      victim.shieldUntil = 10_000;
+
+      game.damagePlayer(victim, 20, {
+        attackerId: attacker.id,
+        cause: 'projectile',
+        weapon: 'standard',
+      }, 1_000);
+
+      expect(victim.hp).toBe(victim.maxHp);
+      expect(attacker.lastCombatAt).toBe(1_000);
+      expect(victim.lastCombatAt).toBe(1_000);
+    });
+  });
+
+  it('regenerates integer health at the configured rate after the combat delay', () => {
+    sessions.run('test-room', () => {
+      game.map = createTestMap();
+      const player = game.addPlayer('player');
+      player.hp = 80;
+      player.lastCombatAt = 1_000;
+
+      game.regeneratePlayerHealth(player, 1, 1_000 + PLAYER_HEALTH_REGEN_DELAY_MS - 1);
+      expect(player.hp).toBe(80);
+
+      game.regeneratePlayerHealth(player, 1, 1_000 + PLAYER_HEALTH_REGEN_DELAY_MS);
+      expect(player.hp).toBe(80 + PLAYER_HEALTH_REGEN_PER_SECOND);
     });
   });
 

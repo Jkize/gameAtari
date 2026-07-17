@@ -206,6 +206,7 @@ export class GameLoopService implements OnModuleDestroy {
         this.processPlayers(roomId, deltaTime, now);
         this.processDangerZone(deltaTime, now);
         this.processBullets(roomId, deltaTime);
+        this.processHealthRegeneration(deltaTime, now);
         this.publishPendingEliminations(roomId);
         this.checkWinCondition(roomId);
       }
@@ -349,6 +350,24 @@ export class GameLoopService implements OnModuleDestroy {
       const wholeDamage = Math.floor(carried);
       zone.damageCarryByPlayerId[player.id] = carried - wholeDamage;
       if (wholeDamage > 0) this.gameService.damagePlayerDirect(player, wholeDamage, now);
+    }
+  }
+
+  private processHealthRegeneration(deltaTime: number, now: number): void {
+    const zone = this.gameService.dangerZone;
+    const zoneIsDamaging = zone
+      ? !['inactive', 'warning'].includes(this.dangerZoneService.phaseAt(zone, now))
+      : false;
+
+    for (const player of this.gameService.players.values()) {
+      const outsideDangerZone = zone && zoneIsDamaging
+        ? this.dangerZoneService.isOutside(zone, player.x, player.y, now)
+        : false;
+      if (outsideDangerZone) {
+        this.gameService.resetHealthRegeneration(player);
+        continue;
+      }
+      this.gameService.regeneratePlayerHealth(player, deltaTime, now);
     }
   }
 

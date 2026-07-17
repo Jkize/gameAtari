@@ -10,6 +10,7 @@ import { PowerUpSpawnService } from './power-up-spawn.service';
 import type { DangerZoneRuntimeState } from './danger-zone.service';
 import { DamageSource } from './events/elimination-event.types';
 import { EliminationService } from './events/elimination.service';
+import { PLAYER_HEALTH_REGEN_DELAY_MS, PLAYER_HEALTH_REGEN_PER_SECOND } from './player.config';
 
 const PLAYER_SPEED   = 200;  // px/sec
 const DASH_MULTIPLIER = 4;
@@ -93,6 +94,8 @@ export class GameService {
       shieldHp: 0,
       shieldUntil: 0,
       lastShieldAt: -SHIELD_COOLDOWN_MS,
+      lastCombatAt: 0,
+      healthRegenCarry: 0,
       alive: true,
       destroyedAt: undefined,
     };
@@ -188,7 +191,13 @@ export class GameService {
     source: DamageSource = { cause: 'projectile', weapon: 'standard' },
     now = Date.now(),
   ): void {
-    if (!player.alive) return;
+    if (!player.alive || amount <= 0) return;
+
+    this.markCombat(player, now);
+    if (source.attackerId && source.attackerId !== player.id) {
+      const attacker = this.players.get(source.attackerId);
+      if (attacker?.alive) this.markCombat(attacker, now);
+    }
 
     if (player.shieldHp > 0 && now < player.shieldUntil) {
       const absorbed = Math.min(player.shieldHp, amount);
@@ -203,7 +212,36 @@ export class GameService {
 
   damagePlayerDirect(player: Player, amount: number, now = Date.now()): void {
     if (!player.alive || amount <= 0) return;
+    this.markCombat(player, now);
     this.applyHpDamage(player, amount, now, { cause: 'danger_zone' });
+  }
+
+  regeneratePlayerHealth(player: Player, deltaTime: number, now: number): void {
+    if (!player.alive || player.hp >= player.maxHp) {
+      player.healthRegenCarry = 0;
+      return;
+    }
+    if (now - player.lastCombatAt < PLAYER_HEALTH_REGEN_DELAY_MS) {
+      player.healthRegenCarry = 0;
+      return;
+    }
+
+    const carried = player.healthRegenCarry + PLAYER_HEALTH_REGEN_PER_SECOND * deltaTime;
+    const wholeHp = Math.floor(carried);
+    player.healthRegenCarry = carried - wholeHp;
+    if (wholeHp <= 0) return;
+
+    player.hp = Math.min(player.maxHp, player.hp + wholeHp);
+    if (player.hp === player.maxHp) player.healthRegenCarry = 0;
+  }
+
+  resetHealthRegeneration(player: Player): void {
+    player.healthRegenCarry = 0;
+  }
+
+  private markCombat(player: Player, now: number): void {
+    player.lastCombatAt = now;
+    player.healthRegenCarry = 0;
   }
 
   private applyHpDamage(player: Player, amount: number, now: number, source: DamageSource): void {

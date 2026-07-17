@@ -95,7 +95,7 @@ export class PlayerRenderer {
   draw(players: PlayerPublicState[], map: GameMap, myPlayerId: string, time: number): void {
     players.forEach(p => {
       const isLocal = p.id === myPlayerId;
-      const hiddenByBush = this.isPlayerInBush(p, map);
+      const hiddenByBush = this.isPlayerHiddenByBush(p, map);
       const revealAlpha = hiddenByBush ? this.getHitRevealAlpha(p.id, time) : undefined;
       const isRevealed = revealAlpha !== undefined;
       this.drawTank(p, isLocal, time, revealAlpha);
@@ -133,7 +133,7 @@ export class PlayerRenderer {
     return Math.floor(time / HIT_REVEAL_BLINK_MS) % 2 === 0 ? 1 : 0.34;
   }
 
-  private isPlayerInBush(p: PlayerPublicState, map: GameMap): boolean {
+  isPlayerHiddenByBush(p: PlayerPublicState, map: GameMap): boolean {
     if (!p.alive) return false;
 
     return map.obstacles.some(obs => {
