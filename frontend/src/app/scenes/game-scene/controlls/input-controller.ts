@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import type { Socket } from 'socket.io-client';
-import { GameState } from '../../types/game-state.types';
-import { PlayerInput } from '../../types/input.types';
-import { environment } from '../../../environments/environment';
-import { SOCKET_EVENTS } from '../../network/socket-events';
+import { GameState } from '../../../types/game-state.types';
+import { PlayerInput } from '../../../types/input.types';
+import { environment } from '../../../../environments/environment';
+import { SOCKET_EVENTS } from '../../../network/socket-events';
+import { GameplayKeys, PhaserKeyboardGuard } from './phaser-keyboard-guard';
 import { TouchControls } from './touch-controls';
 
 type SceneState = {
@@ -11,11 +12,6 @@ type SceneState = {
   getMyPlayerId(): string;
   getSocket(): Socket;
 };
-
-type GameplayKeys = Record<
-  'up' | 'down' | 'left' | 'right' | 'dash' | 'reload' | 'shield' | 'start',
-  Phaser.Input.Keyboard.Key
->;
 
 type KeyboardActions = {
   dash: boolean;
@@ -28,55 +24,22 @@ export class InputController {
   private keys!: GameplayKeys;
   private lastInputSend = 0;
   private readonly inputHz = 1000 / 60;
-  private inputBlocked = false;
-  private readonly onSettingsMenu = (event: Event): void => {
-    this.inputBlocked = Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open);
-    const keyboard = this.scene.input.keyboard;
-    if (!keyboard) return;
-    keyboard.resetKeys();
-    keyboard.enabled = !this.inputBlocked;
-    if (this.inputBlocked) this.emitNeutralInput();
-  };
-  private readonly onPhaserInputSuspended = (): void => {
-    this.scene.input.keyboard?.resetKeys();
-    this.emitNeutralInput();
-  };
+  private readonly keyboardGuard: PhaserKeyboardGuard;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly state: SceneState,
     private readonly touchControls: TouchControls | null = null,
   ) {
-    window.addEventListener('tank-arena:settings-menu', this.onSettingsMenu);
+    this.keyboardGuard = new PhaserKeyboardGuard(this.scene, () => this.emitNeutralInput());
   }
 
   destroy(): void {
-    window.removeEventListener('tank-arena:settings-menu', this.onSettingsMenu);
-    this.scene.game.events.off(Phaser.Core.Events.BLUR, this.onPhaserInputSuspended);
-    this.scene.events.off(Phaser.Scenes.Events.PAUSE, this.onPhaserInputSuspended);
-    this.scene.events.off(Phaser.Scenes.Events.SLEEP, this.onPhaserInputSuspended);
-    const keyboard = this.scene.input.keyboard;
-    if (keyboard) {
-      keyboard.resetKeys();
-      keyboard.enabled = true;
-    }
+    this.keyboardGuard.destroy();
   }
 
   setup(): void {
-    const kb = this.scene.input.keyboard!;
-    this.keys = kb.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.W,
-      down: Phaser.Input.Keyboard.KeyCodes.S,
-      left: Phaser.Input.Keyboard.KeyCodes.A,
-      right: Phaser.Input.Keyboard.KeyCodes.D,
-      dash: Phaser.Input.Keyboard.KeyCodes.SHIFT,
-      reload: Phaser.Input.Keyboard.KeyCodes.R,
-      shield: Phaser.Input.Keyboard.KeyCodes.Q,
-      start: Phaser.Input.Keyboard.KeyCodes.ENTER,
-    }, true, false) as GameplayKeys;
-    this.scene.game.events.on(Phaser.Core.Events.BLUR, this.onPhaserInputSuspended);
-    this.scene.events.on(Phaser.Scenes.Events.PAUSE, this.onPhaserInputSuspended);
-    this.scene.events.on(Phaser.Scenes.Events.SLEEP, this.onPhaserInputSuspended);
+    this.keys = this.keyboardGuard.setup();
   }
 
   sendInput(time: number): void {
@@ -113,7 +76,7 @@ export class InputController {
 
     let moveX = 0;
     let moveY = 0;
-    if (!this.inputBlocked) {
+    if (!this.keyboardGuard.blocked) {
       if (touchMove.x !== 0 || touchMove.y !== 0) {
         moveX = touchMove.x;
         moveY = touchMove.y;
@@ -141,16 +104,16 @@ export class InputController {
       moveX,
       moveY,
       aimAngle,
-      shoot: !this.inputBlocked && shoot,
-      dash: !this.inputBlocked && (keyboardActions.dash || touchDash),
-      reload: !this.inputBlocked && (keyboardActions.reload || touchReload),
-      shield: !this.inputBlocked && (keyboardActions.shield || touchShield),
+      shoot: !this.keyboardGuard.blocked && shoot,
+      dash: !this.keyboardGuard.blocked && (keyboardActions.dash || touchDash),
+      reload: !this.keyboardGuard.blocked && (keyboardActions.reload || touchReload),
+      shield: !this.keyboardGuard.blocked && (keyboardActions.shield || touchShield),
     };
     this.state.getSocket().emit(SOCKET_EVENTS.GAME.PLAYER_INPUT, input);
   }
 
   private consumeKeyboardActions(): KeyboardActions {
-    if (this.inputBlocked || !this.scene.input.keyboard?.enabled) {
+    if (this.keyboardGuard.blocked || !this.scene.input.keyboard?.enabled) {
       return { dash: false, reload: false, shield: false, start: false };
     }
     return {

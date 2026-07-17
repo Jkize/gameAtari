@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_VIEW_HEIGHT } from '../../game/viewport.config';
+import { GAME_VIEW_HEIGHT } from '../../../game/viewport.config';
 
 const CONTROLS_DEPTH = 900;
 const STICK_RADIUS = 64;

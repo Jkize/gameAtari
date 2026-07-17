@@ -12,7 +12,7 @@ import { DangerZoneRenderer } from './game-scene/danger-zone-renderer';
 import { EffectSpawner } from './game-scene/effect-spawner';
 import { clearDynamicLayers, createGameSceneLayers, GameSceneLayers } from './game-scene/game-scene-layers';
 import { GameHudRenderer } from './game-scene/game-hud-renderer';
-import { InputController } from './game-scene/input-controller';
+import { InputController } from './game-scene/controlls/input-controller';
 import { ObstacleRenderer } from './game-scene/obstacle-renderer';
 import { PlayerRenderer } from './game-scene/player-renderer';
 import { PowerUpRenderer } from './game-scene/power-up-renderer';
@@ -20,7 +20,7 @@ import { StateChangeTracker } from './game-scene/state-change-tracker';
 import { SpectatorCameraController } from './game-scene/spectator-camera-controller';
 import { findAliveSpectatorTarget, SpectatorDirection } from './game-scene/spectator-follow';
 import { shouldUseSpectatorMode } from './game-scene/spectator-mode';
-import { TouchControls } from './game-scene/touch-controls';
+import { TouchControls } from './game-scene/controlls/touch-controls';
 import { environment } from '../../environments/environment';
 import type {
   PlayerEliminatedEvent,

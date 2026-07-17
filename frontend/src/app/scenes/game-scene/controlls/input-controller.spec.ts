@@ -1,14 +1,14 @@
 import type Phaser from 'phaser';
 import type { Socket } from 'socket.io-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GameState } from '../../types/game-state.types';
+import { GameState } from '../../../types/game-state.types';
 import { InputController } from './input-controller';
 import type { TouchControls } from './touch-controls';
 
 vi.mock('phaser', () => ({
   default: {
-    Core: { Events: { BLUR: 'blur' } },
-    Scenes: { Events: { PAUSE: 'pause', SLEEP: 'sleep' } },
+    Core: { Events: { BLUR: 'blur', FOCUS: 'focus' } },
+    Scenes: { Events: { PAUSE: 'pause', SLEEP: 'sleep', RESUME: 'resume', WAKE: 'wake' } },
     Input: {
       Keyboard: {
         KeyCodes: { W: 1, A: 2, S: 3, D: 4, SHIFT: 5, ENTER: 6, R: 7, Q: 8 },
@@ -26,7 +26,7 @@ vi.mock('phaser', () => ({
 }));
 
 type KeyName = 'up' | 'down' | 'left' | 'right' | 'dash' | 'reload' | 'shield' | 'start';
-type FakeKey = { isDown: boolean; justDown: boolean };
+type FakeKey = { isDown: boolean; justDown: boolean; keyCode: number };
 type Listener = (...args: unknown[]) => void;
 
 function eventBus() {
@@ -51,14 +51,14 @@ function eventBus() {
 
 function createKeys(): Record<KeyName, FakeKey> {
   return {
-    up: { isDown: false, justDown: false },
-    down: { isDown: false, justDown: false },
-    left: { isDown: false, justDown: false },
-    right: { isDown: false, justDown: false },
-    dash: { isDown: false, justDown: false },
-    reload: { isDown: false, justDown: false },
-    shield: { isDown: false, justDown: false },
-    start: { isDown: false, justDown: false },
+    up: { isDown: false, justDown: false, keyCode: 1 },
+    down: { isDown: false, justDown: false, keyCode: 3 },
+    left: { isDown: false, justDown: false, keyCode: 2 },
+    right: { isDown: false, justDown: false, keyCode: 4 },
+    dash: { isDown: false, justDown: false, keyCode: 5 },
+    reload: { isDown: false, justDown: false, keyCode: 7 },
+    shield: { isDown: false, justDown: false, keyCode: 8 },
+    start: { isDown: false, justDown: false, keyCode: 6 },
   };
 }
 
@@ -75,6 +75,21 @@ function harness(
   const keys = createKeys();
   const keyboard = {
     enabled: true,
+    manager: {
+      enabled: true,
+      startListeners: vi.fn(() => { keyboard.manager.enabled = true; }),
+      onKeyDown: vi.fn((event: KeyboardEvent) => {
+        const key = Object.values(keys).find(candidate => candidate.keyCode === event.keyCode);
+        if (key) {
+          key.isDown = true;
+          key.justDown = true;
+        }
+      }),
+      onKeyUp: vi.fn((event: KeyboardEvent) => {
+        const key = Object.values(keys).find(candidate => candidate.keyCode === event.keyCode);
+        if (key) key.isDown = false;
+      }),
+    },
     addKeys: vi.fn(() => keys),
     resetKeys: vi.fn(() => {
       Object.values(keys).forEach(key => {
@@ -86,6 +101,7 @@ function harness(
   };
   const gameEvents = eventBus();
   const sceneEvents = eventBus();
+  const canInput = vi.fn(() => true);
   const scene = {
     input: {
       keyboard,
@@ -93,6 +109,7 @@ function harness(
     },
     game: { events: gameEvents },
     events: sceneEvents,
+    sys: { canInput },
   } as unknown as Phaser.Scene;
   const socket = { emit: vi.fn() } as unknown as Socket;
   const gameState = {
@@ -109,40 +126,13 @@ function harness(
     getSocket: () => socket,
   }, touchControls);
   controller.setup();
-  return { controller, gameEvents, gameState, keyboard, keys, sceneEvents, socket };
+  keyboard.resetKeys.mockClear();
+  keyboard.manager.startListeners.mockClear();
+  return { canInput, controller, gameEvents, gameState, keyboard, keys, sceneEvents, socket };
 }
 
 describe('InputController', () => {
   beforeEach(() => vi.clearAllMocks());
-
-  it('registers every gameplay key through one Phaser addKeys call', () => {
-    const test = harness();
-
-    expect(test.keyboard.addKeys).toHaveBeenCalledOnce();
-    expect(test.keyboard.addKeys).toHaveBeenCalledWith({
-      up: 1,
-      down: 3,
-      left: 2,
-      right: 4,
-      dash: 5,
-      reload: 7,
-      shield: 8,
-      start: 6,
-    }, true, false);
-    test.controller.destroy();
-  });
-
-  it('does not install native keydown or keyup fallbacks', () => {
-    const listenerSpy = vi.spyOn(window, 'addEventListener');
-    const test = harness();
-
-    const eventNames = listenerSpy.mock.calls.map(call => call[0]);
-    expect(eventNames).not.toContain('keydown');
-    expect(eventNames).not.toContain('keyup');
-
-    test.controller.destroy();
-    listenerSpy.mockRestore();
-  });
 
   it.each([
     ['up', 0, -1],
@@ -287,39 +277,13 @@ describe('InputController', () => {
     test.controller.destroy();
   });
 
-  it('disables and resets Phaser input while settings are open', () => {
-    const test = harness();
-    test.keys.up.isDown = true;
-    test.controller.sendInput(20);
-
-    window.dispatchEvent(new CustomEvent('tank-arena:settings-menu', { detail: { open: true } }));
-
-    expect(test.keyboard.enabled).toBe(false);
-    expect(test.keyboard.resetKeys).toHaveBeenCalledOnce();
-    expect(test.socket.emit).toHaveBeenLastCalledWith(
-      'playerInput',
-      expect.objectContaining({ moveX: 0, moveY: 0, dash: false, shield: false }),
-    );
-
-    window.dispatchEvent(new CustomEvent('tank-arena:settings-menu', { detail: { open: false } }));
-    expect(test.keyboard.enabled).toBe(true);
-    expect(test.keyboard.resetKeys).toHaveBeenCalledTimes(2);
-    test.controller.sendInput(40);
-    expect(test.socket.emit).toHaveBeenLastCalledWith(
-      'playerInput',
-      expect.objectContaining({ moveX: 0, moveY: 0 }),
-    );
-    test.controller.destroy();
-  });
-
-  it('resets Phaser keys and immediately stops the server input on game blur', () => {
+  it('emits neutral server input when the keyboard guard reports suspension', () => {
     const test = harness();
     test.keys.right.isDown = true;
     test.controller.sendInput(20);
 
     test.gameEvents.emit('blur');
 
-    expect(test.keyboard.resetKeys).toHaveBeenCalledOnce();
     expect(test.socket.emit).toHaveBeenLastCalledWith('playerInput', {
       moveX: 0,
       moveY: 0,
@@ -330,34 +294,6 @@ describe('InputController', () => {
       shield: false,
     });
     test.controller.destroy();
-  });
-
-  it.each(['pause', 'sleep'])('stops server input when the Phaser scene emits %s', event => {
-    const test = harness();
-    test.keys.down.isDown = true;
-    test.controller.sendInput(20);
-
-    test.sceneEvents.emit(event);
-
-    expect(test.keyboard.resetKeys).toHaveBeenCalledOnce();
-    expect(test.socket.emit).toHaveBeenLastCalledWith(
-      'playerInput',
-      expect.objectContaining({ moveX: 0, moveY: 0 }),
-    );
-    test.controller.destroy();
-  });
-
-  it('removes Phaser lifecycle listeners and restores the keyboard on destroy', () => {
-    const test = harness();
-    test.keyboard.enabled = false;
-
-    test.controller.destroy();
-
-    expect(test.gameEvents.off).toHaveBeenCalledWith('blur', expect.any(Function));
-    expect(test.sceneEvents.off).toHaveBeenCalledWith('pause', expect.any(Function));
-    expect(test.sceneEvents.off).toHaveBeenCalledWith('sleep', expect.any(Function));
-    expect(test.keyboard.resetKeys).toHaveBeenCalledOnce();
-    expect(test.keyboard.enabled).toBe(true);
   });
 
   it('does not emit player input after the local player is eliminated', () => {

@@ -9,7 +9,7 @@ import {
   GameSceneLayers,
 } from '../scenes/game-scene/game-scene-layers';
 import { PlayerRenderer } from '../scenes/game-scene/player-renderer';
-import { TouchControlHighlight, TouchControls } from '../scenes/game-scene/touch-controls';
+import { TouchControlHighlight, TouchControls } from '../scenes/game-scene/controlls/touch-controls';
 import { ensureShieldSvgTexture } from '../shared/rendering/shield-svg-textures';
 import { ensureTankSvgTextures } from '../shared/rendering/tank-svg-textures';
 import { BulletPublicState, GameMap, PlayerPublicState } from '../types/game-state.types';
