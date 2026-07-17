@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { BulletImpactPublicState, BulletPublicState, GameState } from '../../types/game-state.types';
-import { HIT_REVEAL_MS } from './game-scene.constants';
+import { HIT_REVEAL_MS, PLAYER_LABEL_OFFSET } from './game-scene.constants';
 import { EffectSpawner } from './effect-spawner';
 import { ObstacleRenderer } from './obstacle-renderer';
 import { PlayerRenderer } from './player-renderer';
@@ -23,6 +23,14 @@ type NewBulletGroup = {
 };
 
 const SHIELD_EXPIRY_REVEAL_GRACE_MS = 120;
+
+// Debris tint per impact material; materials not listed keep the plain spark.
+const IMPACT_DEBRIS_COLORS: Partial<Record<BulletImpactPublicState['material'], number>> = {
+  wood: 0x8b5a2b,
+  rock: 0x8f8f8f,
+  mirror: 0x00ddff,
+  steel: 0x5577aa,
+};
 
 export class StateChangeTracker {
   private playerLastHp: Map<string, number> = new Map();
@@ -177,6 +185,18 @@ export class StateChangeTracker {
       if (tookShieldDamage && localPlayer && !hasDirectShieldImpact) {
         this.audioManager.playShieldHit(p, localPlayer, p.id === myPlayerId);
       }
+      // Spawn above the name label (which sits at radius * PLAYER_LABEL_OFFSET
+      // and holds up to two lines) so the number never overlaps it.
+      const damageTextY = p.y - p.radius * PLAYER_LABEL_OFFSET - 30;
+      if (tookHpDamage) {
+        this.effects.spawnDamageNumber(p.x, damageTextY, prevHp - p.hp);
+        this.effects.spawnHitDebris(p.x, p.y, p.color, p.radius + 4);
+      }
+      if (tookShieldDamage) {
+        this.effects.spawnDamageNumber(
+          p.x, damageTextY, prevShieldHp - p.shieldHp, '#33ccff', '#062033',
+        );
+      }
       if (tookHpDamage || tookShieldDamage) {
         revealUntil = this.scene.time.now + HIT_REVEAL_MS;
         if (p.id === myPlayerId) {
@@ -221,6 +241,8 @@ export class StateChangeTracker {
       if (this.playedImpactEventIds.has(event.id)) return;
       this.playedImpactEventIds.add(event.id);
       this.effects.spawnSpark(event.x, event.y);
+      const debrisColor = IMPACT_DEBRIS_COLORS[event.material];
+      if (debrisColor !== undefined) this.effects.spawnHitDebris(event.x, event.y, debrisColor);
       this.audioManager.playBulletImpact(event.material, event, listener);
     });
   }
