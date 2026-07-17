@@ -1,8 +1,16 @@
 import Phaser from 'phaser';
 import { t } from '../../shared/translate-bridge';
 import { GAME_VIEW_HEIGHT, HUD_HEIGHT } from '../../game/viewport.config';
-import { GameState, PlayerPublicState, PowerUpType } from '../../types/game-state.types';
-import { C, MONO } from './game-scene.constants';
+import { GameState, PlayerPublicState } from '../../types/game-state.types';
+import {
+  C,
+  DASH_COOLDOWN_MS,
+  FIRE_COOLDOWN_MS,
+  MONO,
+  POWER_UP_COLOR,
+  RELOAD_COOLDOWN_MS,
+  SHIELD_COOLDOWN_MS,
+} from './game-scene.constants';
 import { environment } from '../../../environments/environment';
 import { EliminationFeedRenderer } from './elimination-feed-renderer';
 import { countAlivePlayers, MatchStatusPanel } from './match-status-panel';
@@ -31,23 +39,12 @@ interface SlotState {
 }
 
 const HUD_DEPTH = 1000;
-const DASH_COOLDOWN_MS = 5000;
-const SHIELD_COOLDOWN_MS = 8000;
-const FIRE_COOLDOWN_MS = 300;
-const RELOAD_COOLDOWN_MS = 1400;
 const DEFAULT_POWER_DURATION_MS = 15000;
 const SLOT_COUNT = 4;
 const HUD_SVG_TOTAL_UNITS = 100;
 const HUD_SVG_BOTTOM_RECT_UNITS = 70;
 const HUD_SLOT_HEIGHT_RATIO = 0.80;
 const HUD_SLOT_HORIZONTAL_GAP_RATIO = 0.5;
-
-const POWER_AURA_COLOR: Record<PowerUpType, number> = {
-  triple_shot: 0x22e8ff,
-  shotgun: 0xffc84a,
-  grenade: 0xff8a1f,
-  laser: 0x20f6ff,
-};
 
 export class GameHudRenderer {
   private uiCamera!: Phaser.Cameras.Scene2D.Camera;
@@ -394,7 +391,7 @@ export class GameHudRenderer {
     const weaponCooldown = Math.max(player?.weapon.reloadMs ?? 0, player?.weapon.fireCooldownMs ?? 0);
     const weaponCooldownTotal = (player?.weapon.reloadMs ?? 0) > 0 ? RELOAD_COOLDOWN_MS : FIRE_COOLDOWN_MS;
     const powerCooldown = activePower?.chargeMs ?? activePower?.remainingMs ?? 0;
-    const powerColor = powerType ? POWER_AURA_COLOR[powerType] : 0x1d5260;
+    const powerColor = powerType ? POWER_UP_COLOR[powerType] : 0x1d5260;
 
     return [
       {

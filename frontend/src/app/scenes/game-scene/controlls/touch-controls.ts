@@ -1,5 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_VIEW_HEIGHT } from '../../../game/viewport.config';
+import type { PowerUpType } from '../../../types/game-state.types';
+import {
+  DASH_COOLDOWN_MS,
+  FIRE_COOLDOWN_MS,
+  POWER_UP_COLOR,
+  RELOAD_COOLDOWN_MS,
+  SHIELD_COOLDOWN_MS,
+} from '../game-scene.constants';
 
 const CONTROLS_DEPTH = 900;
 const STICK_RADIUS = 64;
@@ -28,10 +36,73 @@ const BUTTON_FILL_COLOR = 0x2b1d10;
 const BUTTON_BORDER_COLOR = 0x83e5ef;
 const FIRE_BORDER_COLOR = 0xffd98a;
 const ICON_COLOR = 0x83e5ef;
+const DASH_COLOR = 0x00dfff;
+const SHIELD_COLOR = 0x00ff88;
 
 type ActionKey = 'dash' | 'shield' | 'reload';
 type TutorialHighlightTarget = 'move' | 'aim' | 'fire' | 'dash' | 'shield';
 export type TouchControlHighlight = TutorialHighlightTarget | 'move-dash' | null;
+
+export interface TouchAbilityState {
+  dashCooldownMs: number;
+  shieldCooldownMs: number;
+  shielding: boolean;
+  weapon?: {
+    reloadMs: number;
+    fireCooldownMs: number;
+    activePowerUpType?: PowerUpType;
+  };
+}
+
+export interface TouchAbilityFeedback {
+  active: boolean;
+  ready: boolean;
+  cooldownProgress: number;
+}
+
+export interface TouchWeaponFeedback {
+  iconKey: string;
+  color: number;
+  ready: boolean;
+  cooldownProgress: number;
+}
+
+const EMPTY_ABILITY_STATE: TouchAbilityState = {
+  dashCooldownMs: 0,
+  shieldCooldownMs: 0,
+  shielding: false,
+};
+
+export function resolveTouchAbilityFeedback(
+  key: 'dash' | 'shield',
+  state: TouchAbilityState,
+): TouchAbilityFeedback {
+  const active = key === 'shield' && state.shielding;
+  const cooldownMs = key === 'dash' ? state.dashCooldownMs : state.shieldCooldownMs;
+  const cooldownTotalMs = key === 'dash' ? DASH_COOLDOWN_MS : SHIELD_COOLDOWN_MS;
+  return {
+    active,
+    ready: !active && cooldownMs <= 0,
+    cooldownProgress: active
+      ? 0
+      : Math.max(0, Math.min(1, cooldownMs / cooldownTotalMs)),
+  };
+}
+
+export function resolveTouchWeaponFeedback(state: TouchAbilityState): TouchWeaponFeedback {
+  const weapon = state.weapon;
+  const reloadMs = weapon?.reloadMs ?? 0;
+  const fireCooldownMs = weapon?.fireCooldownMs ?? 0;
+  const cooldownMs = Math.max(reloadMs, fireCooldownMs);
+  const cooldownTotalMs = reloadMs > 0 ? RELOAD_COOLDOWN_MS : FIRE_COOLDOWN_MS;
+  const powerUpType = weapon?.activePowerUpType;
+  return {
+    iconKey: powerUpType ? `weapon-power_${powerUpType}` : 'hud-shot',
+    color: powerUpType ? POWER_UP_COLOR[powerUpType] : FIRE_BORDER_COLOR,
+    ready: cooldownMs <= 0,
+    cooldownProgress: Math.max(0, Math.min(1, cooldownMs / cooldownTotalMs)),
+  };
+}
 
 interface Placement {
   x: number;
@@ -123,6 +194,7 @@ export class TouchControls {
   private readonly buttons: ActionButton[] = [];
   private fireTouchId: number | null = null;
   private tutorialHighlight: TouchControlHighlight = null;
+  private abilityState: TouchAbilityState = EMPTY_ABILITY_STATE;
   private readonly reduceMotion = typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -284,7 +356,8 @@ export class TouchControls {
     window.addEventListener('touchcancel', this.onWindowTouchEnd, { passive: true });
   }
 
-  update(status: string, enabled = true): void {
+  update(status: string, enabled = true, abilityState: TouchAbilityState = EMPTY_ABILITY_STATE): void {
+    this.abilityState = abilityState;
     this.setVisible(status === 'playing' && enabled);
     this.draw();
   }
@@ -383,17 +456,87 @@ export class TouchControls {
 
     for (const button of this.buttons) {
       const pressed = button.pressedPointerId !== null;
-      const alpha = pressed ? PRESSED_ALPHA : NORMAL_ALPHA;
+      const feedback = button.key === 'reload'
+        ? null
+        : resolveTouchAbilityFeedback(button.key, this.abilityState);
+      const color = button.key === 'shield' ? SHIELD_COLOR : DASH_COLOR;
+      const cooldown = (feedback?.cooldownProgress ?? 0) > 0;
+      const alpha = pressed
+        ? PRESSED_ALPHA
+        : feedback?.active
+          ? 1
+          : cooldown
+            ? 0.42
+            : NORMAL_ALPHA;
       const radius = pressed ? ACTION_RADIUS * 1.12 : ACTION_RADIUS;
       this.gfx.fillStyle(BUTTON_FILL_COLOR, alpha * 0.75);
       this.gfx.fillCircle(button.x, button.y, radius);
-      this.gfx.lineStyle(pressed ? 3 : 2, BUTTON_BORDER_COLOR, alpha);
+      this.gfx.lineStyle(pressed ? 3 : 2, feedback ? color : BUTTON_BORDER_COLOR, alpha);
       this.gfx.strokeCircle(button.x, button.y, radius);
+
+      if (feedback) this.drawAbilityFeedback(button, radius, color, feedback);
+
       button.icon?.setAlpha(alpha);
       if (button.key === 'reload') this.drawReloadIcon(button.x, button.y, alpha);
     }
 
     this.drawTutorialHighlight();
+  }
+
+  private drawAbilityFeedback(
+    button: ActionButton,
+    radius: number,
+    color: number,
+    feedback: TouchAbilityFeedback,
+  ): void {
+    if (feedback.cooldownProgress > 0) {
+      this.gfx.fillStyle(0x000000, 0.64);
+      this.drawCooldownWedge(button.x, button.y, radius - 3, feedback.cooldownProgress);
+      this.gfx.lineStyle(3, color, 0.78);
+      this.gfx.beginPath();
+      this.gfx.arc(
+        button.x,
+        button.y,
+        radius - 3,
+        -Math.PI / 2 + Math.PI * 2 * feedback.cooldownProgress,
+        Math.PI * 1.5,
+        false,
+      );
+      this.gfx.strokePath();
+      return;
+    }
+
+    const phase = this.reduceMotion ? 0.5 : (Math.sin(this.scene.time.now * 0.006) + 1) / 2;
+    if (feedback.active) {
+      this.gfx.fillStyle(color, 0.12 + phase * 0.12);
+      this.gfx.fillCircle(button.x, button.y, radius * 0.72);
+      this.gfx.lineStyle(3, color, 0.45 + phase * 0.4);
+      this.gfx.strokeCircle(button.x, button.y, radius + 5 + phase * 3);
+      this.gfx.lineStyle(1.5, color, 0.3 + phase * 0.3);
+      this.gfx.strokeCircle(button.x, button.y, radius * 0.68);
+    } else if (feedback.ready) {
+      this.gfx.fillStyle(color, 0.08 + phase * 0.08);
+      this.gfx.fillCircle(button.x, button.y, radius * 0.7);
+      this.gfx.lineStyle(2, color, 0.18 + phase * 0.16);
+      this.gfx.strokeCircle(button.x, button.y, radius + 3 + phase * 2);
+    }
+  }
+
+  private drawCooldownWedge(cx: number, cy: number, radius: number, progress: number): void {
+    const points = [new Phaser.Math.Vector2(cx, cy)];
+    const start = -Math.PI / 2;
+    const end = start + Math.PI * 2 * progress;
+    const steps = Math.max(4, Math.ceil(36 * progress));
+
+    for (let index = 0; index <= steps; index++) {
+      const angle = start + (end - start) * (index / steps);
+      points.push(new Phaser.Math.Vector2(
+        cx + Math.cos(angle) * radius,
+        cy + Math.sin(angle) * radius,
+      ));
+    }
+
+    this.gfx.fillPoints(points, true);
   }
 
   private drawTutorialHighlight(): void {
@@ -451,20 +594,47 @@ export class TouchControls {
   private drawFireButton(): void {
     const { x, y } = this.layout.fire;
     const pressed = this.firePointerId !== null;
-    const alpha = pressed ? PRESSED_ALPHA : NORMAL_ALPHA;
+    const feedback = resolveTouchWeaponFeedback(this.abilityState);
+    const cooldown = feedback.cooldownProgress > 0;
+    const alpha = cooldown ? 0.42 : (pressed ? PRESSED_ALPHA : NORMAL_ALPHA);
     const radius = pressed ? FIRE_RADIUS * 1.08 : FIRE_RADIUS;
     this.gfx.fillStyle(BUTTON_FILL_COLOR, alpha * 0.75);
     this.gfx.fillCircle(x, y, radius);
-    this.gfx.lineStyle(pressed ? 4 : 3, FIRE_BORDER_COLOR, alpha);
+    this.gfx.lineStyle(pressed ? 4 : 3, feedback.color, alpha);
     this.gfx.strokeCircle(x, y, radius);
+
+    if (cooldown) {
+      this.gfx.fillStyle(0x000000, 0.64);
+      this.drawCooldownWedge(x, y, radius - 4, feedback.cooldownProgress);
+      this.gfx.lineStyle(3, feedback.color, 0.78);
+      this.gfx.beginPath();
+      this.gfx.arc(
+        x,
+        y,
+        radius - 4,
+        -Math.PI / 2 + Math.PI * 2 * feedback.cooldownProgress,
+        Math.PI * 1.5,
+        false,
+      );
+      this.gfx.strokePath();
+    } else if (!pressed) {
+      const phase = this.reduceMotion ? 0.5 : (Math.sin(this.scene.time.now * 0.005) + 1) / 2;
+      this.gfx.fillStyle(feedback.color, 0.06 + phase * 0.07);
+      this.gfx.fillCircle(x, y, radius * 0.68);
+      this.gfx.lineStyle(2, feedback.color, 0.14 + phase * 0.14);
+      this.gfx.strokeCircle(x, y, radius + 3 + phase * 2);
+    }
+
     if (this.fireDragAngle !== null) {
       // Aim-direction marker while fire-dragging.
       const markerX = x + Math.cos(this.fireDragAngle) * (radius + 9);
       const markerY = y + Math.sin(this.fireDragAngle) * (radius + 9);
-      this.gfx.fillStyle(FIRE_BORDER_COLOR, PRESSED_ALPHA);
+      this.gfx.fillStyle(feedback.color, PRESSED_ALPHA);
       this.gfx.fillCircle(markerX, markerY, 5);
     }
     if (this.fireIcon) {
+      const iconKey = this.scene.textures.exists(feedback.iconKey) ? feedback.iconKey : 'hud-shot';
+      this.fireIcon.setTexture(iconKey);
       this.fireIcon.setAlpha(alpha);
     } else {
       // Fallback crosshair when the hud-shot texture is unavailable.

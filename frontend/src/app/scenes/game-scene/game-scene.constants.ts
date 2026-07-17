@@ -53,6 +53,10 @@ export const MONO = 'Share Tech Mono, Courier New, monospace';
 export const BODY_TURN_STEP = 0.1;
 export const PLAYER_LABEL_OFFSET = 1.5;
 export const TANK_TURRET_SCALE = 3;
+export const DASH_COOLDOWN_MS = 5000;
+export const SHIELD_COOLDOWN_MS = 8000;
+export const FIRE_COOLDOWN_MS = 300;
+export const RELOAD_COOLDOWN_MS = 1400;
 
 export function colorToCss(color: number): string {
   return '#' + color.toString(16).padStart(6, '0');

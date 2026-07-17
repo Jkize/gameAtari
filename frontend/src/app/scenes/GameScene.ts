@@ -241,7 +241,17 @@ export class GameScene extends Phaser.Scene {
     this.bulletRenderer.draw(renderState.bullets, time);
 
     if (!this.spectatorMode) this.followLocalPlayer(renderState);
-    this.touchControls?.update(this.gameState.status, !this.spectatorMode);
+    const localPlayer = this.gameState.players.find(player => player.id === this.myPlayerId);
+    this.touchControls?.update(this.gameState.status, !this.spectatorMode, {
+      dashCooldownMs: localPlayer?.dashCooldownMs ?? 0,
+      shieldCooldownMs: localPlayer?.shieldCooldownMs ?? 0,
+      shielding: localPlayer?.shielding ?? false,
+      weapon: localPlayer ? {
+        reloadMs: localPlayer.weapon.reloadMs,
+        fireCooldownMs: localPlayer.weapon.fireCooldownMs,
+        activePowerUpType: localPlayer.activePowerUp?.type,
+      } : undefined,
+    });
     this.inputController.sendInput(time);
     this.updateRttProbe(time, this.gameState.status);
     this.hudRenderer.update(
