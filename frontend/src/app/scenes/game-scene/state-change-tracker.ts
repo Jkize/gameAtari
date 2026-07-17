@@ -31,6 +31,7 @@ export class StateChangeTracker {
   private playerLastPos: Map<string, { x: number; y: number }> = new Map();
   private playerLastReloadMs: Map<string, number> = new Map();
   private playerLastDashing: Map<string, boolean> = new Map();
+  private playerLastShielding: Map<string, boolean> = new Map();
   private bulletLastPos: Map<string, LastBulletPos> = new Map();
   private prevPlayerIds: Set<string> = new Set();
   private prevBulletIds: Set<string> = new Set();
@@ -55,6 +56,7 @@ export class StateChangeTracker {
     this.playerLastPos.clear();
     this.playerLastReloadMs.clear();
     this.playerLastDashing.clear();
+    this.playerLastShielding.clear();
     this.bulletLastPos.clear();
     this.prevPlayerIds.clear();
     this.prevBulletIds.clear();
@@ -70,7 +72,9 @@ export class StateChangeTracker {
     this.playerLastHp.delete(playerId);
     this.playerLastShieldHp.delete(playerId);
     this.playerLastShieldRemainingMs.delete(playerId);
+    this.playerLastShielding.delete(playerId);
     this.playerLastPos.delete(playerId);
+    this.audioManager.stopShieldLoop(playerId);
     this.playerRenderer.remove(playerId);
   }
 
@@ -81,6 +85,7 @@ export class StateChangeTracker {
     const curPowerUps = new Set(state.map.powerUps.map(p => p.id));
 
     const localPlayer = state.players.find(player => player.id === myPlayerId);
+    this.audioManager.syncShieldLoops(state.players, localPlayer, myPlayerId);
 
     if (this.hasStateSnapshot && localPlayer) {
       this.playNewBulletSounds(state.bullets, localPlayer, myPlayerId);
@@ -103,6 +108,7 @@ export class StateChangeTracker {
         this.playerLastPos.delete(id);
         this.playerLastReloadMs.delete(id);
         this.playerLastDashing.delete(id);
+        this.playerLastShielding.delete(id);
         this.playerRenderer.remove(id);
       }
     });
@@ -164,6 +170,13 @@ export class StateChangeTracker {
         prevShieldHp !== undefined &&
         p.shieldHp < prevShieldHp &&
         !shieldExpiredNaturally;
+      const hasDirectShieldImpact = (state.impactEvents ?? []).some(event =>
+        event.material === 'shield' &&
+        Math.hypot(event.x - p.x, event.y - p.y) <= p.radius * 2,
+      );
+      if (tookShieldDamage && localPlayer && !hasDirectShieldImpact) {
+        this.audioManager.playShieldHit(p, localPlayer, p.id === myPlayerId);
+      }
       if (tookHpDamage || tookShieldDamage) {
         revealUntil = this.scene.time.now + HIT_REVEAL_MS;
         if (p.id === myPlayerId) {
@@ -176,6 +189,14 @@ export class StateChangeTracker {
       if (localPlayer && p.dashing && !this.playerLastDashing.get(p.id)) {
         this.audioManager.playDash(p, localPlayer, p.id === myPlayerId);
       }
+      if (
+        this.hasStateSnapshot &&
+        localPlayer &&
+        p.shielding &&
+        !this.playerLastShielding.get(p.id)
+      ) {
+        this.audioManager.playShieldLaunch(p, localPlayer, p.id === myPlayerId);
+      }
       this.playerRenderer.recordPlayerState(p, revealUntil);
       this.playerLastHp.set(p.id, p.hp);
       this.playerLastShieldHp.set(p.id, p.shieldHp);
@@ -183,6 +204,7 @@ export class StateChangeTracker {
       this.playerLastPos.set(p.id, { x: p.x, y: p.y });
       this.playerLastReloadMs.set(p.id, p.weapon.reloadMs);
       this.playerLastDashing.set(p.id, p.dashing);
+      this.playerLastShielding.set(p.id, p.shielding);
     });
 
     state.bullets.forEach(b => this.recordBullet(b));

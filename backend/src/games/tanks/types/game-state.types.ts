@@ -4,7 +4,7 @@ import { PlayerPublicState } from './player.types';
 import type { DangerZonePublicState } from '../danger-zone.service';
 
 export type GameStatus = 'waiting' | 'playing' | 'finished';
-export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror';
+export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror' | 'shield';
 
 export interface BulletPublicState {
   id: string;

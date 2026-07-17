@@ -137,7 +137,10 @@
 
   "settings.menu": "MENU",
   "settings.close": "Close settings",
+  "settings.masterVolume": "General volume",
   "settings.soundEffects": "Sound effects",
+  "settings.ambience": "Arena ambience",
+  "settings.music": "Music",
   "settings.darkMode": "Dark mode",
   "settings.switchToDark": "Switch to dark mode",
   "settings.switchToLight": "Switch to light mode",

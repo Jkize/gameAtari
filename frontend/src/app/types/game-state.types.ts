@@ -1,6 +1,6 @@
 export type PowerUpType = 'triple_shot' | 'shotgun' | 'grenade' | 'laser';
 export type ObstacleType = 'bush' | 'decoration' | 'wood' | 'rock' | 'steel' | 'mirror';
-export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror';
+export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror' | 'shield';
 export type ObstacleAssetId =
   | 'bush_01_rounded_dense'
   | 'bush_02_irregular_leafy'

@@ -7,7 +7,12 @@ import { socketManager } from '../network/socket';
 import { AuthService } from '../auth/auth.service';
 import { registerTranslate } from '../shared/translate-bridge';
 import { Router } from '@angular/router';
-import { clampVolume, DEFAULT_GAME_SETTINGS, GameSettings } from './game-settings.types';
+import {
+  clampVolume,
+  DEFAULT_GAME_SETTINGS,
+  GameSettings,
+  VolumeSettingKey,
+} from './game-settings.types';
 import { GameSettingsService } from './game-settings.service';
 import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
 
@@ -37,6 +42,20 @@ import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
             >x</button>
           </header>
 
+          <label class="volume-control" for="master-volume">
+            <span>{{ 'settings.masterVolume' | transloco }}</span>
+            <strong>{{ masterPercent() }}%</strong>
+          </label>
+          <input
+            id="master-volume"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="masterPercent()"
+            (input)="onVolumeInput('masterVolume', $event)"
+          >
+
           <label class="volume-control" for="sfx-volume">
             <span>{{ 'settings.soundEffects' | transloco }}</span>
             <strong>{{ sfxPercent() }}%</strong>
@@ -48,7 +67,35 @@ import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
             max="100"
             step="1"
             [value]="sfxPercent()"
-            (input)="onSfxVolumeInput($event)"
+            (input)="onVolumeInput('sfxVolume', $event)"
+          >
+
+          <label class="volume-control" for="ambience-volume">
+            <span>{{ 'settings.ambience' | transloco }}</span>
+            <strong>{{ ambiencePercent() }}%</strong>
+          </label>
+          <input
+            id="ambience-volume"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="ambiencePercent()"
+            (input)="onVolumeInput('ambienceVolume', $event)"
+          >
+
+          <label class="volume-control" for="music-volume">
+            <span>{{ 'settings.music' | transloco }}</span>
+            <strong>{{ musicPercent() }}%</strong>
+          </label>
+          <input
+            id="music-volume"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="musicPercent()"
+            (input)="onVolumeInput('musicVolume', $event)"
           >
 
           <div class="panel-footer">{{ saveLabelKey() | transloco }}</div>
@@ -239,6 +286,10 @@ import { VisibleViewportResizer } from '../shared/visible-viewport-resizer';
       accent-color: #62d3df;
     }
 
+    input[type="range"] + .volume-control {
+      margin-top: 12px;
+    }
+
     .panel-footer {
       min-height: 20px;
       margin-top: 12px;
@@ -254,7 +305,10 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   protected readonly settingsOpen = signal(false);
   protected readonly spectatorMode = signal(false);
   protected settings: GameSettings = { ...DEFAULT_GAME_SETTINGS };
+  protected readonly masterPercent = signal(Math.round(DEFAULT_GAME_SETTINGS.masterVolume * 100));
   protected readonly sfxPercent = signal(Math.round(DEFAULT_GAME_SETTINGS.sfxVolume * 100));
+  protected readonly ambiencePercent = signal(Math.round(DEFAULT_GAME_SETTINGS.ambienceVolume * 100));
+  protected readonly musicPercent = signal(Math.round(DEFAULT_GAME_SETTINGS.musicVolume * 100));
   protected readonly saveLabelKey = signal('settings.saved');
 
   @ViewChild('gameContainer', { static: true })
@@ -371,9 +425,12 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
     }));
   }
 
-  protected onSfxVolumeInput(event: Event): void {
+  protected onVolumeInput(key: VolumeSettingKey, event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.applySettings({ ...this.settings, sfxVolume: clampVolume(Number(input.value) / 100) });
+    this.applySettings({
+      ...this.settings,
+      [key]: clampVolume(Number(input.value) / 100, DEFAULT_GAME_SETTINGS[key]),
+    });
     this.saveLabelKey.set('settings.saving');
     if (this.saveTimer !== undefined) window.clearTimeout(this.saveTimer);
     this.saveTimer = window.setTimeout(() => {
@@ -406,8 +463,16 @@ export class GameHostComponent implements AfterViewInit, OnDestroy {
   }
 
   private applySettings(settings: GameSettings): void {
-    this.settings = { sfxVolume: clampVolume(settings.sfxVolume) };
+    this.settings = {
+      masterVolume: clampVolume(settings.masterVolume, DEFAULT_GAME_SETTINGS.masterVolume),
+      sfxVolume: clampVolume(settings.sfxVolume, DEFAULT_GAME_SETTINGS.sfxVolume),
+      ambienceVolume: clampVolume(settings.ambienceVolume, DEFAULT_GAME_SETTINGS.ambienceVolume),
+      musicVolume: clampVolume(settings.musicVolume, DEFAULT_GAME_SETTINGS.musicVolume),
+    };
+    this.masterPercent.set(Math.round(this.settings.masterVolume * 100));
     this.sfxPercent.set(Math.round(this.settings.sfxVolume * 100));
+    this.ambiencePercent.set(Math.round(this.settings.ambienceVolume * 100));
+    this.musicPercent.set(Math.round(this.settings.musicVolume * 100));
     window.dispatchEvent(new CustomEvent('tank-arena:settings-changed', {
       detail: this.settings,
     }));

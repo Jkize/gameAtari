@@ -1,0 +1,80 @@
+Tank Arena - ElevenLabs Music and Ambience Prompts
+
+Project context:
+Real-time multiplayer top-down tank arena game. The visual identity is colorful and arcade-readable, but the audio should feel grounded, tactile, energetic, and modern rather than childish, retro, or overly futuristic.
+
+Mix direction for all music:
+- Instrumental only. No vocals, chanting, spoken words, or recognizable melodies from existing music.
+- Leave space in the middle and high frequencies for cannon shots, impacts, warning sounds, and UI feedback.
+- Controlled bass with no huge cinematic sub-bass.
+- Organic, human-performed instrumentation with a dry, close-recorded sound.
+- Use real drums, hand percussion, wood percussion, strings, restrained brass, acoustic bass, and clean guitar where appropriate.
+- No synthesizers, electronic pads, ambient drones, sequencers, arpeggiators, EDM rhythms, electronic pulses, chiptune, or 8-bit sounds.
+- Avoid heroic orchestral themes, dubstep drops, and constant trailer-style impacts.
+- End in a way that can connect naturally back to the beginning when looped.
+
+1. menu_lobby_music
+Recommended tool: ElevenLabs Music
+Suggested duration: 90 to 120 seconds
+
+Prompt:
+Organic instrumental ensemble cue for the menu and multiplayer lobby of a top-down tank arena game. Confident, welcoming, and lightly competitive, with a clearly audible medium-tempo groove around 100 BPM. Use only organic, human-performed instruments: a dry live drum kit played softly, hand percussion, wooden blocks, acoustic upright bass, pizzicato cello, restrained clean guitar, and a simple original motif played on marimba or plucked strings. Keep a recognizable rhythm and short notes throughout; do not create atmospheric ambient music or long sustained textures. The mood should suggest crews calmly preparing vehicles before a friendly competition. Energetic enough to create anticipation, but relaxed and sparse enough for UI sounds to remain clear. Natural room sound, close recording, gentle development, and no large climax. Absolutely no synthesizers, electronic ambience, pads, drones, sequencers, arpeggiators, electronic pulses, EDM beat, chiptune, military march, vocals, or choir. Create a clean seamless loop whose final rhythm and harmony connect naturally to the opening.
+
+Prompt v2:
+Organic instrumental lobby music for a colorful multiplayer tank arena, with the playful energy of crews working together inside a busy vehicle workshop before competition. Use a light syncopated groove around 106 BPM, performed with cajon, rim clicks, hand percussion, palm-muted acoustic guitar, upright bass, short pizzicato strings, and a catchy original call-and-response motif between muted trumpet and bass clarinet. Keep the notes short, rhythmic, warm, and human, with small performance variations that make the loop feel alive. Friendly, clever, confident, and lightly mischievous rather than heroic or aggressive. Leave generous space for menu clicks and player notifications. No synthesizers, electronic ambience, pads, drones, sequencers, EDM beat, chiptune, military march, cinematic trailer sound, vocals, or choir. Instrumental only, dry natural recording, no dramatic climax, and a seamless ending that reconnects smoothly to the opening.
+
+2. main_battle_music
+Recommended tool: ElevenLabs Music
+Suggested duration: 90 to 120 seconds
+
+Prompt:
+Instrumental combat music for a fast multiplayer top-down tank arena. Driving, physical, and focused at approximately 126 BPM, performed with real instruments. Build the rhythm from a tight live drum kit, low floor toms, frame drums, wooden percussion, and occasional short metal strikes recorded from real objects. Add acoustic bass, rhythmic pizzicato low strings, short muted brass notes, and restrained palm-muted clean guitar. The music should feel dusty, competitive, and energetic while remaining playful rather than aggressive or heroic. Keep the arrangement sparse so cannon shots, explosions, reloads, and impacts remain clear. Add small live-performance variations every 16 bars without dramatic pauses or giant drops. Absolutely no synthesizers, electronic ambience, pads, drones, sequencers, electronic bass, EDM beat, distorted rock guitar, chiptune, sci-fi effects, trailer horns, choir, or vocals. Controlled low end and dry natural recording. Finish with a rhythm and harmony that loop smoothly into the opening.
+
+3. danger_zone_music
+Recommended tool: ElevenLabs Music
+Suggested duration: 45 to 60 seconds
+
+Prompt:
+Instrumental final-stage tension music for a shrinking danger zone in a multiplayer tank arena. Urgent and focused at approximately 136 BPM, performed entirely with organic instruments. Use a persistent low floor-tom pattern, dry hand drums, woodblock ticks, lightly struck real metal, tremolo low strings, short muted cello notes, and restrained acoustic bass. Increase tension through faster human percussion patterns and closer string harmony, not through electronic risers or synthetic effects. Communicate that time and safe space are running out without becoming horror music, a military march, or an emergency alarm. Keep the texture compact so weapon effects and danger-zone warnings remain clear. Absolutely no synthesizers, electronic ambience, pads, drones, sequencers, arpeggiators, electronic pulses, processed electrical hum, EDM beat, cinematic braams, choir, chiptune, or vocals. Maintain continuous pressure and create a seamless loop without a final resolving chord.
+
+4. arena_ambience
+Recommended tool: ElevenLabs Sound Effects
+Suggested duration: 45 to 60 seconds
+
+Prompt:
+Seamless 50-second natural outdoor tank-arena ambience. Soft dry wind over dirt and sparse grass, occasional sand and leaves shifting, a loose canvas flag, and rare distant metal-fence creaks. Quiet, open-air field recording with subtle stereo width and constant low volume. No music, synths, drones, engines, generators, vehicles, gunfire, explosions, voices, prominent birds, rhythmic pulse, or dramatic gusts. No obvious beginning or ending.
+
+5. victory_stinger
+Recommended tool: ElevenLabs Sound Effects
+Suggested duration: 3 to 4 seconds
+
+Prompt:
+Memorable 3-second victory sonic logo for a tank arena game. Play a three-note ascending phrase: "PAAA... pa... PAAAA!" Hold the medium first note, use a shorter higher second, then hold the highest final note longer. Use a warm trumpet softly doubled by French horn, with a confident upward lift. Joyful and triumphant, but not royal or militaristic. No drums, engines, explosions, bells, chimes, sparkles, voices, synths, fanfare, or long reverb.
+
+6. defeat_stinger
+Recommended tool: ElevenLabs Sound Effects
+Suggested duration: 2.5 to 3.5 seconds
+
+Prompt:
+Memorable 3.5-second defeat sonic logo for a tank arena game. Play a clear three-note descending phrase: "FAAA... fa... faaaa." Hold the medium-low first note, use a shorter lower second, then hold the lowest final note longer. Use warm muted French horn softly doubled by cello, with a gentle downward sigh. Disappointed and mildly sad, but not tragic or comedic. No drums, engines, explosions, voices, synths, cartoon trombone, or long reverb.
+
+7. victory_stinger_top_2
+Recommended tool: ElevenLabs Sound Effects
+Suggested duration: 2.5 seconds
+
+Prompt:
+2.5-second second-place sonic logo for a tank arena game. Play a restrained two-note ascending phrase: "PAA... PAAA!" Hold the higher final note briefly. Use the same warm trumpet softly doubled by French horn as the first-place sound, but quieter and without its third climactic note. Positive, proud, and rewarding, yet clearly below victory. No drums, engines, explosions, bells, chimes, sparkles, voices, synths, military fanfare, or long reverb.
+
+8. victory_stinger_top_3
+Recommended tool: ElevenLabs Sound Effects
+Suggested duration: 2 seconds
+
+Prompt:
+2-second third-place sonic logo for a tank arena game. Play a modest two-note ascending phrase: "pa... PAA." Keep both notes short and close in pitch, with a final resolution. Use the same warm trumpet softly doubled by French horn as the other podium sounds, but softer and lower. Pleasant and rewarding, not triumphant. No third rising note, drums, engines, explosions, bells, chimes, sparkles, voices, synths, military fanfare, or long reverb.
+
+Generation notes:
+- Generate two or three candidates from each prompt, then choose them as one coherent set.
+- Evaluate the music while playing the existing weapon effects; music that sounds impressive alone may be too dense during combat.
+- Export the final six assets in both OGG and MP3 for compatibility with the current Phaser asset pipeline.
+- Trim silence from stingers, but preserve their short natural decay.
+- Check every loop transition with headphones before integration.

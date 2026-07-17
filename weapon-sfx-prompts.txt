@@ -1,0 +1,164 @@
+Tank Arena - Grounded Weapon SFX Prompts
+
+Project context:
+Real-time multiplayer top-down tank arena game. Matches are fast and effects repeat often. The sound should feel physical and believable, but slightly compressed and exaggerated so every action remains easy to identify during combat.
+
+General audio direction:
+- Build sounds from natural, recognizable sources: compact cannon reports, compressed air, metal mechanisms, springs, wood splinters, stone chips, and electrical discharge.
+- Grounded and tactile rather than retro, toy-like, magical, or overly futuristic.
+- Close, dry recording with a crisp transient and very short natural reflections.
+- Moderate low end so several players can fire without making the mix muddy.
+- No cinematic sub-bass, huge explosions, long reverb, background ambience, music, or voices.
+- Do not add an artificial UI beep unless a prompt explicitly requests a subtle confirmation tone.
+- Deliver a clean one-shot with no silence at the beginning or end.
+
+1. weapon_standard_fire
+Prompt:
+A compact tank cannon firing one small shell, recorded close. Sharp pressure crack, short controlled low-frequency thump, brief metal breech movement, and a tiny amount of outdoor reflection. Physical and convincing, powerful without sounding like heavy artillery, clean dry game mix, no sci-fi layer, no retro synth, no long reverb, duration 0.25 to 0.35 seconds.
+
+Search terms:
+small cannon fire close
+light tank gun shot
+compact cannon mechanical report
+
+2. weapon_triple_shot_fire
+Prompt:
+Three rapid shots from the same compact tank cannon in a tight burst. Each shot has a real pressure crack and short mechanical cycling sound, with small natural differences between the three reports. Fast, controlled, and believable, not a machine gun and not plasma. Clean dry mix, no synth, no long echo, total duration 0.45 to 0.6 seconds.
+
+Search terms:
+light cannon three round burst
+rapid autocannon burst close
+three shot cannon mechanical cycle
+
+3. weapon_shotgun_fire
+Prompt:
+A tank-mounted scatter cannon firing once. Heavy compressed-air punch, broad short muzzle blast, metal chamber clack, and a brief texture of multiple small projectiles leaving together. Grounded industrial weapon sound, wider and heavier than the standard cannon but still compact. No oversized cinematic boom, no sci-fi effect, no long tail, duration 0.35 to 0.5 seconds.
+
+Search terms:
+industrial scatter gun blast
+large shotgun cannon close
+compressed air cannon shot
+
+4. weapon_grenade_launch
+Prompt:
+A tank grenade launcher firing one round. Deep hollow launch thump, short gas-pressure puff, and a clear metal tube or breech movement. The projectile feels heavy and lobbed rather than fast. Natural mechanical recording, compact and dry, no explosion in this sound, no springy cartoon effect, no long echo, duration 0.3 to 0.45 seconds.
+
+Search terms:
+grenade launcher thump close
+single round launcher mechanical
+heavy projectile tube launch
+
+5. weapon_grenade_explode
+Prompt:
+A compact grenade detonation outdoors, heard at close-to-medium distance. Strong initial pressure snap, controlled low boom, then a very short scatter of dirt, stone chips, and light metal fragments. Believable but scaled for a game arena, powerful without cinematic sub-bass. No fire ambience, no debris rain longer than the blast, no long reverb, duration 0.7 to 1.0 seconds.
+
+Search terms:
+compact grenade explosion outdoors
+small controlled explosion dirt debris
+grenade detonation short tail
+
+6. weapon_laser_fire
+Prompt:
+Experimental energy weapon firing for one second. Hard electrical ignition snap and heavy capacitor discharge, followed by a focused high-voltage arc hum, subtle air ionization, and quick power cutoff. Use textures from electrical arcs, transformers, and industrial equipment rather than a fantasy laser. Intense, controlled, grounded game mix. No musical pitch sweep, arcade zap, synth, explosion, voice, or ambience. Duration 0.9 to 1.1 seconds.
+
+Search terms:
+high voltage arc sustained
+capacitor discharge electrical hum
+industrial electrical beam sound
+
+7. weapon_laser_reflect_mirror
+Prompt:
+A very short high-energy beam deflecting from a hard reflective panel. Sharp electrical crack, small glass-and-metal resonance, and a fast change in the electrical tone that suggests energy changing direction. Grounded high-voltage texture, not magical and not a bright arcade ping. No explosion, no long shimmer, duration 0.18 to 0.28 seconds.
+
+Search terms:
+electrical arc metal reflection
+high voltage deflection crack
+glass metal energy impact
+
+8. bullet_hit_spark
+Prompt:
+A small projectile striking a hard metal surface. Tight dry impact tick followed immediately by one brief electrical or hot-metal spark. Close and realistic, clear without being painfully bright. No ricochet whistle, no explosion, no synthetic zap, duration 0.12 to 0.2 seconds.
+
+Search terms:
+small bullet metal impact spark
+projectile hard surface hit close
+short metal impact spark
+
+9. bullet_hit_wood
+Prompt:
+A small-caliber projectile hitting a thick wooden barricade. Sharp dense wood crack, a short dull body impact, and a few tiny splinters falling away. Close natural recording with no exaggerated tree break, no explosion, no long debris tail, duration 0.2 to 0.35 seconds.
+
+Search terms:
+bullet impact thick wood close
+wood barricade projectile hit
+short wood splinter impact
+
+10. bullet_hit_rock
+Prompt:
+A small projectile striking solid stone. Hard initial knock followed by a compact crunch of stone chips and grit. Heavier and denser than the wood impact, with no metal ring and no large collapse. Natural close recording, dry and short, duration 0.2 to 0.35 seconds.
+
+Search terms:
+projectile impact stone close
+rock chip impact sound
+small stone debris hit
+
+11. bullet_hit_steel
+Prompt:
+A small projectile hitting a thick steel block without penetrating it. Strong short metal strike, brief low plate resonance, and a few hot sparks. Heavy steel rather than a thin pan, readable but not piercing. No long ricochet whistle, no explosion, duration 0.2 to 0.35 seconds.
+
+Search terms:
+bullet impact thick steel plate
+projectile steel block hit
+heavy metal impact sparks short
+
+12. bullet_mirror_ricochet
+Prompt:
+A projectile glancing off a polished metal-and-glass defensive panel. Fast hard impact, short metallic deflection ring, and a tiny glass resonance. The projectile clearly changes direction without the sound becoming a cartoon ricochet. No long whistle, no magical shimmer, duration 0.18 to 0.3 seconds.
+
+Search terms:
+bullet deflection metal glass
+short projectile ricochet plate
+glancing impact polished metal
+
+13. weapon_reload_start
+Prompt:
+The reload cycle beginning inside a compact tank turret. A firm magazine or shell release, two short steel mechanism movements, and a restrained hydraulic or spring-assisted slide. Tactile, functional, and recorded close. No UI beep, no exaggerated machinery, no ambience, duration 0.4 to 0.6 seconds.
+
+Search terms:
+weapon breech reload mechanism
+metal magazine release close
+tank cannon reload mechanical
+
+14. weapon_reload_complete
+Prompt:
+A tank weapon reload finishing. Solid breech lock, compact metal latch, and one subtle mechanical settling click that clearly communicates ready. Satisfying because of the physical mechanism, not because of a synthetic chime. Clean dry recording, duration 0.22 to 0.35 seconds.
+
+Search terms:
+weapon breech lock close
+reload complete metal latch
+cannon mechanism ready click
+
+15. powerup_pickup_weapon
+Prompt:
+A physical weapon upgrade being collected and locked onto a tank. Quick metal attachment clack, small motorized latch, brief electrical connection buzz, and a restrained rising confirmation tone at the end. Mostly mechanical and believable, with only a subtle game-readable electronic accent. No magical sparkle, no musical flourish, duration 0.45 to 0.65 seconds.
+
+Search terms:
+mechanical upgrade attach sound
+metal module lock electrical connect
+weapon attachment confirmation
+
+Recommended generation workflow:
+- Generate three variations for frequently repeated sounds: standard fire, spark, wood, rock, and steel impacts.
+- Keep the three variations similar in loudness and duration; vary only the transient and small debris details.
+- Generate one version first for the rarer grenade, laser, reload, ricochet, dash, and pickup actions.
+- Normalize perceived loudness as a set after choosing the final assets; do not maximize every file independently.
+
+Recommended first integration set:
+weapon_standard_fire
+weapon_triple_shot_fire
+weapon_shotgun_fire
+weapon_grenade_launch
+weapon_grenade_explode
+weapon_laser_fire
+bullet_hit_spark
+powerup_pickup_weapon

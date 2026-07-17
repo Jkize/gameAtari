@@ -418,13 +418,15 @@ export class GameLoopService implements OnModuleDestroy {
         if (!this.collisionService.bulletVsPlayer(bullet, player)) continue;
         if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
         else {
+          const now = Date.now();
+          const hitShield = player.shieldHp > 0 && now < player.shieldUntil;
           this.gameService.damagePlayer(player, bullet.damage, {
             attackerId: bullet.ownerId,
             attackerName: bullet.ownerName,
             cause: (bullet.reflectCount ?? 0) > 0 ? 'reflected_projectile' : 'projectile',
             weapon: bullet.weapon ?? 'standard',
-          });
-          this.recordBulletImpact(bullet, 'spark');
+          }, now);
+          this.recordBulletImpact(bullet, hitShield ? 'shield' : 'spark');
         }
         dead.add(bullet.id);
         break;

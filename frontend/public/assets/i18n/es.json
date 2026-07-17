@@ -137,7 +137,10 @@
 
   "settings.menu": "MENU",
   "settings.close": "Cerrar configuracion",
+  "settings.masterVolume": "Sonido general",
   "settings.soundEffects": "Efectos de sonido",
+  "settings.ambience": "Ambiente de arena",
+  "settings.music": "Musica",
   "settings.darkMode": "Modo oscuro",
   "settings.switchToDark": "Cambiar a modo oscuro",
   "settings.switchToLight": "Cambiar a modo claro",

@@ -131,9 +131,32 @@ export const PHASER_GAME_ASSETS: readonly PhaserGameAsset[] = [
     type: 'audio' as const,
     key,
     path: [
-      `assets/sounds/${file}`,
-      `assets/sounds/${file.replace(/\.ogg$/, '.mp3')}`,
+      `assets/sounds/effects/${file}`,
+      `assets/sounds/effects/${file.replace(/\.ogg$/, '.mp3')}`,
     ],
+  })),
+  ...[
+    ['shield-launch', 'shield_launch.mp3'],
+    ['shield-launching', 'shield_launching.mp3'],
+    ['shield-hit', 'shield_hit.mp3'],
+    ['result-victory-first', 'victory_stinger_top_1.mp3'],
+    ['result-victory-second', 'victory_stinger_top_2.mp3'],
+    ['result-victory-third', 'victory_stinger_top_3.mp3'],
+    ['result-defeat', 'defeat_stinger.mp3'],
+  ].map(([key, file]) => ({
+    type: 'audio' as const,
+    key,
+    path: `assets/sounds/effects/${file}`,
+  })),
+  ...[
+    ['arena-ambience', 'arena_ambience.mp3'],
+    ['music-battle-one', 'main_battle_music_p1.mp3'],
+    ['music-battle-two', 'main_battle_music_p2.mp3'],
+    ['music-danger-zone', 'danger_zone_music.mp3'],
+  ].map(([key, file]) => ({
+    type: 'audio' as const,
+    key,
+    path: `assets/sounds/music/${file}`,
   })),
 ];
 

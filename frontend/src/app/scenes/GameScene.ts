@@ -226,6 +226,7 @@ export class GameScene extends Phaser.Scene {
     if (this.spectatorMode) this.updateSpectatorFollow(this.gameState, renderState);
 
     // Authoritative: sounds, explosions, HP tracking, impact events, kill events.
+    this.audioManager.syncMatchAudio(this.gameState, this.myPlayerId, this.joinedAsWatcher);
     this.stateChangeTracker.check(this.gameState, this.myPlayerId);
 
     clearDynamicLayers(this.layers);
@@ -397,6 +398,7 @@ export class GameScene extends Phaser.Scene {
     this.powerUpRenderer.reset();
     this.playerRenderer.reset();
     this.stateChangeTracker.reset();
+    this.audioManager.resetMatchAudio();
     this.currentMap = null;
     this.hudRenderer.setWaitingCountdown(null);
     this.hudRenderer.resetNotifications();

@@ -81,16 +81,16 @@ export class TutorialScene extends Phaser.Scene {
     ] as const;
     assets.forEach(([key, path]) => this.load.svg(key, path, { width: 64, height: 64 }));
     this.load.audio('weapon-standard-fire', [
-      'assets/sounds/weapon_standard_fire.ogg',
-      'assets/sounds/weapon_standard_fire.mp3',
+      'assets/sounds/effects/weapon_standard_fire.ogg',
+      'assets/sounds/effects/weapon_standard_fire.mp3',
     ]);
     this.load.audio('player-dash', [
-      'assets/sounds/dash.ogg',
-      'assets/sounds/dash.mp3',
+      'assets/sounds/effects/dash.ogg',
+      'assets/sounds/effects/dash.mp3',
     ]);
     this.load.audio('bullet-hit-spark', [
-      'assets/sounds/bullet_hit_spark.ogg',
-      'assets/sounds/bullet_hit_spark.mp3',
+      'assets/sounds/effects/bullet_hit_spark.ogg',
+      'assets/sounds/effects/bullet_hit_spark.mp3',
     ]);
   }
 

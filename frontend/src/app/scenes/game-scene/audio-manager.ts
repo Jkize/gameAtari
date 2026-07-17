@@ -1,8 +1,13 @@
 import Phaser from 'phaser';
-import { GameSettingsChangedEvent, readStoredGameSettings } from '../../game/game-settings.types';
+import {
+  GameSettings,
+  GameSettingsChangedEvent,
+  readStoredGameSettings,
+} from '../../game/game-settings.types';
+import { GameState, PlayerPublicState } from '../../types/game-state.types';
 
 export type WeaponFireSound = 'standard' | 'triple_shot' | 'shotgun';
-export type BulletImpactSound = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror';
+export type BulletImpactSound = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror' | 'shield';
 
 export type SoundPoint = {
   x: number;
@@ -26,6 +31,9 @@ const GRENADE_EXPLODE_VOLUME = 0.58;
 const LASER_FIRE_VOLUME = 0.52;
 const LASER_REFLECT_VOLUME = 0.44;
 const POWERUP_PICKUP_VOLUME = 0.5;
+const SHIELD_LAUNCH_VOLUME = 1;
+const SHIELD_ACTIVE_VOLUME = 0.45;
+const SHIELD_HIT_VOLUME = 1;
 const DASH_VOLUME = 0.46;
 const RELOAD_START_VOLUME = 0.36;
 const RELOAD_COMPLETE_VOLUME = 0.42;
@@ -35,6 +43,7 @@ const BULLET_IMPACT_VOLUME: Record<BulletImpactSound, number> = {
   rock: 0.4,
   steel: 0.38,
   mirror: 0.42,
+  shield: SHIELD_HIT_VOLUME,
 };
 const BULLET_IMPACT_KEY: Record<BulletImpactSound, string> = {
   spark: 'bullet-hit-spark',
@@ -42,13 +51,28 @@ const BULLET_IMPACT_KEY: Record<BulletImpactSound, string> = {
   rock: 'bullet-hit-rock',
   steel: 'bullet-hit-steel',
   mirror: 'bullet-mirror-ricochet',
+  shield: 'shield-hit',
 };
 const MIN_FIRE_SOUND_GAP_MS = 45;
 const FULL_VOLUME_DISTANCE = 340;
 const MAX_AUDIBLE_DISTANCE = 920;
 const MIN_AUDIBLE_VOLUME = 0.045;
 const LOCAL_PLAYER_VOLUME_BOOST = 1.18;
+const SFX_MIX_GAIN = 0.125;
+const AMBIENCE_MIX_GAIN = 1;
+const MUSIC_MIX_GAIN = 0.2;
 const IOS_FOREGROUND_RECOVERY_DELAY_MS = 200;
+const MUSIC_FADE_MS = 700;
+const BATTLE_TRACK_STORAGE_KEY = 'tank-arena:last-battle-track';
+const BATTLE_TRACK_KEYS = ['music-battle-one', 'music-battle-two'] as const;
+const ARENA_AMBIENCE_KEY = 'arena-ambience';
+const DANGER_ZONE_MUSIC_KEY = 'music-danger-zone';
+const VICTORY_STINGER_KEY = 'result-victory-first';
+const DEFEAT_STINGER_KEY = 'result-defeat';
+
+type BattleTrackKey = (typeof BATTLE_TRACK_KEYS)[number];
+type ManagedSound = Phaser.Sound.BaseSound & { volume: number };
+type ManagedShieldSound = { sound: ManagedSound; spatialVolume: number };
 
 type SafariAudioContext = AudioContext & { state: AudioContextState | 'interrupted' };
 type AudioSessionNavigator = Navigator & {
@@ -59,8 +83,15 @@ export class AudioManager {
   private lastFireSoundAt = 0;
   private foregroundRecoveryTimer?: number;
   private needsForegroundRecovery = false;
+  private settings = readStoredGameSettings();
+  private ambienceSound?: ManagedSound;
+  private musicSound?: ManagedSound;
+  private currentMusicKey?: string;
+  private battleTrackKey?: BattleTrackKey;
+  private previousStatus?: GameState['status'];
+  private readonly shieldSounds = new Map<string, ManagedShieldSound>();
   private readonly onSettingsChanged = (event: Event): void => {
-    this.setVolume((event as GameSettingsChangedEvent).detail.sfxVolume);
+    this.applySettings((event as GameSettingsChangedEvent).detail);
   };
 
   private readonly unlockAudioFromGesture = (): void => {
@@ -78,7 +109,7 @@ export class AudioManager {
   private readonly onPageShow = (): void => this.scheduleForegroundRecovery();
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.setVolume(readStoredGameSettings().sfxVolume);
+    this.applySettings(this.settings);
     this.configureAudioSession();
     window.addEventListener('tank-arena:settings-changed', this.onSettingsChanged);
     // Capture gestures globally: after restoring an iOS PWA, the first tap can
@@ -102,6 +133,49 @@ export class AudioManager {
     if (this.foregroundRecoveryTimer !== undefined) {
       window.clearTimeout(this.foregroundRecoveryTimer);
     }
+    this.stopManagedSound(this.ambienceSound);
+    this.stopManagedSound(this.musicSound);
+    this.stopAllShieldSounds();
+    this.ambienceSound = undefined;
+    this.musicSound = undefined;
+    this.currentMusicKey = undefined;
+  }
+
+  syncMatchAudio(state: GameState, myPlayerId: string, joinedAsWatcher: boolean): void {
+    const previousStatus = this.previousStatus;
+
+    if (state.status === 'waiting') {
+      this.ensureAmbience();
+      this.stopMusic();
+    } else if (state.status === 'playing') {
+      this.ensureAmbience();
+      const dangerZoneActive = Boolean(
+        state.dangerZone && state.dangerZone.phase !== 'inactive',
+      );
+      this.transitionToMusic(
+        dangerZoneActive ? DANGER_ZONE_MUSIC_KEY : this.getBattleTrackKey(),
+      );
+    } else if (previousStatus === 'playing') {
+      this.fadeOutAmbience();
+      this.stopMusic(true);
+      if (!joinedAsWatcher && myPlayerId) {
+        const isWinner = state.players.some(player => player.id === myPlayerId && player.alive);
+        this.playUiSound(isWinner ? VICTORY_STINGER_KEY : DEFEAT_STINGER_KEY, 1);
+      }
+    }
+
+    this.previousStatus = state.status;
+  }
+
+  resetMatchAudio(): void {
+    this.stopManagedSound(this.ambienceSound);
+    this.stopManagedSound(this.musicSound);
+    this.stopAllShieldSounds();
+    this.ambienceSound = undefined;
+    this.musicSound = undefined;
+    this.currentMusicKey = undefined;
+    this.battleTrackKey = undefined;
+    this.previousStatus = undefined;
   }
 
   private configureAudioSession(): void {
@@ -221,6 +295,77 @@ export class AudioManager {
     );
   }
 
+  playShieldLaunch(origin: SoundPoint, listener: SoundPoint, isLocalPlayer: boolean): void {
+    this.playSpatialSound(
+      'shield-launch',
+      SHIELD_LAUNCH_VOLUME,
+      origin,
+      listener,
+      isLocalPlayer,
+      0,
+    );
+  }
+
+  playShieldHit(origin: SoundPoint, listener: SoundPoint, isLocalPlayer: boolean): void {
+    this.playSpatialSound(
+      'shield-hit',
+      SHIELD_HIT_VOLUME,
+      origin,
+      listener,
+      isLocalPlayer,
+      0,
+    );
+  }
+
+  syncShieldLoops(
+    players: readonly PlayerPublicState[],
+    listener: SoundPoint | undefined,
+    myPlayerId: string,
+  ): void {
+    if (!listener) {
+      this.stopAllShieldSounds();
+      return;
+    }
+
+    const activePlayerIds = new Set<string>();
+    players.forEach(player => {
+      if (!player.alive || !player.shielding) return;
+      activePlayerIds.add(player.id);
+
+      const spatialVolume = this.getDistanceVolume(
+        SHIELD_ACTIVE_VOLUME,
+        player,
+        listener,
+        player.id === myPlayerId,
+      );
+      let entry = this.shieldSounds.get(player.id);
+      if (!entry && spatialVolume > 0 && this.scene.cache.audio.exists('shield-launching')) {
+        const sound = this.scene.sound.add('shield-launching', {
+          loop: true,
+          volume: this.getSfxOutputVolume(spatialVolume),
+        }) as ManagedSound;
+        sound.play();
+        entry = { sound, spatialVolume };
+        this.shieldSounds.set(player.id, entry);
+      }
+      if (!entry) return;
+
+      entry.spatialVolume = spatialVolume;
+      entry.sound.volume = this.getSfxOutputVolume(spatialVolume);
+    });
+
+    this.shieldSounds.forEach((_entry, playerId) => {
+      if (!activePlayerIds.has(playerId)) this.stopShieldLoop(playerId);
+    });
+  }
+
+  stopShieldLoop(playerId: string): void {
+    const entry = this.shieldSounds.get(playerId);
+    if (!entry) return;
+    this.stopManagedSound(entry.sound);
+    this.shieldSounds.delete(playerId);
+  }
+
   playDash(origin: SoundPoint, listener: SoundPoint, isLocalPlayer: boolean): void {
     this.playSpatialSound('player-dash', DASH_VOLUME, origin, listener, isLocalPlayer, 0);
   }
@@ -277,13 +422,121 @@ export class AudioManager {
   }
 
   private playSound(key: string, volume: number): void {
-    const soundVolume = Phaser.Math.Clamp(volume, 0, 1);
+    const soundVolume = this.getSfxOutputVolume(volume);
     if (soundVolume <= 0 || this.scene.sound.volume <= 0) return;
     this.scene.sound.play(key, { volume: soundVolume });
   }
 
-  private setVolume(volume: number): void {
-    this.scene.sound.volume = Phaser.Math.Clamp(volume, 0, 1);
+  private applySettings(settings: GameSettings): void {
+    this.settings = settings;
+    this.scene.sound.volume = Phaser.Math.Clamp(settings.masterVolume, 0, 1);
+    if (this.ambienceSound) {
+      this.scene.tweens?.killTweensOf(this.ambienceSound);
+      this.ambienceSound.volume = settings.ambienceVolume * AMBIENCE_MIX_GAIN;
+    }
+    if (this.musicSound) {
+      this.scene.tweens?.killTweensOf(this.musicSound);
+      this.musicSound.volume = settings.musicVolume * MUSIC_MIX_GAIN;
+    }
+    this.shieldSounds.forEach(entry => {
+      entry.sound.volume = this.getSfxOutputVolume(entry.spatialVolume);
+    });
+  }
+
+  private ensureAmbience(): void {
+    if (this.ambienceSound?.isPlaying) return;
+    if (!this.scene.cache.audio.exists(ARENA_AMBIENCE_KEY)) return;
+
+    this.stopManagedSound(this.ambienceSound);
+    this.ambienceSound = this.scene.sound.add(ARENA_AMBIENCE_KEY, {
+      loop: true,
+      volume: this.settings.ambienceVolume * AMBIENCE_MIX_GAIN,
+    }) as ManagedSound;
+    this.ambienceSound.play();
+  }
+
+  private fadeOutAmbience(): void {
+    const sound = this.ambienceSound;
+    this.ambienceSound = undefined;
+    this.fadeOutAndDestroy(sound);
+  }
+
+  private transitionToMusic(key: string): void {
+    if (this.currentMusicKey === key && this.musicSound?.isPlaying) return;
+    if (!this.scene.cache.audio.exists(key)) return;
+
+    const previousSound = this.musicSound;
+    const nextSound = this.scene.sound.add(key, { loop: true, volume: 0 }) as ManagedSound;
+    this.musicSound = nextSound;
+    this.currentMusicKey = key;
+    nextSound.play();
+    this.fadeTo(nextSound, this.settings.musicVolume * MUSIC_MIX_GAIN);
+    this.fadeOutAndDestroy(previousSound);
+  }
+
+  private stopMusic(fade = false): void {
+    const sound = this.musicSound;
+    this.musicSound = undefined;
+    this.currentMusicKey = undefined;
+    if (fade) this.fadeOutAndDestroy(sound);
+    else this.stopManagedSound(sound);
+  }
+
+  private getBattleTrackKey(): BattleTrackKey {
+    if (this.battleTrackKey) return this.battleTrackKey;
+
+    let previous: string | null = null;
+    try {
+      previous = window.sessionStorage.getItem(BATTLE_TRACK_STORAGE_KEY);
+    } catch {
+      // Storage can be unavailable in private browsing; deterministic fallback is fine.
+    }
+    this.battleTrackKey = previous === BATTLE_TRACK_KEYS[0]
+      ? BATTLE_TRACK_KEYS[1]
+      : BATTLE_TRACK_KEYS[0];
+    try {
+      window.sessionStorage.setItem(BATTLE_TRACK_STORAGE_KEY, this.battleTrackKey);
+    } catch {
+      // Audio playback does not depend on persistence of the alternation.
+    }
+    return this.battleTrackKey;
+  }
+
+  private fadeTo(sound: ManagedSound, volume: number): void {
+    this.scene.tweens.add({
+      targets: sound,
+      volume: Phaser.Math.Clamp(volume, 0, 1),
+      duration: MUSIC_FADE_MS,
+      ease: 'Linear',
+    });
+  }
+
+  private fadeOutAndDestroy(sound?: ManagedSound): void {
+    if (!sound) return;
+    this.scene.tweens.killTweensOf(sound);
+    this.scene.tweens.add({
+      targets: sound,
+      volume: 0,
+      duration: MUSIC_FADE_MS,
+      ease: 'Linear',
+      onComplete: () => this.stopManagedSound(sound),
+    });
+  }
+
+  private stopManagedSound(sound?: ManagedSound): void {
+    if (!sound) return;
+    this.scene.tweens?.killTweensOf(sound);
+    sound.stop();
+    sound.destroy();
+  }
+
+  private stopAllShieldSounds(): void {
+    this.shieldSounds.forEach(entry => this.stopManagedSound(entry.sound));
+    this.shieldSounds.clear();
+  }
+
+  private getSfxOutputVolume(volume: number): number {
+    return Phaser.Math.Clamp(volume * this.settings.sfxVolume * SFX_MIX_GAIN, 0, 1);
   }
 
   private getDistanceVolume(
