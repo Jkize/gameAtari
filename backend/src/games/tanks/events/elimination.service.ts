@@ -5,9 +5,9 @@ import type { Player } from '../types/player.types';
 import {
   DamageSource,
   EliminationAttribution,
-  KILL_ATTRIBUTION_WINDOW_MS,
   PlayerEliminatedEvent,
 } from './elimination-event.types';
+import { KILL_ATTRIBUTION_WINDOW_MS } from '../config/elimination.config';
 
 @Injectable()
 export class EliminationService {

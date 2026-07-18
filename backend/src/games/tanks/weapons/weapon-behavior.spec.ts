@@ -8,7 +8,10 @@ import { WeaponGrenadeService } from './weapon-grenade.service';
 import { WeaponLaserService } from './weapon-laser.service';
 import { WeaponService } from './weapon.service';
 import { EliminationService } from '../events/elimination.service';
-import { PLAYER_HEALTH_REGEN_DELAY_MS, PLAYER_HEALTH_REGEN_PER_SECOND } from '../player.config';
+import {
+  PLAYER_HEALTH_REGEN_DELAY_MS,
+  PLAYER_HEALTH_REGEN_PER_SECOND,
+} from '../config/player.config';
 
 describe('weapon behavior', () => {
   let sessions: GameSessionsService;

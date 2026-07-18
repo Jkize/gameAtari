@@ -1,21 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import {
+  DANGER_ZONE_CONFIGS_BY_PLAYER_TIER,
+  DANGER_ZONE_EDGE_MARGIN_PX,
+  DANGER_ZONE_INITIAL_RADIUS_MAP_PADDING_PX,
+  DANGER_ZONE_WARNING_MESSAGE,
+  DangerZoneConfig,
+} from './config/danger-zone.config';
 import { GameMap } from './types/map.types';
 
 export type DangerZonePhase = 'inactive' | 'warning' | 'active' | 'final' | 'sudden_death';
-
-export interface DangerZoneConfig {
-  targetDurationMs: number;
-  maxDurationMs: number;
-  warningStartsAtMs: number;
-  damageStartsAtMs: number;
-  shrinkEveryMs: number;
-  initialRadius: number;
-  finalRadius: number;
-  suddenDeathRadius: number;
-  finalHoldMs: number;
-  suddenDeathShrinkMs: number;
-  damagePerSecond: number;
-}
 
 export interface DangerZoneRuntimeState extends DangerZoneConfig {
   enabled: boolean;
@@ -36,52 +29,6 @@ export interface DangerZonePublicState {
   damageStartsAt: number;
 }
 
-const EDGE_MARGIN_PX = 300;
-const INITIAL_RADIUS_MAP_PADDING_PX = 10;
-const WARNING_MESSAGE = 'hud.zone.closing';
-
-const CONFIGS_BY_PLAYER_TIER: Record<4 | 8 | 16, DangerZoneConfig> = {
-  4: {
-    targetDurationMs: 240_000,
-    maxDurationMs: 360_000,
-    warningStartsAtMs: 90_000,
-    damageStartsAtMs: 120_000,
-    shrinkEveryMs: 35_000,
-    initialRadius: 900,
-    finalRadius: 220,
-    suddenDeathRadius: 40,
-    finalHoldMs: 40_000,
-    suddenDeathShrinkMs: 30_000,
-    damagePerSecond: 4,
-  },
-  8: {
-    targetDurationMs: 300_000,
-    maxDurationMs: 420_000,
-    warningStartsAtMs: 100_000,
-    damageStartsAtMs: 130_000,
-    shrinkEveryMs: 35_000,
-    initialRadius: 1000,
-    finalRadius: 250,
-    suddenDeathRadius: 50,
-    finalHoldMs: 45_000,
-    suddenDeathShrinkMs: 35_000,
-    damagePerSecond: 5,
-  },
-  16: {
-    targetDurationMs: 420_000,
-    maxDurationMs: 540_000,
-    warningStartsAtMs: 120_000,
-    damageStartsAtMs: 150_000,
-    shrinkEveryMs: 40_000,
-    initialRadius: 1150,
-    finalRadius: 300,
-    suddenDeathRadius: 60,
-    finalHoldMs: 50_000,
-    suddenDeathShrinkMs: 45_000,
-    damagePerSecond: 6,
-  },
-};
-
 @Injectable()
 export class DangerZoneService {
   createRuntimeState(
@@ -94,16 +41,16 @@ export class DangerZoneService {
       ...this.configForPlayerCount(playerCount),
       ...configOverride,
     };
-    const center = this.pickCenter(map, EDGE_MARGIN_PX);
+    const center = this.pickCenter(map, DANGER_ZONE_EDGE_MARGIN_PX);
     const initialRadius = Math.max(
       config.initialRadius,
-      this.radiusCoveringMap(map, center.x, center.y) + INITIAL_RADIUS_MAP_PADDING_PX,
+      this.radiusCoveringMap(map, center.x, center.y) + DANGER_ZONE_INITIAL_RADIUS_MAP_PADDING_PX,
     );
 
     return {
       enabled: true,
-      edgeMarginPx: EDGE_MARGIN_PX,
-      warningMessage: WARNING_MESSAGE,
+      edgeMarginPx: DANGER_ZONE_EDGE_MARGIN_PX,
+      warningMessage: DANGER_ZONE_WARNING_MESSAGE,
       startedAtMs,
       centerX: center.x,
       centerY: center.y,
@@ -114,12 +61,15 @@ export class DangerZoneService {
   }
 
   configForPlayerCount(playerCount: number): DangerZoneConfig {
-    if (playerCount <= 4) return CONFIGS_BY_PLAYER_TIER[4];
-    if (playerCount <= 8) return CONFIGS_BY_PLAYER_TIER[8];
-    return CONFIGS_BY_PLAYER_TIER[16];
+    if (playerCount <= 4) return DANGER_ZONE_CONFIGS_BY_PLAYER_TIER[4];
+    if (playerCount <= 8) return DANGER_ZONE_CONFIGS_BY_PLAYER_TIER[8];
+    return DANGER_ZONE_CONFIGS_BY_PLAYER_TIER[16];
   }
 
-  pickCenter(map: Pick<GameMap, 'width' | 'height'>, edgeMarginPx = EDGE_MARGIN_PX): { x: number; y: number } {
+  pickCenter(
+    map: Pick<GameMap, 'width' | 'height'>,
+    edgeMarginPx = DANGER_ZONE_EDGE_MARGIN_PX,
+  ): { x: number; y: number } {
     return {
       x: this.pickAxisCenter(map.width, edgeMarginPx),
       y: this.pickAxisCenter(map.height, edgeMarginPx),

@@ -1,0 +1,1 @@
+export const KILL_ATTRIBUTION_WINDOW_MS = 5_000;

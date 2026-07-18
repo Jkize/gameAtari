@@ -1,4 +1,3 @@
-import { PowerUpType } from '../types/power-up.types';
 import { WeaponStats } from '../types/weapon.types';
 
 export const DEFAULT_WEAPON_STATS: WeaponStats = {
@@ -11,13 +10,6 @@ export const DEFAULT_WEAPON_STATS: WeaponStats = {
   bulletRadius: 4,
   bulletLifetimeMs: 3000,
 };
-
-export const POWER_UP_DEFINITIONS = {
-  triple_shot: { name: 'TRIPLE SHOT', durationMs: 12_000 },
-  shotgun: { name: 'SHOTGUN', durationMs: 12_000 },
-  grenade: { name: 'GRENADE SHOT', durationMs: 8_000 },
-  laser: { name: 'LASER READY', durationMs: undefined },
-} as const satisfies Partial<Record<PowerUpType, { name: string; durationMs?: number }>>;
 
 export const TRIPLE_SHOT_CONFIG = {
   spreadAngles: [-0.16, 0, 0.16],

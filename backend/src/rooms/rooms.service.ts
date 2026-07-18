@@ -3,22 +3,17 @@ import { randomUUID } from 'crypto';
 import { Server, Socket } from 'socket.io';
 import { SESSION_MESSAGES, SESSION_REASONS, SOCKET_EVENTS } from '../common/socket-events';
 import { DevelopmentSettingsService } from '../config/development-settings.service';
+import {
+  COUNTDOWN_TIERS,
+  MAX_PLAYERS,
+  PROD_MIN_PLAYERS,
+  RECONNECT_GRACE_MS,
+  ROUND_RESET_MS,
+} from '../games/tanks/config/room.config';
 import { GameLoopService } from '../games/tanks/game-loop.service';
 import { WatcherPresenceService } from '../games/tanks/events/watcher-presence.service';
 import { RedisService } from '../redis/redis.service';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
-
-export const PROD_MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 15;
-const COUNTDOWN_TIERS = [
-  { minPlayers: 15, seconds: 10 },
-  { minPlayers: 8, seconds: 20 },
-  { minPlayers: 4, seconds: 40 },
-];
-// Production allows time to reopen the app and hit Reconnect. Keep the
-// original shorter timeout in local/dev environments used for game testing.
-const RECONNECT_GRACE_MS = process.env.NODE_ENV === 'production' ? 60_000 : 15_000;
-const ROUND_RESET_MS = 5_000;
 
 @Injectable()
 export class RoomsService {

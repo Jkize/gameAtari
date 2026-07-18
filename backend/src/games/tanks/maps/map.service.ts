@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { OBSTACLE_DEFINITIONS } from '../obstacle.config';
+import { OBSTACLE_DEFINITIONS } from '../config/obstacle.config';
+import { POWER_UP_ASSET_ID, POWER_UP_RADIUS } from '../config/power-up.config';
 import { GameMap, Obstacle, ObstacleAssetId, ObstacleType } from '../types/map.types';
 import { PowerUpSpawn, PowerUpType } from '../types/power-up.types';
 
@@ -24,15 +25,6 @@ const FORTRESS_SIEGE_DATA_P8 = require('./data/p8-fortress-siege.json') as RawMa
 const JUNGLE_SURVIVAL_DATA_P8 = require('./data/p8-jungle-survival.json') as RawMapJson;
 const MIRROR_MAZE_DATA_P8 = require('./data/p8-mirror-maze.json') as RawMapJson;
 const URBAN_GRID_DATA_P8 = require('./data/p8-urban-grid.json') as RawMapJson;
-
-const POWER_UP_RADIUS = 18;
-
-const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {
-  triple_shot: 'power_triple_shot',
-  shotgun: 'power_shotgun',
-  grenade: 'power_grenade',
-  laser: 'power_laser',
-};
 
 interface RawObstacle {
   type: ObstacleType;

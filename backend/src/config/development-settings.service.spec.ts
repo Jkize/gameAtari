@@ -20,9 +20,10 @@ describe('DevelopmentSettingsService', () => {
     expect(service.shouldClearInitialPowerUpsOnStart()).toBe(false);
     expect(service.rooms()).toEqual({ minPlayers: 1, countdownSeconds: 3 });
     expect(service.dangerZoneOverride()).toMatchObject({
-      warningStartsAtMs: 5_000,
-      damageStartsAtMs: 10_000,
-      targetDurationMs: 45_000,
+      warningStartsAtMs: 90_000,
+      damageStartsAtMs: 120_000,
+      targetDurationMs: 240_000,
+      maxDurationMs: 360_000,
     });
     expect(service.powerUps()).toEqual({
       firstSpawnDelayMs: 3_000,

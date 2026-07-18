@@ -1,31 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { DangerZoneConfig } from '../games/tanks/danger-zone.service';
+import {
+  DangerZoneConfig,
+  DEVELOPMENT_DANGER_ZONE_OVERRIDE,
+} from '../games/tanks/config/danger-zone.config';
+import {
+  DEV_ROOM_SETTINGS,
+  RoomWaitingConfig,
+} from '../games/tanks/config/room.config';
 
-export interface RoomDevelopmentSettings {
-  minPlayers: number;
-  countdownSeconds: number;
-}
+export type RoomDevelopmentSettings = RoomWaitingConfig;
 
 export interface PowerUpDevelopmentSettings {
   firstSpawnDelayMs: number;
   spawnIntervalMs: number;
 }
-
-const DEV_ROOM_SETTINGS: RoomDevelopmentSettings = {
-  minPlayers: 1,
-  countdownSeconds: 3,
-};
-
-const DEV_DANGER_ZONE_OVERRIDE: Partial<DangerZoneConfig> = {
-  warningStartsAtMs: 90_000,
-  damageStartsAtMs: 10_000,
-  targetDurationMs: 45_000,
-  maxDurationMs: 70_000,
-  shrinkEveryMs: 5_000,
-  finalHoldMs: 8_000,
-  suddenDeathShrinkMs: 12_000,
-};
 
 const DEV_POWER_UP_SETTINGS: PowerUpDevelopmentSettings = {
   firstSpawnDelayMs: 3_000,
@@ -69,7 +58,7 @@ export class DevelopmentSettingsService {
   }
 
   dangerZoneOverride(): Partial<DangerZoneConfig> {
-    return this.isDevGameMode() ? DEV_DANGER_ZONE_OVERRIDE : {};
+    return this.isDevGameMode() ? DEVELOPMENT_DANGER_ZONE_OVERRIDE : {};
   }
 
   powerUps(): PowerUpDevelopmentSettings | null {

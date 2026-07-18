@@ -4,21 +4,13 @@ import {
   DECORATION_OBSTACLE_ASSET_IDS,
   DEFAULT_OBSTACLE_SIZE,
   OBSTACLE_DEFINITIONS,
-} from '../obstacle.config';
+} from '../config/obstacle.config';
+import { POWER_UP_ASSET_ID, POWER_UP_RADIUS } from '../config/power-up.config';
 import { GameMap, Obstacle, ObstacleType } from '../types/map.types';
 import { PowerUpSpawn, PowerUpType } from '../types/power-up.types';
 
 const MAP_WIDTH = 1600;
 const MAP_HEIGHT = 1200;
-const POWER_UP_RADIUS = 18;
-
-const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {
-  triple_shot: 'power_triple_shot',
-  shotgun: 'power_shotgun',
-  grenade: 'power_grenade',
-  laser: 'power_laser',
-};
-
 const DEV_MAPPING_PURPOSE_SPAWN_POINTS = [
   { x: 150, y: 150 },
   { x: 1450, y: 150 },

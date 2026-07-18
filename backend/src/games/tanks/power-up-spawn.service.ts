@@ -3,44 +3,31 @@ import { v4 as uuidv4 } from 'uuid';
 import { GameMap, Obstacle } from './types/map.types';
 import { Player } from './types/player.types';
 import { PowerUpSpawn, PowerUpType } from './types/power-up.types';
-
-export const FIRST_POWER_UP_SPAWN_DELAY_MS = 3_000;
-export const POWER_UP_SPAWN_INTERVAL_MS = 15_000;
-export const MAX_SPAWN_ATTEMPTS = 30;
-export const MIN_DISTANCE_FROM_PLAYER = 180;
-export const MIN_DISTANCE_FROM_OTHER_POWERUP = 250;
-export const MIN_DISTANCE_FROM_SPAWN_POINT = 180;
-export const POWER_UP_PICKUP_RADIUS = 45;
-
-const POWER_UP_RADIUS = 18;
-
-const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {
-  triple_shot: 'power_triple_shot',
-  shotgun: 'power_shotgun',
-  grenade: 'power_grenade',
-  laser: 'power_laser',
-};
-
-const POWER_UP_WEIGHTS: Array<{ type: PowerUpType; weight: number }> = [
-  { type: 'triple_shot', weight: 35 },
-  { type: 'shotgun', weight: 30 },
-  { type: 'grenade', weight: 25 },
-  { type: 'laser', weight: 10 },
-];
+import {
+  MAX_ACTIVE_POWER_UPS_BY_PLAYER_TIER,
+  MAX_POWER_UP_SPAWN_ATTEMPTS,
+  MIN_DISTANCE_BETWEEN_POWER_UPS,
+  MIN_POWER_UP_DISTANCE_FROM_PLAYER,
+  MIN_POWER_UP_DISTANCE_FROM_SPAWN_POINT,
+  POWER_UP_ASSET_ID,
+  POWER_UP_PICKUP_RADIUS,
+  POWER_UP_RADIUS,
+  POWER_UP_WEIGHTS,
+} from './config/power-up.config';
 
 @Injectable()
 export class PowerUpSpawnService {
   maxActiveForPlayerCount(playerCount: number): number {
-    if (playerCount <= 4) return 3;
-    if (playerCount <= 8) return 4;
-    return 5;
+    if (playerCount <= 4) return MAX_ACTIVE_POWER_UPS_BY_PLAYER_TIER[4];
+    if (playerCount <= 8) return MAX_ACTIVE_POWER_UPS_BY_PLAYER_TIER[8];
+    return MAX_ACTIVE_POWER_UPS_BY_PLAYER_TIER[16];
   }
 
   trySpawn(map: GameMap, players: Iterable<Player>, now: number): PowerUpSpawn | null {
     const playersInMatch = [...players];
     if (map.powerUps.length >= this.maxActiveForPlayerCount(playersInMatch.length)) return null;
 
-    for (let attempt = 0; attempt < MAX_SPAWN_ATTEMPTS; attempt++) {
+    for (let attempt = 0; attempt < MAX_POWER_UP_SPAWN_ATTEMPTS; attempt++) {
       const candidate = {
         x: POWER_UP_RADIUS + Math.random() * (map.width - POWER_UP_RADIUS * 2),
         y: POWER_UP_RADIUS + Math.random() * (map.height - POWER_UP_RADIUS * 2),
@@ -68,18 +55,20 @@ export class PowerUpSpawnService {
       return false;
     }
 
-    if (players.some(player => this.distanceSq(x, y, player.x, player.y) < MIN_DISTANCE_FROM_PLAYER ** 2)) {
+    if (players.some(player =>
+      this.distanceSq(x, y, player.x, player.y) < MIN_POWER_UP_DISTANCE_FROM_PLAYER ** 2
+    )) {
       return false;
     }
 
     if (map.powerUps.some(powerUp =>
-      this.distanceSq(x, y, powerUp.x, powerUp.y) < MIN_DISTANCE_FROM_OTHER_POWERUP ** 2,
+      this.distanceSq(x, y, powerUp.x, powerUp.y) < MIN_DISTANCE_BETWEEN_POWER_UPS ** 2,
     )) {
       return false;
     }
 
     if (map.spawnPoints?.some(spawn =>
-      this.distanceSq(x, y, spawn.x, spawn.y) < MIN_DISTANCE_FROM_SPAWN_POINT ** 2,
+      this.distanceSq(x, y, spawn.x, spawn.y) < MIN_POWER_UP_DISTANCE_FROM_SPAWN_POINT ** 2,
     )) {
       return false;
     }

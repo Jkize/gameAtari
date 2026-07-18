@@ -1,7 +1,5 @@
 import type { PowerUpType } from '../types/power-up.types';
 
-export const KILL_ATTRIBUTION_WINDOW_MS = 5_000;
-
 export type AttackWeapon = 'standard' | PowerUpType;
 export type EliminationCause = 'projectile' | 'reflected_projectile' | 'danger_zone';
 export type EliminationAttribution = 'direct' | 'recent_damage' | 'self' | 'environment';

@@ -1,16 +1,17 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { DevelopmentSettingsService } from '../../config/development-settings.service';
+import {
+  LOBBY_ACTION_LIMIT,
+  LOBBY_ACTION_WINDOW_MS,
+  MAX_CONNECTIONS_PER_IP,
+  PLAYER_INPUT_LIMIT,
+  PLAYER_INPUT_WINDOW_MS,
+} from './config/socket.config';
 
 interface Window {
   count: number;
   resetAt: number;
 }
-
-const MAX_CONNECTIONS_PER_IP = 8;
-const LOBBY_ACTION_LIMIT = 5;
-const LOBBY_ACTION_WINDOW_MS = 10_000;
-const PLAYER_INPUT_LIMIT = 150;
-const PLAYER_INPUT_WINDOW_MS = 1_000;
 
 @Injectable()
 export class SocketRateLimiterService implements OnModuleDestroy {

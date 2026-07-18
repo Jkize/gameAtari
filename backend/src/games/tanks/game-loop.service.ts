@@ -3,9 +3,9 @@ import { Server } from 'socket.io';
 import { SOCKET_EVENTS } from '../../common/socket-events';
 import { DevelopmentSettingsService } from '../../config/development-settings.service';
 import { CollisionService } from './collision.service';
-import { DESTROYED_BODY_TTL_MS, GameService, SHIELD_COOLDOWN_MS, SHIELD_HP } from './game.service';
+import { GameService } from './game.service';
 import { MapService } from './maps/map.service';
-import { applyObstacleDamage, isSoftCoverObstacle } from './obstacle.config';
+import { applyObstacleDamage, isSoftCoverObstacle } from './obstacle.utils';
 import { GameSessionsService } from './runtime/game-sessions.service';
 import { BulletImpactMaterial, BulletImpactPublicState, BulletPublicState, GameState, InitialGameState } from './types/game-state.types';
 import { ObstacleType } from './types/map.types';
@@ -15,24 +15,18 @@ import { WeaponGrenadeService } from './weapons/weapon-grenade.service';
 import { WeaponLaserService } from './weapons/weapon-laser.service';
 import { WeaponService } from './weapons/weapon.service';
 import { canBulletHitPlayer } from './bullet-hit-policy';
-import {
-  FIRST_POWER_UP_SPAWN_DELAY_MS,
-  POWER_UP_SPAWN_INTERVAL_MS,
-  PowerUpSpawnService,
-} from './power-up-spawn.service';
+import { PowerUpSpawnService } from './power-up-spawn.service';
 import { DangerZoneService } from './danger-zone.service';
 import { GameEventPublisherService } from './events/game-event-publisher.service';
 import { WatcherPresenceService } from './events/watcher-presence.service';
-
-const TICK_INTERVAL = 1000 / 60;
-const PLAYER_BROADCAST_INTERVAL = 1000 / 30;
-const WATCHER_BROADCAST_INTERVAL = 1000 / 15;
-const OBSTACLE_IMPACT_MATERIAL: Partial<Record<ObstacleType, BulletImpactMaterial>> = {
-  wood: 'wood',
-  rock: 'rock',
-  steel: 'steel',
-  mirror: 'mirror',
-};
+import {
+  GAME_TICK_INTERVAL_MS,
+  OBSTACLE_IMPACT_MATERIAL,
+  PLAYER_BROADCAST_INTERVAL_MS,
+  WATCHER_BROADCAST_INTERVAL_MS,
+} from './config/game-loop.config';
+import { DESTROYED_BODY_TTL_MS, SHIELD_COOLDOWN_MS, SHIELD_HP } from './config/player.config';
+import { FIRST_POWER_UP_SPAWN_DELAY_MS, POWER_UP_SPAWN_INTERVAL_MS } from './config/power-up.config';
 
 interface LoopRuntime {
   timer: NodeJS.Timeout;
@@ -114,7 +108,7 @@ export class GameLoopService implements OnModuleDestroy {
       spawnIntervalMs: POWER_UP_SPAWN_INTERVAL_MS,
     };
     const runtime: LoopRuntime = {
-      timer: setInterval(() => this.tick(roomId), TICK_INTERVAL),
+      timer: setInterval(() => this.tick(roomId), GAME_TICK_INTERVAL_MS),
       lastTickTime: Date.now(),
       lastPlayerBroadcastTime: 0,
       lastWatcherBroadcastTime: 0,
@@ -177,12 +171,19 @@ export class GameLoopService implements OnModuleDestroy {
   getTickMetrics(): TickMetrics {
     const runtimes = [...this.loops.values()];
     if (runtimes.length === 0) {
-      return { targetMs: parseFloat(TICK_INTERVAL.toFixed(2)), averageMs: parseFloat(TICK_INTERVAL.toFixed(2)), delayedTicks: 0 };
+      return {
+        targetMs: parseFloat(GAME_TICK_INTERVAL_MS.toFixed(2)),
+        averageMs: parseFloat(GAME_TICK_INTERVAL_MS.toFixed(2)),
+        delayedTicks: 0,
+      };
     }
-    const avgMs = runtimes.reduce((sum, r) => sum + (r.avgTickMs || TICK_INTERVAL), 0) / runtimes.length;
+    const avgMs = runtimes.reduce(
+      (sum, r) => sum + (r.avgTickMs || GAME_TICK_INTERVAL_MS),
+      0,
+    ) / runtimes.length;
     const delayed = runtimes.reduce((sum, r) => sum + r.delayedTicks, 0);
     return {
-      targetMs: parseFloat(TICK_INTERVAL.toFixed(2)),
+      targetMs: parseFloat(GAME_TICK_INTERVAL_MS.toFixed(2)),
       averageMs: parseFloat(avgMs.toFixed(2)),
       delayedTicks: delayed,
     };
@@ -197,7 +198,7 @@ export class GameLoopService implements OnModuleDestroy {
       const deltaTime = Math.min(0.1, deltaMs / 1000);
       runtime.lastTickTime = now;
       runtime.avgTickMs = runtime.avgTickMs === 0 ? deltaMs : runtime.avgTickMs * 0.9 + deltaMs * 0.1;
-      if (deltaMs > TICK_INTERVAL + 3) runtime.delayedTicks++;
+      if (deltaMs > GAME_TICK_INTERVAL_MS + 3) runtime.delayedTicks++;
       if (!this.gameService.map) return;
 
       const impactStartIndex = this.gameService.impactEvents.length;
@@ -471,14 +472,14 @@ export class GameLoopService implements OnModuleDestroy {
   }
 
   private broadcastState(roomId: string, runtime: LoopRuntime, now: number): void {
-    const shouldBroadcastPlayers = now - runtime.lastPlayerBroadcastTime >= PLAYER_BROADCAST_INTERVAL;
-    const shouldBroadcastWatchers = now - runtime.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL;
+    const shouldBroadcastPlayers = now - runtime.lastPlayerBroadcastTime >= PLAYER_BROADCAST_INTERVAL_MS;
+    const shouldBroadcastWatchers = now - runtime.lastWatcherBroadcastTime >= WATCHER_BROADCAST_INTERVAL_MS;
 
     if (shouldBroadcastPlayers) {
       runtime.lastPlayerBroadcastTime = now;
       const state = this.buildCurrentState();
       this.server.to(`game:${roomId}:players`).emit(SOCKET_EVENTS.GAME.STATE, state);
-      this.logNetworkSnapshot(roomId, 'players', state, PLAYER_BROADCAST_INTERVAL, now, runtime);
+      this.logNetworkSnapshot(roomId, 'players', state, PLAYER_BROADCAST_INTERVAL_MS, now, runtime);
       this.gameService.impactEvents = [];
     }
 
@@ -489,7 +490,7 @@ export class GameLoopService implements OnModuleDestroy {
         impactEvents: [...runtime.pendingWatcherImpactEvents],
       };
       this.server.to(`game:${roomId}:watchers`).emit(SOCKET_EVENTS.GAME.STATE, state);
-      this.logNetworkSnapshot(roomId, 'watchers', state, WATCHER_BROADCAST_INTERVAL, now, runtime);
+      this.logNetworkSnapshot(roomId, 'watchers', state, WATCHER_BROADCAST_INTERVAL_MS, now, runtime);
       runtime.pendingWatcherImpactEvents = [];
     }
   }

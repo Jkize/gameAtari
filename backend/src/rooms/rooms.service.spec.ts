@@ -1,6 +1,7 @@
 import { SESSION_MESSAGES, SOCKET_EVENTS } from '../common/socket-events';
 import { RoomDevelopmentSettings } from '../config/development-settings.service';
-import { MAX_PLAYERS, PROD_MIN_PLAYERS, RoomsService } from './rooms.service';
+import { MAX_PLAYERS, PROD_MIN_PLAYERS } from '../games/tanks/config/room.config';
+import { RoomsService } from './rooms.service';
 
 describe('RoomsService', () => {
   const createHarness = (devGameMode = false) => {
@@ -45,11 +46,11 @@ describe('RoomsService', () => {
     return { gameLoop, redis, server, roomEmit, watcherPresence, rooms };
   };
 
-  it('uses the configured 2-15 player limits and sends player 16 to another quick-play room', async () => {
+  it('uses the configured 2-16 player limits and sends player 17 to another quick-play room', async () => {
     jest.useFakeTimers();
     const { rooms } = createHarness(true);
 
-    for (let index = 1; index <= 16; index++) {
+    for (let index = 1; index <= 17; index++) {
       const socket = {
         id: `socket-${index}`,
         data: {},
@@ -62,9 +63,9 @@ describe('RoomsService', () => {
     }
 
     const list = rooms.list();
-    expect(MAX_PLAYERS).toBe(15);
+    expect(MAX_PLAYERS).toBe(16);
     expect(list).toHaveLength(2);
-    expect(list.map(room => room.playerCount).sort((a, b) => b - a)).toEqual([15, 1]);
+    expect(list.map(room => room.playerCount).sort((a, b) => b - a)).toEqual([16, 1]);
     jest.clearAllTimers();
     jest.useRealTimers();
   });
@@ -236,7 +237,7 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
-  it('shortens countdown to 10 seconds at 15 players and sends player 16 to another room', async () => {
+  it('shortens countdown to 10 seconds at 15 players and sends player 17 to another room', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms } = createHarness(false);
 
@@ -246,14 +247,14 @@ describe('RoomsService', () => {
     const firstRoom = rooms.roomForUser('user-1')!;
 
     jest.setSystemTime(5_000);
-    for (let index = 3; index <= 15; index++) {
+    for (let index = 3; index <= 16; index++) {
       await rooms.quickPlay(socket(index) as never, user(index));
     }
-    await rooms.quickPlay(socket(16) as never, user(16));
+    await rooms.quickPlay(socket(17) as never, user(17));
 
-    expect(firstRoom.players.size).toBe(15);
+    expect(firstRoom.players.size).toBe(16);
     expect(firstRoom.countdownEndsAt).toBe(15_000);
-    expect(rooms.roomForUser('user-16')!.id).not.toBe(firstRoom.id);
+    expect(rooms.roomForUser('user-17')!.id).not.toBe(firstRoom.id);
     jest.clearAllTimers();
     jest.useRealTimers();
   });

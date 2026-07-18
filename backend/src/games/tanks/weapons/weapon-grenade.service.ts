@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GameService } from '../game.service';
 import { Bullet } from '../types/bullet.types';
-import { applyObstacleDamage, isSoftCoverObstacle } from '../obstacle.config';
+import { applyObstacleDamage, isSoftCoverObstacle } from '../obstacle.utils';
 
 export interface GrenadeObstacleChange {
   id: string;

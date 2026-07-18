@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CollisionService } from '../collision.service';
 import { GameService } from '../game.service';
-import { LASER_CONFIG } from './weapon.config';
+import { LASER_CONFIG } from '../config/weapon.config';
 import { Bullet } from '../types/bullet.types';
 import { Obstacle } from '../types/map.types';
-import { applyObstacleDamage, isSoftCoverObstacle } from '../obstacle.config';
+import { applyObstacleDamage, isSoftCoverObstacle } from '../obstacle.utils';
 
 interface LaserSegment {
   x: number;

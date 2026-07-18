@@ -10,35 +10,20 @@ import { PowerUpSpawnService } from './power-up-spawn.service';
 import type { DangerZoneRuntimeState } from './danger-zone.service';
 import { DamageSource } from './events/elimination-event.types';
 import { EliminationService } from './events/elimination.service';
-import { PLAYER_HEALTH_REGEN_DELAY_MS, PLAYER_HEALTH_REGEN_PER_SECOND } from './player.config';
-
-const PLAYER_SPEED   = 200;  // px/sec
-const DASH_MULTIPLIER = 4;
-const DASH_DURATION = 300; // ms
-const DASH_COOLDOWN = 5000; // ms
-export const DESTROYED_BODY_TTL_MS = 10000;
-export const SHIELD_HP = 35;
-export const SHIELD_DURATION_MS = 3500;
-export const SHIELD_COOLDOWN_MS = 8000;
-const PLAYER_RADIUS  = 28;
-const PLAYER_HP      = 100;
-export const PLAYER_COLORS = [
-  0x00ff88, // neon green
-  0xff3b30, // red
-  0x3498db, // blue
-  0xf1c40f, // yellow
-  0x9b59b6, // purple
-  0xe67e22, // orange
-  0x1abc9c, // turquoise
-  0xff66cc, // pink
-  0xecf0f1, // off-white
-  0x2ecc71, // light green
-  0x00d9ff, // cyan
-  0xff0066, // magenta
-  0xc0392b, // dark red
-  0x95a5a6, // grey
-  0x8e44ad, // dark violet
-];
+import {
+  DASH_COOLDOWN_MS,
+  DASH_DURATION_MS,
+  DASH_MULTIPLIER,
+  PLAYER_COLORS,
+  PLAYER_HEALTH_REGEN_DELAY_MS,
+  PLAYER_HEALTH_REGEN_PER_SECOND,
+  PLAYER_HP,
+  PLAYER_RADIUS,
+  PLAYER_SPEED,
+  SHIELD_COOLDOWN_MS,
+  SHIELD_DURATION_MS,
+  SHIELD_HP,
+} from './config/player.config';
 
 @Injectable()
 export class GameService {
@@ -88,9 +73,9 @@ export class GameService {
       input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false, reload: false, shield: false },
       weapon: this.weaponService.createDefaultWeapon(),
       activePowerUp: undefined,
-      lastDashAt: -DASH_COOLDOWN,
+      lastDashAt: -DASH_COOLDOWN_MS,
       dashUntil: 0,
-      dashCooldown: DASH_COOLDOWN,
+      dashCooldown: DASH_COOLDOWN_MS,
       shieldHp: 0,
       shieldUntil: 0,
       lastShieldAt: -SHIELD_COOLDOWN_MS,
@@ -307,6 +292,6 @@ export class GameService {
     if (now - player.lastDashAt < player.dashCooldown) return;
 
     player.lastDashAt = now;
-    player.dashUntil = now + DASH_DURATION;
+    player.dashUntil = now + DASH_DURATION_MS;
   }
 }

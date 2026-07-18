@@ -7,10 +7,10 @@ import {
   DEFAULT_WEAPON_STATS,
   GRENADE_CONFIG,
   LASER_CONFIG,
-  POWER_UP_DEFINITIONS,
   SHOTGUN_CONFIG,
   TRIPLE_SHOT_CONFIG,
-} from './weapon.config';
+} from '../config/weapon.config';
+import { POWER_UP_DEFINITIONS } from '../config/power-up.config';
 
 @Injectable()
 export class WeaponService {
