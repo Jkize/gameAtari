@@ -38,7 +38,6 @@ export class RoomAccessDialogComponent implements OnChanges {
 
   name = '';
   password = '';
-  showPassword = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     const justOpened = changes['open']?.currentValue === true
@@ -47,7 +46,6 @@ export class RoomAccessDialogComponent implements OnChanges {
     if (!justOpened && !changedModeWhileOpen) return;
     this.name = '';
     this.password = '';
-    this.showPassword = false;
     setTimeout(() => this.nameInput?.nativeElement.focus());
   }
 

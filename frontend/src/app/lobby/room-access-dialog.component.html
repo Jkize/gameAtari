@@ -44,30 +44,25 @@
         [(ngModel)]="name"
       >
 
-      <label for="private-room-access-key">{{ 'lobby.privateRooms.password' | transloco }}</label>
-      <div class="password-field">
-        <input
-          id="private-room-access-key"
-          name="privateRoomAccessKey"
-          [type]="showPassword ? 'text' : 'password'"
-          minlength="4"
-          maxlength="32"
-          required
-          autocomplete="new-password"
-          data-lpignore="true"
-          data-1p-ignore="true"
-          [disabled]="pending"
-          [(ngModel)]="password"
-        >
-        <button
-          type="button"
-          class="password-toggle"
-          [attr.aria-label]="'lobby.privateRooms.togglePassword' | transloco"
-          (click)="showPassword = !showPassword"
-        >
-          <i [class]="showPassword ? 'ti ti-eye-off' : 'ti ti-eye'" aria-hidden="true"></i>
-        </button>
-      </div>
+      <label for="private-room-access-code">{{ 'lobby.privateRooms.password' | transloco }}</label>
+      <input
+        id="private-room-access-code"
+        name="privateRoomCode"
+        type="text"
+        minlength="4"
+        maxlength="32"
+        required
+        autocomplete="off"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        aria-describedby="private-room-access-code-hint"
+        [disabled]="pending"
+        [(ngModel)]="password"
+      >
+      <small id="private-room-access-code-hint" class="field-hint">
+        {{ 'lobby.privateRooms.accessCodeHint' | transloco }}
+      </small>
 
       @if (errorMessage) {
         <p class="error" role="alert">{{ errorMessage }}</p>
