@@ -2,6 +2,11 @@
   "name": "game-atari-backend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.16.0",
+  "engines": {
+    "node": "24.x",
+    "npm": "11.x"
+  },
   "scripts": {
     "build": "nest build",
     "build:watch": "nest build --watch",

@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:24.18.0-alpine AS build
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY src ./src
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm run prisma:generate \
     && npm run build
 
-FROM node:22-alpine AS production-dependencies
+FROM node:24.18.0-alpine AS production-dependencies
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -25,7 +25,7 @@ RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm ci --omit=dev
     && DATABASE_URL=postgresql://build:build@localhost:5432/build npm run prisma:generate \
     && npm cache clean --force
 
-FROM node:22-alpine AS runtime
+FROM node:24.18.0-alpine AS runtime
 
 WORKDIR /app
 
