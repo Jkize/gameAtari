@@ -24,11 +24,13 @@ export const envValidationSchema = Joi.object({
   MINT: Joi.string().allow('').default(''),
   DISTRIBUTOR_WALLET_PRIVATE_KEY: Joi.string().allow('').default(''),
   REWARD_PROCESSOR_ENABLED: Joi.boolean().default(true),
-  REWARD_PROCESSOR_INTERVAL_MS: Joi.number().integer().positive().default(5000),
+  REWARD_PROCESSOR_INTERVAL_MS: Joi.number().integer().min(15_000).default(15_000),
   REWARD_PROCESSOR_BATCH_SIZE: Joi.number().integer().min(1).max(100).default(10),
   REWARD_MAX_RETRIES: Joi.number().integer().min(1).default(10),
   REWARD_AMOUNT: Joi.number().min(0).default(1),
   REWARD_ASSET: Joi.string().default('TA_BETA'),
+  TELEMETRY_DIR: Joi.string().allow('').default(''),
+  TELEMETRY_INSTANCE_ID: Joi.string().max(120).optional(),
 }).custom((value, helpers) => {
   if (value.NODE_ENV === 'production') {
     if (value.DEV_GAME_MODE || value.DEV_INFRA_OPTIONAL || value.DEV_MANUAL_START) {

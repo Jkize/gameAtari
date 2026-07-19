@@ -14,6 +14,7 @@ const NAV_TABS: NavTab[] = [
   { path: '/matches/me', labelKey: 'nav.myMatches', roles: [EAuth.USER] },
   { path: '/matches/recent', labelKey: 'nav.recentMatches', roles: [EAuth.USER] },
   { path: '/users', labelKey: 'nav.users', roles: [EAuth.ADMIN] },
+  { path: '/stats', labelKey: 'nav.serverStats', roles: [EAuth.ADMIN] },
 ];
 
 @Injectable({ providedIn: 'root' })

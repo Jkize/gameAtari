@@ -25,13 +25,18 @@ export class RewardProcessorService {
 
   /** Reconciles any pending `SUBMITTED` rewards, then atomically claims and processes one batch of payable rewards. Returns the number processed. */
   async processBatch(): Promise<number> {
-    await this.reconciler.reconcileSubmitted(this.config.rewardProcessorBatchSize());
+    const reconciled = await this.reconciler.reconcileSubmitted(this.config.rewardProcessorBatchSize());
     const claimed = await this.rewards.claimPendingRewards(
       this.config.rewardProcessorBatchSize(),
       this.config.rewardMaxRetries(),
     );
     for (const reward of claimed) await this.processReward(reward);
-    return claimed.length;
+    return reconciled + claimed.length;
+  }
+
+  /** Returns when already-known automatic work should next run; used to avoid idle polling. */
+  nextAutomaticWorkAt(): Promise<Date | null> {
+    return this.rewards.nextAutomaticWorkAt();
   }
 
   /** Operator action: clears a reward's manual-review/failed state so the next batch picks it back up. */

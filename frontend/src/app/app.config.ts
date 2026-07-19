@@ -5,6 +5,7 @@ import { provideTransloco } from '@jsverse/transloco';
 import { routes } from './app.routes';
 import { TranslocoHttpLoader } from './transloco-loader';
 import { provideServiceWorker } from '@angular/service-worker';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import {
   APP_LANGUAGES,
   applyDocumentLanguage,
@@ -19,6 +20,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(),
+    provideCharts(withDefaultRegisterables()),
     provideTransloco({
       config: {
         availableLangs: APP_LANGUAGES.map(language => language.code),

@@ -14,7 +14,7 @@ export const REWARD_TIME_ZONE = 'America/Bogota';
 /** Env var name used to toggle reward processing on/off. */
 export const REWARDS_ENABLED_ENV = 'REWARDS_ENABLED';
 /** Default interval for the reward processor polling loop. Can be overridden with `REWARD_PROCESSOR_INTERVAL_MS`. */
-export const DEFAULT_REWARD_PROCESSOR_INTERVAL_MS = 30_000;
+export const DEFAULT_REWARD_PROCESSOR_INTERVAL_MS = 15_000;
 /** Default number of payable rewards claimed per processor tick. Can be overridden with `REWARD_PROCESSOR_BATCH_SIZE`. */
 export const DEFAULT_REWARD_PROCESSOR_BATCH_SIZE = 10;
 /** Default max automatic retries before a reward moves to manual review. Can be overridden with `REWARD_MAX_RETRIES`. */

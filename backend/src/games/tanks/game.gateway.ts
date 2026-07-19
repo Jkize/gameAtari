@@ -22,6 +22,7 @@ import { PlayerInput } from './types/player.types';
 import { SocketRateLimiterService } from './socket-rate-limiter.service';
 import { GameEventPublisherService } from './events/game-event-publisher.service';
 import { WatcherPresenceService } from './events/watcher-presence.service';
+import { RuntimeTelemetryService } from '../../runtime/runtime-telemetry.service';
 
 type AuthenticatedSocket = Socket & {
   data: Socket['data'] & {
@@ -39,6 +40,7 @@ type AuthenticatedSocket = Socket & {
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
+  private readonly statsSubscriptions = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private readonly tokens: TokensService,
@@ -49,6 +51,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly rateLimiter: SocketRateLimiterService,
     private readonly eventPublisher: GameEventPublisherService,
     private readonly watcherPresence: WatcherPresenceService,
+    private readonly telemetry: RuntimeTelemetryService,
   ) {}
 
   afterInit(server: Server): void {
@@ -107,6 +110,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleDisconnect(client: AuthenticatedSocket): void {
+    this.unsubscribeAdminStats(client);
     this.rateLimiter.removeConnection(this.clientIp(client), client.id);
     this.watcherPresence.disconnected(client);
     const auth = client.data.auth;
@@ -117,6 +121,32 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           if (roomId) this.watcherPresence.refresh(roomId);
         });
     }
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.ADMIN_STATS.SUBSCRIBE)
+  subscribeAdminStats(@ConnectedSocket() client: AuthenticatedSocket): void {
+    if (client.data.auth.role !== UserRole.ADMIN) {
+      client.emit(SOCKET_EVENTS.ADMIN_STATS.ERROR, { code: 'FORBIDDEN' });
+      return;
+    }
+    this.unsubscribeAdminStats(client);
+    client.emit(SOCKET_EVENTS.ADMIN_STATS.UPDATE, {
+      latest: this.telemetry.latest(),
+      recent: this.telemetry.recent(),
+    });
+    const timer = setInterval(() => {
+      const latest = this.telemetry.latest();
+      if (latest) client.emit(SOCKET_EVENTS.ADMIN_STATS.UPDATE, { latest });
+    }, 1_000);
+    timer.unref();
+    this.statsSubscriptions.set(client.id, timer);
+  }
+
+  @SubscribeMessage(SOCKET_EVENTS.ADMIN_STATS.UNSUBSCRIBE)
+  unsubscribeAdminStats(@ConnectedSocket() client: AuthenticatedSocket): void {
+    const timer = this.statsSubscriptions.get(client.id);
+    if (timer) clearInterval(timer);
+    this.statsSubscriptions.delete(client.id);
   }
 
   @SubscribeMessage(SOCKET_EVENTS.LOBBY.LIST_ROOMS)

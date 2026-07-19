@@ -26,6 +26,7 @@ describe('GameGateway connection authentication errors', () => {
       rateLimiter as never,
       eventPublisher as never,
       watcherPresence as never,
+      { latest: jest.fn(), recent: jest.fn() } as never,
     );
     const server = {
       use: jest.fn((handler: typeof middleware) => {

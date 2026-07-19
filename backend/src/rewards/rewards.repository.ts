@@ -312,6 +312,25 @@ export class RewardsRepository {
     `;
   }
 
+  /** Finds the next due automatic payment/reconciliation without changing reward state. */
+  async nextAutomaticWorkAt(): Promise<Date | null> {
+    const rows = await this.prisma.$queryRaw<Array<{ dueAt: Date | null }>>`
+      SELECT MIN(
+        CASE
+          WHEN "status" IN ('PENDING', 'SUBMITTED') THEN CURRENT_TIMESTAMP
+          WHEN "status" = 'FAILED' AND "retryable" = true
+            THEN COALESCE("nextRetryAt", CURRENT_TIMESTAMP)
+          ELSE NULL
+        END
+      ) AS "dueAt"
+      FROM "RewardLog"
+      WHERE
+        "status" IN ('PENDING', 'SUBMITTED')
+        OR ("status" = 'FAILED' AND "retryable" = true)
+    `;
+    return rows[0]?.dueAt ?? null;
+  }
+
   /** Records that a transfer transaction was sent on-chain but not yet confirmed. */
   async markSubmitted(id: string, signature: string): Promise<void> {
     await this.prisma.rewardLog.update({

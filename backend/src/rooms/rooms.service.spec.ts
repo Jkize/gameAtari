@@ -3,6 +3,8 @@ import { RoomDevelopmentSettings } from '../config/development-settings.service'
 import {
   MAX_PLAYERS,
   PRIVATE_ROOM_COUNTDOWN_SECONDS,
+  PRIVATE_ROOM_CLOSING_WARNING_MS,
+  PRIVATE_ROOM_INACTIVITY_MS,
   PROD_MIN_PLAYERS,
   RECONNECT_GRACE_MS,
   ROUND_RESET_MS,
@@ -46,10 +48,15 @@ describe('RoomsService', () => {
       stopWatching: jest.fn(),
       sendCurrent: jest.fn(),
     };
+    const runtimeActivity = {
+      playerConnected: jest.fn(),
+      playerDisconnected: jest.fn(),
+    };
     const rooms = new RoomsService(
       gameLoop as never,
       redis as never,
       watcherPresence as never,
+      runtimeActivity as never,
       developmentSettings as never,
     );
     rooms.setServer(server as never);
@@ -410,7 +417,7 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
-  it('warns at 90 seconds and closes an unstarted private room at 2 minutes', async () => {
+  it('warns before closing an inactive private room', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
     const { rooms, roomEmit, server } = createHarness(false);
     const playerSocket = {
@@ -423,14 +430,14 @@ describe('RoomsService', () => {
     server.sockets.sockets.set(playerSocket.id, playerSocket);
     const state = await rooms.createPrivate(playerSocket as never, user(1), 'Temporary Arena', 'secret');
 
-    expect(state.expiresAt).toBe(121_000);
-    jest.advanceTimersByTime(90_000);
+    expect(state.expiresAt).toBe(1_000 + PRIVATE_ROOM_INACTIVITY_MS);
+    jest.advanceTimersByTime(PRIVATE_ROOM_INACTIVITY_MS - PRIVATE_ROOM_CLOSING_WARNING_MS);
     expect(roomEmit).toHaveBeenCalledWith(SOCKET_EVENTS.ROOM.CLOSING, expect.objectContaining({
       roomId: state.id,
-      remainingSeconds: 30,
+      remainingSeconds: PRIVATE_ROOM_CLOSING_WARNING_MS / 1000,
     }));
 
-    jest.advanceTimersByTime(30_000);
+    jest.advanceTimersByTime(PRIVATE_ROOM_CLOSING_WARNING_MS);
     expect(rooms.roomForUser('user-1')).toBeUndefined();
     expect(playerSocket.leave).toHaveBeenCalledWith(`game:${state.id}:players`);
     expect(playerSocket.emit).toHaveBeenCalledWith(SOCKET_EVENTS.ROOM.CLOSED, {

@@ -228,3 +228,31 @@ model DailyRewardLimit {
   @@index([walletAddress, rewardDate])
   @@index([mint, rewardDate])
 }
+
+model NodeRuntimeMetricMinute {
+  id                    String   @id @default(uuid()) @db.Uuid
+  instanceId            String
+  bucketAt              DateTime
+  eligibleSamples       Int
+  cpuPercentAverage     Float
+  cpuPercentMaximum     Float
+  rssMbAverage          Float
+  rssMbMaximum          Float
+  heapUsedMbAverage     Float
+  heapUsedMbMaximum     Float
+  availableMemoryMbAvg  Float
+  eventLoopUtilAvg      Float
+  eventLoopUtilMax      Float
+  eventLoopDelayMsAvg   Float
+  eventLoopDelayMsMax   Float
+  tickMsAverage         Float
+  tickMsMaximum         Float
+  connectedPlayersMax   Int
+  connectedSocketsMax   Int
+  roomsMax              Int
+  activeMatchesMax      Int
+  createdAt             DateTime @default(now())
+
+  @@unique([instanceId, bucketAt])
+  @@index([bucketAt])
+}

@@ -24,6 +24,7 @@ import { RedisService } from '../redis/redis.service';
 import { RoomRequestError } from './room.errors';
 import { displayRoomName, normalizeRoomName } from './room-name.util';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
+import { RuntimeActivityService } from '../runtime/runtime-activity.service';
 
 const scryptAsync = promisify(scrypt);
 
@@ -40,6 +41,7 @@ export class RoomsService implements OnModuleDestroy {
     private readonly gameLoop: GameLoopService,
     private readonly redis: RedisService,
     private readonly watcherPresence: WatcherPresenceService,
+    private readonly runtimeActivity: RuntimeActivityService,
     private readonly developmentSettings?: DevelopmentSettingsService,
   ) {}
 
@@ -125,6 +127,7 @@ export class RoomsService implements OnModuleDestroy {
       username: auth.username,
       socketId: socket.id,
     });
+    this.runtimeActivity.playerConnected(auth.userId);
     this.watcherPresence.stopWatching(socket);
     this.userRoom.set(auth.userId, room.id);
     socket.join(this.playerSocketRoom(room.id));
@@ -237,6 +240,7 @@ export class RoomsService implements OnModuleDestroy {
       socketId: socket.id,
     };
     room.players.set(auth.userId, member);
+    this.runtimeActivity.playerConnected(auth.userId);
     this.watcherPresence.stopWatching(socket);
     this.userRoom.set(auth.userId, room.id);
     socket.join(this.playerSocketRoom(room.id));
@@ -255,6 +259,7 @@ export class RoomsService implements OnModuleDestroy {
       this.server.sockets.sockets.get(member.socketId)?.leave(this.playerSocketRoom(room.id));
     }
     room.players.delete(userId);
+    this.runtimeActivity.playerDisconnected(userId);
     if (room.type === 'private' && room.adminUserId === userId) {
       room.adminUserId = room.players.keys().next().value ?? null;
     }
@@ -283,6 +288,7 @@ export class RoomsService implements OnModuleDestroy {
     if (!room || !member || member.socketId !== socketId) return;
     member.socketId = null;
     member.disconnectedAt = Date.now();
+    this.runtimeActivity.playerDisconnected(userId);
     await this.redis.del(`presence:${userId}`);
     if (room.type === 'private') {
       if (
@@ -385,6 +391,7 @@ export class RoomsService implements OnModuleDestroy {
     if (!member) throw new NotFoundException('Room membership not found');
     const previousSocketId = member.socketId;
     member.socketId = socket.id;
+    this.runtimeActivity.playerConnected(userId);
     this.watcherPresence.stopWatching(socket);
     member.disconnectedAt = undefined;
     socket.data.roomId = room.id;
@@ -547,6 +554,7 @@ export class RoomsService implements OnModuleDestroy {
     this.clearRoomTimers(room);
     if (room.normalizedName) this.privateRoomsByName.delete(room.normalizedName);
     for (const userId of room.players.keys()) {
+      this.runtimeActivity.playerDisconnected(userId);
       this.userRoom.delete(userId);
       void this.redis.del(`presence:${userId}`);
     }
@@ -563,6 +571,7 @@ export class RoomsService implements OnModuleDestroy {
   private releaseFinishedRoom(room: GameRoom): void {
     const socketRoom = this.playerSocketRoom(room.id);
     for (const member of room.players.values()) {
+      this.runtimeActivity.playerDisconnected(member.userId);
       this.userRoom.delete(member.userId);
       void this.redis.del(`presence:${member.userId}`);
       if (!member.socketId) continue;
@@ -635,6 +644,7 @@ export class RoomsService implements OnModuleDestroy {
     for (const [userId, member] of room.players) {
       if (member.socketId !== null) continue;
       room.players.delete(userId);
+      this.runtimeActivity.playerDisconnected(userId);
       this.userRoom.delete(userId);
       void this.redis.del(`presence:${userId}`);
     }

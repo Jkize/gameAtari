@@ -8,6 +8,7 @@ import { RewardsHistoryController } from './rewards-history.controller';
 import { RewardsHistoryService } from './rewards-history.service';
 import { RewardsRepository } from './rewards.repository';
 import { RewardsService } from './rewards.service';
+import { RuntimeModule } from '../runtime/runtime.module';
 
 /**
  * Owns all reward eligibility, payment, history and retry/reconciliation providers.
@@ -15,7 +16,7 @@ import { RewardsService } from './rewards.service';
  * re-declaring these providers, to avoid duplicate scheduler/processor instances.
  */
 @Module({
-  imports: [AuthModule, SolanaModule],
+  imports: [AuthModule, SolanaModule, RuntimeModule],
   controllers: [RewardsHistoryController],
   providers: [
     RewardsService,
@@ -25,6 +26,6 @@ import { RewardsService } from './rewards.service';
     RewardProcessorService,
     RewardProcessorScheduler,
   ],
-  exports: [RewardsService, RewardProcessorService],
+  exports: [RewardsService, RewardProcessorService, RewardProcessorScheduler],
 })
 export class RewardsModule {}

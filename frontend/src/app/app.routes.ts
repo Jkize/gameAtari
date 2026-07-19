@@ -80,6 +80,18 @@ export const routes: Routes = [
           import('./users/users-list.component').then((module) => module.UsersListComponent),
       },
       {
+        path: 'stats',
+        canActivate: [roleGuard],
+        data: { roles: [EAuth.ADMIN] },
+        loadComponent: () =>
+          import('./admin-stats/admin-stats.component').then((module) => module.AdminStatsComponent),
+      },
+      {
+        path: 'admin/stats',
+        redirectTo: 'stats',
+        pathMatch: 'full',
+      },
+      {
         path: 'matches/:matchId',
         loadComponent: () =>
           import('./rewards/match-detail.component').then((module) => module.MatchDetailComponent),

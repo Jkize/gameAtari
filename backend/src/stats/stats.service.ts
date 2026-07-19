@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GameLoopService } from '../games/tanks/game-loop.service';
 import { RoomsService } from '../rooms/rooms.service';
+import { RuntimeTelemetryService } from '../runtime/runtime-telemetry.service';
 
 export interface PublicStats {
   playersOnline: number;
@@ -28,7 +29,10 @@ export class StatsService {
   constructor(
     private readonly rooms: RoomsService,
     private readonly gameLoop: GameLoopService,
-  ) {}
+    private readonly telemetry: RuntimeTelemetryService,
+  ) {
+    this.telemetry.setContextProvider(() => this.runtimeContext());
+  }
 
   getPublicStats(): PublicStats {
     const now = Date.now();
@@ -61,6 +65,29 @@ export class StatsService {
       },
       tick: this.gameLoop.getTickMetrics(),
       uptimeSeconds: Math.floor(process.uptime()),
+    };
+  }
+
+  getLiveStats() {
+    return { latest: this.telemetry.latest(), recent: this.telemetry.recent() };
+  }
+
+  getHistory(from: Date, to: Date) {
+    return this.telemetry.history(from, to);
+  }
+
+  flushHistory() {
+    return this.telemetry.flushCompletedBatches();
+  }
+
+  private runtimeContext() {
+    const roomList = this.rooms.list();
+    return {
+      connectedSockets: this.rooms.getSocketCount(),
+      waitingRooms: roomList.filter(r => r.status === 'waiting' || r.status === 'countdown').length,
+      playingRooms: roomList.filter(r => r.status === 'in_game').length,
+      totalRooms: roomList.length,
+      tick: this.gameLoop.getTickMetrics(),
     };
   }
 }

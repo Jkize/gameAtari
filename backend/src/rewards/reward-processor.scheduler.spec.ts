@@ -7,8 +7,15 @@ jest.mock('@solana/web3.js', () => ({
 import { SolanaConfigService } from '../solana/solana-config.service';
 import { RewardProcessorScheduler } from './reward-processor.scheduler';
 import { RewardProcessorService } from './reward-processor.service';
+import { RuntimeActivityService } from '../runtime/runtime-activity.service';
+import { Logger } from '@nestjs/common';
 
 describe('RewardProcessorScheduler', () => {
+  const activity = {
+    hasRecentMultiplayerActivity: jest.fn(() => true),
+  } as unknown as RuntimeActivityService;
+
+  afterEach(() => jest.restoreAllMocks());
   it('does not overlap ticks', async () => {
     let release!: () => void;
     const processor = {
@@ -22,6 +29,7 @@ describe('RewardProcessorScheduler', () => {
     const scheduler = new RewardProcessorScheduler(
       config as unknown as SolanaConfigService,
       processor as unknown as RewardProcessorService,
+      activity,
     );
 
     const first = scheduler.tick();
@@ -44,6 +52,7 @@ describe('RewardProcessorScheduler', () => {
     const scheduler = new RewardProcessorScheduler(
       config as unknown as SolanaConfigService,
       processor as unknown as RewardProcessorService,
+      activity,
     );
 
     await scheduler.tick();
@@ -62,6 +71,7 @@ describe('RewardProcessorScheduler', () => {
     const scheduler = new RewardProcessorScheduler(
       config as unknown as SolanaConfigService,
       processor as unknown as RewardProcessorService,
+      activity,
     );
 
     scheduler.onModuleInit();
@@ -71,5 +81,31 @@ describe('RewardProcessorScheduler', () => {
     expect(config.rewardProcessorIntervalMs).not.toHaveBeenCalled();
     scheduler.onModuleDestroy();
     jest.useRealTimers();
+  });
+
+  it('reschedules known work when processing fails', async () => {
+    const processor = {
+      processBatch: jest.fn(async () => { throw new Error('database unavailable'); }),
+    };
+    const config = {
+      rewardsEnabled: jest.fn(() => true),
+      rewardProcessorEnabled: jest.fn(() => true),
+      rewardProcessorIntervalMs: jest.fn(() => 15_000),
+    };
+    const scheduler = new RewardProcessorScheduler(
+      config as unknown as SolanaConfigService,
+      processor as unknown as RewardProcessorService,
+      activity,
+    );
+    const schedule = jest.spyOn(scheduler as never, 'scheduleKnownWork' as never).mockImplementation();
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    (scheduler as unknown as { trackingKnownWork: boolean }).trackingKnownWork = true;
+    const before = Date.now();
+
+    await scheduler.tick();
+
+    expect(schedule).toHaveBeenCalledWith(expect.any(Date));
+    const retryAt = schedule.mock.calls[0][0] as Date;
+    expect(retryAt.getTime()).toBeGreaterThanOrEqual(before + 15_000);
   });
 });

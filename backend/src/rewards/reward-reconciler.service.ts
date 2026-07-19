@@ -16,9 +16,10 @@ export class RewardReconcilerService {
   ) {}
 
   /** Reconciles a batch of `SUBMITTED` rewards, oldest first. */
-  async reconcileSubmitted(batchSize: number): Promise<void> {
+  async reconcileSubmitted(batchSize: number): Promise<number> {
     const rewards = await this.rewards.findSubmittedRewards(batchSize);
     for (const reward of rewards) await this.reconcile(reward);
+    return rewards.length;
   }
 
   /** Verifies a single reward's submitted transaction on-chain and updates the `RewardLog` to `SENT`, `FAILED`, or `MANUAL_REVIEW` accordingly. */

@@ -48,6 +48,7 @@ describe('GameGateway private room contract', () => {
       rateLimiter as never,
       {} as never,
       {} as never,
+      { latest: jest.fn(), recent: jest.fn() } as never,
     );
     const client = {
       id: 'socket-1',

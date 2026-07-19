@@ -9,6 +9,8 @@ import { GameSessionsService } from '../games/tanks/runtime/game-sessions.servic
 import { RewardsService } from '../rewards/rewards.service';
 import { MatchResultsRepository } from './match-results.repository';
 import { MatchesService } from './matches.service';
+import { RewardProcessorScheduler } from '../rewards/reward-processor.scheduler';
+import { RuntimeTelemetryService } from '../runtime/runtime-telemetry.service';
 
 describe('MatchesService', () => {
   const userId = '00000000-0000-4000-8000-000000000001';
@@ -39,16 +41,20 @@ describe('MatchesService', () => {
       registerMatchRewards: jest.fn(async () => undefined),
       registerDisabledMatchRewards: jest.fn(async () => undefined),
     };
+    const rewardScheduler = { requestProcessing: jest.fn() };
+    const telemetry = { checkpointMatchMinuteAndFlush: jest.fn(async () => 0) };
     const service = new MatchesService(
       sessions as unknown as GameSessionsService,
       matchResults as unknown as MatchResultsRepository,
       rewards as unknown as RewardsService,
+      rewardScheduler as unknown as RewardProcessorScheduler,
+      telemetry as unknown as RuntimeTelemetryService,
     );
-    return { matchResults, rewards, service, state };
+    return { matchResults, rewards, rewardScheduler, telemetry, service, state };
   };
 
   it('persists a completed match and registers top placement rewards', async () => {
-    const { matchResults, rewards, service } = createHarness();
+    const { matchResults, rewards, telemetry, service } = createHarness();
 
     const result = await service.persist('room-1');
 
@@ -62,6 +68,7 @@ describe('MatchesService', () => {
       userId,
       placement: 1,
     }]);
+    expect(telemetry.checkpointMatchMinuteAndFlush).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the match persisted when reward registration fails', async () => {
@@ -75,6 +82,14 @@ describe('MatchesService', () => {
     expect(state.persisted).toBe(true);
     expect(log).toHaveBeenCalled();
     log.mockRestore();
+  });
+
+  it('does not delay match persistence while telemetry is written', async () => {
+    const { telemetry, service } = createHarness();
+    telemetry.checkpointMatchMinuteAndFlush.mockReturnValue(new Promise<number>(() => undefined));
+
+    await expect(service.persist('room-1')).resolves.toBe('match-1');
+    expect(telemetry.checkpointMatchMinuteAndFlush).toHaveBeenCalledTimes(1);
   });
 
   it('persists private matches without registering rewards', async () => {

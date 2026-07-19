@@ -38,6 +38,9 @@ COPY --chown=node:node --from=production-dependencies /app/prisma ./prisma
 COPY --chown=node:node --from=production-dependencies /app/prisma.config.ts ./prisma.config.ts
 COPY --chown=node:node --from=build /app/dist ./dist
 
+RUN mkdir -p /app/data/telemetry /app/data/rewards \
+    && chown -R node:node /app/data
+
 EXPOSE 3000
 
 USER node

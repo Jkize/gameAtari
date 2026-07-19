@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GameSessionsService } from '../games/tanks/runtime/game-sessions.service';
 import { RewardsService } from '../rewards/rewards.service';
+import { RewardProcessorScheduler } from '../rewards/reward-processor.scheduler';
+import { RuntimeTelemetryService } from '../runtime/runtime-telemetry.service';
 import { REWARD_AMOUNTS_BY_PLACEMENT } from '../rewards/rewards.config';
 import { RewardCandidate, RewardedPlacement } from '../rewards/rewards.types';
 import { MatchResultsRepository } from './match-results.repository';
@@ -13,6 +15,8 @@ export class MatchesService {
     private readonly sessions: GameSessionsService,
     private readonly matchResults: MatchResultsRepository,
     private readonly rewards: RewardsService,
+    private readonly rewardScheduler: RewardProcessorScheduler,
+    private readonly telemetry: RuntimeTelemetryService,
   ) {}
 
   async persist(roomId: string): Promise<string | null> {
@@ -74,6 +78,10 @@ export class MatchesService {
           error instanceof Error ? error.stack : undefined,
         );
       }
+      this.rewardScheduler.requestProcessing();
+      void this.telemetry.checkpointMatchMinuteAndFlush().catch(error => {
+        this.logger.warn(`Telemetry flush deferred for match=${matchId}: ${error instanceof Error ? error.message : error}`);
+      });
       return matchId;
     } catch (error) {
       state.persisted = false;

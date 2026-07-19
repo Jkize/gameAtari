@@ -21,9 +21,10 @@ import { DangerZoneService } from './danger-zone.service';
 import { EliminationService } from './events/elimination.service';
 import { GameEventPublisherService } from './events/game-event-publisher.service';
 import { WatcherPresenceService } from './events/watcher-presence.service';
+import { RuntimeModule } from '../../runtime/runtime.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, RewardsModule],
+  imports: [AuthModule, UsersModule, RewardsModule, RuntimeModule],
   providers: [
     GameGateway,
     GameService,

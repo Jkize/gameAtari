@@ -1,0 +1,140 @@
+<section class="ui-page ui-page--wide stats-page">
+  <header class="page-header">
+    <div>
+      <p class="ui-eyebrow">{{ 'adminStats.eyebrow' | transloco }}</p>
+      <h1>{{ 'adminStats.title' | transloco }}</h1>
+      <p>{{ 'adminStats.subtitle' | transloco }}</p>
+    </div>
+    @if (activeView() === 'realtime') {
+      <span class="live-indicator"><i></i>{{ 'adminStats.live' | transloco }}</span>
+    }
+  </header>
+
+  <nav class="stats-tabs" [attr.aria-label]="'adminStats.views' | transloco">
+    <button
+      type="button"
+      class="tab-button"
+      [class.active]="activeView() === 'realtime'"
+      [attr.aria-current]="activeView() === 'realtime' ? 'page' : null"
+      (click)="selectView('realtime')"
+    >
+      <i class="ti ti-activity" aria-hidden="true"></i>
+      {{ 'adminStats.realtime' | transloco }}
+    </button>
+    <button
+      type="button"
+      class="tab-button"
+      [class.active]="activeView() === 'history'"
+      [attr.aria-current]="activeView() === 'history' ? 'page' : null"
+      (click)="selectView('history')"
+    >
+      <i class="ti ti-history" aria-hidden="true"></i>
+      {{ 'adminStats.history' | transloco }}
+    </button>
+  </nav>
+
+  @if (activeView() === 'realtime') {
+    @if (latest(); as current) {
+      <div class="summary-grid">
+        <article><span>{{ 'adminStats.metrics.cpu' | transloco }}</span><strong>{{ current.cpuPercent.toFixed(1) }}%</strong></article>
+        <article><span>{{ 'adminStats.metrics.rss' | transloco }}</span><strong>{{ current.rssMb.toFixed(0) }} MB</strong></article>
+        <article><span>{{ 'adminStats.players' | transloco }}</span><strong>{{ current.connectedPlayers }}</strong></article>
+        <article><span>{{ 'adminStats.matches' | transloco }}</span><strong>{{ current.playingRooms }}</strong></article>
+        <article><span>{{ 'adminStats.metrics.eventLoop' | transloco }}</span><strong>{{ current.eventLoopDelayMs.toFixed(1) }} ms</strong></article>
+        <article><span>{{ 'adminStats.metrics.uptime' | transloco }}</span><strong>{{ (current.uptimeSeconds / 3600).toFixed(1) }} h</strong></article>
+      </div>
+    } @else {
+      <div class="empty">{{ 'adminStats.waiting' | transloco }}</div>
+    }
+
+    <div class="charts-grid">
+      <article class="chart-card"><h2>{{ 'adminStats.charts.cpu' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="cpuChart()" [options]="chartOptions"></canvas></div></article>
+      <article class="chart-card"><h2>{{ 'adminStats.charts.memory' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="memoryChart()" [options]="chartOptions"></canvas></div></article>
+      <article class="chart-card"><h2>{{ 'adminStats.charts.processLatency' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="loopChart()" [options]="chartOptions"></canvas></div></article>
+      <article class="chart-card"><h2>{{ 'adminStats.charts.gameActivity' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="activityChart()" [options]="chartOptions"></canvas></div></article>
+    </div>
+  } @else {
+    <section class="history-toolbar">
+      <div>
+        <h2>{{ 'adminStats.historyTitle' | transloco }}</h2>
+        <p>{{ 'adminStats.historyHint' | transloco }}</p>
+      </div>
+      <div class="history-controls">
+        <div class="range-selector" [attr.aria-label]="'adminStats.historyRange' | transloco">
+          <button type="button" [class.active]="historyHours() === 24" (click)="loadHistory(24)">{{ 'adminStats.ranges.hours24' | transloco }}</button>
+          <button type="button" [class.active]="historyHours() === 168" (click)="loadHistory(168)">{{ 'adminStats.ranges.days7' | transloco }}</button>
+          <button type="button" [class.active]="historyHours() === 720" (click)="loadHistory(720)">{{ 'adminStats.ranges.days30' | transloco }}</button>
+        </div>
+        <button type="button" class="secondary" (click)="loadHistory()" [disabled]="historyLoading()">
+          <i class="ti ti-refresh" aria-hidden="true"></i>
+          {{ 'adminStats.refresh' | transloco }}
+        </button>
+        <button type="button" class="secondary" (click)="flush()">
+          {{ 'adminStats.flush' | transloco }}
+        </button>
+      </div>
+    </section>
+
+    @if (message(); as statusMessage) {
+      <p class="message">{{ statusMessage.key | transloco: statusMessage.params }}</p>
+    }
+
+    @if (historyLoading()) {
+      <div class="empty">{{ 'adminStats.loadingHistory' | transloco }}</div>
+    } @else if (historical().length === 0) {
+      <div class="empty">
+        <strong>{{ 'adminStats.emptyHistory' | transloco }}</strong>
+        <span>{{ 'adminStats.emptyHistoryHint' | transloco }}</span>
+      </div>
+    } @else {
+      <div class="summary-grid history-summary">
+        <article><span>{{ 'adminStats.recordedPeriods' | transloco }}</span><strong>{{ historySummary().periods }}</strong></article>
+        <article><span>{{ 'adminStats.metrics.cpuMaximum' | transloco }}</span><strong>{{ historySummary().cpuMaximum.toFixed(1) }}%</strong></article>
+        <article><span>{{ 'adminStats.metrics.rssMaximum' | transloco }}</span><strong>{{ historySummary().rssMaximum.toFixed(0) }} MB</strong></article>
+        <article><span>{{ 'adminStats.maxPlayers' | transloco }}</span><strong>{{ historySummary().playersMaximum }}</strong></article>
+        <article><span>{{ 'adminStats.maxMatches' | transloco }}</span><strong>{{ historySummary().matchesMaximum }}</strong></article>
+      </div>
+
+      <div class="charts-grid">
+        <article class="chart-card"><h2>{{ 'adminStats.charts.cpuHistory' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="historicalCpuChart()" [options]="chartOptions"></canvas></div></article>
+        <article class="chart-card"><h2>{{ 'adminStats.charts.memoryHistory' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="historicalMemoryChart()" [options]="chartOptions"></canvas></div></article>
+        <article class="chart-card"><h2>{{ 'adminStats.charts.eventLoopHistory' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="historicalLoopChart()" [options]="chartOptions"></canvas></div></article>
+        <article class="chart-card"><h2>{{ 'adminStats.charts.activityHistory' | transloco }}</h2><div class="chart"><canvas baseChart type="line" [data]="historicalActivityChart()" [options]="chartOptions"></canvas></div></article>
+      </div>
+
+      <article class="history-table-card">
+        <h2>{{ 'adminStats.recentBuckets' | transloco }}</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ 'adminStats.table.period' | transloco }}</th>
+                <th>{{ 'adminStats.table.instance' | transloco }}</th>
+                <th>{{ 'adminStats.table.samples' | transloco }}</th>
+                <th>{{ 'adminStats.table.cpuAverage' | transloco }}</th>
+                <th>{{ 'adminStats.table.cpuMaximum' | transloco }}</th>
+                <th>{{ 'adminStats.table.rss' | transloco }}</th>
+                <th>{{ 'adminStats.table.players' | transloco }}</th>
+                <th>{{ 'adminStats.table.matches' | transloco }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of historical().slice(-50).reverse(); track row.id) {
+                <tr>
+                  <td>{{ row.bucketAt | date:'short' }}</td>
+                  <td>{{ row.instanceId }}</td>
+                  <td>{{ row.eligibleSamples }}</td>
+                  <td>{{ row.cpuPercentAverage.toFixed(1) }}%</td>
+                  <td>{{ row.cpuPercentMaximum.toFixed(1) }}%</td>
+                  <td>{{ row.rssMbAverage.toFixed(0) }} MB</td>
+                  <td>{{ row.connectedPlayersMax }}</td>
+                  <td>{{ row.activeMatchesMax }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+    }
+  }
+</section>

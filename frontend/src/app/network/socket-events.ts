@@ -51,6 +51,12 @@ export const SOCKET_EVENTS = {
     PING: 'network:ping',
     PONG: 'network:pong',
   },
+  ADMIN_STATS: {
+    SUBSCRIBE: 'admin:stats:subscribe',
+    UPDATE: 'admin:stats:update',
+    UNSUBSCRIBE: 'admin:stats:unsubscribe',
+    ERROR: 'admin:stats:error',
+  },
 } as const;
 
 export const SESSION_REASONS = {
