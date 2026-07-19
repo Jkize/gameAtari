@@ -15,6 +15,8 @@ export const SOCKET_EVENTS = {
     COUNTDOWN_STARTED: 'room:countdownStarted',
     COUNTDOWN_UPDATED: 'room:countdownUpdated',
     COUNTDOWN_CANCELLED: 'room:countdownCancelled',
+    CLOSING: 'room:closing',
+    CLOSED: 'room:closed',
     RETURNED_TO_LOBBY: 'room:returnedToLobby',
   },
   GAME: {

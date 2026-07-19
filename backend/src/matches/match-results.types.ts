@@ -11,6 +11,7 @@ export interface CompletedMatchPlayerResult {
 
 export interface CompletedMatchResult {
   roomId: string;
+  rewardsEligible: boolean;
   mapName?: string;
   winnerUserId: string | null;
   startedAt: Date;

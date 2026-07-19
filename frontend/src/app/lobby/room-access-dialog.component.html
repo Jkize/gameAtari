@@ -1,0 +1,88 @@
+@if (open) {
+  <div class="room-dialog-backdrop" role="presentation" (click)="close()"></div>
+  <section
+    class="room-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="room-dialog-title"
+    aria-describedby="room-dialog-description"
+  >
+    <header>
+      <div>
+        <p class="ui-eyebrow">{{ 'lobby.privateRooms.eyebrow' | transloco }}</p>
+        <h2 id="room-dialog-title">
+          {{ (mode === 'create' ? 'lobby.privateRooms.createTitle' : 'lobby.privateRooms.joinTitle') | transloco }}
+        </h2>
+      </div>
+      <button
+        class="close-button"
+        type="button"
+        [disabled]="pending"
+        [attr.aria-label]="'lobby.privateRooms.close' | transloco"
+        (click)="close()"
+      >
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <p id="room-dialog-description" class="description">
+      {{ (mode === 'create' ? 'lobby.privateRooms.createDescription' : 'lobby.privateRooms.joinDescription') | transloco }}
+    </p>
+
+    <form autocomplete="off" (ngSubmit)="submit()">
+      <label for="private-room-name">{{ 'lobby.privateRooms.name' | transloco }}</label>
+      <input
+        #nameInput
+        id="private-room-name"
+        name="roomName"
+        type="text"
+        minlength="3"
+        maxlength="40"
+        required
+        autocomplete="off"
+        [disabled]="pending"
+        [(ngModel)]="name"
+      >
+
+      <label for="private-room-access-key">{{ 'lobby.privateRooms.password' | transloco }}</label>
+      <div class="password-field">
+        <input
+          id="private-room-access-key"
+          name="privateRoomAccessKey"
+          [type]="showPassword ? 'text' : 'password'"
+          minlength="4"
+          maxlength="32"
+          required
+          autocomplete="new-password"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          [disabled]="pending"
+          [(ngModel)]="password"
+        >
+        <button
+          type="button"
+          class="password-toggle"
+          [attr.aria-label]="'lobby.privateRooms.togglePassword' | transloco"
+          (click)="showPassword = !showPassword"
+        >
+          <i [class]="showPassword ? 'ti ti-eye-off' : 'ti ti-eye'" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      @if (errorMessage) {
+        <p class="error" role="alert">{{ errorMessage }}</p>
+      }
+
+      <button
+        class="submit-button ui-button ui-button--primary"
+        type="submit"
+        [disabled]="pending || name.trim().length < 3 || password.length < 4"
+      >
+        @if (pending) {
+          <span class="spinner" aria-hidden="true"></span>
+        }
+        {{ (mode === 'create' ? 'lobby.privateRooms.createSubmit' : 'lobby.privateRooms.joinSubmit') | transloco }}
+      </button>
+    </form>
+  </section>
+}

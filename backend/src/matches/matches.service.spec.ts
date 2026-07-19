@@ -16,6 +16,7 @@ describe('MatchesService', () => {
   const createHarness = () => {
     const state = {
       persisted: false,
+      rewardsEligible: true,
       startedAt: new Date('2026-07-09T20:00:00.000Z'),
       endedAt: new Date('2026-07-09T20:05:00.000Z'),
       players: new Map([[userId, { id: userId, alive: true }]]),
@@ -36,6 +37,7 @@ describe('MatchesService', () => {
     };
     const rewards = {
       registerMatchRewards: jest.fn(async () => undefined),
+      registerDisabledMatchRewards: jest.fn(async () => undefined),
     };
     const service = new MatchesService(
       sessions as unknown as GameSessionsService,
@@ -73,6 +75,24 @@ describe('MatchesService', () => {
     expect(state.persisted).toBe(true);
     expect(log).toHaveBeenCalled();
     log.mockRestore();
+  });
+
+  it('persists private matches without registering rewards', async () => {
+    const { matchResults, rewards, service, state } = createHarness();
+    state.rewardsEligible = false;
+
+    await service.persist('private-room');
+
+    expect(matchResults.persistCompleted).toHaveBeenCalledWith(expect.objectContaining({
+      roomId: 'private-room',
+      rewardsEligible: false,
+    }));
+    expect(rewards.registerMatchRewards).not.toHaveBeenCalled();
+    expect(rewards.registerDisabledMatchRewards).toHaveBeenCalledWith([{
+      matchId: 'match-1',
+      userId,
+      placement: 1,
+    }]);
   });
 
   it('unmarks persisted when storing the match itself fails', async () => {

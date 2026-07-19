@@ -16,6 +16,7 @@ import { SOCKET_EVENTS } from '../../common/socket-events';
 import { DevelopmentSettingsService } from '../../config/development-settings.service';
 import { MatchesService } from '../../matches/matches.service';
 import { RoomsService } from '../../rooms/rooms.service';
+import { RoomRequestError } from '../../rooms/room.errors';
 import { GameLoopService } from './game-loop.service';
 import { PlayerInput } from './types/player.types';
 import { SocketRateLimiterService } from './socket-rate-limiter.service';
@@ -98,7 +99,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   handleConnection(client: AuthenticatedSocket): void {
     this.rateLimiter.addConnection(this.clientIp(client), client.id);
     client.join('lobby');
-    client.emit(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, this.rooms.list());
+    client.emit(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, this.rooms.listLobby());
     console.log(`[connect] ${client.id} user=${client.data.auth.userId}`);
   }
 
@@ -117,13 +118,18 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage(SOCKET_EVENTS.LOBBY.LIST_ROOMS)
   listRooms(@ConnectedSocket() client: AuthenticatedSocket): void {
-    client.emit(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, this.rooms.list());
+    client.emit(SOCKET_EVENTS.LOBBY.ROOMS_UPDATED, this.rooms.listLobby());
   }
 
   @SubscribeMessage(SOCKET_EVENTS.LOBBY.QUICK_PLAY)
   async quickPlay(@ConnectedSocket() client: AuthenticatedSocket): Promise<void> {
     if (!this.rateLimiter.checkLobbyAction(client.data.auth.userId)) {
-      client.emit(SOCKET_EVENTS.GAME.ERROR, { code: 'RATE_LIMITED', message: 'Too many requests, slow down' });
+      client.emit(SOCKET_EVENTS.GAME.ERROR, {
+        code: 'RATE_LIMITED',
+        messageKey: 'common.errors.rateLimited',
+        messageParams: {},
+        message: 'Too many requests, slow down',
+      });
       return;
     }
     await this.safe(client, async () => {
@@ -136,14 +142,27 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage(SOCKET_EVENTS.LOBBY.CREATE_ROOM)
   async createRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
-    @MessageBody() body: { name?: string } = {},
+    @MessageBody() body: { name?: string; password?: string } = {},
   ): Promise<void> {
     if (!this.rateLimiter.checkLobbyAction(client.data.auth.userId)) {
-      client.emit(SOCKET_EVENTS.GAME.ERROR, { code: 'RATE_LIMITED', message: 'Too many requests, slow down' });
+      client.emit(SOCKET_EVENTS.GAME.ERROR, {
+        code: 'RATE_LIMITED',
+        messageKey: 'common.errors.rateLimited',
+        messageParams: {},
+        message: 'Too many requests, slow down',
+      });
       return;
     }
     await this.safe(client, async () => {
-      const room = await this.rooms.create(client, client.data.auth, body?.name);
+      if (typeof body?.name !== 'string' || typeof body?.password !== 'string') {
+        throw new RoomRequestError('ROOM_CREATE_INVALID', 'Room name and password are required');
+      }
+      const room = await this.rooms.createPrivate(
+        client,
+        client.data.auth,
+        body.name,
+        body.password,
+      );
       client.emit(SOCKET_EVENTS.ROOM.JOINED, room);
       this.emitDevelopmentWaitingState(client, room);
     });
@@ -152,15 +171,22 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage(SOCKET_EVENTS.LOBBY.JOIN_ROOM)
   async joinRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
-    @MessageBody() body: { roomId?: string },
+    @MessageBody() body: { name?: string; password?: string },
   ): Promise<void> {
     if (!this.rateLimiter.checkLobbyAction(client.data.auth.userId)) {
-      client.emit(SOCKET_EVENTS.GAME.ERROR, { code: 'RATE_LIMITED', message: 'Too many requests, slow down' });
+      client.emit(SOCKET_EVENTS.GAME.ERROR, {
+        code: 'RATE_LIMITED',
+        messageKey: 'common.errors.rateLimited',
+        messageParams: {},
+        message: 'Too many requests, slow down',
+      });
       return;
     }
     await this.safe(client, async () => {
-      if (!body?.roomId) throw new Error('roomId is required');
-      const room = await this.rooms.join(body.roomId, client, client.data.auth);
+      if (typeof body?.name !== 'string' || typeof body?.password !== 'string') {
+        throw new RoomRequestError('ROOM_JOIN_INVALID', 'Room name and password are required');
+      }
+      const room = await this.rooms.joinPrivate(body.name, body.password, client, client.data.auth);
       client.emit(SOCKET_EVENTS.ROOM.JOINED, room);
       this.emitDevelopmentWaitingState(client, room);
     });
@@ -212,12 +238,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (client.data.auth.role !== UserRole.ADMIN) {
       client.emit(SOCKET_EVENTS.GAME.ERROR, {
         code: 'WATCH_ADMIN_ONLY',
+        messageKey: 'game.errors.watchAdminOnly',
+        messageParams: {},
         message: 'Watching games is currently restricted to administrators',
       });
       return;
     }
     if (!body?.roomId || !this.gameLoop.hasSession(body.roomId)) {
-      client.emit(SOCKET_EVENTS.GAME.ERROR, { code: 'ROOM_NOT_FOUND', message: 'Game room not found' });
+      client.emit(SOCKET_EVENTS.GAME.ERROR, {
+        code: 'ROOM_NOT_FOUND',
+        messageKey: 'game.errors.roomNotFound',
+        messageParams: {},
+        message: 'Game room not found',
+      });
       return;
     }
     await this.watcherPresence.join(client, body.roomId);
@@ -245,12 +278,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage(SOCKET_EVENTS.GAME.START)
   startGame(@ConnectedSocket() client: AuthenticatedSocket): void {
-    if (this.developmentSettings.isManualStartEnabled()) {
+    const room = this.rooms.roomForUser(client.data.auth.userId);
+    if (room?.type === 'private' || this.developmentSettings.isManualStartEnabled()) {
       try {
         this.rooms.startNow(client.data.auth.userId);
       } catch (error) {
         client.emit(SOCKET_EVENTS.GAME.ERROR, {
-          code: 'START_FAILED',
+          code: error instanceof RoomRequestError ? error.code : 'START_FAILED',
+          messageKey: error instanceof RoomRequestError ? error.messageKey : 'game.errors.startFailed',
+          messageParams: error instanceof RoomRequestError ? error.messageParams : {},
           message: error instanceof Error ? error.message : 'Could not start the game',
         });
       }
@@ -258,6 +294,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
     client.emit(SOCKET_EVENTS.GAME.ERROR, {
       code: 'COUNTDOWN_AUTHORITATIVE',
+      messageKey: 'game.errors.countdownAuthoritative',
+      messageParams: {},
       message: 'The room countdown starts the game automatically',
     });
   }
@@ -267,6 +305,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!this.isDevGameMode() || !this.developmentSettings.isManualStartEnabled()) {
       client.emit(SOCKET_EVENTS.GAME.ERROR, {
         code: 'RESTART_DEVELOPMENT_ONLY',
+        messageKey: 'game.errors.restartDevelopmentOnly',
+        messageParams: {},
         message: 'Manual restart is only available in development mode',
       });
       return;
@@ -290,7 +330,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       await action();
     } catch (error) {
       client.emit(SOCKET_EVENTS.GAME.ERROR, {
-        code: 'REQUEST_FAILED',
+        code: error instanceof RoomRequestError ? error.code : 'REQUEST_FAILED',
+        messageKey: error instanceof RoomRequestError ? error.messageKey : 'common.errors.requestFailed',
+        messageParams: error instanceof RoomRequestError ? error.messageParams : {},
         message: error instanceof Error ? error.message : 'Request failed',
       });
     }
@@ -309,11 +351,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   private emitDevelopmentWaitingState(
     client: AuthenticatedSocket,
-    room: { id: string; players: Array<{ userId: string; username: string }> },
+    room: {
+      id: string;
+      rewardsEligible: boolean;
+      players: Array<{ userId: string; username: string }>;
+    },
   ): void {
     if (!this.isDevGameMode()) return;
     if (!this.gameLoop.hasSession(room.id)) {
-      this.gameLoop.prepare(room.id, room.players);
+      this.gameLoop.prepare(room.id, room.players, room.rewardsEligible);
     } else {
       this.gameLoop.addPlayer(
         room.id,

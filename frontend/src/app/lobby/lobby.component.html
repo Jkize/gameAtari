@@ -7,21 +7,47 @@
           <h1>{{ 'lobby.heading' | transloco }}</h1>
         </div>
         <app-pwa-install-prompt />
-        <app-quick-play-card
-          [currentRoom]="currentRoom()"
-          [preparing]="preparing()"
-          [preparationProgress]="preparationProgress()"
-          [searching]="searching()"
-          [errorMessage]="error()"
-          (play)="quickPlay()"
-          (cancel)="leaveRoom()"
-          (retry)="quickPlay()"
-          [reconnectEnabled]="reconnectEnabled"
-          [canReconnect]="canReconnect()"
-          (reconnect)="reconnectToMatch()"
-        >
-          <app-public-stats [compact]="true"></app-public-stats>
-        </app-quick-play-card>
+        @if (currentRoom()?.type === 'private') {
+          <app-private-room-panel
+            [room]="currentRoom()!"
+            [currentUserId]="auth.user()?.id ?? ''"
+            [starting]="startingPrivateRoom()"
+            (startRequested)="startPrivateRoom()"
+            (leaveRequested)="leaveRoom()"
+          />
+          @if (error()) {
+            <p class="room-error" role="alert">{{ error() }}</p>
+          }
+        } @else {
+          <app-quick-play-card
+            [currentRoom]="currentRoom()"
+            [preparing]="preparing()"
+            [preparationProgress]="preparationProgress()"
+            [searching]="searching()"
+            [errorMessage]="error()"
+            (play)="quickPlay()"
+            (cancel)="leaveRoom()"
+            (retry)="quickPlay()"
+            [reconnectEnabled]="reconnectEnabled"
+            [canReconnect]="canReconnect()"
+            (reconnect)="reconnectToMatch()"
+          >
+            <app-public-stats [compact]="true"></app-public-stats>
+          </app-quick-play-card>
+
+          @if (showPrivateRoomActions()) {
+            <div class="private-room-actions">
+              <button type="button" (click)="openRoomDialog('create')">
+                <i class="ti ti-plus" aria-hidden="true"></i>
+                {{ 'lobby.privateRooms.createAction' | transloco }}
+              </button>
+              <button type="button" (click)="openRoomDialog('join')">
+                <i class="ti ti-login" aria-hidden="true"></i>
+                {{ 'lobby.privateRooms.joinAction' | transloco }}
+              </button>
+            </div>
+          }
+        }
         @if (notice()) {
           <p class="notice">{{ notice() }}</p>
         }
@@ -35,3 +61,12 @@
     </div>
   </div>
 </main>
+
+<app-room-access-dialog
+  [open]="roomDialogMode() !== null"
+  [mode]="roomDialogMode() ?? 'create'"
+  [pending]="roomActionPending()"
+  [errorMessage]="roomActionError()"
+  (dismissed)="closeRoomDialog()"
+  (submitted)="submitRoomAction($event)"
+/>

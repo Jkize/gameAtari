@@ -1,6 +1,12 @@
 import { SESSION_MESSAGES, SOCKET_EVENTS } from '../common/socket-events';
 import { RoomDevelopmentSettings } from '../config/development-settings.service';
-import { MAX_PLAYERS, PROD_MIN_PLAYERS } from '../games/tanks/config/room.config';
+import {
+  MAX_PLAYERS,
+  PRIVATE_ROOM_COUNTDOWN_SECONDS,
+  PROD_MIN_PLAYERS,
+  RECONNECT_GRACE_MS,
+  ROUND_RESET_MS,
+} from '../games/tanks/config/room.config';
 import { RoomsService } from './rooms.service';
 
 describe('RoomsService', () => {
@@ -12,6 +18,10 @@ describe('RoomsService', () => {
       prepare: jest.fn(),
       start: jest.fn(),
       buildState: jest.fn(),
+      buildInitialState: jest.fn(() => ({
+        map: { name: 'Arena' },
+        state: { status: 'playing' },
+      })),
       isPlayerAlive: jest.fn(() => true),
     };
     const redis = {
@@ -342,18 +352,309 @@ describe('RoomsService', () => {
     jest.useRealTimers();
   });
 
-  it('quick play prefers fuller available rooms before older emptier rooms', async () => {
+  it('quick play ignores private rooms and prefers fuller public rooms', async () => {
     jest.useFakeTimers();
     const { rooms } = createHarness(false);
 
-    await rooms.create(socket(1) as never, user(1), 'Older empty');
+    await rooms.createPrivate(socket(1) as never, user(1), 'Older Private', 'secret');
     await rooms.quickPlay(socket(2) as never, user(2));
     await rooms.quickPlay(socket(3) as never, user(3));
 
-    await rooms.leave('user-1');
     await rooms.quickPlay(socket(4) as never, user(4));
 
     expect(rooms.roomForUser('user-4')!.id).toBe(rooms.roomForUser('user-2')!.id);
+    expect(rooms.roomForUser('user-4')!.id).not.toBe(rooms.roomForUser('user-1')!.id);
+    expect(rooms.listLobby()).toHaveLength(1);
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('normalizes private room names for unique lookup and checks the password', async () => {
+    jest.useFakeTimers();
+    const { rooms } = createHarness(false);
+
+    const created = await rooms.createPrivate(socket(1) as never, user(1), 'LÓS   Tanques', 'secret');
+    const joined = await rooms.joinPrivate('los tanques', 'secret', socket(2) as never, user(2));
+
+    expect(created.type).toBe('private');
+    expect(created.adminUserId).toBe('user-1');
+    expect(created.rewardsEligible).toBe(false);
+    expect(joined.id).toBe(created.id);
+    await expect(rooms.createPrivate(socket(3) as never, user(3), 'Los Tanques', 'other'))
+      .rejects.toMatchObject({ code: 'ROOM_NAME_TAKEN' });
+    await expect(rooms.joinPrivate('Los Tanques', 'wrong', socket(4) as never, user(4)))
+      .rejects.toMatchObject({ code: 'ROOM_NOT_FOUND_OR_INVALID_PASSWORD' });
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('allows only the private room admin to start and transfers admin on leave', async () => {
+    jest.useFakeTimers();
+    const { rooms, gameLoop } = createHarness(false);
+    await rooms.createPrivate(socket(1) as never, user(1), 'Admin Arena', 'secret');
+    await rooms.joinPrivate('admin arena', 'secret', socket(2) as never, user(2));
+
+    expect(() => rooms.startNow('user-2')).toThrow(expect.objectContaining({ code: 'ROOM_START_FORBIDDEN' }));
+    await rooms.leave('user-1');
+    expect(rooms.roomForUser('user-2')?.adminUserId).toBe('user-2');
+
+    await rooms.joinPrivate('admin arena', 'secret', socket(3) as never, user(3));
+    const state = rooms.startNow('user-2');
+    expect(state.status).toBe('countdown');
+    expect(state.countdownSeconds).toBe(PRIVATE_ROOM_COUNTDOWN_SECONDS);
+    expect(state.expiresAt).toBeNull();
+    jest.advanceTimersByTime(PRIVATE_ROOM_COUNTDOWN_SECONDS * 1000);
+    expect(rooms.stateForUser('user-2')?.status).toBe('in_game');
+    expect(gameLoop.prepare).toHaveBeenCalledWith(state.id, expect.any(Array), false);
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('warns at 90 seconds and closes an unstarted private room at 2 minutes', async () => {
+    jest.useFakeTimers().setSystemTime(1_000);
+    const { rooms, roomEmit, server } = createHarness(false);
+    const playerSocket = {
+      id: 'socket-1',
+      data: {},
+      join: jest.fn(),
+      leave: jest.fn(),
+      emit: jest.fn(),
+    };
+    server.sockets.sockets.set(playerSocket.id, playerSocket);
+    const state = await rooms.createPrivate(playerSocket as never, user(1), 'Temporary Arena', 'secret');
+
+    expect(state.expiresAt).toBe(121_000);
+    jest.advanceTimersByTime(90_000);
+    expect(roomEmit).toHaveBeenCalledWith(SOCKET_EVENTS.ROOM.CLOSING, expect.objectContaining({
+      roomId: state.id,
+      remainingSeconds: 30,
+    }));
+
+    jest.advanceTimersByTime(30_000);
+    expect(rooms.roomForUser('user-1')).toBeUndefined();
+    expect(playerSocket.leave).toHaveBeenCalledWith(`game:${state.id}:players`);
+    expect(playerSocket.emit).toHaveBeenCalledWith(SOCKET_EVENTS.ROOM.CLOSED, {
+      roomId: state.id,
+      reason: 'inactivity',
+    });
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('returns stable validation metadata for private room names and passwords', async () => {
+    const { rooms } = createHarness(false);
+
+    await expect(rooms.createPrivate(socket(1) as never, user(1), 'ab', 'secret'))
+      .rejects.toMatchObject({
+        code: 'ROOM_NAME_INVALID',
+        messageKey: 'lobby.errors.roomNameInvalid',
+        messageParams: { minLength: 3, maxLength: 40 },
+      });
+    await expect(rooms.createPrivate(socket(1) as never, user(1), 'Valid Room', 'abc'))
+      .rejects.toMatchObject({
+        code: 'ROOM_PASSWORD_INVALID',
+        messageKey: 'lobby.errors.roomPasswordInvalid',
+        messageParams: { minLength: 4, maxLength: 32 },
+      });
+    await expect(rooms.createPrivate(socket(1) as never, user(1), '---', 'secret'))
+      .rejects.toMatchObject({
+        code: 'ROOM_NAME_INVALID',
+        messageKey: 'lobby.errors.roomNameInvalid',
+      });
+  });
+
+  it('enforces membership rules and reconnects an existing private-room member', async () => {
+    jest.useFakeTimers();
+    const { rooms } = createHarness(false);
+    await rooms.createPrivate(socket(1) as never, user(1), 'Membership Room', 'secret');
+
+    await expect(rooms.createPrivate(socket(1) as never, user(1), 'Another Room', 'secret'))
+      .rejects.toMatchObject({ code: 'ROOM_ALREADY_JOINED' });
+    await rooms.quickPlay(socket(2) as never, user(2));
+    await expect(rooms.joinPrivate('Membership Room', 'secret', socket(2) as never, user(2)))
+      .rejects.toMatchObject({ code: 'ROOM_ALREADY_JOINED' });
+
+    const reconnectSocket = {
+      id: 'socket-1-reconnected',
+      data: {},
+      join: jest.fn(),
+      emit: jest.fn(),
+    };
+    const reconnected = await rooms.joinPrivate(
+      'membership-room',
+      'password-is-not-required-for-an-existing-member',
+      reconnectSocket as never,
+      user(1),
+    );
+    expect(reconnected.id).toBe(rooms.roomForUser('user-1')?.id);
+    expect(reconnectSocket.join).toHaveBeenCalledWith(`game:${reconnected.id}:players`);
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('requires the production minimum before a private admin can start', async () => {
+    jest.useFakeTimers();
+    const { rooms } = createHarness(false);
+    await rooms.createPrivate(socket(1) as never, user(1), 'Minimum Room', 'secret');
+
+    expect(() => rooms.startNow('user-1')).toThrow(expect.objectContaining({
+      code: 'ROOM_MIN_PLAYERS',
+      messageKey: 'lobby.errors.roomMinPlayers',
+      messageParams: { minPlayers: 2 },
+    }));
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('rejects simultaneous duplicate-name and duplicate-user creation requests', async () => {
+    jest.useFakeTimers();
+    const { rooms } = createHarness(false);
+    let resolveHash!: (value: string) => void;
+    const pendingHash = new Promise<string>(resolve => { resolveHash = resolve; });
+    jest.spyOn(
+      rooms as unknown as { hashPassword(password: string, salt: string): Promise<string> },
+      'hashPassword',
+    ).mockReturnValueOnce(pendingHash);
+
+    const firstCreation = rooms.createPrivate(socket(1) as never, user(1), 'Concurrent Room', 'secret');
+
+    await expect(rooms.createPrivate(socket(2) as never, user(2), 'concurrent-room', 'secret'))
+      .rejects.toMatchObject({ code: 'ROOM_NAME_TAKEN' });
+    await expect(rooms.createPrivate(socket(1) as never, user(1), 'Different Room', 'secret'))
+      .rejects.toMatchObject({ code: 'ROOM_CREATE_IN_PROGRESS' });
+
+    resolveHash('00'.repeat(64));
+    await firstCreation;
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('rolls back the room and normalized-name reservation when joining after creation fails', async () => {
+    jest.useFakeTimers();
+    const { redis, rooms } = createHarness(false);
+    redis.set.mockRejectedValueOnce(new Error('Redis unavailable'));
+
+    await expect(rooms.createPrivate(socket(1) as never, user(1), 'Rollback Room', 'secret'))
+      .rejects.toThrow('Redis unavailable');
+
+    expect(rooms.list()).toHaveLength(0);
+    expect(rooms.roomForUser('user-1')).toBeUndefined();
+    redis.set.mockResolvedValue(undefined);
+    await expect(rooms.createPrivate(socket(1) as never, user(1), 'Rollback Room', 'secret'))
+      .resolves.toMatchObject({ name: 'Rollback Room', type: 'private' });
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('rejects joins to full and already-started private rooms with specific codes', async () => {
+    jest.useFakeTimers();
+    const { rooms } = createHarness(false);
+    await rooms.createPrivate(socket(1) as never, user(1), 'Full Room', 'secret');
+    const fullRoom = rooms.roomForUser('user-1')!;
+    for (let index = 2; index <= MAX_PLAYERS; index++) {
+      fullRoom.players.set(`filled-${index}`, {
+        userId: `filled-${index}`,
+        username: `Filled${index}`,
+        socketId: null,
+      });
+    }
+    await expect(rooms.joinPrivate('Full Room', 'secret', socket(17) as never, user(17)))
+      .rejects.toMatchObject({ code: 'ROOM_FULL' });
+
+    await rooms.createPrivate(socket(20) as never, user(20), 'Started Room', 'secret');
+    await rooms.joinPrivate('Started Room', 'secret', socket(21) as never, user(21));
+    rooms.startNow('user-20');
+    await expect(rooms.joinPrivate('Started Room', 'secret', socket(22) as never, user(22)))
+      .rejects.toMatchObject({ code: 'ROOM_ALREADY_STARTED' });
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('does not close a private room after its game starts and clears lifecycle timers on shutdown', async () => {
+    jest.useFakeTimers().setSystemTime(1_000);
+    const { rooms, server } = createHarness(false);
+    const firstSocket = {
+      ...socket(1),
+      leave: jest.fn(),
+      emit: jest.fn(),
+    };
+    const secondSocket = {
+      ...socket(2),
+      leave: jest.fn(),
+      emit: jest.fn(),
+    };
+    server.sockets.sockets.set(firstSocket.id, firstSocket);
+    server.sockets.sockets.set(secondSocket.id, secondSocket);
+    const state = await rooms.createPrivate(firstSocket as never, user(1), 'Persistent Room', 'secret');
+    await rooms.joinPrivate('Persistent Room', 'secret', secondSocket as never, user(2));
+
+    rooms.startNow('user-1');
+    jest.advanceTimersByTime(120_000);
+
+    expect(rooms.roomForUser('user-1')?.id).toBe(state.id);
+    expect(firstSocket.emit).not.toHaveBeenCalledWith(SOCKET_EVENTS.ROOM.CLOSED, expect.anything());
+    await rooms.createPrivate(socket(3) as never, user(3), 'Shutdown Room', 'secret');
+    expect(jest.getTimerCount()).toBe(2);
+    rooms.onModuleDestroy();
+    expect(jest.getTimerCount()).toBe(0);
+    jest.useRealTimers();
+  });
+
+  it('keeps private members after a finished round and allows a second countdown', async () => {
+    jest.useFakeTimers().setSystemTime(1_000);
+    const { gameLoop, rooms, server } = createHarness(false);
+    const playerSockets = [1, 2].map(index => ({
+      ...socket(index),
+      leave: jest.fn(),
+      emit: jest.fn(),
+    }));
+    for (const playerSocket of playerSockets) server.sockets.sockets.set(playerSocket.id, playerSocket);
+    const created = await rooms.createPrivate(playerSockets[0] as never, user(1), 'Rematch Room', 'secret');
+    await rooms.joinPrivate('Rematch Room', 'secret', playerSockets[1] as never, user(2));
+    rooms.startNow('user-1');
+    jest.advanceTimersByTime(PRIVATE_ROOM_COUNTDOWN_SECONDS * 1000);
+    gameLoop.buildState.mockReturnValue({ players: [{ id: 'user-1', alive: true }] });
+
+    await rooms.finish(created.id);
+    jest.advanceTimersByTime(ROUND_RESET_MS);
+
+    const waiting = rooms.stateForUser('user-1');
+    expect(waiting).toMatchObject({
+      id: created.id,
+      type: 'private',
+      status: 'waiting',
+      playerCount: 2,
+      rewardsEligible: false,
+    });
+    expect(waiting?.expiresAt).not.toBeNull();
+    expect(gameLoop.remove).toHaveBeenCalledWith(created.id);
+    for (const playerSocket of playerSockets) {
+      expect(playerSocket.emit).not.toHaveBeenCalledWith(SOCKET_EVENTS.ROOM.LEFT, expect.anything());
+    }
+
+    const secondRound = rooms.startNow('user-1');
+    expect(secondRound.status).toBe('countdown');
+    expect(secondRound.countdownSeconds).toBe(PRIVATE_ROOM_COUNTDOWN_SECONDS);
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('keeps disconnected private members visible during grace and removes them after timeout', async () => {
+    jest.useFakeTimers();
+    const { rooms } = createHarness(false);
+    await rooms.createPrivate(socket(1) as never, user(1), 'Presence Room', 'secret');
+    await rooms.joinPrivate('Presence Room', 'secret', socket(2) as never, user(2));
+
+    await rooms.disconnect('user-2', 'socket-2');
+
+    expect(rooms.stateForUser('user-1')?.players.find(player => player.userId === 'user-2'))
+      .toMatchObject({ connected: false });
+    jest.advanceTimersByTime(RECONNECT_GRACE_MS - 1);
+    expect(rooms.roomForUser('user-2')).toBeDefined();
+    jest.advanceTimersByTime(1);
+    await Promise.resolve();
+    expect(rooms.roomForUser('user-2')).toBeUndefined();
+    expect(rooms.stateForUser('user-1')?.playerCount).toBe(1);
     jest.clearAllTimers();
     jest.useRealTimers();
   });

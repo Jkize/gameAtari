@@ -39,6 +39,29 @@ export class RewardsService {
     }
   }
 
+  /** Records top placements for a match that cannot award prizes, without entering eligibility or payment processing. */
+  async registerDisabledMatchRewards(candidates: RewardCandidate[]): Promise<void> {
+    const checkedAt = new Date();
+    for (const candidate of candidates) {
+      await this.rewards.upsertRewardLog({
+        matchId: candidate.matchId,
+        userId: candidate.userId,
+        placement: candidate.placement,
+        walletAddress: null,
+        potentialAmount: 0,
+        amount: 0,
+        mint: this.solanaConfig.mint(),
+        tokenDecimals: null,
+        eligible: false,
+        eligibilityCheckedAt: checkedAt,
+        tokenBalanceChecked: null,
+        ineligibilityReason: RewardIneligibilityReason.REWARDS_DISABLED,
+        status: RewardStatus.REWARDS_DISABLED,
+        retryable: false,
+      });
+    }
+  }
+
   /**
    * Creates/reuses the candidate's `RewardLog`, then walks the eligibility chain in order:
    * authenticated user -> linked wallet -> verified wallet -> minimum token balance -> daily

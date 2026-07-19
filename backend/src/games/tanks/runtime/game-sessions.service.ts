@@ -13,6 +13,7 @@ export class GameSessionsService {
     if (existing) return existing;
     const state: GameRuntimeState = {
       roomId,
+      rewardsEligible: true,
       players: new Map(),
       bullets: [],
       impactEvents: [],

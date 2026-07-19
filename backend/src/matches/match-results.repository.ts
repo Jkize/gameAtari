@@ -13,6 +13,7 @@ export class MatchResultsRepository {
         where: { roomId: result.roomId },
         create: {
           roomId: result.roomId,
+          rewardsEligible: result.rewardsEligible,
           mapName: result.mapName,
           status: MatchStatus.COMPLETED,
           winnerUserId: result.winnerUserId,

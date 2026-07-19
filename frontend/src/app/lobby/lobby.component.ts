@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Socket } from 'socket.io-client';
 import { AuthService } from '../auth/auth.service';
 import { socketManager } from '../network/socket';
 import { SOCKET_EVENTS } from '../network/socket-events';
-import { RoomState } from '../network/room-state';
+import { GameErrorPayload, RoomState } from '../network/room-state';
 import { PublicStatsComponent } from '../stats/public-stats.component';
 import { environment } from '../../environments/environment';
 import { RewardEligibilityNoticeComponent } from '../rewards/reward-eligibility-notice.component';
@@ -13,6 +13,12 @@ import { AccountRefreshService } from '../account/account-refresh.service';
 import { GameAssetPreloaderService } from '../game/game-asset-preloader.service';
 import { QuickPlayCardComponent } from './quick-play-card.component';
 import { PwaInstallPromptComponent } from '../pwa/pwa-install-prompt.component';
+import {
+  RoomAccessDialogComponent,
+  RoomCredentials,
+  RoomDialogMode,
+} from './room-access-dialog.component';
+import { PrivateRoomPanelComponent } from './private-room-panel.component';
 
 @Component({
   selector: 'app-lobby',
@@ -23,6 +29,8 @@ import { PwaInstallPromptComponent } from '../pwa/pwa-install-prompt.component';
     RewardEligibilityNoticeComponent,
     QuickPlayCardComponent,
     PwaInstallPromptComponent,
+    RoomAccessDialogComponent,
+    PrivateRoomPanelComponent,
   ],
   templateUrl: './lobby.component.html',
   styleUrl: './lobby.component.css',
@@ -34,6 +42,17 @@ export class LobbyComponent implements OnInit, OnDestroy {
   readonly error = signal('');
   readonly preparing = signal(false);
   readonly searching = signal(false);
+  readonly roomDialogMode = signal<RoomDialogMode | null>(null);
+  readonly roomActionPending = signal(false);
+  readonly roomActionError = signal('');
+  readonly startingPrivateRoom = signal(false);
+  readonly showPrivateRoomActions = computed(() =>
+    !this.currentRoom()
+    && !this.preparing()
+    && !this.searching()
+    && !this.roomActionPending()
+    && !this.error(),
+  );
   private readonly gameAssets = inject(GameAssetPreloaderService);
   private socket!: Socket;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,25 +77,37 @@ export class LobbyComponent implements OnInit, OnDestroy {
     this.listen(SOCKET_EVENTS.ROOM.JOINED, (room: RoomState) => {
       this.currentRoom.set(room);
       this.searching.set(false);
+      this.roomActionPending.set(false);
+      this.roomActionError.set('');
+      this.roomDialogMode.set(null);
       void this.gameAssets.prepare().catch(() => undefined);
     });
     this.listen(SOCKET_EVENTS.ROOM.STATE_UPDATED, (room: RoomState) => {
       if (this.currentRoom()?.id === room.id) {
         this.currentRoom.set(room);
         this.searching.set(false);
+        if (room.status === 'countdown') this.startingPrivateRoom.set(false);
       }
     });
     this.listen(SOCKET_EVENTS.ROOM.COUNTDOWN_STARTED, (room: RoomState) => {
       this.currentRoom.set(room);
       this.searching.set(false);
+      this.startingPrivateRoom.set(false);
     });
     this.listen(SOCKET_EVENTS.ROOM.COUNTDOWN_UPDATED, (room: RoomState) => {
       this.currentRoom.set(room);
       this.searching.set(false);
+      this.startingPrivateRoom.set(false);
     });
     this.listen(SOCKET_EVENTS.ROOM.COUNTDOWN_CANCELLED, (room: RoomState) => {
       this.currentRoom.set(room);
       this.searching.set(false);
+      this.startingPrivateRoom.set(false);
+    });
+    this.listen(SOCKET_EVENTS.ROOM.CLOSED, () => {
+      this.currentRoom.set(null);
+      this.startingPrivateRoom.set(false);
+      this.notice.set(this.transloco.translate('lobby.privateRooms.closedByInactivity'));
     });
     this.listen(SOCKET_EVENTS.ROOM.RETURNED_TO_LOBBY, () => this.currentRoom.set(null));
     this.listen(SOCKET_EVENTS.ROOM.LEFT, () => this.currentRoom.set(null));
@@ -99,8 +130,15 @@ export class LobbyComponent implements OnInit, OnDestroy {
       }
       void this.router.navigateByUrl('/game');
     });
-    this.listen(SOCKET_EVENTS.GAME.ERROR, (data: { message?: string }) => {
-      this.error.set(data?.message ?? this.transloco.translate('lobby.errorFallback'));
+    this.listen(SOCKET_EVENTS.GAME.ERROR, (data: GameErrorPayload) => {
+      const message = this.translateSocketError(data);
+      if (this.roomDialogMode() && this.roomActionPending()) {
+        this.roomActionError.set(message);
+        this.roomActionPending.set(false);
+      } else {
+        this.error.set(message);
+      }
+      this.startingPrivateRoom.set(false);
       this.searching.set(false);
     });
     this.restoreStoredNotice();
@@ -144,6 +182,44 @@ export class LobbyComponent implements OnInit, OnDestroy {
     }
   }
 
+  openRoomDialog(mode: RoomDialogMode): void {
+    if (!this.showPrivateRoomActions()) return;
+    this.roomActionError.set('');
+    this.roomDialogMode.set(mode);
+  }
+
+  closeRoomDialog(): void {
+    if (this.roomActionPending()) return;
+    this.roomActionError.set('');
+    this.roomDialogMode.set(null);
+  }
+
+  submitRoomAction(credentials: RoomCredentials): void {
+    const mode = this.roomDialogMode();
+    if (!mode || this.roomActionPending()) return;
+    this.roomActionPending.set(true);
+    this.roomActionError.set('');
+    this.error.set('');
+    this.socket.emit(
+      mode === 'create' ? SOCKET_EVENTS.LOBBY.CREATE_ROOM : SOCKET_EVENTS.LOBBY.JOIN_ROOM,
+      credentials,
+    );
+  }
+
+  startPrivateRoom(): void {
+    const room = this.currentRoom();
+    if (
+      !room
+      || room.type !== 'private'
+      || room.adminUserId !== this.auth.user()?.id
+      || room.status !== 'waiting'
+      || this.startingPrivateRoom()
+    ) return;
+    this.error.set('');
+    this.startingPrivateRoom.set(true);
+    this.socket.emit(SOCKET_EVENTS.GAME.START);
+  }
+
   canReconnect(): boolean {
     if (environment.devGameMode) return false;
     const room = this.currentRoom();
@@ -169,6 +245,15 @@ export class LobbyComponent implements OnInit, OnDestroy {
     }
     this.socket.emit(SOCKET_EVENTS.LOBBY.LEAVE_ROOM);
     this.searching.set(false);
+    this.startingPrivateRoom.set(false);
+  }
+
+  private translateSocketError(error: GameErrorPayload): string {
+    if (error.messageKey) {
+      const translated = this.transloco.translate(error.messageKey, error.messageParams ?? {});
+      if (translated !== error.messageKey) return translated;
+    }
+    return error.message ?? this.transloco.translate('lobby.errorFallback');
   }
 
   private restoreStoredNotice(): void {

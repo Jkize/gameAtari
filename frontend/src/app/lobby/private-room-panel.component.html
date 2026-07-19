@@ -1,0 +1,85 @@
+<section class="private-room-card" [class.closing]="isClosingSoon()">
+  <header>
+    <div>
+      <p class="ui-eyebrow">{{ 'lobby.privateRooms.roomEyebrow' | transloco }}</p>
+      <h2>{{ room.name }}</h2>
+    </div>
+    <div class="badges">
+      <span class="badge private">{{ 'lobby.privateRooms.privateBadge' | transloco }}</span>
+      <span class="badge no-rewards">{{ 'lobby.privateRooms.noRewardsBadge' | transloco }}</span>
+    </div>
+  </header>
+
+  <div class="room-meta">
+    <strong>{{ 'lobby.capacityPlayers' | transloco: { current: room.playerCount, max: room.maxPlayers } }}</strong>
+    @if (isClosingSoon()) {
+      <span class="warning">
+        <i class="ti ti-clock" aria-hidden="true"></i>
+        {{ 'lobby.privateRooms.closesIn' | transloco: { time: remainingTime() } }}
+      </span>
+    }
+  </div>
+
+  @if (room.status === 'countdown' && room.countdownSeconds !== null) {
+    <div class="countdown" role="status" aria-live="polite">
+      <span>{{ 'lobby.privateRooms.startingIn' | transloco }}</span>
+      <strong>{{ room.countdownSeconds }}</strong>
+      <small>{{ 'lobby.privateRooms.getReady' | transloco }}</small>
+    </div>
+  } @else {
+    <div class="roster">
+      <div class="roster-heading">
+        <h3>{{ 'lobby.privateRooms.players' | transloco }}</h3>
+        <span>{{ 'lobby.privateRooms.connectedCount' | transloco: { count: connectedPlayers() } }}</span>
+      </div>
+      <ul>
+        @for (player of room.players; track player.userId) {
+          <li [class.disconnected]="!player.connected">
+            <span class="presence" [class.online]="player.connected" aria-hidden="true"></span>
+            <strong>{{ player.username }}</strong>
+            @if (player.userId === currentUserId) {
+              <span class="self">{{ 'lobby.privateRooms.you' | transloco }}</span>
+            }
+            @if (player.userId === room.adminUserId) {
+              <span class="admin"><i class="ti ti-crown" aria-hidden="true"></i> {{ 'lobby.privateRooms.admin' | transloco }}</span>
+            }
+            <span class="connection-label">
+              {{ (player.connected ? 'lobby.privateRooms.connected' : 'lobby.privateRooms.disconnected') | transloco }}
+            </span>
+          </li>
+        } @empty {
+          <li class="empty">{{ 'lobby.privateRooms.noPlayers' | transloco }}</li>
+        }
+      </ul>
+    </div>
+
+    <div class="status-copy">
+      @if (isAdmin()) {
+        @if (connectedPlayers() < room.minPlayers) {
+          <span>{{ 'lobby.privateRooms.minimumPlayers' | transloco: { min: room.minPlayers } }}</span>
+        } @else {
+          <span>{{ 'lobby.privateRooms.adminReady' | transloco }}</span>
+        }
+      } @else {
+        <span>{{ 'lobby.privateRooms.waitingForAdmin' | transloco }}</span>
+      }
+    </div>
+  }
+
+  <div class="actions">
+    @if (isAdmin() && room.status === 'waiting') {
+      <button
+        class="start ui-button ui-button--primary"
+        type="button"
+        [disabled]="!canStart()"
+        (click)="startRequested.emit()"
+      >
+        <i class="ti ti-player-play" aria-hidden="true"></i>
+        {{ 'lobby.privateRooms.startMatch' | transloco }}
+      </button>
+    }
+    <button class="leave" type="button" [disabled]="starting" (click)="leaveRequested.emit()">
+      {{ 'lobby.privateRooms.leave' | transloco }}
+    </button>
+  </div>
+</section>

@@ -44,6 +44,7 @@ export class MatchesService {
 
       const matchId = await this.matchResults.persistCompleted({
         roomId,
+        rewardsEligible: state.rewardsEligible,
         mapName: state.map?.name,
         winnerUserId,
         startedAt: state.startedAt,
@@ -62,7 +63,11 @@ export class MatchesService {
         .sort((a, b) => a.placement - b.placement);
 
       try {
-        await this.rewards.registerMatchRewards(rewardCandidates);
+        if (state.rewardsEligible) {
+          await this.rewards.registerMatchRewards(rewardCandidates);
+        } else {
+          await this.rewards.registerDisabledMatchRewards(rewardCandidates);
+        }
       } catch (error) {
         this.logger.error(
           `Failed to register rewards for match=${matchId} room=${roomId}`,

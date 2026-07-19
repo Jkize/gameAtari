@@ -75,8 +75,13 @@ export class GameLoopService implements OnModuleDestroy {
     this.finishedHandler = handler;
   }
 
-  prepare(roomId: string, players: Array<{ userId: string; username: string }>): void {
-    this.sessions.create(roomId);
+  prepare(
+    roomId: string,
+    players: Array<{ userId: string; username: string }>,
+    rewardsEligible = true,
+  ): void {
+    const state = this.sessions.create(roomId);
+    state.rewardsEligible = rewardsEligible;
     this.sessions.run(roomId, () => {
       const preparedMap = this.gameService.map;
       this.gameService.reset();

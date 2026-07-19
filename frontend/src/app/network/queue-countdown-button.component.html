@@ -1,21 +1,62 @@
 @if (visible(); as isVisible) {
   @if (isVisible && room(); as activeRoom) {
-    <button
-      type="button"
-      class="queue-countdown"
-      aria-live="polite"
-      aria-atomic="true"
-      (click)="goToLobby()"
-    >
-      <strong>
-        {{ 'queueFloating.countdown' | transloco: { seconds: activeRoom.countdownSeconds } }}
-      </strong>
-      <small>
-        {{
-          'queueFloating.players'
-            | transloco: { current: activeRoom.playerCount, max: activeRoom.maxPlayers }
-        }}
-      </small>
-    </button>
+    <aside class="queue-card" aria-live="polite" aria-atomic="true">
+      @if (activeRoom.status === 'countdown') {
+        <button type="button" class="room-link countdown-link" (click)="goToLobby()">
+          <span class="countdown-label">{{ 'queueFloating.countdown' | transloco }}</span>
+          <strong class="countdown-value">
+            {{ 'queueFloating.countdownSeconds' | transloco: { seconds: activeRoom.countdownSeconds } }}
+          </strong>
+          <small>
+            {{
+              'queueFloating.players'
+                | transloco: { current: activeRoom.playerCount, max: activeRoom.maxPlayers }
+            }}
+          </small>
+        </button>
+      } @else {
+        <button type="button" class="room-link" (click)="goToLobby()">
+          <span class="eyebrow">{{ 'queueFloating.privateRoom' | transloco }}</span>
+          <strong>{{ activeRoom.name }}</strong>
+          <small>{{ 'queueFloating.waiting' | transloco }}</small>
+        </button>
+
+        <div class="room-stats">
+          <span>
+            <i class="ti ti-users" aria-hidden="true"></i>
+            {{
+              'queueFloating.players'
+                | transloco: { current: connectedPlayers(), max: activeRoom.maxPlayers }
+            }}
+          </span>
+          <button type="button" class="view-room" (click)="goToLobby()">
+            {{ 'queueFloating.viewRoom' | transloco }}
+          </button>
+        </div>
+
+        @if (isAdmin()) {
+          <button
+            type="button"
+            class="start-match"
+            [disabled]="!canStart()"
+            (click)="startMatch()"
+          >
+            <i class="ti ti-player-play" aria-hidden="true"></i>
+            {{ 'lobby.privateRooms.startMatch' | transloco }}
+          </button>
+          @if (connectedPlayers() < activeRoom.minPlayers) {
+            <small class="room-status">
+              {{ 'lobby.privateRooms.minimumPlayers' | transloco: { min: activeRoom.minPlayers } }}
+            </small>
+          }
+        } @else {
+          <small class="room-status">{{ 'lobby.privateRooms.waitingForAdmin' | transloco }}</small>
+        }
+
+        @if (startFailed()) {
+          <small class="start-error" role="alert">{{ 'queueFloating.startFailed' | transloco }}</small>
+        }
+      }
+    </aside>
   }
 }

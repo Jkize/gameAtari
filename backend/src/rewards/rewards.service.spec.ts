@@ -64,6 +64,26 @@ describe('RewardsService eligibility', () => {
     expect(solana.getTokenBalance).not.toHaveBeenCalled();
   });
 
+  it('records private-room placements as disabled without claiming evaluation or checking wallets', async () => {
+    const { repository, solana, service } = createHarness();
+
+    await service.registerDisabledMatchRewards([{ matchId, userId, placement: 1 }]);
+
+    expect(repository.upsertRewardLog).toHaveBeenCalledWith(expect.objectContaining({
+      matchId,
+      placement: 1,
+      potentialAmount: 0,
+      amount: 0,
+      eligible: false,
+      status: RewardStatus.REWARDS_DISABLED,
+      ineligibilityReason: RewardIneligibilityReason.REWARDS_DISABLED,
+    }));
+    expect(repository.claimRewardEvaluation).not.toHaveBeenCalled();
+    expect(repository.findVerifiedWallet).not.toHaveBeenCalled();
+    expect(repository.tryReserveDailyAmount).not.toHaveBeenCalled();
+    expect(solana.getTokenBalance).not.toHaveBeenCalled();
+  });
+
   it('marks an unauthenticated first place as not eligible', async () => {
     const { repository, service } = createHarness();
 

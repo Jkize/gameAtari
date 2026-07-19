@@ -1,0 +1,2 @@
+ALTER TABLE "Match"
+ADD COLUMN "rewardsEligible" BOOLEAN NOT NULL DEFAULT true;

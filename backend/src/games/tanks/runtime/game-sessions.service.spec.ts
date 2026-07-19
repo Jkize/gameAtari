@@ -7,6 +7,8 @@ describe('GameSessionsService', () => {
     sessions.create('room-a');
     sessions.create('room-b');
 
+    expect(sessions.require('room-a').rewardsEligible).toBe(true);
+
     sessions.run('room-a', () => {
       sessions.require('room-a').bullets.push({
         id: 'bullet-a',

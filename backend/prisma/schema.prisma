@@ -145,6 +145,7 @@ model UserSetting {
 model Match {
   id              String        @id @default(uuid()) @db.Uuid
   roomId          String        @unique
+  rewardsEligible Boolean       @default(true)
   mapName         String?
   status          MatchStatus   @default(COMPLETED)
   winnerUserId    String?       @db.Uuid

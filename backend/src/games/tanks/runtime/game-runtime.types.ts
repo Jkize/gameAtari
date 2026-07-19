@@ -14,6 +14,7 @@ export interface PlayerMatchStats {
 
 export interface GameRuntimeState {
   roomId: string;
+  rewardsEligible: boolean;
   players: Map<string, Player>;
   bullets: Bullet[];
   impactEvents: BulletImpactPublicState[];
