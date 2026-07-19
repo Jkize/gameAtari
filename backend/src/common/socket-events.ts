@@ -61,3 +61,10 @@ export const SESSION_MESSAGES = {
   REPLACED: 'session.replaced',
   CLAIMED: 'session.claimed',
 } as const;
+
+export const SOCKET_CONNECTION_ERROR_CODES = {
+  ACCESS_TOKEN_EXPIRED: 'ACCESS_TOKEN_EXPIRED',
+  AUTH_REQUIRED: 'AUTH_REQUIRED',
+  AUTH_INVALID: 'AUTH_INVALID',
+  RATE_LIMITED: 'RATE_LIMITED',
+} as const;

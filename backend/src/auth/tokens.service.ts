@@ -7,6 +7,29 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { AccessTokenPayload, AuthenticatedUser, OnboardingTokenPayload } from '../common/auth.types';
 
+interface RedisAuthSession {
+  refreshHash: string;
+  userId: string;
+  provider: AuthProvider;
+}
+
+const ROTATE_SESSION_SCRIPT = `
+local raw = redis.call('GET', KEYS[1])
+if not raw then
+  return { 0 }
+end
+
+local decoded, session = pcall(cjson.decode, raw)
+if not decoded or type(session) ~= 'table' or session.refreshHash ~= ARGV[1] then
+  redis.call('DEL', KEYS[1])
+  return { -1 }
+end
+
+session.refreshHash = ARGV[2]
+redis.call('SET', KEYS[1], cjson.encode(session), 'EX', ARGV[3])
+return { 1, session.userId, session.provider }
+`;
+
 export interface RefreshCookieDescriptor {
   value: string;
   maxAge: number;
@@ -50,15 +73,14 @@ export class TokensService {
   ): Promise<{ accessToken: string; refreshCookie: RefreshCookieDescriptor }> {
     if (!user.username) throw new UnauthorizedException('Profile is incomplete');
     const refresh = randomBytes(48).toString('base64url');
-    const expiresAt = new Date(Date.now() + this.refreshTtlSeconds * 1000);
-    await this.prisma.authSession.upsert({
-      where: { id: sessionId },
-      create: { id: sessionId, userId: user.id, provider, expiresAt },
-      update: { expiresAt, revokedAt: null, provider },
-    });
+    const session: RedisAuthSession = {
+      refreshHash: this.hash(refresh),
+      userId: user.id,
+      provider,
+    };
     await this.redis.client.set(
-      this.refreshKey(sessionId),
-      this.hash(refresh),
+      this.sessionKey(sessionId),
+      JSON.stringify(session),
       'EX',
       this.refreshTtlSeconds,
     );
@@ -78,19 +100,45 @@ export class TokensService {
   }> {
     const [sessionId, provided] = rawCookie.split('.');
     if (!sessionId || !provided) throw new UnauthorizedException('Invalid refresh token');
-    const session = await this.prisma.authSession.findUnique({
-      where: { id: sessionId },
-      include: { user: true },
-    });
-    if (!session || session.revokedAt || session.expiresAt <= new Date() || !session.user.username) {
-      throw new UnauthorizedException('Session expired');
+    const nextRefresh = randomBytes(48).toString('base64url');
+    const result = await this.redis.client.eval(
+      ROTATE_SESSION_SCRIPT,
+      1,
+      this.sessionKey(sessionId),
+      this.hash(provided),
+      this.hash(nextRefresh),
+      this.refreshTtlSeconds,
+    );
+    const [status, userId, rawProvider] = this.rotationResult(result);
+    if (status !== 1) {
+      throw new UnauthorizedException('Session expired or invalid');
     }
-    const stored = await this.redis.client.get(this.refreshKey(sessionId));
-    if (!stored || stored !== this.hash(provided)) {
+    if (!userId || !this.isAuthProvider(rawProvider)) {
       await this.revoke(sessionId);
-      throw new UnauthorizedException('Refresh token reuse detected');
+      throw new UnauthorizedException('Session expired or invalid');
     }
-    return this.issueSession(session.user, session.provider, sessionId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, username: true, role: true, active: true },
+    });
+    if (!user?.username || !user.active) {
+      await this.revoke(sessionId);
+      throw new UnauthorizedException('Session expired or invalid');
+    }
+    const accessToken = await this.signAccess(
+      user.id,
+      user.username,
+      rawProvider,
+      user.role,
+      sessionId,
+    );
+    return {
+      accessToken,
+      refreshCookie: {
+        value: `${sessionId}.${nextRefresh}`,
+        maxAge: this.refreshTtlSeconds * 1000,
+      },
+    };
   }
 
   async authenticateAccess(token: string): Promise<AuthenticatedUser> {
@@ -98,7 +146,7 @@ export class TokensService {
       secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
     });
     if (payload.type !== 'access') throw new UnauthorizedException('Invalid access token');
-    const active = await this.redis.client.exists(this.refreshKey(payload.sid));
+    const active = await this.redis.client.exists(this.sessionKey(payload.sid));
     if (!active) throw new UnauthorizedException('Session is no longer active');
     return {
       userId: payload.sub,
@@ -110,13 +158,7 @@ export class TokensService {
   }
 
   async revoke(sessionId: string): Promise<void> {
-    await Promise.all([
-      this.redis.client.del(this.refreshKey(sessionId)),
-      this.prisma.authSession.updateMany({
-        where: { id: sessionId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
-    ]);
+    await this.redis.client.del(this.sessionKey(sessionId));
   }
 
   private signAccess(userId: string, username: string, provider: AuthProvider, role: UserRole, sid: string) {
@@ -129,8 +171,20 @@ export class TokensService {
     );
   }
 
-  private refreshKey(sessionId: string): string {
-    return `auth:refresh:${sessionId}`;
+  private sessionKey(sessionId: string): string {
+    return `auth:session:${sessionId}`;
+  }
+
+  private rotationResult(result: unknown): [number, string?, string?] {
+    if (!Array.isArray(result)) return [0];
+    const status = Number(result[0]);
+    const userId = typeof result[1] === 'string' ? result[1] : undefined;
+    const provider = typeof result[2] === 'string' ? result[2] : undefined;
+    return [status, userId, provider];
+  }
+
+  private isAuthProvider(value?: string): value is AuthProvider {
+    return value != null && Object.values(AuthProvider).includes(value as AuthProvider);
   }
 
   private hash(value: string): string {

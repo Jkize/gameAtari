@@ -12,7 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { AuthProvider, UserRole } from '@prisma/client';
 import { TokensService } from '../../auth/tokens.service';
 import { AuthenticatedUser } from '../../common/auth.types';
-import { SOCKET_EVENTS } from '../../common/socket-events';
+import { SOCKET_CONNECTION_ERROR_CODES, SOCKET_EVENTS } from '../../common/socket-events';
 import { DevelopmentSettingsService } from '../../config/development-settings.service';
 import { MatchesService } from '../../matches/matches.service';
 import { RoomsService } from '../../rooms/rooms.service';
@@ -69,7 +69,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       try {
         const ip = this.clientIp(socket);
         if (!this.rateLimiter.isConnectionAllowed(ip)) {
-          next(new Error('Too many connections from this IP'));
+          next(this.connectionError(
+            SOCKET_CONNECTION_ERROR_CODES.RATE_LIMITED,
+            'Too many connections from this IP',
+          ));
           return;
         }
         if (this.isDevGameMode()) {
@@ -91,7 +94,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         socket.data.auth = await this.tokens.authenticateAccess(token);
         next();
       } catch (error) {
-        next(new Error(error instanceof Error ? error.message : 'Unauthorized'));
+        next(this.authenticationError(error));
       }
     });
   }
@@ -340,6 +343,31 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   private isDevGameMode(): boolean {
     return this.developmentSettings.isDevGameMode();
+  }
+
+  private authenticationError(error: unknown): Error {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
+      return this.connectionError(
+        SOCKET_CONNECTION_ERROR_CODES.ACCESS_TOKEN_EXPIRED,
+        'Access token expired',
+      );
+    }
+    if (error instanceof Error && error.message === 'Missing access token') {
+      return this.connectionError(
+        SOCKET_CONNECTION_ERROR_CODES.AUTH_REQUIRED,
+        error.message,
+      );
+    }
+    return this.connectionError(
+      SOCKET_CONNECTION_ERROR_CODES.AUTH_INVALID,
+      error instanceof Error ? error.message : 'Unauthorized',
+    );
+  }
+
+  private connectionError(code: string, message: string): Error {
+    const error = new Error(message) as Error & { data: { code: string } };
+    error.data = { code };
+    return error;
   }
 
   private clientIp(client: Socket): string {

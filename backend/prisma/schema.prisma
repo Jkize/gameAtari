@@ -57,12 +57,11 @@ model User {
   avatarUrl          String?
   active             Boolean            @default(true)
   role               UserRole           @default(USER)
-  tutorialStatus     TutorialStatus      @default(PENDING)
+  tutorialStatus     TutorialStatus     @default(PENDING)
   tutorialFinishedAt DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   accounts           AuthAccount[]
-  sessions           AuthSession[]
   wonMatches         Match[]            @relation("MatchWinner")
   matchPlayers       MatchPlayer[]
   rewards            RewardLog[]
@@ -115,18 +114,6 @@ model Wallet {
   @@unique([userId, provider])
   @@index([userId])
   @@index([provider, verifiedAt])
-}
-
-model AuthSession {
-  id        String       @id @db.Uuid
-  userId    String       @db.Uuid
-  provider  AuthProvider
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime     @default(now())
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, expiresAt])
 }
 
 model UserSetting {

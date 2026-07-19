@@ -13,15 +13,17 @@ export class HealthController {
   @Public()
   @Get()
   async health() {
-    try {
-      await Promise.all([this.prisma.$queryRaw`SELECT 1`, this.redis.client.ping()]);
-      return { status: 'ok', postgres: 'up', redis: this.redis.mode() };
-    } catch {
-      throw new ServiceUnavailableException({
-        status: 'degraded',
-        postgres: 'unknown',
-        redis: this.redis.mode(),
-      });
+    const [postgres, redis] = await Promise.allSettled([
+      this.prisma.$queryRaw`SELECT 1`,
+      this.redis.client.ping(),
+    ]);
+    const services = {
+      postgres: postgres.status === 'fulfilled' ? 'up' : 'down',
+      redis: redis.status === 'fulfilled' ? 'up' : 'down',
+    };
+    if (postgres.status === 'fulfilled' && redis.status === 'fulfilled') {
+      return { status: 'ok', ...services };
     }
+    throw new ServiceUnavailableException({ status: 'degraded', ...services });
   }
 }

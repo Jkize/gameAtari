@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import bs58 from 'bs58';
 import { environment } from '../../environments/environment';
 import { AccountStatus, AuthProvider, AuthUser, EAuth, LoginResponse, PhantomProvider, TutorialStatus } from './auth.models';
+import { socketManager } from '../network/socket';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -15,7 +16,15 @@ export class AuthService {
   readonly tutorialPending = computed(() => this.user()?.tutorialStatus === 'PENDING');
   private sessionRestorePromise: Promise<boolean> | null = null;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {
+    socketManager.configureAuthentication({
+      accessToken: () => this.accessToken() ?? undefined,
+      refreshAccessToken: async () => {
+        const restored = await this.ensureSession(true);
+        return restored ? this.accessToken() : null;
+      },
+    });
+  }
 
   async loginGoogle(idToken: string): Promise<LoginResponse> {
     return this.acceptLogin(await firstValueFrom(
@@ -100,8 +109,8 @@ export class AuthService {
     this.user.update(user => user ? { ...user, ...response } : user);
   }
 
-  async ensureSession(): Promise<boolean> {
-    if (this.isAccessTokenUsable(this.accessToken())) return true;
+  async ensureSession(forceRefresh = false): Promise<boolean> {
+    if (!forceRefresh && this.isAccessTokenUsable(this.accessToken())) return true;
     if (this.sessionRestorePromise) return this.sessionRestorePromise;
     this.sessionRestorePromise = this.restoreSession();
     return this.sessionRestorePromise;

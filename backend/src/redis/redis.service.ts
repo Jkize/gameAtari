@@ -1,34 +1,29 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import RedisMock from 'ioredis-mock';
+
+export const REDIS_KEY_PREFIX = 'tkgame:';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
-  client: Redis;
-  private usingMemoryFallback = false;
+  readonly client: Redis;
 
   constructor(config: ConfigService) {
-    const redisUrl = config.get<string>('REDIS_URL');
-    this.client = redisUrl
-      ? new Redis(redisUrl, {
-          lazyConnect: true,
-          maxRetriesPerRequest: 2,
-        })
-      : this.createMemoryClient('REDIS_URL is not configured');
-    if (!this.usingMemoryFallback) {
-      this.client.on('error', () => undefined);
-    }
+    this.client = new Redis(config.getOrThrow<string>('REDIS_URL'), {
+      keyPrefix: REDIS_KEY_PREFIX,
+      lazyConnect: true,
+      maxRetriesPerRequest: 2,
+    });
+    this.client.on('error', () => undefined);
   }
 
   async ensureConnected(): Promise<void> {
-    if (this.usingMemoryFallback) return;
     try {
       if (this.client.status === 'wait') await this.client.connect();
       await this.client.ping();
     } catch (error) {
       this.client.disconnect();
-      this.client = this.createMemoryClient(error instanceof Error ? error.message : 'Redis connection failed');
+      throw new Error('Redis connection failed', { cause: error });
     }
   }
 
@@ -42,20 +37,6 @@ export class RedisService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    if (this.usingMemoryFallback) {
-      this.client.disconnect();
-      return;
-    }
     if (this.client.status !== 'end') await this.client.quit();
-  }
-
-  mode(): 'redis' | 'memory' {
-    return this.usingMemoryFallback ? 'memory' : 'redis';
-  }
-
-  private createMemoryClient(reason: string): Redis {
-    this.usingMemoryFallback = true;
-    console.warn(`[redis] Using in-memory Redis mock: ${reason}`);
-    return new RedisMock() as unknown as Redis;
   }
 }
