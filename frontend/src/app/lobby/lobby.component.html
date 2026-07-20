@@ -7,7 +7,7 @@
           <h1>{{ 'lobby.heading' | transloco }}</h1>
         </div>
         <app-pwa-install-prompt />
-        @if (currentRoom()?.type === 'private') {
+        @if (currentRoom()?.type === 'private' && currentRoom()?.status !== 'in_game') {
           <app-private-room-panel
             [room]="currentRoom()!"
             [currentUserId]="auth.user()?.id ?? ''"
