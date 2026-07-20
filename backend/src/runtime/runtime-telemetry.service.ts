@@ -7,6 +7,10 @@ import { join } from 'path';
 import { EventLoopUtilization, monitorEventLoopDelay, performance } from 'perf_hooks';
 import { PrismaService } from '../prisma/prisma.service';
 import { RuntimeActivityService } from './runtime-activity.service';
+import {
+  RUNTIME_TELEMETRY_RECENT_SAMPLE_LIMIT,
+  RUNTIME_TELEMETRY_SAMPLE_INTERVAL_MS,
+} from '../config/runtime.config';
 
 export interface RuntimeContextMetrics {
   connectedSockets: number;
@@ -95,7 +99,7 @@ export class RuntimeTelemetryService implements OnModuleInit, OnModuleDestroy {
       void this.sample().catch(error => {
         this.logger.error(`Could not sample runtime telemetry: ${error instanceof Error ? error.message : error}`);
       });
-    }, 1_000);
+    }, RUNTIME_TELEMETRY_SAMPLE_INTERVAL_MS);
     this.timer.unref();
   }
 
@@ -194,7 +198,7 @@ export class RuntimeTelemetryService implements OnModuleInit, OnModuleDestroy {
     this.previousElu = performance.eventLoopUtilization();
     this.delayHistogram.reset();
     this.ring.push(sample);
-    if (this.ring.length > 900) this.ring.shift();
+    if (this.ring.length > RUNTIME_TELEMETRY_RECENT_SAMPLE_LIMIT) this.ring.shift();
     if (this.activity.hasCurrentMultiplayerActivity()) {
       this.eligibleSamples.push(sample);
     }

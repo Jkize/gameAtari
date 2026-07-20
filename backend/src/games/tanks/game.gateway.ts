@@ -23,6 +23,7 @@ import { SocketRateLimiterService } from './socket-rate-limiter.service';
 import { GameEventPublisherService } from './events/game-event-publisher.service';
 import { WatcherPresenceService } from './events/watcher-presence.service';
 import { RuntimeTelemetryService } from '../../runtime/runtime-telemetry.service';
+import { RUNTIME_STATS_BROADCAST_INTERVAL_MS } from '../../config/runtime.config';
 
 type AuthenticatedSocket = Socket & {
   data: Socket['data'] & {
@@ -137,7 +138,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const timer = setInterval(() => {
       const latest = this.telemetry.latest();
       if (latest) client.emit(SOCKET_EVENTS.ADMIN_STATS.UPDATE, { latest });
-    }, 1_000);
+    }, RUNTIME_STATS_BROADCAST_INTERVAL_MS);
     timer.unref();
     this.statsSubscriptions.set(client.id, timer);
   }
