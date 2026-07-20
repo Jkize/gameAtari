@@ -1,17 +1,17 @@
 <main class="tutorial-shell">
   <div #tutorialContainer class="tutorial-canvas" aria-label="{{ 'tutorial.arenaLabel' | transloco }}"></div>
 
-  <header class="tutorial-header">
-    <div>
-      <span class="eyebrow">{{ 'tutorial.eyebrow' | transloco }}</span>
-      <h1>{{ 'tutorial.title' | transloco }}</h1>
-    </div>
-    <button type="button" class="skip-button" [disabled]="saving()" (click)="skip()">
-      {{ 'tutorial.skip' | transloco }}
-    </button>
-  </header>
-
   @if (!complete()) {
+    <header class="tutorial-header">
+      <div>
+        <span class="eyebrow">{{ 'tutorial.eyebrow' | transloco }}</span>
+        <h1>{{ 'tutorial.title' | transloco }}</h1>
+      </div>
+      <button type="button" class="skip-button" [disabled]="saving()" (click)="skip()">
+        {{ 'tutorial.skip' | transloco }}
+      </button>
+    </header>
+
     <section class="instruction-card" aria-live="polite">
       <span class="step-count">{{ 'tutorial.stepCount' | transloco: { current: step() + 1 } }}</span>
       <strong>{{ ('tutorial.steps.' + step() + '.title') | transloco }}</strong>
