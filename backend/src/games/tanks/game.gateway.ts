@@ -59,13 +59,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.rooms.setServer(server);
     this.eventPublisher.setServer(server);
     this.watcherPresence.setServer(server);
-    this.gameLoop.onFinished(async roomId => {
+    this.gameLoop.onFinished(async (roomId, winnerUserId) => {
       try {
         if (this.developmentSettings.shouldPersistMatches()) await this.matches.persist(roomId);
       } catch (error) {
         console.error(`[match:persist] room=${roomId}`, error);
       } finally {
-        await this.rooms.finish(roomId);
+        await this.rooms.finish(roomId, winnerUserId);
       }
     });
     server.use(async (socket, next) => {
@@ -305,7 +305,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ): void {
     if (!this.rateLimiter.checkPlayerInput(client.data.auth.userId)) return;
     const room = this.rooms.roomForUser(client.data.auth.userId);
-    if (!room || room.status !== 'in_game' || !this.gameLoop.hasSession(room.id)) return;
+    if (
+      !room ||
+      (room.status !== 'in_game' && room.status !== 'finished') ||
+      !this.gameLoop.hasSession(room.id)
+    ) return;
     this.gameLoop.applyInput(room.id, client.data.auth.userId, input);
   }
 

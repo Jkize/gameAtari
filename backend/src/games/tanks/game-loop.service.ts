@@ -50,7 +50,7 @@ export interface TickMetrics {
 export class GameLoopService implements OnModuleDestroy {
   private server!: Server;
   private readonly loops = new Map<string, LoopRuntime>();
-  private finishedHandler?: (roomId: string) => Promise<void> | void;
+  private finishedHandler?: (roomId: string, winnerUserId: string | null) => Promise<void> | void;
 
   constructor(
     private readonly sessions: GameSessionsService,
@@ -71,7 +71,7 @@ export class GameLoopService implements OnModuleDestroy {
     this.server = server;
   }
 
-  onFinished(handler: (roomId: string) => Promise<void> | void): void {
+  onFinished(handler: (roomId: string, winnerUserId: string | null) => Promise<void> | void): void {
     this.finishedHandler = handler;
   }
 
@@ -207,20 +207,20 @@ export class GameLoopService implements OnModuleDestroy {
       if (!this.gameService.map) return;
 
       const impactStartIndex = this.gameService.impactEvents.length;
-      if (this.gameService.status === 'playing') {
+      const statusAtTickStart = this.gameService.status;
+      if (statusAtTickStart === 'playing' || statusAtTickStart === 'finished') {
+        // A finished round keeps simulating until RoomsService's existing
+        // ROUND_RESET_MS timer removes it, but the win check only runs once.
         this.processPowerUpSpawns(roomId, runtime, now);
         this.processPlayers(roomId, deltaTime, now);
         this.processDangerZone(deltaTime, now);
         this.processBullets(roomId, deltaTime);
         this.processHealthRegeneration(deltaTime, now);
         this.publishPendingEliminations(roomId);
-        this.checkWinCondition(roomId);
+        if (statusAtTickStart === 'playing') this.checkWinCondition(roomId);
       }
       runtime.pendingWatcherImpactEvents.push(...this.gameService.impactEvents.slice(impactStartIndex));
       this.broadcastState(roomId, runtime, now);
-      if (this.gameService.status === 'finished' && !this.hasVisibleDestroyedBodies(now)) {
-        this.stop(roomId);
-      }
     });
   }
 
@@ -462,11 +462,12 @@ export class GameLoopService implements OnModuleDestroy {
 
   private checkWinCondition(roomId: string): void {
     const alive = [...this.gameService.players.values()].filter(player => player.alive);
-    const initialPlayerCount = this.sessions.require(roomId).stats.size;
+    const state = this.sessions.require(roomId);
+    const initialPlayerCount = state.stats.size;
     if (initialPlayerCount > 1 && alive.length <= 1) {
       this.gameService.status = 'finished';
-      this.sessions.require(roomId).endedAt = new Date();
-      void this.finishedHandler?.(roomId);
+      state.endedAt = new Date();
+      void this.finishedHandler?.(roomId, alive.length === 1 ? alive[0].id : null);
     }
   }
 
@@ -562,12 +563,6 @@ export class GameLoopService implements OnModuleDestroy {
 
   private isDestroyedBodyVisible(destroyedAt: number | undefined, now: number): boolean {
     return destroyedAt !== undefined && now - destroyedAt < DESTROYED_BODY_TTL_MS;
-  }
-
-  private hasVisibleDestroyedBodies(now: number): boolean {
-    return [...this.gameService.players.values()].some(player =>
-      this.isDestroyedBodyVisible(player.destroyedAt, now),
-    );
   }
 
   private getDestroyedBodyAlpha(destroyedAt: number | undefined, now: number): number {

@@ -38,6 +38,7 @@ type TestableTouchControls = {
   };
   onWindowTouchMove(event: TouchEvent): void;
   onWindowTouchEnd(event: TouchEvent): void;
+  draw(): void;
 };
 
 function touchEvent(identifier: number, pageX: number, pageY: number): TouchEvent {
@@ -47,6 +48,16 @@ function touchEvent(identifier: number, pageX: number, pageY: number): TouchEven
 }
 
 describe('TouchControls wide-screen touch fallback', () => {
+  it('remains visible during the finished-round animation window', () => {
+    const controls = new TouchControls({} as never);
+    const testable = controls as unknown as TestableTouchControls;
+    testable.draw = vi.fn();
+
+    controls.update('finished');
+
+    expect(testable.visible).toBe(true);
+  });
+
   it('continues movement when the active touch moves outside the Phaser canvas', () => {
     const scene = {
       scale: {

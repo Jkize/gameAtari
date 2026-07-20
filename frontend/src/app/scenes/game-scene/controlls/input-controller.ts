@@ -65,7 +65,7 @@ export class InputController {
       }
     }
 
-    if (gameState.status !== 'playing') return;
+    if (gameState.status !== 'playing' && gameState.status !== 'finished') return;
 
     const me = gameState.players.find(p => p.id === myPlayerId);
     if (!me?.alive) return;
@@ -127,7 +127,11 @@ export class InputController {
   private emitNeutralInput(): void {
     const myPlayerId = this.state.getMyPlayerId();
     const gameState = this.state.getGameState();
-    if (!myPlayerId || gameState?.status !== 'playing') return;
+    if (
+      !myPlayerId ||
+      !gameState ||
+      (gameState.status !== 'playing' && gameState.status !== 'finished')
+    ) return;
     const me = gameState.players.find(player => player.id === myPlayerId);
     if (!me?.alive) return;
     this.state.getSocket().emit(SOCKET_EVENTS.GAME.PLAYER_INPUT, {

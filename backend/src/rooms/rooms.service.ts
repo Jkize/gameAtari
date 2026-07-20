@@ -309,18 +309,16 @@ export class RoomsService implements OnModuleDestroy {
     this.scheduleDisconnectedMemberRemoval(room, member);
   }
 
-  async finish(roomId: string): Promise<RoomPublicState | null> {
+  async finish(roomId: string, winnerUserId: string | null): Promise<RoomPublicState | null> {
     const room = this.rooms.get(roomId);
     if (!room || room.status === 'finished') return room ? this.publicState(room) : null;
     room.status = 'finished';
     room.countdownEndsAt = undefined;
     this.emitRoom(room);
-    const gameState = this.gameLoop.buildState(roomId);
-    const winner = gameState.players.find(player => player.alive);
     this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.GAME.ENDED, {
       roomId,
-      winnerUserId: winner?.id ?? null,
-      state: gameState,
+      winnerUserId,
+      state: this.gameLoop.buildState(roomId),
       returnToLobbyInMs: ROUND_RESET_MS,
     });
     room.roundResetTimer = setTimeout(() => this.resetRound(room.id), ROUND_RESET_MS);

@@ -10,18 +10,37 @@ import { GameGateway } from './game.gateway';
 describe('GameGateway connection authentication errors', () => {
   const createHarness = () => {
     let middleware!: (socket: any, next: (error?: Error) => void) => Promise<void>;
+    let finishedHandler!: (roomId: string, winnerUserId: string | null) => Promise<void>;
     const tokens = { authenticateAccess: jest.fn() };
-    const rooms = { setServer: jest.fn() };
-    const gameLoop = { setServer: jest.fn(), onFinished: jest.fn() };
-    const developmentSettings = { isDevGameMode: jest.fn(() => false) };
-    const rateLimiter = { isConnectionAllowed: jest.fn(() => true) };
+    const rooms = {
+      setServer: jest.fn(),
+      finish: jest.fn(async () => undefined),
+      roomForUser: jest.fn(),
+    };
+    const gameLoop = {
+      setServer: jest.fn(),
+      hasSession: jest.fn(() => true),
+      applyInput: jest.fn(),
+      onFinished: jest.fn((handler: typeof finishedHandler) => {
+        finishedHandler = handler;
+      }),
+    };
+    const matches = { persist: jest.fn(async () => 'match-1') };
+    const developmentSettings = {
+      isDevGameMode: jest.fn(() => false),
+      shouldPersistMatches: jest.fn(() => true),
+    };
+    const rateLimiter = {
+      isConnectionAllowed: jest.fn(() => true),
+      checkPlayerInput: jest.fn(() => true),
+    };
     const eventPublisher = { setServer: jest.fn() };
     const watcherPresence = { setServer: jest.fn() };
     const gateway = new GameGateway(
       tokens as never,
       rooms as never,
       gameLoop as never,
-      {} as never,
+      matches as never,
       developmentSettings as never,
       rateLimiter as never,
       eventPublisher as never,
@@ -43,8 +62,28 @@ describe('GameGateway connection authentication errors', () => {
         headers: {},
       },
     };
-    return { middleware, rateLimiter, socket, tokens };
+    return { finishedHandler, gameLoop, gateway, matches, middleware, rateLimiter, rooms, socket, tokens };
   };
+
+  it('persists the result and forwards the captured winner when the loop finishes', async () => {
+    const { finishedHandler, matches, rooms } = createHarness();
+
+    await finishedHandler('room-1', 'winner-1');
+
+    expect(matches.persist).toHaveBeenCalledWith('room-1');
+    expect(rooms.finish).toHaveBeenCalledWith('room-1', 'winner-1');
+  });
+
+  it('accepts player input while a finished room is still simulating', () => {
+    const { gameLoop, gateway, rooms } = createHarness();
+    rooms.roomForUser.mockReturnValue({ id: 'room-1', status: 'finished' });
+    const client = { data: { auth: { userId: 'player-1' } } };
+    const input = { moveX: 1, moveY: 0, aimAngle: 0, shoot: false };
+
+    gateway.playerInput(client as never, input);
+
+    expect(gameLoop.applyInput).toHaveBeenCalledWith('room-1', 'player-1', input);
+  });
 
   it('reports an expired access token with a stable connection error code', async () => {
     const { middleware, socket, tokens } = createHarness();

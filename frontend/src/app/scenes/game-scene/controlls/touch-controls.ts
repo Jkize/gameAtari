@@ -358,7 +358,7 @@ export class TouchControls {
 
   update(status: string, enabled = true, abilityState: TouchAbilityState = EMPTY_ABILITY_STATE): void {
     this.abilityState = abilityState;
-    this.setVisible(status === 'playing' && enabled);
+    this.setVisible((status === 'playing' || status === 'finished') && enabled);
     this.draw();
   }
 

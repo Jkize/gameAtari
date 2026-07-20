@@ -297,7 +297,7 @@ describe('RoomsService', () => {
 
   it('releases players to the lobby after a finished round instead of queueing again', async () => {
     jest.useFakeTimers().setSystemTime(1_000);
-    const { rooms, gameLoop, server } = createHarness(false);
+    const { rooms, gameLoop, server, roomEmit } = createHarness(false);
     const playerSockets = Array.from({ length: 2 }, (_, index) => ({
       id: `socket-${index + 1}`,
       data: {},
@@ -317,7 +317,17 @@ describe('RoomsService', () => {
       players: [{ id: 'user-1', alive: true }],
     });
 
-    await rooms.finish(room.id);
+    await rooms.finish(room.id, 'user-1');
+
+    expect(roomEmit).toHaveBeenCalledWith(
+      SOCKET_EVENTS.GAME.ENDED,
+      expect.objectContaining({
+        roomId: room.id,
+        winnerUserId: 'user-1',
+        returnToLobbyInMs: ROUND_RESET_MS,
+      }),
+    );
+
     jest.advanceTimersByTime(5_000);
 
     expect(rooms.list()).toHaveLength(0);
@@ -622,7 +632,7 @@ describe('RoomsService', () => {
     jest.advanceTimersByTime(PRIVATE_ROOM_COUNTDOWN_SECONDS * 1000);
     gameLoop.buildState.mockReturnValue({ players: [{ id: 'user-1', alive: true }] });
 
-    await rooms.finish(created.id);
+    await rooms.finish(created.id, 'user-1');
     jest.advanceTimersByTime(ROUND_RESET_MS);
 
     const waiting = rooms.stateForUser('user-1');

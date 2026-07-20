@@ -166,6 +166,19 @@ describe('InputController', () => {
     test.controller.destroy();
   });
 
+  it('continues emitting input during the finished-round animation window', () => {
+    const test = harness('finished');
+    test.keys.right.isDown = true;
+
+    test.controller.sendInput(20);
+
+    expect(test.socket.emit).toHaveBeenCalledWith(
+      'playerInput',
+      expect.objectContaining({ moveX: 1, moveY: 0 }),
+    );
+    test.controller.destroy();
+  });
+
   it('cancels movement when opposite Phaser keys are held together', () => {
     const test = harness();
     test.keys.up.isDown = true;
@@ -293,6 +306,20 @@ describe('InputController', () => {
       reload: false,
       shield: false,
     });
+    test.controller.destroy();
+  });
+
+  it('emits neutral input on suspension during the finished-round animation window', () => {
+    const test = harness('finished');
+    test.keys.right.isDown = true;
+    test.controller.sendInput(20);
+
+    test.gameEvents.emit('blur');
+
+    expect(test.socket.emit).toHaveBeenLastCalledWith(
+      'playerInput',
+      expect.objectContaining({ moveX: 0, moveY: 0, shoot: false }),
+    );
     test.controller.destroy();
   });
 
