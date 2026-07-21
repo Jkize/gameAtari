@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Header, Param, Query } from '@nestjs/common';
 import { seconds, Throttle } from '@nestjs/throttler';
 import { RequestUser } from '../common/request-user.decorator';
 import { AuthenticatedUser } from '../common/auth.types';
@@ -44,6 +44,7 @@ export class RewardsHistoryController {
   /** Public feed of recent matches with podium/reward info. Unauthenticated. */
   @Public()
   @Get('matches/recent')
+  @Header('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=30')
   @Throttle({ default: { limit: 60, ttl: seconds(60) } })
   recentMatches(@Query('cursor') cursor?: string) {
     this.assertValidCursor(cursor);
