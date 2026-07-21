@@ -124,10 +124,11 @@ describe('UsersService list', () => {
     role: UserRole.USER,
     active: true,
     createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, 0, count - index)),
+    lastConnectionAt: new Date(Date.UTC(2026, 0, 2, 0, 0, 0, count - index)),
     accounts: [{ provider: AuthProvider.GOOGLE }, { provider: AuthProvider.PHANTOM }],
   }));
 
-  const createListService = (rows: ReturnType<typeof buildRows>) => {
+  const createListService = (rows: unknown[]) => {
     const prisma = {
       user: { findMany: jest.fn(async () => rows) },
     };
@@ -135,7 +136,11 @@ describe('UsersService list', () => {
   };
 
   const decodeCursor = (cursor: string) =>
-    JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as { createdAt: string; id: string };
+    JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as {
+      sortBy: string;
+      sortValue: string | null;
+      id: string;
+    };
 
   it('returns a full page with a next cursor pointing at the last item', async () => {
     const rows = buildRows(51);
@@ -146,7 +151,8 @@ describe('UsersService list', () => {
     expect(result.items).toHaveLength(50);
     expect(result.nextCursor).not.toBeNull();
     expect(decodeCursor(result.nextCursor as string)).toEqual({
-      createdAt: rows[49].createdAt.toISOString(),
+      sortBy: 'createdAt',
+      sortValue: rows[49].createdAt.toISOString(),
       id: rows[49].id,
     });
   });
@@ -174,6 +180,7 @@ describe('UsersService list', () => {
         role: true,
         active: true,
         createdAt: true,
+        lastConnectionAt: true,
         accounts: { select: { provider: true } },
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -183,6 +190,7 @@ describe('UsersService list', () => {
     expect(result.items[0]).toEqual({
       ...publicFields,
       createdAt: rows[0].createdAt.toISOString(),
+      lastConnectionAt: rows[0].lastConnectionAt.toISOString(),
       providers: [AuthProvider.GOOGLE, AuthProvider.PHANTOM],
     });
   });
@@ -190,7 +198,8 @@ describe('UsersService list', () => {
   it('builds a keyset WHERE clause from a valid cursor', async () => {
     const { service, prisma } = createListService([]);
     const cursor = Buffer.from(JSON.stringify({
-      createdAt: '2026-01-01T00:00:00.000Z',
+      sortBy: 'createdAt',
+      sortValue: '2026-01-01T00:00:00.000Z',
       id: 'user-000',
     })).toString('base64url');
 
@@ -201,6 +210,7 @@ describe('UsersService list', () => {
         OR: [
           { createdAt: { lt: new Date('2026-01-01T00:00:00.000Z') } },
           { createdAt: new Date('2026-01-01T00:00:00.000Z'), id: { lt: 'user-000' } },
+          { createdAt: null },
         ],
       },
     }));
@@ -214,5 +224,56 @@ describe('UsersService list', () => {
     expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: undefined,
     }));
+  });
+
+  it('treats a cursor sorted by a different field as no cursor', async () => {
+    const { service, prisma } = createListService([]);
+    const cursor = Buffer.from(JSON.stringify({
+      sortBy: 'createdAt',
+      sortValue: '2026-01-01T00:00:00.000Z',
+      id: 'user-000',
+    })).toString('base64url');
+
+    await service.list(cursor, 'lastConnectionAt', 'desc');
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: undefined,
+    }));
+  });
+
+  it('sorts by lastConnectionAt with nulls-last ordering and encodes a null-aware cursor', async () => {
+    const rows = [
+      {
+        id: 'user-000',
+        username: 'pilot0',
+        avatarUrl: null,
+        role: UserRole.USER,
+        active: true,
+        createdAt: new Date(Date.UTC(2026, 0, 1)),
+        lastConnectionAt: new Date(Date.UTC(2026, 0, 5)),
+        accounts: [],
+      },
+      {
+        id: 'user-001',
+        username: 'pilot1',
+        avatarUrl: null,
+        role: UserRole.USER,
+        active: true,
+        createdAt: new Date(Date.UTC(2026, 0, 2)),
+        lastConnectionAt: null,
+        accounts: [],
+      },
+    ];
+    const { service, prisma } = createListService(rows);
+
+    const result = await service.list(null, 'lastConnectionAt', 'desc');
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      orderBy: [{ lastConnectionAt: { sort: 'desc', nulls: 'last' } }, { id: 'desc' }],
+    }));
+    expect(result.items.map(item => item.lastConnectionAt)).toEqual([
+      rows[0].lastConnectionAt.toISOString(),
+      null,
+    ]);
   });
 });

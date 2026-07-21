@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProvider, UserRole } from '@prisma/client';
@@ -6,6 +6,7 @@ import { createHash, randomBytes, randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { AccessTokenPayload, AuthenticatedUser, OnboardingTokenPayload } from '../common/auth.types';
+import { LAST_CONNECTION_REFRESH_THROTTLE_MS } from '../config/auth.config';
 
 interface RedisAuthSession {
   refreshHash: string;
@@ -37,6 +38,7 @@ export interface RefreshCookieDescriptor {
 
 @Injectable()
 export class TokensService {
+  private readonly logger = new Logger(TokensService.name);
   private readonly refreshTtlSeconds: number;
 
   constructor(
@@ -84,6 +86,7 @@ export class TokensService {
       'EX',
       this.refreshTtlSeconds,
     );
+    this.recordLastConnection(user.id);
     const accessToken = await this.signAccess(user.id, user.username, provider, user.role, sessionId);
     return {
       accessToken,
@@ -119,11 +122,16 @@ export class TokensService {
     }
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, username: true, role: true, active: true },
+      select: { id: true, username: true, role: true, active: true, lastConnectionAt: true },
     });
     if (!user?.username || !user.active) {
       await this.revoke(sessionId);
       throw new UnauthorizedException('Session expired or invalid');
+    }
+    // Access tokens are refreshed every ~15min while the app is open, so only
+    // touch lastConnectionAt when it's actually gone stale to avoid a DB write per refresh.
+    if (!user.lastConnectionAt || Date.now() - user.lastConnectionAt.getTime() >= LAST_CONNECTION_REFRESH_THROTTLE_MS) {
+      this.recordLastConnection(user.id);
     }
     const accessToken = await this.signAccess(
       user.id,
@@ -159,6 +167,14 @@ export class TokensService {
 
   async revoke(sessionId: string): Promise<void> {
     await this.redis.client.del(this.sessionKey(sessionId));
+  }
+
+  // Bookkeeping only — fire-and-forget, must never fail the caller.
+  private recordLastConnection(userId: string): void {
+    this.prisma.user.update({
+      where: { id: userId },
+      data: { lastConnectionAt: new Date() },
+    }).catch(error => this.logger.warn(`Failed to record lastConnectionAt for user ${userId}: ${error}`));
   }
 
   private signAccess(userId: string, username: string, provider: AuthProvider, role: UserRole, sid: string) {

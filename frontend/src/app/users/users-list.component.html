@@ -2,6 +2,23 @@
   <nav><a class="ui-back-link" routerLink="/lobby">{{ 'users.backToLobby' | transloco }}</a></nav>
   <h1 class="ui-page-title">{{ 'users.title' | transloco }}</h1>
 
+  <div class="controls">
+    <label>
+      {{ 'users.sortByLabel' | transloco }}
+      <select (change)="setSort($any($event.target).value, order())">
+        <option value="createdAt" [selected]="sortBy() === 'createdAt'">{{ 'users.sortBy.createdAt' | transloco }}</option>
+        <option value="lastConnectionAt" [selected]="sortBy() === 'lastConnectionAt'">{{ 'users.sortBy.lastConnectionAt' | transloco }}</option>
+      </select>
+    </label>
+    <label>
+      {{ 'users.orderLabel' | transloco }}
+      <select (change)="setSort(sortBy(), $any($event.target).value)">
+        <option value="desc" [selected]="order() === 'desc'">{{ 'users.order.desc' | transloco }}</option>
+        <option value="asc" [selected]="order() === 'asc'">{{ 'users.order.asc' | transloco }}</option>
+      </select>
+    </label>
+  </div>
+
   @if (loading() && !items().length) {
     <app-loading-skeleton [rows]="4" [ariaLabel]="'users.loadingAriaLabel' | transloco" />
   } @else if (error()) {
@@ -33,6 +50,14 @@
               <p class="meta">
                 <span>{{ 'users.joined' | transloco }}</span>
                 <time>{{ user.createdAt | date:'mediumDate' }}</time>
+              </p>
+              <p class="meta">
+                <span>{{ 'users.lastConnection' | transloco }}</span>
+                @if (user.lastConnectionAt) {
+                  <time>{{ user.lastConnectionAt | date:'medium' }}</time>
+                } @else {
+                  <span>{{ 'users.never' | transloco }}</span>
+                }
               </p>
             </div>
           </div>

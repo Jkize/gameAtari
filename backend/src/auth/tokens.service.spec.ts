@@ -17,7 +17,7 @@ describe('TokensService Redis sessions', () => {
     getOrThrow: jest.fn((key: string) => `${key}-value`),
   };
   const prisma = {
-    user: { findUnique: jest.fn() },
+    user: { findUnique: jest.fn(), update: jest.fn() },
   };
   const redisClient = {
     set: jest.fn(),
@@ -34,6 +34,7 @@ describe('TokensService Redis sessions', () => {
     jwt.signAsync.mockResolvedValue('access-token');
     redisClient.set.mockResolvedValue('OK');
     redisClient.del.mockResolvedValue(1);
+    prisma.user.update.mockResolvedValue({});
     service = new TokensService(
       jwt as never,
       config as never,
@@ -65,6 +66,10 @@ describe('TokensService Redis sessions', () => {
     expect(stored).not.toHaveProperty('role');
     expect(result.refreshCookie.value).toMatch(/^session-1\./);
     expect(result.refreshCookie.value).not.toContain(stored.refreshHash);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { lastConnectionAt: expect.any(Date) },
+    });
   });
 
   it('rotates the refresh hash atomically and loads the current user', async () => {
@@ -74,6 +79,7 @@ describe('TokensService Redis sessions', () => {
       username: 'CurrentName',
       role: UserRole.ADMIN,
       active: true,
+      lastConnectionAt: new Date(),
     });
 
     const result = await service.rotate('session-1.previous-refresh');
@@ -88,7 +94,7 @@ describe('TokensService Redis sessions', () => {
     );
     expect(prisma.user.findUnique).toHaveBeenCalledWith({
       where: { id: 'user-1' },
-      select: { id: true, username: true, role: true, active: true },
+      select: { id: true, username: true, role: true, active: true, lastConnectionAt: true },
     });
     expect(jwt.signAsync).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -102,6 +108,58 @@ describe('TokensService Redis sessions', () => {
     );
     expect(result.refreshCookie.value).toMatch(/^session-1\./);
     expect(result.refreshCookie.value).not.toBe('session-1.previous-refresh');
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('touches lastConnectionAt on rotate when it is null (never connected)', async () => {
+    redisClient.eval.mockResolvedValue([1, 'user-1', AuthProvider.GOOGLE]);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'TankOne',
+      role: UserRole.USER,
+      active: true,
+      lastConnectionAt: null,
+    });
+
+    await service.rotate('session-1.refresh');
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { lastConnectionAt: expect.any(Date) },
+    });
+  });
+
+  it('touches lastConnectionAt on rotate when the stored value is stale', async () => {
+    redisClient.eval.mockResolvedValue([1, 'user-1', AuthProvider.GOOGLE]);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'TankOne',
+      role: UserRole.USER,
+      active: true,
+      lastConnectionAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    });
+
+    await service.rotate('session-1.refresh');
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { lastConnectionAt: expect.any(Date) },
+    });
+  });
+
+  it('does not touch lastConnectionAt on rotate when it was updated recently', async () => {
+    redisClient.eval.mockResolvedValue([1, 'user-1', AuthProvider.GOOGLE]);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'TankOne',
+      role: UserRole.USER,
+      active: true,
+      lastConnectionAt: new Date(Date.now() - 5 * 60 * 1000),
+    });
+
+    await service.rotate('session-1.refresh');
+
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   it.each([0, -1])('rejects missing and reused sessions without querying PostgreSQL', async status => {

@@ -10,8 +10,14 @@ interface GoogleIdentity {
 
 const LIST_PAGE_SIZE = 50;
 
+export type UserSortField = 'createdAt' | 'lastConnectionAt';
+export type SortOrder = 'asc' | 'desc';
+
+export const USER_SORT_FIELDS: readonly UserSortField[] = ['createdAt', 'lastConnectionAt'];
+
 interface UserListCursor {
-  createdAt: string;
+  sortBy: UserSortField;
+  sortValue: string | null;
   id: string;
 }
 
@@ -19,10 +25,10 @@ interface UserListCursor {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Admin listing of users, newest registrations first. Cursor-paginated by `(createdAt DESC, id DESC)`, capped at `LIST_PAGE_SIZE` rows per page. */
-  async list(cursor?: string | null) {
+  /** Admin listing of users, sortable by `createdAt` or `lastConnectionAt`. Cursor-paginated keyset style, nulls always sort last, capped at `LIST_PAGE_SIZE` rows per page. */
+  async list(cursor?: string | null, sortBy: UserSortField = 'createdAt', order: SortOrder = 'desc') {
     const rows = await this.prisma.user.findMany({
-      where: this.listCursorWhere(cursor),
+      where: this.listCursorWhere(cursor, sortBy, order),
       select: {
         id: true,
         username: true,
@@ -30,9 +36,12 @@ export class UsersService {
         role: true,
         active: true,
         createdAt: true,
+        lastConnectionAt: true,
         accounts: { select: { provider: true } },
       },
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: sortBy === 'lastConnectionAt'
+        ? [{ lastConnectionAt: { sort: order, nulls: 'last' } }, { id: order }]
+        : [{ createdAt: order }, { id: order }],
       take: LIST_PAGE_SIZE + 1,
     });
     const items = rows.slice(0, LIST_PAGE_SIZE);
@@ -40,33 +49,47 @@ export class UsersService {
       items: items.map(({ accounts, ...user }) => ({
         ...user,
         createdAt: user.createdAt.toISOString(),
+        lastConnectionAt: user.lastConnectionAt ? user.lastConnectionAt.toISOString() : null,
         providers: [...new Set(accounts.map(account => account.provider))],
       })),
-      nextCursor: this.listNextCursor(items, rows.length > LIST_PAGE_SIZE),
+      nextCursor: this.listNextCursor(items, rows.length > LIST_PAGE_SIZE, sortBy),
     };
   }
 
-  /** Translates an opaque page cursor into a Prisma `WHERE` clause that continues strictly after that cursor's `(createdAt, id)`. */
-  private listCursorWhere(cursor?: string | null): Prisma.UserWhereInput | undefined {
+  /** Translates an opaque page cursor into a Prisma `WHERE` clause that continues strictly after that cursor's `(sortBy, id)`, per the requested sort. A cursor sorted by a different field is treated as absent. */
+  private listCursorWhere(
+    cursor: string | null | undefined,
+    sortBy: UserSortField,
+    order: SortOrder,
+  ): Prisma.UserWhereInput | undefined {
     const decoded = this.decodeListCursor(cursor);
-    if (!decoded) return undefined;
+    if (!decoded || decoded.sortBy !== sortBy) return undefined;
+    const op = order === 'desc' ? 'lt' : 'gt';
+    if (decoded.sortValue === null) {
+      return { [sortBy]: null, id: { [op]: decoded.id } } as Prisma.UserWhereInput;
+    }
+    const sortDate = new Date(decoded.sortValue);
     return {
       OR: [
-        { createdAt: { lt: new Date(decoded.createdAt) } },
-        {
-          createdAt: new Date(decoded.createdAt),
-          id: { lt: decoded.id },
-        },
+        { [sortBy]: { [op]: sortDate } },
+        { [sortBy]: sortDate, id: { [op]: decoded.id } },
+        { [sortBy]: null },
       ],
-    };
+    } as Prisma.UserWhereInput;
   }
 
   /** Builds the opaque base64url cursor for the next page from the last item on the current page, or `null` if there is no next page. */
-  private listNextCursor(items: { id: string; createdAt: Date }[], hasNext: boolean): string | null {
+  private listNextCursor(
+    items: { id: string; createdAt: Date; lastConnectionAt: Date | null }[],
+    hasNext: boolean,
+    sortBy: UserSortField,
+  ): string | null {
     if (!hasNext || !items.length) return null;
     const last = items[items.length - 1];
+    const sortValue = last[sortBy];
     return Buffer.from(JSON.stringify({
-      createdAt: last.createdAt.toISOString(),
+      sortBy,
+      sortValue: sortValue ? sortValue.toISOString() : null,
       id: last.id,
     } satisfies UserListCursor)).toString('base64url');
   }
@@ -76,8 +99,12 @@ export class UsersService {
     if (!cursor) return null;
     try {
       const parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<UserListCursor>;
-      if (!parsed.id || !parsed.createdAt || Number.isNaN(new Date(parsed.createdAt).getTime())) return null;
-      return { id: parsed.id, createdAt: parsed.createdAt };
+      if (typeof parsed.id !== 'string' || !parsed.id) return null;
+      if (!parsed.sortBy || !USER_SORT_FIELDS.includes(parsed.sortBy)) return null;
+      if (parsed.sortValue !== null) {
+        if (!parsed.sortValue || Number.isNaN(new Date(parsed.sortValue).getTime())) return null;
+      }
+      return { sortBy: parsed.sortBy, sortValue: parsed.sortValue, id: parsed.id };
     } catch {
       return null;
     }

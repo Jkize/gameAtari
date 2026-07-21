@@ -7,5 +7,6 @@ export interface AdminUserItem {
   role: EAuth;
   active: boolean;
   createdAt: string;
+  lastConnectionAt: string | null;
   providers: AuthProvider[];
 }

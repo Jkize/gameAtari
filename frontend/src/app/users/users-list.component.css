@@ -8,6 +8,26 @@ nav a {
   font-weight: 500;
   margin-bottom: 4px;
 }
+.controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+.controls select {
+  padding: 6px 10px;
+  border-radius: var(--radius-card);
+  border: 0.5px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+}
 .list {
   display: grid;
   gap: 10px;

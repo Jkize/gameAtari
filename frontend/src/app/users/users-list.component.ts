@@ -19,6 +19,8 @@ export class UsersListComponent implements OnInit {
   readonly nextCursor = signal<string | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly sortBy = signal<'createdAt' | 'lastConnectionAt'>('createdAt');
+  readonly order = signal<'asc' | 'desc'>('desc');
 
   private readonly transloco = inject(TranslocoService);
 
@@ -26,11 +28,19 @@ export class UsersListComponent implements OnInit {
 
   ngOnInit(): void { this.load(); }
 
+  setSort(sortBy: 'createdAt' | 'lastConnectionAt', order: 'asc' | 'desc'): void {
+    this.sortBy.set(sortBy);
+    this.order.set(order);
+    this.items.set([]);
+    this.nextCursor.set(null);
+    this.load();
+  }
+
   load(): void {
     if (this.loading()) return;
     this.loading.set(true);
     this.error.set('');
-    this.users.getUsers(this.nextCursor()).subscribe({
+    this.users.getUsers(this.nextCursor(), this.sortBy(), this.order()).subscribe({
       next: page => {
         this.items.set([...this.items(), ...page.items]);
         this.nextCursor.set(page.nextCursor ?? null);

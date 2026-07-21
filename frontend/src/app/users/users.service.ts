@@ -13,16 +13,28 @@ export class UsersService {
     private readonly auth: AuthService,
   ) {}
 
-  getUsers(cursor?: string | null): Observable<PagedResult<AdminUserItem>> {
+  getUsers(
+    cursor?: string | null,
+    sortBy?: 'createdAt' | 'lastConnectionAt',
+    order?: 'asc' | 'desc',
+  ): Observable<PagedResult<AdminUserItem>> {
     return this.http.get<PagedResult<AdminUserItem>>(`${environment.backendUrl}/users`, {
       headers: this.authHeaders(),
-      params: this.cursorParams(cursor),
+      params: this.listParams(cursor, sortBy, order),
       withCredentials: true,
     });
   }
 
-  private cursorParams(cursor?: string | null): HttpParams {
-    return cursor ? new HttpParams().set('cursor', cursor) : new HttpParams();
+  private listParams(
+    cursor?: string | null,
+    sortBy?: 'createdAt' | 'lastConnectionAt',
+    order?: 'asc' | 'desc',
+  ): HttpParams {
+    let params = new HttpParams();
+    if (cursor) params = params.set('cursor', cursor);
+    if (sortBy) params = params.set('sortBy', sortBy);
+    if (order) params = params.set('order', order);
+    return params;
   }
 
   private authHeaders(): HttpHeaders {
