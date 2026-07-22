@@ -67,6 +67,7 @@ backend/data/
 .classpath
 .settings/
 .c9/
+.playwright-mcp/
 
 # OS files
 .DS_Store

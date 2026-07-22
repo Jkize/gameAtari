@@ -1,0 +1,396 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--color-bg-page);
+}
+
+/*
+ * BUG FIX: the global `html, body { overflow: hidden }` rule in
+ * src/styles.css is intentional for the rest of the app (fixed-viewport SPA
+ * screens manage their own internal scroll) but this landing page is real
+ * long-form scrollable content. Scope the fix to this route only: make
+ * .landing-shell its own viewport-anchored scroll container instead of
+ * relying on body scroll (which is clamped and unreachable here).
+ *
+ * .landing-shell stays full-bleed (no max-width) so its scrollbar tracks the
+ * true viewport edge; .landing-content carries the max-width/centering so
+ * the scrollbar doesn't end up stranded in the middle of wide screens.
+ */
+.landing-shell {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: var(--color-bg-page);
+}
+
+.landing-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.landing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand img {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+}
+
+.brand .wordmark {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.play-link {
+  padding: 8px 16px;
+  color: var(--color-accent-contrast);
+  border-radius: var(--radius-control);
+  background: var(--color-accent);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.play-link:hover {
+  background: var(--color-accent-hover);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-surface);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.theme-toggle:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface-hover);
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 56px;
+}
+
+.hero-copy h1 {
+  margin: 0 0 16px;
+  color: var(--color-text-primary);
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.hero-subtitle {
+  margin: 0 0 24px;
+  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.cta-primary {
+  display: inline-block;
+  padding: 14px 32px;
+  color: var(--color-accent-contrast);
+  border-radius: var(--radius-control);
+  background: var(--color-accent);
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.cta-primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.hero-media {
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-surface);
+  overflow: hidden;
+}
+
+.teaser-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--color-bg-inset);
+}
+
+.media-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  color: var(--color-text-muted);
+  background: linear-gradient(
+    100deg,
+    var(--color-bg-inset) 40%,
+    var(--color-bg-surface-hover) 50%,
+    var(--color-bg-inset) 60%
+  );
+  background-size: 200% 100%;
+  animation: media-skeleton-shimmer 2.2s ease-in-out infinite;
+}
+
+.media-skeleton i {
+  font-size: 1.8rem;
+}
+
+.media-skeleton span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.teaser-skeleton {
+  aspect-ratio: 16 / 9;
+}
+
+.gallery-skeleton {
+  aspect-ratio: 4 / 3;
+}
+
+@keyframes media-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-skeleton {
+    animation: none;
+  }
+}
+
+.tank-showcase {
+  margin-bottom: 56px;
+  text-align: center;
+}
+
+.tank-showcase h2 {
+  margin: 0 0 32px;
+  color: var(--color-text-primary);
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.tank-showcase-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 36px;
+  padding: 24px 0 16px;
+}
+
+.tank-showcase-item {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.tank-glow {
+  position: absolute;
+  inset: -22px;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(30px);
+  opacity: 0.45;
+}
+
+.tank-art {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.35));
+}
+
+.tank-art-body {
+  position: absolute;
+  inset: 0;
+}
+
+.tank-art-turret,
+.tank-art-weapon {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  width: 64%;
+  transform: translateX(-50%);
+}
+
+/* [innerHTML]-injected markup isn't compiled by Angular, so it never gets
+   the view-encapsulation content attribute — ::ng-deep is required here to
+   reach the raw <svg> root at all. */
+.tank-art-body ::ng-deep svg,
+.tank-art-turret ::ng-deep svg,
+.tank-art-weapon ::ng-deep svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 780px) {
+  .tank-showcase-row {
+    gap: 20px;
+  }
+
+  .tank-showcase-item {
+    width: 110px;
+    height: 110px;
+  }
+}
+
+.features {
+  position: relative;
+  margin-bottom: 56px;
+}
+
+.features h2,
+.gallery h2 {
+  margin: 0 0 20px;
+  color: var(--color-text-primary);
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature-card {
+  padding: 20px;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-surface);
+}
+
+.feature-card h3 {
+  margin: 0 0 8px;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.feature-icon {
+  display: block;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 10px;
+}
+
+.feature-icon-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.feature-icon-row img {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.gallery {
+  position: relative;
+  margin-bottom: 48px;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.gallery-slot {
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-inset);
+  overflow: hidden;
+}
+
+.gallery-slot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.landing-footer {
+  padding: 24px 0;
+  border-top: 0.5px solid var(--color-border);
+  text-align: center;
+}
+
+@media (max-width: 780px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-shell {
+    padding: 16px;
+  }
+
+  .landing-header {
+    flex-wrap: wrap;
+  }
+}

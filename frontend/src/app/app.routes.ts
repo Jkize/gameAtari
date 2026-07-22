@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { EAuth } from './auth/auth.models';
 import { guestGuard } from './auth/guest.guard';
 import { roleGuard } from './auth/role.guard';
-import { rootGuard } from './auth/root.guard';
 import { tutorialFinishedGuard, tutorialWelcomeGuard } from './auth/tutorial.guard';
 
 export const routes: Routes = [
@@ -42,6 +41,12 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     loadComponent: () =>
       import('./map-editor/map-editor.component').then((module) => module.MapEditorComponent),
+  },
+  {
+    path: '',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./landing/landing-page.component').then((module) => module.LandingPageComponent),
   },
   {
     path: '',

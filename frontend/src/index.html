@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Tank Arena</title>
+  <title>Tank Arena — Free Multiplayer Tank Battle Game, Play Instantly in Your Browser</title>
+  <meta name="description" content="Tank Arena is a free real-time multiplayer tank battle game. Fight other players instantly in your browser — no downloads. Destructible obstacles, power-ups, and a shrinking danger zone.">
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#20170d">
@@ -12,10 +13,50 @@
   <meta name="apple-mobile-web-app-title" content="Tank Arena">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
   <link rel="icon" type="image/svg+xml" href="assets/logo/logo.svg">
+  <link rel="canonical" href="https://playtankarena.com/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://playtankarena.com/">
+  <meta property="og:title" content="Tank Arena — Free Multiplayer Tank Battle Game">
+  <meta property="og:description" content="Fight other players in real-time tank battles, instantly in your browser. Destructible obstacles, power-ups, and a shrinking danger zone.">
+  <!-- Placeholder image; swap for a real 1200x630 social share image once available. -->
+  <meta property="og:image" content="https://playtankarena.com/assets/landing/gameplay-poster.jpg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tank Arena — Free Multiplayer Tank Battle Game">
+  <meta name="twitter:description" content="Fight other players in real-time tank battles, instantly in your browser. Destructible obstacles, power-ups, and a shrinking danger zone.">
+  <!-- Placeholder image; swap for a real 1200x630 social share image once available. -->
+  <meta name="twitter:image" content="https://playtankarena.com/assets/landing/gameplay-poster.jpg">
+
+  <!-- Structured data: VideoGame with a nested VideoObject for the gameplay teaser. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Tank Arena",
+    "url": "https://playtankarena.com/",
+    "description": "Free real-time multiplayer tank battle game. Fight other players instantly in your browser with destructible obstacles, power-ups, and a shrinking danger zone.",
+    "genre": ["Action", "Multiplayer", "Battle Royale"],
+    "gamePlatform": ["Web browser"],
+    "applicationCategory": "Game",
+    "operatingSystem": "Any",
+    "image": "https://playtankarena.com/assets/landing/gameplay-poster.jpg",
+    "trailer": {
+      "@type": "VideoObject",
+      "name": "Tank Arena gameplay teaser",
+      "description": "Gameplay teaser showing real-time multiplayer tank combat in Tank Arena.",
+      "contentUrl": "https://playtankarena.com/assets/landing/gameplay-teaser.mp4",
+      "thumbnailUrl": "https://playtankarena.com/assets/landing/gameplay-poster.jpg",
+      "uploadDate": "TODO-set-real-upload-date-when-recording-exists"
+    }
+  }
+  </script>
 </head>
 <body>
   <app-root></app-root>

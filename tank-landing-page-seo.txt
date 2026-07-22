@@ -1,0 +1,96 @@
+TANK ARENA — SEO / LANDING PAGE INITIATIVE
+Context file for future work. Captures the discussion and decisions made so agents/devs
+picking this up later don't have to re-derive the reasoning.
+
+## Goal
+Improve Google search visibility for playtankarena.com and give the domain a real,
+crawlable entry point (today the root route has none — see "Current state" below).
+
+## Domain / architecture decision
+- Keep everything on ONE domain: playtankarena.com. Do not split into a separate
+  marketing domain + game.playtankarena subdomain.
+- Reason: a single domain consolidates backlinks/authority/trust signals. The
+  Angular+Phaser game itself is a client-rendered SPA with no crawlable text, so it
+  must not be the thing Google indexes — a real content-rich landing page needs to sit
+  at the root, with the actual playable game behind a "Play Now" button/route.
+
+## Current codebase state (as found, frontend/src/app/app.routes.ts)
+- Root path '' redirects unconditionally to 'lobby', which is gated by roleGuard
+  (auth required). Result: any unauthenticated visitor (including Googlebot) hitting
+  '/' bounces toward /login today. There is NO landing/marketing content at all.
+- `rootGuard` (frontend/src/app/auth/root.guard.ts) exists but is unused/dead in routes.ts.
+- `guestGuard` (frontend/src/app/auth/guest.guard.ts) is the pattern to reuse: on
+  '/login' it redirects already-authenticated users to `auth.authenticatedHomeUrl()`
+  and returns true (allow) for guests. Plan: add a new top-level route `path: ''`
+  guarded by `guestGuard`, loading a new public LandingPageComponent, inserted BEFORE
+  the existing AppLayoutComponent `path: ''` entry (Angular matches first-listed exact
+  path). Authenticated users fall through to the app as before; guests see the landing
+  page.
+- Frontend is CSR only — no @angular/ssr, no prerendering (checked package.json).
+  This matters: OG tags / Twitter Card / VideoGame schema must be static in
+  frontend/src/index.html, NOT set only via Angular's Meta/Title service, because
+  crawlers like Facebook/Twitter/Discord don't execute JS.
+
+## Cloudflare (already set up)
+- Zone: playtankarena.com, zone_id be4c342ceb28c65c1c092481c3f9624c, account
+  "Jhosesaro@hotmail.com's Account" (ca27d380ddc6ca2d60a179e573c858d1).
+- Legacy REST `/zones/{id}/analytics/dashboard` is NOT authorized for this API token.
+  Use the GraphQL endpoint instead (`POST /graphql`, `viewer.zones(...).httpRequests1dGroups`)
+  for traffic (uniques, pageViews, requests, bytes, threats).
+- Traffic snapshot pulled 2026-07-21 (last ~9 days): peaked ~300 uniques/day on
+  2026-07-14/15, declining to ~90-130 uniques/day since. Cloudflare only shows raw
+  edge traffic — no search-query/keyword/impression data. That requires Search Console.
+
+## Google Search Console
+- Not verified yet as of 2026-07-21.
+- Plan: verify via "Domain" property type (not URL-prefix) using a DNS TXT record —
+  covers all subdomains at once. Get the TXT value from Search Console, add it to
+  Cloudflare DNS (can be done via the cloudflare MCP once the value is provided).
+- Considered installing the community MCP server github.com/ahonn/mcp-server-gsc to
+  let Claude query GSC data directly. Verified: legit (250 stars, active, not
+  archived), but requires a Google Cloud project + service account + JSON key granted
+  as property admin — real setup overhead.
+- Decision: DEFER installing that MCP. Right after verification there's no data to
+  query yet (GSC needs days to start crawling/reporting). Do the cheap manual steps
+  first:
+    1. Submit a sitemap.xml in Search Console.
+    2. Request indexing of the homepage via URL Inspection.
+  Revisit the MCP once there's actual search data worth analyzing on an ongoing basis.
+
+## Demo video decision
+- Do NOT render a live 60fps Phaser replay (driven by a recorded match JSON) directly
+  on the landing page. Reasons: ships the full game bundle just for a teaser, hurts
+  Core Web Vitals (LCP/TBT) which are an SEO signal, risks janky playback on weak
+  devices, and produces nothing crawlable/embeddable.
+- Instead: use the JSON replay only as a RECORDING SOURCE — run it once, screen-capture
+  it, export a compressed .mp4/.webm (or upload to YouTube and embed). This also gets
+  VideoObject schema + a rich search thumbnail, and YouTube becomes a second discovery
+  channel. The live engine stays strictly behind "Play Now".
+- Status: recording tooling doesn't exist yet; user will do the capture manually once
+  a build is ready.
+
+## Landing page content plan
+Above the fold:
+  - H1 with the actual keyword (e.g. "Tank Arena — Free Multiplayer Tank Battle Game,
+    Play Instantly in Your Browser")
+  - Gameplay teaser clip (muted autoplay loop, poster fallback) — placeholder asset
+    paths until the real recording exists
+  - Big "Play Now" CTA (routes to /login, no separate signup wall)
+Content:
+  - Feature bullets tied to real mechanics: real-time multiplayer, destructible
+    obstacles, power-ups, danger zone (matches root CLAUDE.md, don't invent features)
+  - Screenshots/GIFs (placeholder slots ok for the draft)
+  - Optional: live player/room count if backend can expose it cheaply
+Technical SEO:
+  - title + meta description, OG tags, Twitter Card, canonical URL
+  - schema.org VideoGame + VideoObject JSON-LD
+  - robots.txt + sitemap.xml (create minimal versions if missing)
+
+## Next steps / open TODOs
+- [ ] Land the draft LandingPageComponent + route change (in progress — see latest
+      commit/diff for frontend/src/app/landing/*, frontend/src/app/app.routes.ts,
+      frontend/src/index.html)
+- [ ] Record real gameplay footage, swap placeholder video/screenshot assets
+- [ ] Get GSC TXT value from user, add via Cloudflare DNS, verify domain property
+- [ ] Submit sitemap.xml, request indexing
+- [ ] Revisit mcp-server-gsc install once there's real query data to analyze

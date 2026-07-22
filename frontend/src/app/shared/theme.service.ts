@@ -28,7 +28,7 @@ export class ThemeService {
   }
 
   private storedTheme(): Theme {
-    return this.storage()?.getItem(THEME_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+    return this.storage()?.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark';
   }
 
   private storage(): Pick<Storage, 'getItem' | 'setItem'> | null {

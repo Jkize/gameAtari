@@ -449,5 +449,22 @@
   "stats.activeMatches": "battles",
   "stats.availableRooms": "rooms",
   "stats.unavailable": "Data unavailable right now",
-  "stats.stale": "Last known value"
+  "stats.stale": "Last known value",
+
+  "landing.hero.title": "Tank Arena — Free Multiplayer Tank Battle Game, Play Instantly in Your Browser",
+  "landing.hero.subtitle": "Jump into real-time tank combat against players around the world. No downloads, no installs — just open your browser and battle.",
+  "landing.hero.cta": "Play Now",
+  "landing.features.heading": "Built for real battles",
+  "landing.features.multiplayer.title": "Real-time multiplayer combat",
+  "landing.features.multiplayer.description": "Fight other players live in fast-paced tank battles powered by an authoritative server.",
+  "landing.features.destructible.title": "Destructible obstacles",
+  "landing.features.destructible.description": "Blast through cover and reshape the battlefield as walls and barricades take damage and fall.",
+  "landing.features.powerUps.title": "Power-ups",
+  "landing.features.powerUps.description": "Grab weapon upgrades and boosts scattered across the arena to turn the tide of battle.",
+  "landing.features.dangerZone.title": "Shrinking danger zone",
+  "landing.features.dangerZone.description": "Stay inside the safe zone as it closes in, forcing constant movement and tense final standoffs.",
+  "landing.tanks.heading": "Tanks and abilities",
+  "landing.gallery.heading": "Screenshots",
+  "landing.gallery.altPrefix": "Tank Arena gameplay screenshot",
+  "landing.media.comingSoon": "Gameplay preview coming soon"
 }

@@ -449,5 +449,22 @@
   "stats.activeMatches": "batallas",
   "stats.availableRooms": "salas",
   "stats.unavailable": "Datos no disponibles por el momento",
-  "stats.stale": "Último dato conocido"
+  "stats.stale": "Último dato conocido",
+
+  "landing.hero.title": "Tank Arena — Juego gratuito de batallas de tanques multijugador, juega al instante en tu navegador",
+  "landing.hero.subtitle": "Entra en combate de tanques en tiempo real contra jugadores de todo el mundo. Sin descargas ni instalaciones: solo abre tu navegador y batalla.",
+  "landing.hero.cta": "Jugar ahora",
+  "landing.features.heading": "Hecho para batallas reales",
+  "landing.features.multiplayer.title": "Combate multijugador en tiempo real",
+  "landing.features.multiplayer.description": "Enfréntate a otros jugadores en vivo en batallas de tanques rápidas, con un servidor autoritativo.",
+  "landing.features.destructible.title": "Obstáculos destructibles",
+  "landing.features.destructible.description": "Destruye coberturas y transforma el campo de batalla mientras muros y barricadas reciben daño y caen.",
+  "landing.features.powerUps.title": "Power-ups",
+  "landing.features.powerUps.description": "Recoge mejoras de arma y potenciadores repartidos por la arena para cambiar el rumbo de la batalla.",
+  "landing.features.dangerZone.title": "Zona de peligro que se reduce",
+  "landing.features.dangerZone.description": "Mantente dentro de la zona segura mientras se cierra, obligando a moverte constantemente en tensos enfrentamientos finales.",
+  "landing.tanks.heading": "Tanques y habilidades",
+  "landing.gallery.heading": "Capturas de pantalla",
+  "landing.gallery.altPrefix": "Captura de pantalla de Tank Arena",
+  "landing.media.comingSoon": "Vista previa próximamente"
 }
