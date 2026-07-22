@@ -2,6 +2,7 @@ import { GameMap } from './map.types';
 import { PowerUpSpawn } from './power-up.types';
 import { PlayerPublicState } from './player.types';
 import type { DangerZonePublicState } from '../danger-zone.service';
+import { EBulletKind } from './bullet.types';
 
 export type GameStatus = 'waiting' | 'playing' | 'finished';
 export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror' | 'shield';
@@ -9,7 +10,7 @@ export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror
 export interface BulletPublicState {
   id: string;
   ownerId: string;
-  kind?: string;
+  kind: EBulletKind;
   x: number;
   y: number;
   endX?: number;

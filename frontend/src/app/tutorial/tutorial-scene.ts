@@ -12,7 +12,7 @@ import { PlayerRenderer } from '../scenes/game-scene/player-renderer';
 import { TouchControlHighlight, TouchControls } from '../scenes/game-scene/controlls/touch-controls';
 import { ensureShieldSvgTexture } from '../shared/rendering/shield-svg-textures';
 import { ensureTankSvgTextures } from '../shared/rendering/tank-svg-textures';
-import { BulletPublicState, GameMap, PlayerPublicState } from '../types/game-state.types';
+import { BulletPublicState, EBulletKind, GameMap, PlayerPublicState } from '../types/game-state.types';
 
 export interface TutorialSceneCallbacks {
   onStepChange(step: number): void;
@@ -276,7 +276,7 @@ export class TutorialScene extends Phaser.Scene {
     this.bullets.push({
       id: `tutorial-bullet-${this.time.now}-${this.bullets.length}`,
       ownerId: 'tutorial-player',
-      kind: 'standard',
+      kind: EBulletKind.STANDARD,
       x: startX,
       y: startY,
       radius: 5,

@@ -1,5 +1,10 @@
 import Phaser from 'phaser';
-import { BulletImpactPublicState, BulletPublicState, GameState } from '../../types/game-state.types';
+import {
+  BulletImpactPublicState,
+  BulletPublicState,
+  EBulletKind,
+  GameState,
+} from '../../types/game-state.types';
 import { HIT_REVEAL_MS, PLAYER_LABEL_OFFSET } from './game-scene.constants';
 import { EffectSpawner } from './effect-spawner';
 import { ObstacleRenderer } from './obstacle-renderer';
@@ -10,7 +15,7 @@ import { AudioManager, SoundPoint, WeaponFireSound } from './audio-manager';
 type LastBulletPos = {
   x: number;
   y: number;
-  kind?: string;
+  kind: EBulletKind;
   explosionRadius?: number;
   laserReflected?: boolean;
   reflectCount?: number;
@@ -125,10 +130,10 @@ export class StateChangeTracker {
       if (!curBullets.has(id)) {
         const pos = this.bulletLastPos.get(id);
         if (pos) {
-          if (pos.kind === 'grenade') {
+          if (pos.kind === EBulletKind.GRENADE) {
             this.effects.spawnGrenadeExplosion(pos.x, pos.y, pos.explosionRadius);
             if (localPlayer) this.audioManager.playGrenadeExplosion(pos, localPlayer);
-          } else if (pos.kind !== 'laser' && !handledImpactBulletIds.has(id)) {
+          } else if (pos.kind !== EBulletKind.LASER && !handledImpactBulletIds.has(id)) {
             this.effects.spawnSpark(pos.x, pos.y);
             if (localPlayer) {
               this.audioManager.playBulletImpact(
@@ -257,14 +262,18 @@ export class StateChangeTracker {
     myPlayerId: string,
   ): void {
     const newStandardBulletsByOwner = new Map<string, NewBulletGroup>();
+    const firingPlayers = new Map<string, BulletPublicState['kind']>();
 
     bullets.forEach(bullet => {
       if (this.prevBulletIds.has(bullet.id)) return;
-      if (bullet.kind === 'laser') {
+      if (!firingPlayers.has(bullet.ownerId)) {
+        firingPlayers.set(bullet.ownerId, bullet.kind);
+      }
+      if (bullet.kind === EBulletKind.LASER) {
         this.audioManager.playLaserFire(bullet, listener, bullet.ownerId === myPlayerId);
         return;
       }
-      if (bullet.kind === 'grenade') {
+      if (bullet.kind === EBulletKind.GRENADE) {
         this.audioManager.playGrenadeLaunch(bullet, listener, bullet.ownerId === myPlayerId);
         return;
       }
@@ -293,11 +302,15 @@ export class StateChangeTracker {
         ownerId === myPlayerId,
       );
     });
+
+    firingPlayers.forEach((bulletKind, playerId) => {
+      this.playerRenderer.triggerRecoil(playerId, bulletKind);
+    });
   }
 
   private playLaserReflectionSounds(bullets: BulletPublicState[], listener: SoundPoint): void {
     bullets.forEach(bullet => {
-      if (bullet.kind !== 'laser') return;
+      if (bullet.kind !== EBulletKind.LASER) return;
       if (bullet.bendX === undefined || bullet.bendY === undefined) return;
 
       const previous = this.bulletLastPos.get(bullet.id);

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BulletPublicState } from '../../types/game-state.types';
+import { BulletPublicState, EBulletKind } from '../../types/game-state.types';
 import { C } from './game-scene.constants';
 import { GameSceneLayers } from './game-scene-layers';
 
@@ -10,9 +10,13 @@ export class BulletRenderer {
     const flicker = 0.85 + 0.15 * Math.sin(time * 0.012);
     bullets.forEach(b => {
       const r = b.radius;
-      const core = b.kind === 'grenade' ? 0x8fff5a : b.kind === 'laser' ? 0xff0030 : C.BULLET;
-      const glow = b.kind === 'grenade' ? 0x42ff66 : b.kind === 'laser' ? 0xff174f : C.BULLET_GLOW;
-      if (b.kind === 'laser') {
+      const core = b.kind === EBulletKind.GRENADE
+        ? 0x8fff5a
+        : b.kind === EBulletKind.LASER ? 0xff0030 : C.BULLET;
+      const glow = b.kind === EBulletKind.GRENADE
+        ? 0x42ff66
+        : b.kind === EBulletKind.LASER ? 0xff174f : C.BULLET_GLOW;
+      if (b.kind === EBulletKind.LASER) {
         this.drawLaser(b, time, core, glow);
         return;
       }

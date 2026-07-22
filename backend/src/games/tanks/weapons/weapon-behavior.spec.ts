@@ -12,6 +12,7 @@ import {
   PLAYER_HEALTH_REGEN_DELAY_MS,
   PLAYER_HEALTH_REGEN_PER_SECOND,
 } from '../config/player.config';
+import { EBulletKind } from '../types/bullet.types';
 
 describe('weapon behavior', () => {
   let sessions: GameSessionsService;
@@ -37,10 +38,10 @@ describe('weapon behavior', () => {
   });
 
   it.each([
-    ['triple_shot', 3, undefined],
-    ['shotgun', 5, undefined],
-    ['grenade', 1, 'grenade'],
-    ['laser', 1, 'laser'],
+    ['triple_shot', 3, EBulletKind.TRIPLE_SHOT],
+    ['shotgun', 5, EBulletKind.SHOTGUN],
+    ['grenade', 1, EBulletKind.GRENADE],
+    ['laser', 1, EBulletKind.LASER],
   ] as const)('creates the expected %s projectile pattern', (powerUp, count, kind) => {
     sessions.run('test-room', () => {
       game.map = createTestMap();
@@ -117,7 +118,7 @@ describe('weapon behavior', () => {
       grenade.explode({
         id: 'grenade',
         ownerId: owner.id,
-        kind: 'grenade',
+        kind: EBulletKind.GRENADE,
         x: 100,
         y: 100,
         dirX: 1,

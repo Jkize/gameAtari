@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { Bullet } from '../types/bullet.types';
+import { Bullet, EBulletKind } from '../types/bullet.types';
 import { Player } from '../types/player.types';
 import { PlayerWeapon, WeaponPublicState, WeaponStats } from '../types/weapon.types';
 import {
@@ -34,7 +34,9 @@ export class WeaponService {
       return this.tryShootLaser(player, activeBullets, now);
     }
 
-    const hasActiveLaserBeam = activeBullets.some(b => b.ownerId === player.id && b.kind === 'laser');
+    const hasActiveLaserBeam = activeBullets.some(
+      b => b.ownerId === player.id && b.kind === EBulletKind.LASER,
+    );
     if (hasActiveLaserBeam) return [];
 
     const stats = this.getPowerAdjustedStats(player, this.getStats(weapon, now));
@@ -101,7 +103,13 @@ export class WeaponService {
     switch (player.activePowerUp?.type) {
       case 'triple_shot':
         return TRIPLE_SHOT_CONFIG.spreadAngles.map(spread =>
-          this.createBullet(player, stats, player.input.aimAngle + spread),
+          this.createBullet(
+            player,
+            stats,
+            player.input.aimAngle + spread,
+            undefined,
+            EBulletKind.TRIPLE_SHOT,
+          ),
         );
       case 'shotgun':
         return SHOTGUN_CONFIG.spreadAngles.map(spread => this.createBullet(
@@ -112,6 +120,7 @@ export class WeaponService {
           },
           player.input.aimAngle + spread,
           SHOTGUN_CONFIG.maxDistance,
+          EBulletKind.SHOTGUN,
         ));
       case 'grenade':
         return [this.createBullet(
@@ -122,7 +131,7 @@ export class WeaponService {
           },
           player.input.aimAngle,
           GRENADE_CONFIG.maxDistance,
-          'grenade',
+          EBulletKind.GRENADE,
         )];
       default:
         return [this.createBullet(player, stats, player.input.aimAngle)];
@@ -188,7 +197,7 @@ export class WeaponService {
       },
       player.input.aimAngle,
       LASER_CONFIG.maxDistance,
-      'laser',
+      EBulletKind.LASER,
     );
 
     bullet.endX = bullet.x + bullet.dirX * LASER_CONFIG.maxDistance;
@@ -214,7 +223,7 @@ export class WeaponService {
     stats: WeaponStats,
     angle: number,
     maxDistance?: number,
-    kind?: Bullet['kind'],
+    kind: EBulletKind = EBulletKind.STANDARD,
   ): Bullet {
     const offset = player.radius + stats.bulletRadius + 2;
     const x = player.x + Math.cos(angle) * offset;
@@ -237,8 +246,8 @@ export class WeaponService {
       radius: stats.bulletRadius,
       lifeTime: stats.bulletLifetimeMs,
       maxDistance,
-      explosionRadius: kind === 'grenade' ? GRENADE_CONFIG.explosionRadius : undefined,
-      obstacleDamage: kind === 'grenade' ? GRENADE_CONFIG.obstacleDamage : undefined,
+      explosionRadius: kind === EBulletKind.GRENADE ? GRENADE_CONFIG.explosionRadius : undefined,
+      obstacleDamage: kind === EBulletKind.GRENADE ? GRENADE_CONFIG.obstacleDamage : undefined,
     };
   }
 

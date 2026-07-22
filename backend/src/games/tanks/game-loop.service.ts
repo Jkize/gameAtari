@@ -27,6 +27,7 @@ import {
 } from './config/game-loop.config';
 import { DESTROYED_BODY_TTL_MS, SHIELD_COOLDOWN_MS, SHIELD_HP } from './config/player.config';
 import { FIRST_POWER_UP_SPAWN_DELAY_MS, POWER_UP_SPAWN_INTERVAL_MS } from './config/power-up.config';
+import { EBulletKind } from './types/bullet.types';
 
 interface LoopRuntime {
   timer: NodeJS.Timeout;
@@ -308,7 +309,9 @@ export class GameLoopService implements OnModuleDestroy {
       if (!player.alive) continue;
       const previousX = player.x;
       const previousY = player.y;
-      const firingLaser = bullets.some(bullet => bullet.ownerId === player.id && bullet.kind === 'laser');
+      const firingLaser = bullets.some(
+        bullet => bullet.ownerId === player.id && bullet.kind === EBulletKind.LASER,
+      );
       if (!firingLaser) {
         this.gameService.movePlayer(player, deltaTime, now);
         this.collisionService.clampPlayerToBounds(player, map.width, map.height);
@@ -382,7 +385,7 @@ export class GameLoopService implements OnModuleDestroy {
     if (!map) return;
     const dead = new Set<string>();
     for (const bullet of bullets) {
-      if (bullet.kind === 'laser') {
+      if (bullet.kind === EBulletKind.LASER) {
         const result = this.weaponLaserService.processBeam(bullet, deltaTime);
         this.emitObstacleChanges(roomId, result.obstacleChanges);
         if (!result.alive) dead.add(bullet.id);
@@ -402,7 +405,7 @@ export class GameLoopService implements OnModuleDestroy {
         reachedMaxDistance ||
         this.collisionService.isBulletOutOfBounds(bullet, map.width, map.height)
       ) {
-        if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
+        if (bullet.kind === EBulletKind.GRENADE) this.handleGrenadeExplosion(roomId, bullet);
         else this.recordBulletImpact(bullet, 'spark');
         dead.add(bullet.id);
         continue;
@@ -420,7 +423,7 @@ export class GameLoopService implements OnModuleDestroy {
           bullet.reflectY = bullet.y;
           break;
         }
-        if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
+        if (bullet.kind === EBulletKind.GRENADE) this.handleGrenadeExplosion(roomId, bullet);
         else {
           this.recordBulletImpact(bullet, this.getObstacleImpactMaterial(obstacle.type));
           if (obstacle.destructible) {
@@ -441,7 +444,7 @@ export class GameLoopService implements OnModuleDestroy {
       for (const player of players.values()) {
         if (!canBulletHitPlayer(bullet, player)) continue;
         if (!this.collisionService.bulletVsPlayer(bullet, player)) continue;
-        if (bullet.kind === 'grenade') this.handleGrenadeExplosion(roomId, bullet);
+        if (bullet.kind === EBulletKind.GRENADE) this.handleGrenadeExplosion(roomId, bullet);
         else {
           const now = Date.now();
           const hitShield = player.shieldHp > 0 && now < player.shieldUntil;

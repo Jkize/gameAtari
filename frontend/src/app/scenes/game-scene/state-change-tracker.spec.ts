@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { describe, expect, it, vi } from 'vitest';
-import type { GameState, PlayerPublicState } from '../../types/game-state.types';
+import { EBulletKind, type GameState, type PlayerPublicState } from '../../types/game-state.types';
 import { StateChangeTracker } from './state-change-tracker';
 
 describe('StateChangeTracker shield impact audio', () => {
@@ -64,6 +64,33 @@ describe('StateChangeTracker shield impact audio', () => {
     expect(playerRenderer.isPlayerHiddenByBush).toHaveBeenCalled();
     expect(effects.spawnRecoveryNumber).not.toHaveBeenCalled();
   });
+
+  it('triggers turret recoil once when a new shot appears', () => {
+    const { tracker, playerRenderer } = createTracker();
+    tracker.check(createState(0), 'me');
+
+    const state = createState(0);
+    state.bullets = [{
+      id: 'bullet-1', ownerId: 'me', kind: EBulletKind.STANDARD, x: 120, y: 100, radius: 3,
+    }];
+    tracker.check(state, 'me');
+
+    expect(playerRenderer.triggerRecoil).toHaveBeenCalledOnce();
+    expect(playerRenderer.triggerRecoil).toHaveBeenCalledWith('me', EBulletKind.STANDARD);
+  });
+
+  it('passes the projectile kind to the turret recoil', () => {
+    const { tracker, playerRenderer } = createTracker();
+    tracker.check(createState(0), 'me');
+
+    const state = createState(0);
+    state.bullets = [{
+      id: 'grenade-1', ownerId: 'me', kind: EBulletKind.GRENADE, x: 120, y: 100, radius: 5,
+    }];
+    tracker.check(state, 'me');
+
+    expect(playerRenderer.triggerRecoil).toHaveBeenCalledWith('me', EBulletKind.GRENADE);
+  });
 });
 
 function createTracker(hiddenByBush = false) {
@@ -86,6 +113,7 @@ function createTracker(hiddenByBush = false) {
     recordPlayerState: vi.fn(),
     remove: vi.fn(),
     isPlayerHiddenByBush: vi.fn(() => hiddenByBush),
+    triggerRecoil: vi.fn(),
   };
   const audio = {
     syncShieldLoops: vi.fn(),

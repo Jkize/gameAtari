@@ -1,13 +1,19 @@
 import type { AttackWeapon } from '../events/elimination-event.types';
 
-export type BulletKind = 'standard' | 'grenade' | 'laser';
+export enum EBulletKind {
+  STANDARD = 'standard',
+  TRIPLE_SHOT = 'triple_shot',
+  SHOTGUN = 'shotgun',
+  GRENADE = 'grenade',
+  LASER = 'laser',
+}
 
 export interface Bullet {
   id: string;
   ownerId: string;
   ownerName?: string;
   weapon?: AttackWeapon;
-  kind?: BulletKind;
+  kind: EBulletKind;
   x: number;
   y: number;
   startX?: number;

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GameMap, PlayerPublicState } from '../../types/game-state.types';
+import { EBulletKind, GameMap, PlayerPublicState } from '../../types/game-state.types';
 import {
   BODY_TURN_STEP,
   BUSH_COVER_DEPTH,
@@ -26,6 +26,26 @@ const SHIELDED_TANK_ALPHA = 0.9;
 const SHIELDED_WEAPON_ALPHA = 0.9;
 const SHIELD_DEPTH = BUSH_COVER_DEPTH - 0.1;
 
+type TurretRecoilConfig = {
+  distance: number;
+  recoilMs: number;
+};
+
+export const TURRET_RECOIL_CONFIG: Readonly<
+  Partial<Record<EBulletKind, TurretRecoilConfig>> &
+  Record<EBulletKind.STANDARD, TurretRecoilConfig>
+> = {
+  [EBulletKind.STANDARD]: { distance: 6, recoilMs: 140 },
+  [EBulletKind.GRENADE]: { distance: 14, recoilMs: 300 },
+  [EBulletKind.LASER]: { distance: 14, recoilMs: 800 },
+};
+
+type TurretRecoilState = {
+  startedAt: number;
+  distance: number;
+  recoilMs: number;
+};
+
 interface TankSprites {
   body: Phaser.GameObjects.Image;
   turret: Phaser.GameObjects.Image;
@@ -38,6 +58,7 @@ export class PlayerRenderer {
   private playerNameTexts: Map<string, Phaser.GameObjects.Text> = new Map();
   private playerTankSprites: Map<string, TankSprites> = new Map();
   private playerRevealUntil: Map<string, number> = new Map();
+  private playerRecoil: Map<string, TurretRecoilState> = new Map();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -58,11 +79,13 @@ export class PlayerRenderer {
 
     this.playerMaxHp.clear();
     this.playerRevealUntil.clear();
+    this.playerRecoil.clear();
   }
 
   remove(id: string): void {
     this.playerMaxHp.delete(id);
     this.playerRevealUntil.delete(id);
+    this.playerRecoil.delete(id);
     const txt = this.playerNameTexts.get(id);
     if (txt) {
       txt.destroy();
@@ -90,6 +113,15 @@ export class PlayerRenderer {
       }).setOrigin(0.5, 1).setDepth(10);
       this.playerNameTexts.set(player.id, txt);
     }
+  }
+
+  triggerRecoil(playerId: string, bulletKind: EBulletKind): void {
+    const config = TURRET_RECOIL_CONFIG[bulletKind]
+      ?? TURRET_RECOIL_CONFIG[EBulletKind.STANDARD];
+    this.playerRecoil.set(playerId, {
+      startedAt: this.scene.time.now,
+      ...config,
+    });
   }
 
   draw(players: PlayerPublicState[], map: GameMap, myPlayerId: string, time: number): void {
@@ -187,6 +219,7 @@ export class PlayerRenderer {
         : textureKeys.turret;
     const tankAlpha = (revealAlpha ?? 1) * (p.shielding ? SHIELDED_TANK_ALPHA : 1);
     const weaponAlpha = (revealAlpha ?? 1) * (p.shielding ? SHIELDED_WEAPON_ALPHA : 1);
+    const recoil = this.getRecoilOffset(p.id, a, time);
 
     if (!p.alive) {
       const destroyedAlpha = Phaser.Math.Clamp(p.destroyedBodyAlpha ?? 1, 0, 1);
@@ -255,7 +288,7 @@ export class PlayerRenderer {
     sprites.turret
       .setVisible(true)
       .setTexture(activeTurretTexture)
-      .setPosition(x, y)
+      .setPosition(x + recoil.x, y + recoil.y)
       .setDepth(turretDepth)
       .setScale(turretScale)
       .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
@@ -269,7 +302,7 @@ export class PlayerRenderer {
         sprites.weapon
           ?.setVisible(true)
           .setTexture(weaponTexture)
-          .setPosition(x, y)
+          .setPosition(x + recoil.x, y + recoil.y)
           .setDepth(weaponDepth)
           .setScale(turretScale)
           .setRotation(a + TANK_TURRET_ROTATION_OFFSET)
@@ -281,6 +314,23 @@ export class PlayerRenderer {
     } else {
       sprites.weapon?.setVisible(false);
     }
+  }
+
+  private getRecoilOffset(playerId: string, aimAngle: number, time: number): { x: number; y: number } {
+    const recoil = this.playerRecoil.get(playerId);
+    if (!recoil) return { x: 0, y: 0 };
+
+    const progress = Phaser.Math.Clamp((time - recoil.startedAt) / recoil.recoilMs, 0, 1);
+    if (progress >= 1) {
+      this.playerRecoil.delete(playerId);
+      return { x: 0, y: 0 };
+    }
+
+    const distance = recoil.distance * (1 - Phaser.Math.Easing.Cubic.Out(progress));
+    return {
+      x: -Math.cos(aimAngle) * distance,
+      y: -Math.sin(aimAngle) * distance,
+    };
   }
 
   private drawHpBar(p: PlayerPublicState): void {

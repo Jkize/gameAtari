@@ -1,5 +1,5 @@
 import { GameLoopService } from './game-loop.service';
-import type { Bullet } from './types/bullet.types';
+import { EBulletKind, type Bullet } from './types/bullet.types';
 import type { BulletImpactPublicState } from './types/game-state.types';
 import type { Player } from './types/player.types';
 
@@ -68,7 +68,7 @@ function createBullet(): Bullet {
   return {
     id: 'bullet-1',
     ownerId: 'attacker',
-    kind: 'standard',
+    kind: EBulletKind.STANDARD,
     x: 100,
     y: 100,
     dirX: 1,

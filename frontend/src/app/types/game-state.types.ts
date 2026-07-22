@@ -1,4 +1,11 @@
 export type PowerUpType = 'triple_shot' | 'shotgun' | 'grenade' | 'laser';
+export enum EBulletKind {
+  STANDARD = 'standard',
+  TRIPLE_SHOT = 'triple_shot',
+  SHOTGUN = 'shotgun',
+  GRENADE = 'grenade',
+  LASER = 'laser',
+}
 export type ObstacleType = 'bush' | 'decoration' | 'wood' | 'rock' | 'steel' | 'mirror';
 export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror' | 'shield';
 export type ObstacleAssetId =
@@ -84,7 +91,7 @@ export interface WeaponPublicState {
 export interface BulletPublicState {
   id: string;
   ownerId: string;
-  kind?: string;
+  kind: EBulletKind;
   x: number;
   y: number;
   endX?: number;

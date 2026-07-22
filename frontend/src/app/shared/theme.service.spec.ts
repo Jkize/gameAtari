@@ -23,11 +23,11 @@ describe('ThemeService', () => {
   it('toggles the document theme and persists the selection', () => {
     const service = TestBed.inject(ThemeService);
 
-    expect(service.current()).toBe('light');
+    expect(service.current()).toBe('dark');
     service.toggle();
 
-    expect(service.current()).toBe('dark');
-    expect(document.documentElement.dataset['theme']).toBe('dark');
-    expect(values.get('tank-arena:theme')).toBe('dark');
+    expect(service.current()).toBe('light');
+    expect(document.documentElement.dataset['theme']).toBe('light');
+    expect(values.get('tank-arena:theme')).toBe('light');
   });
 });
