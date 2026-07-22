@@ -8,7 +8,7 @@ import {
 } from './map-editor.models';
 
 const TYPES = new Set<ObstacleType>(['bush', 'decoration', 'wood', 'rock', 'steel', 'mirror']);
-const PLAYER_RADIUS = 28;
+const PLAYER_RADIUS = 30;
 
 function id(prefix: string, index: number): string {
   return `${prefix}-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`;

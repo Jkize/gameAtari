@@ -249,9 +249,18 @@
   filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.35));
 }
 
+.tank-art-tracks,
 .tank-art-body {
   position: absolute;
   inset: 0;
+}
+
+.tank-art-tracks {
+  z-index: 0;
+}
+
+.tank-art-body {
+  z-index: 1;
 }
 
 .tank-art-turret,
@@ -263,9 +272,18 @@
   transform: translateX(-50%);
 }
 
+.tank-art-turret {
+  z-index: 2;
+}
+
+.tank-art-weapon {
+  z-index: 3;
+}
+
 /* [innerHTML]-injected markup isn't compiled by Angular, so it never gets
    the view-encapsulation content attribute — ::ng-deep is required here to
    reach the raw <svg> root at all. */
+.tank-art-tracks ::ng-deep svg,
 .tank-art-body ::ng-deep svg,
 .tank-art-turret ::ng-deep svg,
 .tank-art-weapon ::ng-deep svg {

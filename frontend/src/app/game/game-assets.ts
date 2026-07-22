@@ -171,6 +171,15 @@ export const TANK_TEMPLATE_PATHS = {
   destroyedTurret: '/assets/tanks/tank_pistol_destroyed_template.svg',
 } as const;
 
+export const TANK_TRACK_TEMPLATE_PATHS = {
+  normal0: '/assets/tanks/track/tank_tracks_0.svg',
+  normal1: '/assets/tanks/track/tank_tracks_1.svg',
+  normal2: '/assets/tanks/track/tank_tracks_2.svg',
+  critical0: '/assets/tanks/track/tank_tracks_critical_0.svg',
+  critical1: '/assets/tanks/track/tank_tracks_critical_1.svg',
+  critical2: '/assets/tanks/track/tank_tracks_critical_2.svg',
+} as const;
+
 export const SHIELD_TEMPLATE_PATH = '/assets/tanks/tank_shield_template.svg';
 
 export const WEAPON_OVERLAY_TEMPLATE_PATHS = {
@@ -183,6 +192,7 @@ export const WEAPON_OVERLAY_TEMPLATE_PATHS = {
 export const GAME_PUBLIC_ASSET_PATHS = [
   ...PHASER_GAME_ASSETS.flatMap((asset) => (Array.isArray(asset.path) ? asset.path : [asset.path])),
   ...Object.values(TANK_TEMPLATE_PATHS),
+  ...Object.values(TANK_TRACK_TEMPLATE_PATHS),
   SHIELD_TEMPLATE_PATH,
   ...Object.values(WEAPON_OVERLAY_TEMPLATE_PATHS),
 ] as const;

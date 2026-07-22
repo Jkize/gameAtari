@@ -21,6 +21,12 @@ import {
 } from '../../shared/rendering/tank-svg-textures';
 import { ensureWeaponOverlayTexture } from '../../shared/rendering/weapon-svg-textures';
 import { ensureShieldSvgTexture } from '../../shared/rendering/shield-svg-textures';
+import { ensureTankTrackSvgTextures } from '../../shared/rendering/tank-track-svg-textures';
+import {
+  advanceTankTrackAnimation,
+  createTankTrackAnimationState,
+  TankTrackAnimationState,
+} from './tank-track-animation';
 
 const SHIELDED_TANK_ALPHA = 0.9;
 const SHIELDED_WEAPON_ALPHA = 0.9;
@@ -48,9 +54,11 @@ type TurretRecoilState = {
 
 interface TankSprites {
   body: Phaser.GameObjects.Image;
+  tracks: Phaser.GameObjects.Image;
   turret: Phaser.GameObjects.Image;
   weapon?: Phaser.GameObjects.Image;
   shield?: Phaser.GameObjects.Image;
+  trackAnimation: TankTrackAnimationState;
 }
 
 export class PlayerRenderer {
@@ -71,6 +79,7 @@ export class PlayerRenderer {
 
     this.playerTankSprites.forEach(tank => {
       tank.body.destroy();
+      tank.tracks.destroy();
       tank.turret.destroy();
       tank.weapon?.destroy();
       tank.shield?.destroy();
@@ -94,6 +103,7 @@ export class PlayerRenderer {
     const tank = this.playerTankSprites.get(id);
     if (tank) {
       tank.body.destroy();
+      tank.tracks.destroy();
       tank.turret.destroy();
       tank.weapon?.destroy();
       tank.shield?.destroy();
@@ -182,7 +192,8 @@ export class PlayerRenderer {
   private drawTank(p: PlayerPublicState, isLocal: boolean, time: number, revealAlpha: number | undefined): void {
     const { x, y, radius: r, bodyAngle, aimAngle: a, color } = p;
     const textureKeys = ensureTankSvgTextures(this.scene, color);
-    if (!textureKeys) return;
+    const trackTextureKeys = ensureTankTrackSvgTextures(this.scene, color);
+    if (!textureKeys || !trackTextureKeys) return;
 
     let sprites = this.playerTankSprites.get(p.id);
     if (!sprites) {
@@ -190,6 +201,9 @@ export class PlayerRenderer {
         body: this.scene.add.image(x, y, textureKeys.body)
           .setOrigin(0.5)
           .setDepth(5),
+        tracks: this.scene.add.image(x, y, trackTextureKeys.normal[0])
+          .setOrigin(0.5)
+          .setDepth(4),
         turret: this.scene.add.image(x, y, textureKeys.turret)
           .setOrigin(TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y)
           .setDepth(7),
@@ -197,6 +211,7 @@ export class PlayerRenderer {
           .setOrigin(TANK_TURRET_ORIGIN_X, TANK_TURRET_ORIGIN_Y)
           .setDepth(8)
           .setVisible(false),
+        trackAnimation: createTankTrackAnimationState(x, y),
       };
       this.playerTankSprites.set(p.id, sprites);
     }
@@ -247,6 +262,7 @@ export class PlayerRenderer {
         .setTint(0x777777);
       sprites.weapon?.setVisible(false);
       sprites.shield?.setVisible(false);
+      sprites.tracks.setVisible(false);
 
       return;
     }
@@ -285,6 +301,19 @@ export class PlayerRenderer {
         BODY_TURN_STEP,
       ),
     );
+    const trackFrame = advanceTankTrackAnimation(sprites.trackAnimation, x, y);
+    const activeTrackTextureKeys = hpFrac <= 0.35
+      ? trackTextureKeys.critical
+      : trackTextureKeys.normal;
+    sprites.tracks
+      .setVisible(true)
+      .setTexture(activeTrackTextureKeys[trackFrame])
+      .setPosition(x, y)
+      .setDepth(bodyDepth - 1)
+      .setScale(bodyScale)
+      .setRotation(sprites.body.rotation)
+      .setAlpha(tankAlpha)
+      .clearTint();
     sprites.turret
       .setVisible(true)
       .setTexture(activeTurretTexture)

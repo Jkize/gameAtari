@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="wreckedTrack" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0%" stop-color="#25272c"/>
-      <stop offset="48%" stop-color="#101114"/>
-      <stop offset="100%" stop-color="#040405"/>
-    </linearGradient>
     <linearGradient id="criticalArmor" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0%" stop-color="var(--tank-highlight)"/>
       <stop offset="34%" stop-color="var(--tank-color)"/>
@@ -39,22 +34,6 @@
 
   <g filter="url(#shadow)">
     <ellipse cx="258" cy="430" rx="178" ry="37" fill="#000" opacity=".34"/>
-
-    <path d="M80 72 L151 63 L157 111 L144 443 L79 428 Z" fill="url(#wreckedTrack)" class="line"/>
-    <path d="M361 66 L433 83 L423 430 L359 448 L348 111 Z" fill="url(#wreckedTrack)" class="line"/>
-    <g fill="#08090b" opacity=".92">
-      <rect x="87" y="90" width="52" height="25" rx="5" transform="rotate(-6 113 102)"/>
-      <rect x="88" y="137" width="49" height="25" rx="5" transform="rotate(5 112 149)"/>
-      <rect x="85" y="187" width="53" height="25" rx="5"/>
-      <rect x="88" y="238" width="48" height="25" rx="5" transform="rotate(7 112 250)"/>
-      <rect x="83" y="296" width="53" height="25" rx="5" transform="rotate(-5 109 308)"/>
-      <rect x="84" y="356" width="50" height="25" rx="5"/>
-      <rect x="372" y="91" width="50" height="25" rx="5" transform="rotate(6 397 103)"/>
-      <rect x="371" y="146" width="52" height="25" rx="5" transform="rotate(-5 397 158)"/>
-      <rect x="374" y="207" width="45" height="25" rx="5" transform="rotate(8 396 219)"/>
-      <rect x="371" y="273" width="51" height="25" rx="5"/>
-      <rect x="374" y="335" width="47" height="25" rx="5" transform="rotate(-7 397 347)"/>
-    </g>
 
     <path d="M178 54 L334 61 L378 116 L366 402 L329 457 L183 451 L126 399 L139 109 Z" fill="url(#criticalArmor)" class="line"/>
     <path d="M195 82 L318 80 L347 123 L340 381 L313 419 L196 425 L165 386 L164 125 Z" fill="#121314" class="fine"/>

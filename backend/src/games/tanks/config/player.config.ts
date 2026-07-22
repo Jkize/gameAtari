@@ -1,5 +1,5 @@
 export const PLAYER_SPEED = 200;
-export const PLAYER_RADIUS = 28;
+export const PLAYER_RADIUS = 30;
 export const PLAYER_HP = 100;
 
 export const DASH_MULTIPLIER = 4;

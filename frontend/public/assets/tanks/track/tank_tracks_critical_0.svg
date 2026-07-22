@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <style>
+      :root {
+        --track-tread-bright: #777d87;
+        --track-tread-mid: #464b54;
+        --track-tread-dark: #0c0e11;
+        --track-tread-shadow: #1b1517;
+        --track-base-bright: #25272c;
+        --track-base-mid: #101114;
+        --track-base-dark: #040405;
+        --track-base-outline: #050505;
+      }
+    </style>
+    <linearGradient id="trackBase" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="var(--track-base-bright)"/>
+      <stop offset=".48" stop-color="var(--track-base-mid)"/>
+      <stop offset="1" stop-color="var(--track-base-dark)"/>
+    </linearGradient>
+    <linearGradient id="plateLeft" x1="0" x2="1" y1="0" y2="0" gradientTransform="rotate(180 .5 .5)">
+      <stop offset="0" stop-color="var(--track-tread-bright)"/>
+      <stop offset=".45" stop-color="var(--track-tread-mid)"/>
+      <stop offset="1" stop-color="var(--track-tread-shadow)"/>
+    </linearGradient>
+    <linearGradient id="plateRight" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="var(--track-tread-bright)"/>
+      <stop offset=".45" stop-color="var(--track-tread-mid)"/>
+      <stop offset="1" stop-color="var(--track-tread-shadow)"/>
+    </linearGradient>
+    <clipPath id="left"><path d="M80 72L151 63l6 48-13 332-65-15z"/></clipPath>
+    <clipPath id="right"><path d="M361 66l72 17-10 347-64 18-11-337z"/></clipPath>
+    <pattern id="leftPlate" x="84" y="72" width="58" height="48" patternUnits="userSpaceOnUse"><rect width="58" height="29" rx="5" fill="url(#plateLeft)"/></pattern>
+    <pattern id="rightPlate" x="370" y="72" width="58" height="48" patternUnits="userSpaceOnUse"><rect width="58" height="29" rx="5" fill="url(#plateRight)"/></pattern>
+  </defs>
+  <path d="M80 72L151 63l6 48-13 332-65-15z" fill="url(#trackBase)" stroke="var(--track-base-outline)" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M361 66l72 17-10 347-64 18-11-337z" fill="url(#trackBase)" stroke="var(--track-base-outline)" stroke-width="5" stroke-linejoin="round"/>
+  <rect x="80" y="62" width="78" height="388" fill="url(#leftPlate)" clip-path="url(#left)" opacity=".78"/>
+  <rect x="348" y="62" width="86" height="388" fill="url(#rightPlate)" clip-path="url(#right)" opacity=".78"/>
+</svg>

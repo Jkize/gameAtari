@@ -1,15 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="trackGrad" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0%" stop-color="#26272b"/>
-      <stop offset="45%" stop-color="#15161a"/>
-      <stop offset="100%" stop-color="#08090b"/>
-    </linearGradient>
-    <linearGradient id="trackPlate" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0%" stop-color="#36383d"/>
-      <stop offset="50%" stop-color="#1b1d21"/>
-      <stop offset="100%" stop-color="#0b0c0e"/>
-    </linearGradient>
     <linearGradient id="hurtArmor" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0%" stop-color="var(--tank-highlight)"/>
       <stop offset="38%" stop-color="var(--tank-color)"/>
@@ -49,29 +39,6 @@
   </defs>
 
   <g filter="url(#shadow)">
-    <rect x="74" y="62" width="78" height="388" rx="22" fill="url(#trackGrad)" class="line"/>
-    <rect x="360" y="62" width="78" height="388" rx="22" fill="url(#trackGrad)" class="line"/>
-    <g fill="url(#trackPlate)">
-      <rect x="84" y="74" width="58" height="28" rx="6"/>
-      <rect x="84" y="111" width="58" height="28" rx="6"/>
-      <rect x="84" y="148" width="58" height="28" rx="6"/>
-      <rect x="84" y="185" width="58" height="28" rx="6"/>
-      <rect x="84" y="222" width="58" height="28" rx="6"/>
-      <rect x="84" y="259" width="58" height="28" rx="6"/>
-      <rect x="84" y="296" width="58" height="28" rx="6"/>
-      <rect x="84" y="333" width="58" height="28" rx="6"/>
-      <rect x="84" y="370" width="58" height="28" rx="6"/>
-      <rect x="370" y="74" width="58" height="28" rx="6"/>
-      <rect x="370" y="111" width="58" height="28" rx="6"/>
-      <rect x="370" y="148" width="58" height="28" rx="6"/>
-      <rect x="370" y="185" width="58" height="28" rx="6"/>
-      <rect x="370" y="222" width="58" height="28" rx="6"/>
-      <rect x="370" y="259" width="58" height="28" rx="6"/>
-      <rect x="370" y="296" width="58" height="28" rx="6"/>
-      <rect x="370" y="333" width="58" height="28" rx="6"/>
-      <rect x="370" y="370" width="58" height="28" rx="6"/>
-    </g>
-
     <path d="M182 58 L330 58 L364 100 L364 416 L328 454 L184 454 L148 416 L148 100 Z" fill="#0b0c0f" opacity=".84"/>
     <path d="M178 52 L334 52 L382 110 L382 406 L330 458 L182 458 L130 406 L130 110 Z" fill="url(#hurtArmor)" class="line"/>
     <path d="M194 72 L318 72 L354 114 L354 394 L320 430 L192 430 L158 394 L158 114 Z" fill="#15161a" class="fine"/>

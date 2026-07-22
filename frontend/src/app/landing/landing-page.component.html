@@ -61,10 +61,11 @@
           <div
             class="tank-showcase-item"
             [style.transform]="'rotate(' + tank.rotate + 'deg) translateY(' + tank.offsetY + 'px)'"
-          >
-            <div class="tank-glow" [style.background]="tank.color"></div>
-            <div class="tank-art" aria-hidden="true">
-              <div class="tank-art-body" [innerHTML]="tank.bodyHtml"></div>
+            >
+              <div class="tank-glow" [style.background]="tank.color"></div>
+              <div class="tank-art" aria-hidden="true">
+                <div class="tank-art-tracks" [innerHTML]="tank.tracksHtml"></div>
+                <div class="tank-art-body" [innerHTML]="tank.bodyHtml"></div>
               <div class="tank-art-turret" [innerHTML]="tank.turretHtml"></div>
               @if (tank.weaponHtml) {
                 <div class="tank-art-weapon" [innerHTML]="tank.weaponHtml"></div>

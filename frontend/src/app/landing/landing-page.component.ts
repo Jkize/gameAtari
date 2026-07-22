@@ -6,11 +6,13 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageSwitcherComponent } from '../shared/language-switcher.component';
 import { ThemeService } from '../shared/theme.service';
+import { USE_PLAYER_COLOR_FOR_TRACK_TREAD_SHADOW } from '../shared/rendering/tank-track-rendering.config';
 
 interface ShowcaseTank {
   color: string;
   rotate: number;
   offsetY: number;
+  tracksHtml: SafeHtml;
   bodyHtml: SafeHtml;
   turretHtml: SafeHtml;
   weaponHtml?: SafeHtml;
@@ -33,6 +35,7 @@ interface ShowcaseTank {
 // the color is patched in, scoping the whole custom-property chain to that
 // one instance.
 const TANK_COLOR_PATTERN = /--tank-color:\s*#[0-9a-fA-F]{3,8}\s*;/;
+const TRACK_TREAD_SHADOW_PATTERN = /--track-tread-shadow:\s*#[0-9a-fA-F]{3,8}\s*;/;
 const SVG_ROOT_TAG_PATTERN = /<svg\s/;
 const STYLE_ROOT_SELECTOR_PATTERN = /:root\s*\{/;
 
@@ -43,6 +46,16 @@ function scopeAndColorTank(svg: string, hexColor: string, instanceId: string): s
   return scoped.replace(TANK_COLOR_PATTERN, `--tank-color: ${hexColor};`);
 }
 
+function scopeAndColorTracks(svg: string, hexColor: string, instanceId: string): string {
+  const scoped = svg
+    .replace(SVG_ROOT_TAG_PATTERN, `<svg id="${instanceId}" `)
+    .replace(STYLE_ROOT_SELECTOR_PATTERN, `#${instanceId} {`);
+  return USE_PLAYER_COLOR_FOR_TRACK_TREAD_SHADOW
+    ? scoped.replace(TRACK_TREAD_SHADOW_PATTERN, `--track-tread-shadow: ${hexColor};`)
+    : scoped;
+}
+
+const TANK_TRACKS_ASSET = 'assets/tanks/track/tank_tracks_0.svg';
 const TANK_BODY_ASSET = 'assets/tanks/tank_body_template.svg';
 const TANK_TURRET_ASSET = 'assets/tanks/tank_pistol_template.svg';
 
@@ -128,7 +141,8 @@ export class LandingPageComponent implements OnInit {
 
   private async loadShowcaseTanks(): Promise<void> {
     // Each template is fetched once and reused across every colored instance.
-    const [bodyRaw, turretRaw, ...weaponRaws] = await Promise.all([
+    const [tracksRaw, bodyRaw, turretRaw, ...weaponRaws] = await Promise.all([
+      firstValueFrom(this.http.get(TANK_TRACKS_ASSET, { responseType: 'text' })),
       firstValueFrom(this.http.get(TANK_BODY_ASSET, { responseType: 'text' })),
       firstValueFrom(this.http.get(TANK_TURRET_ASSET, { responseType: 'text' })),
       ...WEAPON_SHOWCASE_TYPES.map((type) =>
@@ -145,12 +159,18 @@ export class LandingPageComponent implements OnInit {
     const loadouts = shuffle(TANK_SHOWCASE_LOADOUTS);
 
     const tanks: ShowcaseTank[] = colors.map((color, index) => {
+      const tracksId = `landing-tank-tracks-${index}`;
       const bodyId = `landing-tank-body-${index}`;
       const turretId = `landing-tank-turret-${index}`;
-      // Order matters: unique-id the shared <defs> ids (trackGrad, etc.)
+      // Order matters: unique-id the shared <defs> ids (trackBase, etc.)
       // BEFORE adding the root svg's own id and rewriting `:root`, otherwise
       // withUniqueIds would also rename that fresh root id and desync it
       // from the `#instanceId { ... }` selector scopeAndColorTank just wrote.
+      const tracks = scopeAndColorTracks(
+        this.withUniqueIds(tracksRaw, tracksId),
+        color,
+        tracksId,
+      );
       const body = scopeAndColorTank(this.withUniqueIds(bodyRaw, bodyId), color, bodyId);
       const turret = scopeAndColorTank(this.withUniqueIds(turretRaw, turretId), color, turretId);
 
@@ -169,6 +189,7 @@ export class LandingPageComponent implements OnInit {
         color,
         rotate: TANK_SHOWCASE_ROTATIONS[index] ?? 0,
         offsetY: TANK_SHOWCASE_OFFSETS[index] ?? 0,
+        tracksHtml: this.sanitizer.bypassSecurityTrustHtml(tracks),
         bodyHtml: this.sanitizer.bypassSecurityTrustHtml(body),
         turretHtml: this.sanitizer.bypassSecurityTrustHtml(turret),
         weaponHtml,
