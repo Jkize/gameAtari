@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../auth/auth.service';
-import { socketManager } from '../network/socket';
+import { AuthService } from '@core/auth/auth.service';
+import { socketManager } from '@core/realtime/socket';
 
 @Injectable({ providedIn: 'root' })
 export class SessionExitService {

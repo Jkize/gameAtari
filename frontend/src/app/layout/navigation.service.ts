@@ -1,7 +1,7 @@
 import { Injectable, computed, inject } from '@angular/core';
-import { environment } from '../../environments/environment';
-import { EAuth } from '../auth/auth.models';
-import { AuthService } from '../auth/auth.service';
+import { environment } from '@env/environment';
+import { EAuth } from '@core/auth/auth.models';
+import { AuthService } from '@core/auth/auth.service';
 
 export interface NavTab {
   path: string;

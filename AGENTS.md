@@ -93,7 +93,8 @@ Tank Arena has an SPL token rewards system layered on top of completed matches.
 - Prizes are fixed: 1st = 700, 2nd = 300, 3rd = 100. Prizes are never redistributed.
 - Solana/Helius config is centralized in `backend/src/solana`; `NODE_ENV=production` uses mainnet-beta, all other environments use devnet.
 - Reward history endpoints live under `/rewards`: personal history, recent public matches, and match detail. They return backend-generated Solscan URLs and paginate at 50 items.
-- Frontend reward UI lives in `frontend/src/app/rewards`; account/wallet linking UI lives in `frontend/src/app/account`.
+- Frontend routed screens live in `frontend/src/app/pages`; Phaser runtime, rendering, audio, input, and public game contracts live in `frontend/src/app/game`.
+- Reusable reward UI lives in `frontend/src/app/features/rewards`; account/wallet linking UI lives in `frontend/src/app/features/account`.
 
 ## Commands
 

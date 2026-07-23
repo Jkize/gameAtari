@@ -13,19 +13,31 @@ Frontend for Tank Arena: Angular shell + Phaser + Socket.IO client.
 ## Important Files
 
 - `src/app/app.ts`, `app.html`, `app.css`: Angular shell.
-- `src/app/game/TankGame.ts`: Phaser game bootstrap.
-- `src/app/scenes/BootScene.ts`: asset preloading and transition to `GameScene`.
-- `src/app/scenes/GameScene.ts`: socket setup, map cache, input, rendering, HUD, effects.
-- `src/app/scenes/game-scene/`: renderers/controllers/HUD/tracking helpers.
-- `src/app/scenes/game-scene/danger-zone-renderer.ts`: lava-style ring/overlay renderer.
-- `src/app/scenes/game-scene/game-hud-renderer.ts`: zone warnings and HUD state.
-- `src/app/network/socket.ts`: Socket.IO client manager.
-- `src/app/network/socket-events.ts`: frontend event names; keep aligned with backend.
-- `src/app/types/`: frontend copies of backend contracts.
-- `public/assets/`: obstacle, weapon, tile, tank template assets.
-- `src/app/rewards/`: reward notice, personal history, public recent matches, match detail, Solscan link/status badge.
-- `src/app/account/account-settings.component.ts`: account popup for linking Google/Phantom.
-- `src/app/auth/auth.service.ts`: login and account-linking client methods.
+- `src/app/pages/`: route-level Angular components only.
+- `src/app/features/`: reusable business UI such as account, rewards, matchmaking, public stats, and PWA.
+- `src/app/core/`: singleton infrastructure for auth, realtime transport, i18n, and theme.
+- `src/app/game/bootstrap/tank-game.ts`: Phaser game bootstrap.
+- `src/app/game/scenes/boot-scene.ts`: asset preloading and transition to `GameScene`.
+- `src/app/game/scenes/game-scene.ts`: socket setup, map cache, input, rendering, HUD, effects.
+- `src/app/game/rendering/`: arena/object renderers, HUD, effects, and generated textures.
+- `src/app/game/audio/`, `input/`, `state/`, `spectator/`: focused runtime helpers.
+- `src/app/game/contracts/`: frontend copies of backend game contracts.
+- `src/app/core/realtime/socket.ts`: Socket.IO client manager.
+- `src/app/core/realtime/socket-events.ts`: frontend event names; keep aligned with backend.
+- `public/assets/game/`: game HUD, obstacle, weapon, tile, tank, music, and sound assets.
+- `src/app/pages/matches/`: personal history, public recent matches, and match detail pages.
+- `src/app/features/rewards/`: reusable reward UI and data access.
+- `src/app/features/account/account-settings/account-settings.component.ts`: account popup for linking Google/Phantom.
+- `src/app/core/auth/auth.service.ts`: login and account-linking client methods.
+
+## Architecture Boundaries
+
+- Pages may compose features, game, core, and shared code.
+- Features may depend on core and shared code, but not on pages.
+- Game runtime may depend on core realtime/i18n and shared utilities, but never on route pages or features.
+- Shared code must stay business-agnostic and must not import pages or features.
+- Prefer `@core`, `@features`, `@game`, `@pages`, `@shared`, and `@env` aliases for cross-boundary imports.
+- Keep every Angular component with separate `.ts`, `.html`, and `.css` files in its own folder; keep its `.spec.ts` there too.
 
 ## Networking Rules
 
@@ -64,7 +76,7 @@ this.gameState = { ...state, map: this.currentMap };
 
 ## Rendering Notes
 
-- `GameScene` uses Phaser layers: background graphics, glow graphics with ADD blend, main graphics, player UI graphics, plus per-object images/text.
+- `game/scenes/game-scene.ts` uses Phaser layers: background graphics, glow graphics with ADD blend, main graphics, player UI graphics, plus per-object images/text.
 - Obstacles are static render objects keyed by obstacle ID and removed by obstacle events/cache changes.
 - Non-mirror obstacles prefer image assets when textures exist; procedural drawing is the fallback.
 - Tanks use generated SVG textures for body/turret and destroyed variants.

@@ -1,57 +1,57 @@
 import { Routes } from '@angular/router';
-import { EAuth } from './auth/auth.models';
-import { guestGuard } from './auth/guest.guard';
-import { roleGuard } from './auth/role.guard';
-import { tutorialFinishedGuard, tutorialWelcomeGuard } from './auth/tutorial.guard';
+import { EAuth } from '@core/auth/auth.models';
+import { guestGuard } from '@core/auth/guest.guard';
+import { roleGuard } from '@core/auth/role.guard';
+import { tutorialFinishedGuard, tutorialWelcomeGuard } from '@core/auth/tutorial.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./auth/login/login.component').then((module) => module.LoginComponent),
+      import('@pages/login/login.component').then((module) => module.LoginComponent),
   },
   { path: 'auth', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'game',
     canActivate: [roleGuard, tutorialFinishedGuard],
     loadComponent: () =>
-      import('./game/game-host.component').then((module) => module.GameHostComponent),
+      import('@pages/game/game-host.component').then((module) => module.GameHostComponent),
   },
   {
     path: 'game/:roomId',
     canActivate: [roleGuard, tutorialFinishedGuard],
     loadComponent: () =>
-      import('./game/game-host.component').then((module) => module.GameHostComponent),
+      import('@pages/game/game-host.component').then((module) => module.GameHostComponent),
   },
   {
     path: 'welcome',
     canActivate: [roleGuard, tutorialWelcomeGuard],
     loadComponent: () =>
-      import('./tutorial/tutorial-welcome.component').then((module) => module.TutorialWelcomeComponent),
+      import('@pages/tutorial/tutorial-welcome/tutorial-welcome.component').then((module) => module.TutorialWelcomeComponent),
   },
   {
     path: 'tutorial',
     canActivate: [roleGuard],
     loadComponent: () =>
-      import('./tutorial/tutorial.component').then((module) => module.TutorialComponent),
+      import('@pages/tutorial/tutorial/tutorial.component').then((module) => module.TutorialComponent),
   },
   {
     path: 'custom',
     canActivate: [roleGuard],
     loadComponent: () =>
-      import('./map-editor/map-editor.component').then((module) => module.MapEditorComponent),
+      import('@pages/map-editor/map-editor/map-editor.component').then((module) => module.MapEditorComponent),
   },
   {
     path: '',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./landing/landing-page.component').then((module) => module.LandingPageComponent),
+      import('@pages/landing/landing-page.component').then((module) => module.LandingPageComponent),
   },
   {
     path: '',
     loadComponent: () =>
-      import('./layout/app-layout.component').then((module) => module.AppLayoutComponent),
+      import('@app/layout/app-layout/app-layout.component').then((module) => module.AppLayoutComponent),
     children: [
       {
         path: '',
@@ -62,18 +62,18 @@ export const routes: Routes = [
         path: 'lobby',
         canActivate: [roleGuard, tutorialFinishedGuard],
         loadComponent: () =>
-          import('./lobby/lobby.component').then((module) => module.LobbyComponent),
+          import('@pages/lobby/lobby/lobby.component').then((module) => module.LobbyComponent),
       },
       {
         path: 'matches/me',
         canActivate: [roleGuard],
         loadComponent: () =>
-          import('./rewards/my-matches.component').then((module) => module.MyMatchesComponent),
+          import('@pages/matches/my-matches/my-matches.component').then((module) => module.MyMatchesComponent),
       },
       {
         path: 'matches/recent',
         loadComponent: () =>
-          import('./rewards/recent-matches.component').then(
+          import('@pages/matches/recent-matches/recent-matches.component').then(
             (module) => module.RecentMatchesComponent,
           ),
       },
@@ -82,14 +82,14 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: [EAuth.ADMIN] },
         loadComponent: () =>
-          import('./users/users-list.component').then((module) => module.UsersListComponent),
+          import('@pages/admin/users/users-list/users-list.component').then((module) => module.UsersListComponent),
       },
       {
         path: 'stats',
         canActivate: [roleGuard],
         data: { roles: [EAuth.ADMIN] },
         loadComponent: () =>
-          import('./admin-stats/admin-stats.component').then((module) => module.AdminStatsComponent),
+          import('@pages/admin/stats/admin-stats/admin-stats.component').then((module) => module.AdminStatsComponent),
       },
       {
         path: 'admin/stats',
@@ -99,7 +99,7 @@ export const routes: Routes = [
       {
         path: 'matches/:matchId',
         loadComponent: () =>
-          import('./rewards/match-detail.component').then((module) => module.MatchDetailComponent),
+          import('@pages/matches/match-detail/match-detail.component').then((module) => module.MatchDetailComponent),
       },
     ],
   },

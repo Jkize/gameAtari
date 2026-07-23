@@ -8,27 +8,20 @@ This app runs without `zone.js`. Any state written from window events, Phaser ca
 
 ## UI Theme Convention
 
-App-shell UI (layout, lobby, account, admin panels — anything outside the Phaser canvas) must use theme CSS variables via `frontend/src/app/shared/theme.service.ts` and support light/dark. The bronze/neon in-game palette is scoped to Phaser canvas rendering (`scenes/`) only and must not leak into Angular component styles.
+App-shell UI (layout, lobby, account, admin panels — anything outside the Phaser canvas) must use theme CSS variables via `frontend/src/app/core/theme/theme.service.ts` and support light/dark. The bronze/neon in-game palette is scoped to `frontend/src/app/game/` and must not leak into Angular component styles.
 
-## Module Map
+## Architecture Map
 
-- `account` — account modal state + settings, see `account/CLAUDE.md`.
-- `admin-stats` — admin runtime dashboard.
-- `auth` — login, guards, `AuthService`.
-- `game` — `TankGame.ts` Phaser bootstrap, asset preloading, game host component.
-- `layout` — app shell: header, nav, user menu.
-- `lobby` — room list, quick play, private room join/create.
-- `map-editor` — in-browser map authoring tool.
-- `network` — socket connection/auth, see `network/CLAUDE.md`.
-- `pwa` — install prompt/service worker.
-- `rewards` — reward history/eligibility UI, see `rewards/CLAUDE.md`.
-- `scenarios` — background decorative scenarios.
-- `scenes` — Phaser game rendering, see `scenes/CLAUDE.md`.
-- `shared` — theme service, language switcher, shared rendering helpers.
-- `stats` — public stats display.
-- `tutorial` — guided tutorial scene/flow.
-- `types` — frontend copies of backend public contracts (`types/game-state.types.ts`).
-- `users` — admin user list.
+- `core/` — singleton infrastructure: authentication/guards, Socket.IO transport, i18n, and theme. Realtime rules are in `core/realtime/CLAUDE.md`.
+- `game/` — all Phaser runtime code: bootstrap, scenes, rendering, audio, input, state, spectator behavior, tutorial runtime, assets, config, and public game contracts. See `game/CLAUDE.md`.
+- `pages/` — components loaded directly by `app.routes.ts`: landing, login, lobby, game host, tutorial flow, map editor, match histories, and admin screens.
+- `features/` — reusable business UI/data access: account, rewards, matchmaking, public stats, and PWA. See `features/account/CLAUDE.md` and `features/rewards/CLAUDE.md`.
+- `layout/` — application shell: header, navigation, session exit, and user menu.
+- `shared/` — generic UI, utilities, and config with no game or business-feature ownership.
+
+Cross-boundary imports use `@core`, `@features`, `@game`, `@pages`, `@shared`, and `@env`. Pages may compose lower layers; core/shared/game/features must not import route pages.
+
+Components with separate `.ts`, `.html`, and `.css` files live in dedicated component folders together with their component spec. A folder already containing only one component triplet counts as dedicated; do not add redundant nesting such as `login/login/`.
 
 ## Frontend Responsibilities
 
@@ -57,4 +50,4 @@ cd backend && npm run build
 cd frontend && npm run build
 ```
 
-`frontend/src/app/network/socket-events.ts` frontend event names must stay aligned with backend's socket event names — see `network/CLAUDE.md`.
+`frontend/src/app/core/realtime/socket-events.ts` frontend event names must stay aligned with backend's socket event names — see `core/realtime/CLAUDE.md`.

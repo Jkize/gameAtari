@@ -3,11 +3,11 @@ import { RouterOutlet } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { filter } from 'rxjs';
-import { MatchStartRedirectService } from './network/match-start-redirect.service';
-import { QueueCountdownButtonComponent } from './network/queue-countdown-button.component';
-import { QueueStatusService } from './network/queue-status.service';
-import { ThemeService } from './shared/theme.service';
-import { PwaInstallService } from './pwa/pwa-install.service';
+import { MatchStartRedirectService } from '@features/matchmaking/match-start-redirect.service';
+import { QueueCountdownButtonComponent } from '@features/matchmaking/queue-countdown-button/queue-countdown-button.component';
+import { QueueStatusService } from '@features/matchmaking/queue-status.service';
+import { ThemeService } from '@core/theme/theme.service';
+import { PwaInstallService } from '@features/pwa/pwa-install.service';
 
 @Component({
   selector: 'app-root',

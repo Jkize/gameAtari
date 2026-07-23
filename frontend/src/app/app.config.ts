@@ -3,14 +3,14 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTransloco } from '@jsverse/transloco';
 import { routes } from './app.routes';
-import { TranslocoHttpLoader } from './transloco-loader';
+import { TranslocoHttpLoader } from '@core/i18n/transloco-loader';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import {
   APP_LANGUAGES,
   applyDocumentLanguage,
   resolveInitialLanguage,
-} from './shared/language.config';
+} from '@core/i18n/language.config';
 
 const initialLanguage = resolveInitialLanguage();
 applyDocumentLanguage(initialLanguage);

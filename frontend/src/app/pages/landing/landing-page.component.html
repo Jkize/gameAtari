@@ -1,0 +1,145 @@
+<main class="landing-shell">
+  <div class="landing-content">
+    <header class="landing-header">
+      <div class="brand">
+        <img src="/assets/logo/logo.svg" alt="" aria-hidden="true" />
+        <span class="wordmark">Tank Arena</span>
+      </div>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="theme-toggle"
+          role="switch"
+          [attr.aria-checked]="theme.current() === 'dark'"
+          [attr.aria-label]="(theme.current() === 'dark' ? 'settings.switchToLight' : 'settings.switchToDark') | transloco"
+          (click)="toggleTheme()"
+        >
+          <i class="ti" [class.ti-sun]="theme.current() === 'dark'" [class.ti-moon]="theme.current() !== 'dark'" aria-hidden="true"></i>
+        </button>
+        <app-lang-switcher></app-lang-switcher>
+        <a class="play-link" routerLink="/login">{{ 'landing.hero.cta' | transloco }}</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>{{ 'landing.hero.title' | transloco }}</h1>
+        <p class="hero-subtitle">{{ 'landing.hero.subtitle' | transloco }}</p>
+        <a class="cta-primary" routerLink="/login">{{ 'landing.hero.cta' | transloco }}</a>
+      </div>
+
+      <div class="hero-media">
+        <!--
+          MEDIA SKELETON: no gameplay recording exists yet. Once
+          assets/landing/gameplay-teaser.mp4 and assets/landing/gameplay-poster.jpg
+          are captured, delete the .media-skeleton div below and uncomment the
+          real <video> block in its place — that's the whole swap.
+
+          <video
+            class="teaser-video"
+            poster="assets/landing/gameplay-poster.jpg"
+            autoplay
+            muted
+            loop
+            playsinline
+            aria-label="Tank Arena gameplay teaser"
+          >
+            <source src="assets/landing/gameplay-teaser.mp4" type="video/mp4" />
+          </video>
+        -->
+        <div class="media-skeleton teaser-skeleton">
+          <i class="ti ti-player-play" aria-hidden="true"></i>
+          <span>{{ 'landing.media.comingSoon' | transloco }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tank-showcase">
+      <h2>{{ 'landing.tanks.heading' | transloco }}</h2>
+      <div class="tank-showcase-row">
+        @for (tank of showcaseTanks(); track $index) {
+          <div
+            class="tank-showcase-item"
+            [style.transform]="'rotate(' + tank.rotate + 'deg) translateY(' + tank.offsetY + 'px)'"
+            >
+              <div class="tank-glow" [style.background]="tank.color"></div>
+              <div class="tank-art" aria-hidden="true">
+                <div class="tank-art-tracks" [innerHTML]="tank.tracksHtml"></div>
+                <div class="tank-art-body" [innerHTML]="tank.bodyHtml"></div>
+              <div class="tank-art-turret" [innerHTML]="tank.turretHtml"></div>
+              @if (tank.weaponHtml) {
+                <div class="tank-art-weapon" [innerHTML]="tank.weaponHtml"></div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="features">
+      <h2>{{ 'landing.features.heading' | transloco }}</h2>
+      <ul class="feature-grid">
+        <li class="feature-card">
+          <h3>{{ 'landing.features.multiplayer.title' | transloco }}</h3>
+          <p>{{ 'landing.features.multiplayer.description' | transloco }}</p>
+        </li>
+        <li class="feature-card">
+          <img class="feature-icon" src="assets/game/obstacle/rock_block_1.svg" alt="" aria-hidden="true" />
+          <h3>{{ 'landing.features.destructible.title' | transloco }}</h3>
+          <p>{{ 'landing.features.destructible.description' | transloco }}</p>
+        </li>
+        <li class="feature-card">
+          <div class="feature-icon-row" aria-hidden="true">
+            <img src="assets/game/power/dash.svg" alt="" />
+            <img src="assets/game/power/shot.svg" alt="" />
+            <img src="assets/game/power/shield.svg" alt="" />
+          </div>
+          <h3>{{ 'landing.features.powerUps.title' | transloco }}</h3>
+          <p>{{ 'landing.features.powerUps.description' | transloco }}</p>
+        </li>
+        <li class="feature-card">
+          <h3>{{ 'landing.features.dangerZone.title' | transloco }}</h3>
+          <p>{{ 'landing.features.dangerZone.description' | transloco }}</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="gallery">
+      <h2>{{ 'landing.gallery.heading' | transloco }}</h2>
+      <!--
+        MEDIA SKELETON: no screenshots exist yet. Once
+        assets/landing/screenshot-1.jpg / -2.jpg / -3.jpg are captured, delete
+        the .media-skeleton div in each slot below and uncomment the matching
+        <img> — that's the whole swap.
+
+        <img src="assets/landing/screenshot-1.jpg" alt="{{ 'landing.gallery.altPrefix' | transloco }} 1" loading="lazy" />
+        <img src="assets/landing/screenshot-2.jpg" alt="{{ 'landing.gallery.altPrefix' | transloco }} 2" loading="lazy" />
+        <img src="assets/landing/screenshot-3.jpg" alt="{{ 'landing.gallery.altPrefix' | transloco }} 3" loading="lazy" />
+      -->
+      <div class="gallery-grid">
+        <div class="gallery-slot">
+          <div class="media-skeleton gallery-skeleton">
+            <i class="ti ti-photo" aria-hidden="true"></i>
+            <span>{{ 'landing.media.comingSoon' | transloco }}</span>
+          </div>
+        </div>
+        <div class="gallery-slot">
+          <div class="media-skeleton gallery-skeleton">
+            <i class="ti ti-photo" aria-hidden="true"></i>
+            <span>{{ 'landing.media.comingSoon' | transloco }}</span>
+          </div>
+        </div>
+        <div class="gallery-slot">
+          <div class="media-skeleton gallery-skeleton">
+            <i class="ti ti-photo" aria-hidden="true"></i>
+            <span>{{ 'landing.media.comingSoon' | transloco }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
+      <a class="cta-primary" routerLink="/login">{{ 'landing.hero.cta' | transloco }}</a>
+    </footer>
+  </div>
+</main>

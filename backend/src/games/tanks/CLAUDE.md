@@ -77,8 +77,8 @@ Important files:
 - `backend/src/games/tanks/danger-zone.service.ts`: tier configs, center picking, phase/radius/public state.
 - `backend/src/games/tanks/game-loop.service.ts`: zone initialization, tick damage, `gameState` payload.
 - `backend/src/games/tanks/game.service.ts`: direct shield-ignoring zone damage helper.
-- `frontend/src/app/scenes/game-scene/danger-zone-renderer.ts`: lava-style world renderer.
-- `frontend/src/app/scenes/game-scene/game-hud-renderer.ts`: zone warning HUD.
+- `frontend/src/app/game/rendering/danger-zone-renderer.ts`: lava-style world renderer.
+- `frontend/src/app/game/rendering/hud/game-hud-renderer.ts`: zone warning HUD.
 
 ## Loop Behavior
 

@@ -1,0 +1,105 @@
+<main class="tutorial-shell">
+  <div #tutorialContainer class="tutorial-canvas" aria-label="{{ 'tutorial.arenaLabel' | transloco }}"></div>
+
+  @if (!complete()) {
+    <header class="tutorial-header">
+      <div>
+        <span class="eyebrow">{{ 'tutorial.eyebrow' | transloco }}</span>
+        <h1>{{ 'tutorial.title' | transloco }}</h1>
+      </div>
+      <button type="button" class="skip-button" [disabled]="saving()" (click)="skip()">
+        {{ 'tutorial.skip' | transloco }}
+      </button>
+    </header>
+
+    <section class="instruction-card" aria-live="polite">
+      <span class="step-count">{{ 'tutorial.stepCount' | transloco: { current: step() + 1 } }}</span>
+      <strong>{{ ('tutorial.steps.' + step() + '.title') | transloco }}</strong>
+      <p>{{ instructionKey() | transloco }}</p>
+      @if (!isTouch()) {
+        <div class="desktop-cue" aria-hidden="true">
+          @switch (step()) {
+            @case (0) {
+              <div class="key-sequence"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+            }
+            @case (1) {
+              <span class="mouse-cue mouse-moving"><i></i></span>
+            }
+            @case (2) {
+              <span class="mouse-cue mouse-clicking"><i></i></span>
+            }
+            @case (3) {
+              <div class="dash-key-combo">
+                <div class="key-sequence"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+                <span>+</span>
+                <kbd class="wide-key">SHIFT</kbd>
+              </div>
+            }
+            @case (4) {
+              <kbd>Q</kbd>
+            }
+          }
+        </div>
+      }
+      <div class="progress" aria-hidden="true">
+        @for (item of [0, 1, 2, 3, 4]; track item) {
+          <span [class.active]="item <= step()"></span>
+        }
+      </div>
+    </section>
+  } @else {
+    <section class="summary-panel" aria-live="polite">
+      <span class="eyebrow">{{ 'tutorial.readyEyebrow' | transloco }}</span>
+      <h2>{{ 'tutorial.readyTitle' | transloco }}</h2>
+      <p class="summary-intro">{{ 'tutorial.readyDescription' | transloco }}</p>
+
+      <div class="summary-content">
+        <article class="menu-tip">
+          <span class="menu-gear" aria-hidden="true">&#9881;</span>
+          <div>
+            <strong>{{ 'tutorial.tips.menuTitle' | transloco }}</strong>
+            <p>{{ (isTouch() ? 'tutorial.tips.menuMobile' : 'tutorial.tips.menuDesktop') | transloco }}</p>
+          </div>
+        </article>
+
+        <div class="powers-header">
+          <strong>{{ 'tutorial.powers.heading' | transloco }}</strong>
+          <span>{{ 'tutorial.powers.cooldownHint' | transloco }}</span>
+        </div>
+
+        <div class="powers-grid">
+          <article class="power-card">
+            <img src="assets/game/weapon/power_triple_shot.svg" alt="" aria-hidden="true">
+            <div><strong>{{ 'tutorial.powers.tripleShotTitle' | transloco }}</strong><p>{{ 'tutorial.powers.tripleShotDescription' | transloco }}</p></div>
+          </article>
+          <article class="power-card">
+            <img src="assets/game/weapon/power_shotgun.svg" alt="" aria-hidden="true">
+            <div><strong>{{ 'tutorial.powers.shotgunTitle' | transloco }}</strong><p>{{ 'tutorial.powers.shotgunDescription' | transloco }}</p></div>
+          </article>
+          <article class="power-card">
+            <img src="assets/game/weapon/power_grenade.svg" alt="" aria-hidden="true">
+            <div><strong>{{ 'tutorial.powers.grenadeTitle' | transloco }}</strong><p>{{ 'tutorial.powers.grenadeDescription' | transloco }}</p></div>
+          </article>
+          <article class="power-card">
+            <img src="assets/game/weapon/power_laser.svg" alt="" aria-hidden="true">
+            <div><strong>{{ 'tutorial.powers.laserTitle' | transloco }}</strong><p>{{ 'tutorial.powers.laserDescription' | transloco }}</p></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="summary-actions">
+        @if (saveError()) { <span class="save-error" role="alert">{{ saveError() }}</span> }
+        <button type="button" class="secondary-button" [disabled]="saving()" (click)="repeat()">{{ 'tutorial.repeat' | transloco }}</button>
+        <button type="button" class="primary-button" [disabled]="saving()" (click)="finish()">
+          {{ (saving() ? 'tutorial.saving' : 'tutorial.finish') | transloco }}
+        </button>
+      </div>
+    </section>
+  }
+
+  <div class="rotate-overlay" aria-hidden="true">
+    <span class="rotate-icon">↻</span>
+    <strong>{{ 'game.rotateTitle' | transloco }}</strong>
+    <span>{{ 'game.rotateHint' | transloco }}</span>
+  </div>
+</main>

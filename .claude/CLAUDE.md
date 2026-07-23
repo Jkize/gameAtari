@@ -22,10 +22,10 @@ Claude Code auto-loads nested `CLAUDE.md` files when work happens under that dir
 - `backend/src/rooms/CLAUDE.md` — dev/prod room config, countdown, watcher presence
 - `backend/src/rewards/CLAUDE.md` — pointer to `rewards/AGENTS.md` (full rewards rules live there, not auto-loaded by Claude Code otherwise)
 - `frontend/CLAUDE.md` — Angular/Phaser overview, zoneless signals rule, UI theme convention, module map, frontend responsibilities
-- `frontend/src/app/scenes/CLAUDE.md` — GameScene, snapshot interpolation, rendering notes
-- `frontend/src/app/network/CLAUDE.md` — SocketManager, socket-events alignment with backend
-- `frontend/src/app/rewards/CLAUDE.md` — frontend reward UI rules
-- `frontend/src/app/account/CLAUDE.md` — account-as-modal pattern
+- `frontend/src/app/game/CLAUDE.md` — GameScene, snapshot interpolation, rendering/audio/input boundaries
+- `frontend/src/app/core/realtime/CLAUDE.md` — SocketManager, socket-events alignment with backend
+- `frontend/src/app/features/rewards/CLAUDE.md` — frontend reward UI rules
+- `frontend/src/app/features/account/CLAUDE.md` — account-as-modal pattern
 
 ## Commands
 
