@@ -9,8 +9,8 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: calc(20px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px))
-    calc(24px + env(safe-area-inset-bottom, 0px)) calc(20px + env(safe-area-inset-left, 0px));
+  padding: calc(20px + var(--safe-area-top)) calc(20px + var(--safe-area-right))
+    calc(24px + var(--safe-area-bottom)) calc(20px + var(--safe-area-left));
   color: var(--color-text-primary);
   background: var(--color-bg-page);
   overflow-y: auto;

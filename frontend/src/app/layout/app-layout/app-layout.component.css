@@ -9,6 +9,8 @@
 .app-scroll {
   flex: 1;
   min-height: 0;
+  padding-right: var(--safe-area-right);
+  padding-left: var(--safe-area-left);
   overflow-y: auto;
   overflow-x: hidden;
   color: inherit;
@@ -24,7 +26,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 8px calc(16px + var(--safe-area-right))
+    calc(8px + var(--safe-area-bottom)) calc(16px + var(--safe-area-left));
   color: var(--color-text-secondary);
   font-size: 0.75rem;
   border-top: 0.5px solid var(--color-border);

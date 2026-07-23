@@ -10,10 +10,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 24px;
-  /* Keep header content below the iOS status bar in standalone PWA mode;
-     env() resolves to 0 everywhere else. */
-  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  padding: calc(14px + var(--safe-area-top)) calc(24px + var(--safe-area-right)) 14px
+    calc(24px + var(--safe-area-left));
   background: var(--color-bg-surface);
   border-bottom: 0.5px solid var(--color-border);
   box-shadow: 0 1px 6px rgba(44, 44, 42, 0.06);
@@ -108,7 +106,8 @@
 @media (max-width: 720px) {
   .app-header {
     gap: 10px;
-    padding-inline: 14px;
+    padding-right: calc(14px + var(--safe-area-right));
+    padding-left: calc(14px + var(--safe-area-left));
   }
 
   .brand .wordmark {
