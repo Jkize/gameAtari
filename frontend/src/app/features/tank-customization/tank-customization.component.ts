@@ -18,6 +18,8 @@ interface PartOption {
   icon: string;
 }
 
+const MODAL_HISTORY_STATE_KEY = 'tankCustomizationEditor';
+
 @Component({
   selector: 'app-tank-customization',
   standalone: true,
@@ -59,25 +61,35 @@ export class TankCustomizationComponent implements OnInit {
     '#9b5de5',
     '#e94f9c',
   ];
+  private modalHistoryEntryActive = false;
 
   ngOnInit(): void {
     if (this.openOnInit) this.openEditor();
   }
 
   openEditor(): void {
+    if (this.editorOpen()) return;
     this.draft.set(this.copy(this.store.current()));
     this.activePart.set('body');
     this.editorOpen.set(true);
+    const currentState = window.history.state;
+    const modalState = currentState && typeof currentState === 'object'
+      ? { ...currentState, [MODAL_HISTORY_STATE_KEY]: true }
+      : { [MODAL_HISTORY_STATE_KEY]: true };
+    window.history.pushState(modalState, '', window.location.href);
+    this.modalHistoryEntryActive = true;
   }
 
   closeEditor(): void {
-    this.draft.set(this.copy(this.store.current()));
-    this.editorOpen.set(false);
+    if (!this.editorOpen()) return;
+    this.dismissEditor();
+    this.removeModalHistoryEntry();
   }
 
   save(): void {
     this.store.save(this.draft());
     this.editorOpen.set(false);
+    this.removeModalHistoryEntry();
   }
 
   reset(): void {
@@ -103,6 +115,24 @@ export class TankCustomizationComponent implements OnInit {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.editorOpen()) this.closeEditor();
+  }
+
+  @HostListener('window:popstate')
+  onBrowserBack(): void {
+    if (!this.editorOpen() || !this.modalHistoryEntryActive) return;
+    this.modalHistoryEntryActive = false;
+    this.dismissEditor();
+  }
+
+  private dismissEditor(): void {
+    this.draft.set(this.copy(this.store.current()));
+    this.editorOpen.set(false);
+  }
+
+  private removeModalHistoryEntry(): void {
+    if (!this.modalHistoryEntryActive) return;
+    this.modalHistoryEntryActive = false;
+    window.history.back();
   }
 
   private copy(customization: TankCustomization): TankCustomization {

@@ -279,7 +279,7 @@
   }
 
   .command-center-v2__grid {
-    grid-template-columns: minmax(0, 1.35fr) minmax(210px, 0.65fr);
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 0.62fr);
     height: 100%;
     gap: 9px;
   }
@@ -340,7 +340,7 @@
   }
 
   .battle-console-v2 {
-    gap: 8px;
+    gap: 6px;
   }
 
   .room-console-v2 {
@@ -348,26 +348,31 @@
   }
 
   .battle-console-v2 .game-panel-v2--padded {
-    padding: 11px;
+    padding: 8px;
   }
 
   .battle-console-v2 h2 {
-    margin: 3px 0;
-    font-size: 0.95rem;
+    margin: 2px 0;
+    font-size: 0.86rem;
   }
 
   .battle-console-v2__description {
-    font-size: 0.62rem;
-    line-height: 1.3;
+    font-size: 0.57rem;
+    line-height: 1.2;
   }
 
   .battle-console-v2__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
-    margin: 8px 0;
+    margin: 5px 0;
+  }
+
+  .battle-console-v2__facts > div:first-child {
+    display: none;
   }
 
   .battle-console-v2__facts > div {
-    padding: 6px;
+    padding: 4px;
     gap: 2px;
     font-size: 0.58rem;
   }
@@ -377,20 +382,20 @@
   }
 
   .game-button-v2--battle {
-    min-height: 38px;
-    padding-block: 6px;
-    font-size: 0.67rem;
+    min-height: 34px;
+    padding-block: 5px;
+    font-size: 0.64rem;
   }
 
   .private-actions-v2 {
     gap: 5px;
-    margin-top: 7px;
+    margin-top: 5px;
   }
 
   .private-actions-v2 .game-button-v2 {
-    min-height: 34px;
-    padding: 6px;
-    font-size: 0.61rem;
+    min-height: 30px;
+    padding: 4px;
+    font-size: 0.58rem;
   }
 }
 

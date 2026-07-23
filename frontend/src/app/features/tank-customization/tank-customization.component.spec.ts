@@ -11,7 +11,10 @@ describe('TankCustomizationComponent', () => {
     TestBed.configureTestingModule({});
   });
 
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   it('applies a selected color only to the active tank part', () => {
     const component = TestBed.runInInjectionContext(() => new TankCustomizationComponent());
@@ -26,5 +29,30 @@ describe('TankCustomizationComponent', () => {
       tracks: '#db3a2c',
     });
     expect(component.selectedRgb()).toEqual({ red: 52, green: 120, blue: 246 });
+  });
+
+  it('closes the editor instead of navigating away when the browser goes back', () => {
+    const pushState = vi.spyOn(window.history, 'pushState').mockImplementation(() => undefined);
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+    const component = TestBed.runInInjectionContext(() => new TankCustomizationComponent());
+
+    component.openEditor();
+    component.onBrowserBack();
+
+    expect(pushState).toHaveBeenCalledOnce();
+    expect(component.editorOpen()).toBe(false);
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it('removes the modal history entry when closed from the interface', () => {
+    vi.spyOn(window.history, 'pushState').mockImplementation(() => undefined);
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+    const component = TestBed.runInInjectionContext(() => new TankCustomizationComponent());
+
+    component.openEditor();
+    component.closeEditor();
+
+    expect(component.editorOpen()).toBe(false);
+    expect(back).toHaveBeenCalledOnce();
   });
 });

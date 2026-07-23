@@ -38,7 +38,9 @@
     >
       <header class="lab-header">
         <div class="lab-brand">
-          <span class="lab-mark"><i class="ti ti-hexagon-letter-t" aria-hidden="true"></i></span>
+          <span class="lab-mark">
+            <img src="/assets/logo/logo.svg" alt="" aria-hidden="true" />
+          </span>
           <div>
             <p>{{ 'tankCustomization.labTitle' | transloco }}</p>
             <span>{{ 'tankCustomization.labSubtitle' | transloco }}</span>
@@ -191,10 +193,7 @@
       </div>
 
       <footer class="dialog-actions">
-        <p>
-          <i class="ti ti-info-circle" aria-hidden="true"></i>
-          {{ 'tankCustomization.previewNote' | transloco }}
-        </p>
+        <p></p>
         <div>
           <button class="reset-button" type="button" (click)="reset()">
             <i class="ti ti-refresh" aria-hidden="true"></i>
