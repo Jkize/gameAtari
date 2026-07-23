@@ -4,4 +4,5 @@ export const environment = {
   tokenContractAddress: '',
   devGameMode: false,
   interpolationEnabled: true,
+  uiVersion: 1 as 1 | 2,
 };

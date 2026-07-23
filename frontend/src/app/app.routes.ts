@@ -1,8 +1,26 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanMatchFn, Routes } from '@angular/router';
 import { EAuth } from '@core/auth/auth.models';
 import { guestGuard } from '@core/auth/guest.guard';
 import { roleGuard } from '@core/auth/role.guard';
 import { tutorialFinishedGuard, tutorialWelcomeGuard } from '@core/auth/tutorial.guard';
+import { UiVersionService } from '@core/ui/ui-version.service';
+
+const loadAuthenticatedLayout = () =>
+  inject(UiVersionService).current() === 2
+    ? import('@app/layout/game-shell-v2/game-shell-v2.component').then(
+        (module) => module.GameShellV2Component,
+      )
+    : import('@app/layout/app-layout/app-layout.component').then(
+        (module) => module.AppLayoutComponent,
+      );
+
+const loadLobby = () =>
+  inject(UiVersionService).current() === 2
+    ? import('@pages/lobby/lobby-v2/lobby-v2.component').then((module) => module.LobbyV2Component)
+    : import('@pages/lobby/lobby/lobby.component').then((module) => module.LobbyComponent);
+
+const v2OnlyGuard: CanMatchFn = () => inject(UiVersionService).current() === 2;
 
 export const routes: Routes = [
   {
@@ -28,19 +46,25 @@ export const routes: Routes = [
     path: 'welcome',
     canActivate: [roleGuard, tutorialWelcomeGuard],
     loadComponent: () =>
-      import('@pages/tutorial/tutorial-welcome/tutorial-welcome.component').then((module) => module.TutorialWelcomeComponent),
+      import('@pages/tutorial/tutorial-welcome/tutorial-welcome.component').then(
+        (module) => module.TutorialWelcomeComponent,
+      ),
   },
   {
     path: 'tutorial',
     canActivate: [roleGuard],
     loadComponent: () =>
-      import('@pages/tutorial/tutorial/tutorial.component').then((module) => module.TutorialComponent),
+      import('@pages/tutorial/tutorial/tutorial.component').then(
+        (module) => module.TutorialComponent,
+      ),
   },
   {
     path: 'custom',
     canActivate: [roleGuard],
     loadComponent: () =>
-      import('@pages/map-editor/map-editor/map-editor.component').then((module) => module.MapEditorComponent),
+      import('@pages/map-editor/map-editor/map-editor.component').then(
+        (module) => module.MapEditorComponent,
+      ),
   },
   {
     path: '',
@@ -50,8 +74,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    loadComponent: () =>
-      import('@app/layout/app-layout/app-layout.component').then((module) => module.AppLayoutComponent),
+    loadComponent: loadAuthenticatedLayout,
     children: [
       {
         path: '',
@@ -61,14 +84,22 @@ export const routes: Routes = [
       {
         path: 'lobby',
         canActivate: [roleGuard, tutorialFinishedGuard],
+        loadComponent: loadLobby,
+      },
+      {
+        path: 'garage',
+        canMatch: [v2OnlyGuard],
+        canActivate: [roleGuard, tutorialFinishedGuard],
         loadComponent: () =>
-          import('@pages/lobby/lobby/lobby.component').then((module) => module.LobbyComponent),
+          import('@pages/garage/garage-v2.component').then((module) => module.GarageV2Component),
       },
       {
         path: 'matches/me',
         canActivate: [roleGuard],
         loadComponent: () =>
-          import('@pages/matches/my-matches/my-matches.component').then((module) => module.MyMatchesComponent),
+          import('@pages/matches/my-matches/my-matches.component').then(
+            (module) => module.MyMatchesComponent,
+          ),
       },
       {
         path: 'matches/recent',
@@ -82,14 +113,18 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: [EAuth.ADMIN] },
         loadComponent: () =>
-          import('@pages/admin/users/users-list/users-list.component').then((module) => module.UsersListComponent),
+          import('@pages/admin/users/users-list/users-list.component').then(
+            (module) => module.UsersListComponent,
+          ),
       },
       {
         path: 'stats',
         canActivate: [roleGuard],
         data: { roles: [EAuth.ADMIN] },
         loadComponent: () =>
-          import('@pages/admin/stats/admin-stats/admin-stats.component').then((module) => module.AdminStatsComponent),
+          import('@pages/admin/stats/admin-stats/admin-stats.component').then(
+            (module) => module.AdminStatsComponent,
+          ),
       },
       {
         path: 'admin/stats',
@@ -99,7 +134,9 @@ export const routes: Routes = [
       {
         path: 'matches/:matchId',
         loadComponent: () =>
-          import('@pages/matches/match-detail/match-detail.component').then((module) => module.MatchDetailComponent),
+          import('@pages/matches/match-detail/match-detail.component').then(
+            (module) => module.MatchDetailComponent,
+          ),
       },
     ],
   },

@@ -4,7 +4,7 @@
   z-index: 30;
   background: rgba(44, 44, 42, 0.45);
 }
-[data-theme='dark'] .backdrop {
+:is([data-theme='dark'], [data-theme='dark_v2']) .backdrop {
   background: rgba(0, 0, 0, 0.55);
 }
 
@@ -23,7 +23,7 @@
   transform: translate(-50%, -50%);
   box-shadow: 0 24px 80px rgba(44, 44, 42, 0.35);
 }
-[data-theme='dark'] .account-settings.modal {
+:is([data-theme='dark'], [data-theme='dark_v2']) .account-settings.modal {
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
 }
 

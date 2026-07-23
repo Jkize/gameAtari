@@ -1,0 +1,209 @@
+<div class="game-page-v2 command-center-v2">
+  <app-pwa-install-prompt />
+
+  <div class="command-center-v2__grid">
+      <section class="game-panel-v2 hangar-v2">
+        <header class="hangar-v2__header">
+          <div>
+            <p class="game-eyebrow-v2">{{ 'lobbyV2.eyebrow' | transloco }}</p>
+            <h1>{{ 'lobbyV2.ready' | transloco }}</h1>
+            <p>{{ 'lobbyV2.description' | transloco }}</p>
+          </div>
+          <span class="game-status-chip-v2 game-status-chip-v2--online">
+            <i class="game-online-dot-v2"></i>
+            {{ 'lobbyV2.tankReady' | transloco }}
+          </span>
+        </header>
+
+        <div class="hangar-stage-v2" aria-hidden="true">
+          <span class="hangar-stage-v2__ring hangar-stage-v2__ring--outer"></span>
+          <span class="hangar-stage-v2__ring hangar-stage-v2__ring--inner"></span>
+          <div class="hangar-stage-v2__tank">
+            <app-tank-appearance-preview
+              [customization]="tankCustomization.current()"
+              [interactive]="true"
+            />
+          </div>
+        </div>
+
+        <div class="hangar-v2__appearance">
+          <div>
+            <span>{{ 'lobbyV2.currentAppearance' | transloco }}</span>
+            <div class="hangar-v2__swatches">
+              <i [style.background]="tankCustomization.current().colors.body"></i>
+              <i [style.background]="tankCustomization.current().colors.turret"></i>
+              <i [style.background]="tankCustomization.current().colors.tracks"></i>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="game-button-v2 game-button-v2--secondary game-button-v2--success-outline"
+            (click)="openTankCustomization()"
+          >
+            <i class="ti ti-palette" aria-hidden="true"></i>
+            {{ 'lobbyV2.customize' | transloco }}
+          </button>
+        </div>
+      </section>
+
+      <aside class="battle-console-v2">
+        @if (currentRoom()?.type === 'private' && currentRoom()?.status !== 'in_game') {
+          <app-private-room-panel
+            class="game-panel-v2 room-console-v2"
+            [room]="currentRoom()!"
+            [currentUserId]="auth.user()?.id ?? ''"
+            [starting]="startingPrivateRoom()"
+            [compact]="true"
+            (startRequested)="startPrivateRoom()"
+            (leaveRequested)="leaveRoom()"
+          />
+          @if (error()) {
+            <p class="game-message-v2 game-message-v2--error" role="alert">{{ error() }}</p>
+          }
+        } @else {
+        <section class="game-panel-v2 game-panel-v2--padded">
+          <p class="game-eyebrow-v2">{{ 'lobbyV2.battleConsole' | transloco }}</p>
+          <h2>{{ 'lobbyV2.publicBattle' | transloco }}</h2>
+          <p class="battle-console-v2__description">
+            {{ 'lobbyV2.publicDescription' | transloco }}
+          </p>
+
+          <div class="battle-console-v2__facts">
+            <div>
+              <span>{{ 'lobbyV2.mode' | transloco }}</span>
+              <strong>{{ 'lobbyV2.freeForAll' | transloco }}</strong>
+            </div>
+            <div>
+              <span>{{ 'lobbyV2.players' | transloco }}</span>
+              <strong>4&ndash;15</strong>
+            </div>
+            <div>
+              <span>{{ 'lobbyV2.map' | transloco }}</span>
+              <strong>{{ 'lobbyV2.random' | transloco }}</strong>
+            </div>
+          </div>
+
+          @if (preparing()) {
+            <div class="matchmaking-state-v2">
+              <i class="ti ti-loader-2"></i>
+              <strong>{{
+                'lobby.preparing' | transloco: { progress: preparationProgress() }
+              }}</strong>
+              <div class="game-progress-v2">
+                <span [style.width.%]="preparationProgress()"></span>
+              </div>
+            </div>
+            <button
+              class="game-button-v2 game-button-v2--secondary game-button-v2--wide"
+              (click)="leaveRoom()"
+            >
+              {{ 'lobby.cancel' | transloco }}
+            </button>
+          } @else if (searching()) {
+            <div class="matchmaking-state-v2 matchmaking-state-v2--searching">
+              <i class="ti ti-radar-2"></i>
+              <strong>{{ 'lobby.searching' | transloco }}</strong>
+            </div>
+            <button
+              class="game-button-v2 game-button-v2--secondary game-button-v2--wide"
+              (click)="leaveRoom()"
+            >
+              {{ 'lobby.cancel' | transloco }}
+            </button>
+          } @else if (currentRoom()?.status === 'in_game') {
+            <div class="matchmaking-state-v2">
+              <i class="ti ti-swords"></i>
+              <strong>{{ 'lobby.matchInProgress' | transloco }}</strong>
+            </div>
+            @if (canReconnect()) {
+              <button
+                class="game-button-v2 game-button-v2--primary game-button-v2--wide"
+                (click)="reconnectToMatch()"
+              >
+                {{ 'lobby.reconnect' | transloco }}
+              </button>
+            }
+          } @else if (currentRoom()) {
+            <div class="matchmaking-state-v2">
+              <i class="ti ti-users"></i>
+              @if (currentRoom()?.countdownSeconds !== null) {
+                <strong>
+                  {{
+                    'lobby.battleCountdown'
+                      | transloco: { seconds: currentRoom()?.countdownSeconds }
+                  }}
+                </strong>
+              } @else {
+                <strong>
+                  {{
+                    'lobby.waitingPlayers'
+                      | transloco
+                        : {
+                            current: currentRoom()?.playerCount,
+                            min: currentRoom()?.minPlayers,
+                          }
+                  }}
+                </strong>
+              }
+            </div>
+            <button
+              class="game-button-v2 game-button-v2--secondary game-button-v2--wide"
+              (click)="leaveRoom()"
+            >
+              {{ 'lobby.cancel' | transloco }}
+            </button>
+          } @else {
+            <button
+              class="game-button-v2 game-button-v2--primary game-button-v2--battle"
+              (click)="quickPlay()"
+            >
+              <i class="ti ti-swords" aria-hidden="true"></i>
+              {{ 'lobbyV2.enterBattle' | transloco }}
+            </button>
+          }
+
+          @if (error()) {
+            <p class="game-message-v2 game-message-v2--error" role="alert">{{ error() }}</p>
+          }
+        </section>
+
+        @if (showPrivateRoomActions()) {
+          <section class="game-panel-v2 game-panel-v2--padded">
+            <p class="game-eyebrow-v2">{{ 'lobby.privateRooms.eyebrow' | transloco }}</p>
+            <div class="private-actions-v2">
+              <button
+                class="game-button-v2 game-button-v2--secondary game-button-v2--success-outline"
+                (click)="openRoomDialog('create')"
+              >
+                <i class="ti ti-plus" aria-hidden="true"></i>
+                {{ 'lobby.privateRooms.createAction' | transloco }}
+              </button>
+              <button
+                class="game-button-v2 game-button-v2--secondary game-button-v2--success-outline"
+                (click)="openRoomDialog('join')"
+              >
+                <i class="ti ti-login" aria-hidden="true"></i>
+                {{ 'lobby.privateRooms.joinAction' | transloco }}
+              </button>
+            </div>
+          </section>
+        }
+        }
+      </aside>
+    </div>
+
+  @if (notice()) {
+    <p class="game-message-v2">{{ notice() }}</p>
+  }
+</div>
+
+<app-room-access-dialog
+  [open]="roomDialogMode() !== null"
+  [mode]="roomDialogMode() ?? 'create'"
+  [pending]="roomActionPending()"
+  [errorMessage]="roomActionError()"
+  (dismissed)="closeRoomDialog()"
+  (submitted)="submitRoomAction($event)"
+/>
+
+<app-tank-customization [showLauncher]="false" />

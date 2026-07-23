@@ -12,6 +12,97 @@ Tank Arena is a real-time multiplayer top-down tank game.
 - Rooms, lobby, auth, and persistence already exist. Do not add ranking, tournament, or new persistence systems unless requested.
 - Run backend and frontend in separate terminals.
 
+## Frontend UI Versions and Themes
+
+The authenticated frontend currently has two intentionally parallel UI versions. Keep V2 independent from V1 so V1 can be removed after V2 testing without a broad rewrite.
+
+- The active version is selected by `uiVersion: 1 | 2` in the Angular environment files.
+- `frontend/src/environments/environment.ts` currently selects V2 for development.
+- `frontend/src/environments/environment.production.ts` currently keeps production on V1.
+- `frontend/src/app/app.routes.ts` selects the authenticated shell and lobby from that flag.
+- V1 uses the existing `AppLayoutComponent` and `LobbyComponent`.
+- V2 uses `GameShellV2Component` and `LobbyV2Component`.
+- `/garage` is a V2-only route. V1 must not display tank personalization or link to the Garage.
+- Game, tutorial, custom-game, and map-editor routes remain outside the authenticated shell.
+- Do not delete or redesign V1 unless explicitly requested. New game-oriented frontend work should target V2 by default.
+
+`ThemeService` supports four theme identifiers:
+
+```ts
+'light' | 'dark' | 'light_v2' | 'dark_v2'
+```
+
+- Theme toggling stays inside the active UI family.
+- The service sets `data-theme` and `data-ui-version` on the root HTML element.
+- Stored legacy preferences are normalized into the active UI family.
+- V2 shared tokens and reusable visual primitives live in `frontend/src/styles/v2-game-ui.css`, imported by `frontend/src/styles.css`.
+- Scope V2 global rules through `[data-ui-version='2']` and the appropriate `[data-theme='light_v2' | 'dark_v2']` selector.
+- Keep page-specific structure in component styles, but centralize reusable theme colors, controls, surfaces, borders, and states in the V2 global stylesheet.
+
+Theme direction:
+
+- `dark_v2` is the neon game interface: dark navy surfaces with cyan, green, and magenta accents.
+- `light_v2` keeps the warm V1 light palette: cream background, white surfaces, beige borders, dark text, and orange primary actions, while retaining V2's game/HUD geometry.
+- In `light_v2`, primary actions such as Enter Battle and Save are orange. Green is reserved for ready, connected, eligible, or other success states.
+- In `dark_v2`, the main battle action may remain green.
+
+The repository-root `tank_arena_game_shell.html` is a visual reference supplied by the user. It is not production source and must not introduce fake currencies, rankings, missions, or unsupported backend features.
+
+## V2 Frontend State
+
+The V2 shell lives in `frontend/src/app/layout/game-shell-v2/` and currently includes:
+
+- Top game HUD with brand, token contract display, language control, and user menu.
+- Desktop left navigation and a responsive mobile bottom navigation.
+- Right-side account, public-statistics, and reward-eligibility panels using existing application data.
+- Bottom connection/status presentation.
+
+The V2 lobby lives in `frontend/src/app/pages/lobby/lobby-v2/` and currently includes:
+
+- A command-center/hangar presentation with the player's tank centered in the main panel.
+- Public battle and private-room controls backed by the existing matchmaking, reconnect, and room behavior.
+- Current tank color swatches and a Customize Tank action that navigates to `/garage`.
+- No invented gameplay or backend data.
+
+Presentation-neutral lobby behavior is shared through `frontend/src/app/pages/lobby/lobby.controller.ts`. Both lobby presentations use this controller so the V1 templates can later be deleted without removing V2's matchmaking behavior.
+
+Navigation metadata is managed by `NavigationService`, including icons and the V2-only Garage entry.
+
+## Tank Customization Frontend Contract
+
+Tank customization is currently frontend-only and V2-only.
+
+- The Garage page is implemented in `frontend/src/app/pages/garage/garage-v2.component.*`.
+- The reusable customization feature lives in `frontend/src/app/features/tank-customization/`.
+- The tank preview is reusable through `tank-appearance-preview/`.
+- Opening the Garage starts the editor immediately through its `openOnInit` input.
+- Appearance is active today. Skins and Effects are visible extension points but remain disabled/coming soon.
+- The user can select body, turret/cannon, or tracks and change colors through the palette/RGB controls with a live preview.
+
+The public frontend contract is defined in `frontend/src/app/game/contracts/tank-customization.types.ts`:
+
+```ts
+{
+  version: 1,
+  skinId: 'classic',
+  colors: {
+    body: '#...',
+    turret: '#...',
+    tracks: '#...'
+  }
+}
+```
+
+`TankCustomizationStore` currently persists this value only in local storage under `tank-arena:tank-customization:v1`, with frontend defaults when no saved value exists. The backend is not synchronized yet.
+
+When backend synchronization is implemented:
+
+- Preserve the versioned contract and validate incoming colors.
+- Return the player's customization with the initial join/map payload.
+- Do not add customization or full map data to frequent `gameState` snapshots without an explicit networking decision.
+- Update backend public types and frontend contracts/rendering in the same change.
+- Keep cosmetic choices non-authoritative: they must not affect positions, collision, HP, damage, or match outcomes.
+
 ## Core Contract
 
 Preserve the server-authoritative design.

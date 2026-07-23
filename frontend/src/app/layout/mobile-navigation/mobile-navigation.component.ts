@@ -8,6 +8,8 @@ import { NavigationService } from '../navigation.service';
 import { SessionExitService } from '../session-exit.service';
 import { AccountModalStateService } from '@features/account/account-modal-state.service';
 import { ThemeService } from '@core/theme/theme.service';
+import { UiVersion } from '@core/ui/ui-version';
+import { UiVersionService } from '@core/ui/ui-version.service';
 
 @Component({
   selector: 'app-mobile-nav',
@@ -22,6 +24,7 @@ export class MobileNavigationComponent {
   private readonly sessionExit = inject(SessionExitService);
   private readonly accountModal = inject(AccountModalStateService);
   readonly theme = inject(ThemeService);
+  readonly uiVersion = inject(UiVersionService);
   readonly nav = inject(NavigationService);
 
   constructor(
@@ -46,6 +49,13 @@ export class MobileNavigationComponent {
 
   toggleTheme(): void {
     this.theme.toggle();
+  }
+
+  selectUiVersion(version: UiVersion): void {
+    if (!this.auth.isAdmin() || this.uiVersion.current() === version) return;
+    this.uiVersion.select(version);
+    this.close();
+    window.location.reload();
   }
 
   async logout(): Promise<void> {

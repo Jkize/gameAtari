@@ -44,9 +44,150 @@ li strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space
 .start { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 220px; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 .leave { padding: 8px 16px; color: var(--color-text-secondary); background: transparent; border: 0; font: inherit; cursor: pointer; }
+
+.private-room-card--compact {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 20px;
+  gap: 12px;
+  background: transparent;
+  border: 0;
+}
+
+.private-room-card--compact header {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.private-room-card--compact .badges {
+  justify-content: flex-start;
+}
+
+.private-room-card--compact .ui-eyebrow {
+  color: var(--game-green);
+}
+
+.private-room-card--compact .roster {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.private-room-card--compact .connection-label {
+  display: none;
+}
+
+.private-room-card--compact .actions {
+  justify-items: stretch;
+}
+
+.private-room-card--compact .start {
+  width: 100%;
+  min-width: 0;
+}
+
+.private-room-card--compact .leave {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
 @media (max-width: 560px) {
   header, .room-meta { flex-direction: column; }
   .badges { justify-content: flex-start; }
   .connection-label { display: none; }
   .start { width: 100%; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .private-room-card--compact {
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    min-height: 0;
+    padding: 8px;
+    gap: 5px;
+  }
+
+  .private-room-card--compact header {
+    gap: 4px;
+  }
+
+  .private-room-card--compact .ui-eyebrow {
+    margin-bottom: 1px;
+    font-size: 0.5rem;
+  }
+
+  .private-room-card--compact h2 {
+    font-size: 0.78rem;
+  }
+
+  .private-room-card--compact .badges {
+    flex-wrap: nowrap;
+    gap: 3px;
+  }
+
+  .private-room-card--compact .badge {
+    padding: 2px 4px;
+    font-size: 0.45rem;
+  }
+
+  .private-room-card--compact .room-meta {
+    flex-direction: row;
+    font-size: 0.54rem;
+  }
+
+  .private-room-card--compact .roster {
+    min-height: 0;
+    max-height: none;
+  }
+
+  .private-room-card--compact .roster-heading {
+    padding: 4px 5px;
+  }
+
+  .private-room-card--compact .roster-heading h3,
+  .private-room-card--compact .roster-heading span {
+    font-size: 0.5rem;
+  }
+
+  .private-room-card--compact li {
+    min-height: 27px;
+    padding: 3px 5px;
+    gap: 4px;
+    font-size: 0.56rem;
+  }
+
+  .private-room-card--compact :is(.self, .admin) {
+    padding: 1px 3px;
+    font-size: 0.42rem;
+  }
+
+  .private-room-card--compact .connection-label {
+    display: none;
+  }
+
+  .private-room-card--compact .status-copy {
+    font-size: 0.52rem;
+  }
+
+  .private-room-card--compact .countdown {
+    min-height: 0;
+    padding: 8px;
+    gap: 2px;
+    font-size: 0.58rem;
+  }
+
+  .private-room-card--compact .countdown strong {
+    font-size: 2rem;
+  }
+
+  .private-room-card--compact .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .private-room-card--compact :is(.start, .leave) {
+    min-width: 0;
+    min-height: 30px;
+    padding: 4px;
+    font-size: 0.52rem;
+  }
 }

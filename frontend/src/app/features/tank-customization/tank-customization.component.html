@@ -1,0 +1,211 @@
+@if (showLauncher) {
+  <section class="customization-card" aria-labelledby="tank-customization-title">
+    <div class="card-copy">
+      <p class="eyebrow">{{ 'tankCustomization.eyebrow' | transloco }}</p>
+      <h2 id="tank-customization-title">{{ 'tankCustomization.title' | transloco }}</h2>
+      <p>{{ 'tankCustomization.description' | transloco }}</p>
+
+      <div class="current-colors">
+        @for (part of partOptions; track part.id) {
+          <span
+            class="color-dot"
+            [style.background]="store.current().colors[part.id]"
+            [title]="'tankCustomization.parts.' + part.id | transloco"
+          ></span>
+        }
+      </div>
+
+      <button class="primary-button" type="button" (click)="openEditor()">
+        <i class="ti ti-palette" aria-hidden="true"></i>
+        {{ 'tankCustomization.action' | transloco }}
+      </button>
+    </div>
+
+    <div class="tank-stage tank-stage--card" aria-hidden="true">
+      <app-tank-appearance-preview [customization]="store.current()" />
+    </div>
+  </section>
+}
+
+@if (editorOpen()) {
+  <div class="dialog-backdrop" (mousedown)="closeEditor()">
+    <section
+      class="customization-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tank-editor-title"
+      (mousedown)="$event.stopPropagation()"
+    >
+      <header class="lab-header">
+        <div class="lab-brand">
+          <span class="lab-mark"><i class="ti ti-hexagon-letter-t" aria-hidden="true"></i></span>
+          <div>
+            <p>{{ 'tankCustomization.labTitle' | transloco }}</p>
+            <span>{{ 'tankCustomization.labSubtitle' | transloco }}</span>
+          </div>
+        </div>
+
+        <nav class="editor-tabs" role="tablist" aria-label="Tank customization sections">
+          <button
+            type="button"
+            class="editor-tab editor-tab--active"
+            role="tab"
+            aria-selected="true"
+          >
+            <i class="ti ti-palette" aria-hidden="true"></i>
+            {{ 'tankCustomization.tabs.appearance' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="editor-tab"
+            role="tab"
+            aria-selected="false"
+            [title]="'tankCustomization.comingSoon' | transloco"
+            disabled
+          >
+            <i class="ti ti-shirt" aria-hidden="true"></i>
+            {{ 'tankCustomization.tabs.skins' | transloco }}
+            <span>{{ 'tankCustomization.comingSoon' | transloco }}</span>
+          </button>
+          <button
+            type="button"
+            class="editor-tab"
+            role="tab"
+            aria-selected="false"
+            [title]="'tankCustomization.comingSoon' | transloco"
+            disabled
+          >
+            <i class="ti ti-sparkles" aria-hidden="true"></i>
+            {{ 'tankCustomization.tabs.effects' | transloco }}
+            <span>{{ 'tankCustomization.comingSoon' | transloco }}</span>
+          </button>
+        </nav>
+
+        <button
+          class="close-button"
+          type="button"
+          (click)="closeEditor()"
+          [attr.aria-label]="'tankCustomization.close' | transloco"
+        >
+          <i class="ti ti-x" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="editor-workspace">
+        <section class="editor-preview" aria-labelledby="tank-editor-title">
+          <div class="section-heading">
+            <p class="eyebrow">{{ 'tankCustomization.previewEyebrow' | transloco }}</p>
+            <h2 id="tank-editor-title">{{ 'tankCustomization.editorTitle' | transloco }}</h2>
+          </div>
+
+          <div class="tank-stage tank-stage--editor" aria-hidden="true">
+            <span class="stage-ring stage-ring--outer"></span>
+            <span class="stage-ring stage-ring--inner"></span>
+            <app-tank-appearance-preview
+              [customization]="draft()"
+              [selectedPart]="activePart()"
+              [interactive]="true"
+            />
+          </div>
+
+          <div class="selected-part-summary">
+            <span [style.background]="selectedColor()"></span>
+            <div>
+              <strong>{{ 'tankCustomization.parts.' + activePart() | transloco }}</strong>
+              <p>
+                {{ 'tankCustomization.parts.' + activePart() + 'Description' | transloco }}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="editor-controls" aria-labelledby="color-editor-heading">
+          <div class="control-panel-heading">
+            <div>
+              <p class="eyebrow">{{ 'tankCustomization.tabs.appearance' | transloco }}</p>
+              <h2 id="color-editor-heading">{{ 'tankCustomization.colorEditor' | transloco }}</h2>
+            </div>
+            <span class="schema-badge">V1</span>
+          </div>
+
+          <div class="control-columns">
+            <div class="control-section control-section--parts">
+              <h3>{{ 'tankCustomization.selectPart' | transloco }}</h3>
+              <div class="part-selector">
+                @for (part of partOptions; track part.id) {
+                  <button
+                    type="button"
+                    class="part-option"
+                    [class.part-option--active]="activePart() === part.id"
+                    [attr.aria-pressed]="activePart() === part.id"
+                    (click)="selectPart(part.id)"
+                  >
+                    <i class="ti {{ part.icon }}" aria-hidden="true"></i>
+                    <span>
+                      <strong>{{ 'tankCustomization.parts.' + part.id | transloco }}</strong>
+                      <small>{{ draft().colors[part.id] }}</small>
+                    </span>
+                    <span class="part-swatch" [style.background]="draft().colors[part.id]"></span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="control-section color-editor">
+              <h3>{{ 'tankCustomization.currentColor' | transloco }}</h3>
+              <div class="color-value-row">
+                <label class="large-picker">
+                  <input
+                    type="color"
+                    [value]="selectedColor()"
+                    (input)="updateSelectedColor($any($event.target).value)"
+                    [attr.aria-label]="'tankCustomization.currentColor' | transloco"
+                  />
+                  <span class="picker-color" [style.background]="selectedColor()"></span>
+                  <span>{{ selectedColor() }}</span>
+                </label>
+
+                <div class="rgb-values" aria-label="RGB color values">
+                  <span><small>R</small>{{ selectedRgb().red }}</span>
+                  <span><small>G</small>{{ selectedRgb().green }}</span>
+                  <span><small>B</small>{{ selectedRgb().blue }}</span>
+                </div>
+              </div>
+
+              <h3 class="quick-title">{{ 'tankCustomization.quickColors' | transloco }}</h3>
+              <div class="preset-list">
+                @for (color of presets; track color) {
+                  <button
+                    class="preset"
+                    type="button"
+                    [class.preset--selected]="selectedColor() === color"
+                    [style.--preset-color]="color"
+                    [attr.aria-label]="color"
+                    (click)="updateSelectedColor(color)"
+                  ></button>
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="dialog-actions">
+        <p>
+          <i class="ti ti-info-circle" aria-hidden="true"></i>
+          {{ 'tankCustomization.previewNote' | transloco }}
+        </p>
+        <div>
+          <button class="reset-button" type="button" (click)="reset()">
+            <i class="ti ti-refresh" aria-hidden="true"></i>
+            {{ 'tankCustomization.reset' | transloco }}
+          </button>
+          <button class="primary-button save-button" type="button" (click)="save()">
+            <i class="ti ti-check" aria-hidden="true"></i>
+            {{ 'tankCustomization.save' | transloco }}
+          </button>
+        </div>
+      </footer>
+    </section>
+  </div>
+}

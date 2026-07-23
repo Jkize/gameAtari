@@ -13,6 +13,7 @@ export class PrivateRoomPanelComponent implements OnInit, OnDestroy {
   @Input({ required: true }) room!: RoomState;
   @Input() currentUserId = '';
   @Input() starting = false;
+  @Input() compact = false;
 
   @Output() startRequested = new EventEmitter<void>();
   @Output() leaveRequested = new EventEmitter<void>();

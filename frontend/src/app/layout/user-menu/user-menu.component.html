@@ -12,15 +12,21 @@
 
   @if (menuOpen()) {
     <div class="dropdown" role="menu">
-      <button type="button" role="menuitem" (click)="openAccount()">{{ 'nav.account' | transloco }}</button>
-      <a routerLink="/tutorial" role="menuitem" (click)="closeMenu()">{{ 'nav.howToPlay' | transloco }}</a>
+      <button type="button" role="menuitem" (click)="openAccount()">
+        {{ 'nav.account' | transloco }}
+      </button>
+      <a routerLink="/tutorial" role="menuitem" (click)="closeMenu()">{{
+        'nav.howToPlay' | transloco
+      }}</a>
       <div class="theme-setting">
         <button
           type="button"
           class="theme-toggle"
           role="switch"
-          [attr.aria-checked]="theme.current() === 'dark'"
-          [attr.aria-label]="(theme.current() === 'dark' ? 'settings.switchToLight' : 'settings.switchToDark') | transloco"
+          [attr.aria-checked]="theme.isDark()"
+          [attr.aria-label]="
+            (theme.isDark() ? 'settings.switchToLight' : 'settings.switchToDark') | transloco
+          "
           (click)="toggleTheme()"
         >
           <i class="ti ti-sun sun" aria-hidden="true"></i>
@@ -28,7 +34,36 @@
           <span class="toggle-thumb" aria-hidden="true"></span>
         </button>
       </div>
-      <button type="button" role="menuitem" (click)="logout()">{{ 'nav.signOut' | transloco }}</button>
+      @if (auth.isAdmin()) {
+        <div class="ui-version-setting">
+          <span>{{ 'settings.uiVersion' | transloco }}</span>
+          <div
+            class="ui-version-toggle"
+            role="group"
+            [attr.aria-label]="'settings.uiVersion' | transloco"
+          >
+            <button
+              type="button"
+              [class.active]="uiVersion.current() === 1"
+              [attr.aria-pressed]="uiVersion.current() === 1"
+              (click)="selectUiVersion(1)"
+            >
+              V1
+            </button>
+            <button
+              type="button"
+              [class.active]="uiVersion.current() === 2"
+              [attr.aria-pressed]="uiVersion.current() === 2"
+              (click)="selectUiVersion(2)"
+            >
+              V2
+            </button>
+          </div>
+        </div>
+      }
+      <button type="button" role="menuitem" (click)="logout()">
+        {{ 'nav.signOut' | transloco }}
+      </button>
     </div>
   }
 </div>

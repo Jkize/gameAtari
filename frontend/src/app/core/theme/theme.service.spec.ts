@@ -23,11 +23,21 @@ describe('ThemeService', () => {
   it('toggles the document theme and persists the selection', () => {
     const service = TestBed.inject(ThemeService);
 
-    expect(service.current()).toBe('dark');
+    expect(service.current()).toBe('dark_v2');
     service.toggle();
 
-    expect(service.current()).toBe('light');
-    expect(document.documentElement.dataset['theme']).toBe('light');
-    expect(values.get('tank-arena:theme')).toBe('light');
+    expect(service.current()).toBe('light_v2');
+    expect(document.documentElement.dataset['theme']).toBe('light_v2');
+    expect(document.documentElement.dataset['uiVersion']).toBe('2');
+    expect(values.get('tank-arena:theme')).toBe('light_v2');
+  });
+
+  it('migrates a stored V1 light preference into the active V2 family', () => {
+    values.set('tank-arena:theme', 'light');
+
+    const service = TestBed.inject(ThemeService);
+
+    expect(service.current()).toBe('light_v2');
+    expect(service.isDark()).toBe(false);
   });
 });

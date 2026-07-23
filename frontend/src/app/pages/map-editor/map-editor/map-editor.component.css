@@ -470,13 +470,13 @@ button.primary.has-errors {
   color: var(--color-text-secondary);
 }
 
-[data-theme='dark'] .modal-backdrop {
+:is([data-theme='dark'], [data-theme='dark_v2']) .modal-backdrop {
   background: rgba(0, 0, 0, 0.55);
 }
-[data-theme='dark'] .help-dialog {
+:is([data-theme='dark'], [data-theme='dark_v2']) .help-dialog {
   box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
 }
-[data-theme='dark'] .toolbar {
+:is([data-theme='dark'], [data-theme='dark_v2']) .toolbar {
   box-shadow: 0 5px 18px rgba(0, 0, 0, 0.35);
 }
 

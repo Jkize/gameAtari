@@ -1,0 +1,81 @@
+<div class="game-shell-v2">
+  <header class="game-topbar-v2">
+    <a class="game-brand-v2" routerLink="/lobby">
+      <span class="game-brand-v2__mark">
+        <img src="/assets/logo/logo.svg" alt="" aria-hidden="true" />
+      </span>
+      <span>
+        <strong>Tank Arena</strong>
+        <small>{{ 'shellV2.commandCenter' | transloco }}</small>
+      </span>
+    </a>
+
+    <div class="game-topbar-v2__contract">
+      <app-token-ca [compact]="true" />
+    </div>
+
+    <div class="game-topbar-v2__actions">
+      <app-lang-switcher />
+      <app-user-menu />
+    </div>
+  </header>
+
+  <nav class="game-sidebar-v2" [attr.aria-label]="'shellV2.mainNavigation' | transloco">
+    @for (tab of nav.visibleTabs(); track tab.path) {
+      <a
+        class="game-nav-item-v2"
+        [routerLink]="tab.path"
+        routerLinkActive="game-nav-item-v2--active"
+      >
+        <i class="ti {{ tab.icon }}" aria-hidden="true"></i>
+        <span>{{ tab.labelKey | transloco }}</span>
+      </a>
+    }
+    <a
+      class="game-nav-item-v2 game-nav-item-v2--secondary"
+      routerLink="/tutorial"
+      routerLinkActive="game-nav-item-v2--active"
+    >
+      <i class="ti ti-help-hexagon" aria-hidden="true"></i>
+      <span>{{ 'nav.howToPlay' | transloco }}</span>
+    </a>
+  </nav>
+
+  <main class="game-main-v2">
+    <router-outlet />
+  </main>
+
+  <aside class="game-right-rail-v2">
+    <section class="game-panel-v2 game-commander-card-v2">
+      <p class="game-eyebrow-v2">{{ 'shellV2.commander' | transloco }}</p>
+      <button type="button" class="game-profile-button-v2" (click)="accountModal.show()">
+        <span class="game-avatar-v2">
+          {{ (auth.user()?.username ?? 'P').slice(0, 2).toUpperCase() }}
+        </span>
+        <span>
+          <strong>{{ auth.user()?.username ?? ('nav.guestUsername' | transloco) }}</strong>
+          <small>{{ 'nav.account' | transloco }}</small>
+        </span>
+        <i class="ti ti-chevron-right" aria-hidden="true"></i>
+      </button>
+    </section>
+
+    <section class="game-panel-v2 game-rail-section-v2">
+      <p class="game-eyebrow-v2">{{ 'shellV2.arenaStatus' | transloco }}</p>
+      <app-public-stats [compact]="true" />
+    </section>
+
+    <app-reward-eligibility-notice [refreshKey]="accountRefresh.key()" />
+  </aside>
+
+  <footer class="game-statusbar-v2">
+    <span><i class="game-online-dot-v2"></i>{{ 'shellV2.systemOnline' | transloco }}</span>
+    <span>Tank Arena v{{ appVersion }} · {{ appAuthor }}</span>
+  </footer>
+</div>
+
+<app-account-settings
+  [open]="accountModal.open()"
+  (closed)="accountModal.hide()"
+  (accountChanged)="accountRefresh.bump()"
+/>

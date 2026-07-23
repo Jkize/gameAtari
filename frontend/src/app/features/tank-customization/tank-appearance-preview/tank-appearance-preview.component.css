@@ -1,0 +1,76 @@
+:host {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+:host.tank-preview--interactive {
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.tank-part {
+  position: absolute;
+  inset: 8%;
+  width: 84%;
+  height: 84%;
+  object-fit: fill;
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease;
+}
+
+.tank-tracks {
+  z-index: 1;
+}
+
+.tank-body {
+  z-index: 2;
+}
+
+.tank-turret {
+  z-index: 3;
+  top: 25.390625%;
+  bottom: auto;
+  transform: rotate(var(--turret-rotation, 180deg));
+  transform-origin: 50% 29.296875%;
+  transition:
+    filter 160ms ease,
+    transform 90ms ease-out;
+}
+
+.tank-part--muted {
+  opacity: 1;
+  filter: brightness(0.94) saturate(0.92);
+}
+
+.tank-part--selected {
+  filter: none;
+  transform: scale(1.025);
+}
+
+.tank-turret.tank-part--selected {
+  transform: rotate(var(--turret-rotation, 180deg)) scale(1.025);
+}
+
+.preview-loader {
+  color: var(--color-accent);
+  font-size: 1.6rem;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tank-part,
+  .tank-turret {
+    transition: none;
+  }
+}

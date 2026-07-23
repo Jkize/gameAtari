@@ -5,6 +5,8 @@ import { AuthService } from '@core/auth/auth.service';
 import { SessionExitService } from '../session-exit.service';
 import { AccountModalStateService } from '@features/account/account-modal-state.service';
 import { ThemeService } from '@core/theme/theme.service';
+import { UiVersion } from '@core/ui/ui-version';
+import { UiVersionService } from '@core/ui/ui-version.service';
 
 @Component({
   selector: 'app-user-menu',
@@ -16,6 +18,7 @@ import { ThemeService } from '@core/theme/theme.service';
 export class UserMenuComponent {
   readonly menuOpen = signal(false);
   readonly theme = inject(ThemeService);
+  readonly uiVersion = inject(UiVersionService);
 
   private readonly sessionExit = inject(SessionExitService);
   private readonly accountModal = inject(AccountModalStateService);
@@ -26,7 +29,7 @@ export class UserMenuComponent {
   ) {}
 
   toggleMenu(): void {
-    this.menuOpen.update(value => !value);
+    this.menuOpen.update((value) => !value);
   }
 
   openAccount(): void {
@@ -40,6 +43,13 @@ export class UserMenuComponent {
 
   toggleTheme(): void {
     this.theme.toggle();
+  }
+
+  selectUiVersion(version: UiVersion): void {
+    if (!this.auth.isAdmin() || this.uiVersion.current() === version) return;
+    this.uiVersion.select(version);
+    this.menuOpen.set(false);
+    window.location.reload();
   }
 
   async logout(): Promise<void> {

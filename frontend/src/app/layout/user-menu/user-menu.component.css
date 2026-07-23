@@ -72,6 +72,42 @@
   border-bottom: 0.5px solid var(--color-border);
 }
 
+.ui-version-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.ui-version-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-inset);
+}
+
+.ui-version-toggle button {
+  min-width: 36px;
+  padding: 4px 8px;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 700;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-version-toggle button.active {
+  color: var(--color-accent-text);
+  background: var(--color-accent-bg);
+}
+
 .theme-toggle {
   position: relative;
   width: 64px;
@@ -82,7 +118,9 @@
   border-radius: var(--radius-pill);
   background: var(--color-bg-inset);
   cursor: pointer;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
 }
 
 .theme-toggle i {

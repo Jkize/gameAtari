@@ -9,11 +9,8 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding:
-    calc(20px + env(safe-area-inset-top, 0px))
-    calc(20px + env(safe-area-inset-right, 0px))
-    calc(24px + env(safe-area-inset-bottom, 0px))
-    calc(20px + env(safe-area-inset-left, 0px));
+  padding: calc(20px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px))
+    calc(24px + env(safe-area-inset-bottom, 0px)) calc(20px + env(safe-area-inset-left, 0px));
   color: var(--color-text-primary);
   background: var(--color-bg-page);
   overflow-y: auto;
@@ -161,6 +158,42 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.ui-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 54px;
+  padding: 12px 14px 12px 18px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ui-version-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-inset);
+}
+
+.ui-version-toggle button {
+  min-width: 40px;
+  padding: 6px 10px;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 700;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-version-toggle button.active {
+  color: var(--color-accent-text);
+  background: var(--color-accent-bg);
+}
+
 .theme-toggle {
   position: relative;
   width: 64px;
@@ -171,7 +204,9 @@
   border-radius: var(--radius-pill);
   background: var(--color-bg-inset);
   cursor: pointer;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
 }
 
 .theme-toggle i {

@@ -1,0 +1,435 @@
+:host {
+  display: block;
+}
+
+.command-center-v2__grid {
+  display: grid;
+  grid-template-columns: minmax(460px, 1.35fr) minmax(320px, 0.65fr);
+  gap: 18px;
+}
+
+.hangar-v2 {
+  position: relative;
+  display: flex;
+  min-height: 620px;
+  padding: 26px;
+  overflow: hidden;
+  flex-direction: column;
+  background:
+    radial-gradient(
+      circle at 50% 48%,
+      color-mix(in srgb, var(--game-cyan) 13%, transparent),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--game-surface-raised) 74%, transparent),
+      color-mix(in srgb, var(--game-surface) 94%, var(--game-bg-deep))
+    );
+}
+
+.hangar-v2::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.7%,
+      color-mix(in srgb, var(--game-cyan) 7%, transparent) 50%,
+      transparent 50.3%
+    ),
+    linear-gradient(
+      transparent 49.7%,
+      color-mix(in srgb, var(--game-cyan) 7%, transparent) 50%,
+      transparent 50.3%
+    );
+  background-size: 84px 84px;
+  pointer-events: none;
+  content: '';
+}
+
+.hangar-v2__header,
+.hangar-v2__appearance,
+.hangar-stage-v2 {
+  position: relative;
+  z-index: 1;
+}
+
+.hangar-v2__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.hangar-v2__header h1 {
+  margin: 2px 0 7px;
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  text-transform: uppercase;
+}
+
+.hangar-v2__header > div > p:last-child {
+  max-width: 590px;
+  color: var(--game-text-muted);
+  font-size: 0.85rem;
+}
+
+.hangar-stage-v2 {
+  display: grid;
+  min-height: 390px;
+  flex: 1;
+  place-items: center;
+}
+
+.hangar-stage-v2__tank {
+  position: relative;
+  z-index: 2;
+  width: min(52%, 285px);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 28px 24px rgb(0 0 0 / 55%));
+}
+
+.hangar-stage-v2__ring {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  border: 2px solid;
+  border-radius: 50%;
+  transform: translateX(-50%) perspective(420px) rotateX(64deg);
+}
+
+.hangar-stage-v2__ring--outer {
+  width: min(78%, 480px);
+  height: 125px;
+  border-color: color-mix(in srgb, var(--game-cyan) 45%, transparent);
+  box-shadow:
+    0 0 28px color-mix(in srgb, var(--game-cyan) 18%, transparent),
+    inset 0 0 22px color-mix(in srgb, var(--game-cyan) 13%, transparent);
+}
+
+.hangar-stage-v2__ring--inner {
+  width: min(58%, 350px);
+  height: 90px;
+  border-color: color-mix(in srgb, var(--game-magenta) 36%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--game-magenta) 16%, transparent);
+}
+
+.hangar-v2__appearance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 15px;
+  background: color-mix(in srgb, var(--game-surface-inset) 88%, transparent);
+  border: 1px solid var(--game-line);
+  border-radius: 8px;
+}
+
+.hangar-v2__appearance > div > span {
+  color: var(--game-text-muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hangar-v2__swatches {
+  display: flex;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.hangar-v2__swatches i {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--game-surface);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--game-line-bright);
+}
+
+.battle-console-v2 {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.room-console-v2 {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.battle-console-v2 h2 {
+  margin: 7px 0;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+}
+
+.battle-console-v2__description {
+  color: var(--game-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.battle-console-v2__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 18px 0;
+}
+
+.battle-console-v2__facts > div {
+  display: grid;
+  min-width: 0;
+  padding: 10px;
+  gap: 5px;
+  background: var(--game-surface-inset);
+  border: 1px solid var(--game-line-soft);
+  border-radius: 7px;
+  font-size: 0.74rem;
+}
+
+.battle-console-v2__facts strong {
+  overflow: hidden;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-console-v2__facts span {
+  color: var(--game-text-muted);
+}
+
+.matchmaking-state-v2 {
+  display: grid;
+  gap: 9px;
+  min-height: 94px;
+  margin: 14px 0;
+  place-items: center;
+  color: var(--game-cyan);
+  text-align: center;
+}
+
+.matchmaking-state-v2 > i {
+  font-size: 2rem;
+}
+
+.matchmaking-state-v2--searching > i,
+.matchmaking-state-v2 .ti-loader-2 {
+  animation: game-spin 1.2s linear infinite;
+}
+
+.private-actions-v2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@keyframes game-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1100px) {
+  .command-center-v2__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hangar-v2 {
+    min-height: 570px;
+  }
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .hangar-v2 {
+    min-height: 500px;
+    padding: 18px;
+  }
+
+  .hangar-v2__header {
+    flex-direction: column;
+  }
+
+  .hangar-stage-v2 {
+    min-height: 285px;
+  }
+
+  .hangar-stage-v2__tank {
+    width: min(72%, 260px);
+  }
+
+  .hangar-v2__appearance {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .private-actions-v2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  :host {
+    height: 100%;
+  }
+
+  .command-center-v2 {
+    height: 100%;
+    padding-block: 9px;
+  }
+
+  .command-center-v2__grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(210px, 0.65fr);
+    height: 100%;
+    gap: 9px;
+  }
+
+  .hangar-v2 {
+    box-sizing: border-box;
+    min-height: 0;
+    height: 100%;
+    padding: 13px;
+  }
+
+  .hangar-v2__header {
+    gap: 10px;
+  }
+
+  .hangar-v2__header h1 {
+    margin-block: 1px 3px;
+    font-size: clamp(1.05rem, 3.3vh, 1.45rem);
+  }
+
+  .hangar-v2__header > div > p:last-child {
+    font-size: 0.66rem;
+  }
+
+  .hangar-stage-v2 {
+    min-height: 0;
+  }
+
+  .hangar-stage-v2__tank {
+    width: min(40%, 168px, 28vh);
+  }
+
+  .hangar-stage-v2__ring {
+    bottom: 8%;
+  }
+
+  .hangar-stage-v2__ring--outer {
+    width: min(70%, 330px);
+    height: 68px;
+  }
+
+  .hangar-stage-v2__ring--inner {
+    width: min(50%, 230px);
+    height: 48px;
+  }
+
+  .hangar-v2__appearance {
+    padding: 7px 9px;
+  }
+
+  .hangar-v2__swatches {
+    margin-top: 4px;
+  }
+
+  .hangar-v2__swatches i {
+    width: 12px;
+    height: 12px;
+  }
+
+  .battle-console-v2 {
+    gap: 8px;
+  }
+
+  .room-console-v2 {
+    height: 100%;
+  }
+
+  .battle-console-v2 .game-panel-v2--padded {
+    padding: 11px;
+  }
+
+  .battle-console-v2 h2 {
+    margin: 3px 0;
+    font-size: 0.95rem;
+  }
+
+  .battle-console-v2__description {
+    font-size: 0.62rem;
+    line-height: 1.3;
+  }
+
+  .battle-console-v2__facts {
+    gap: 4px;
+    margin: 8px 0;
+  }
+
+  .battle-console-v2__facts > div {
+    padding: 6px;
+    gap: 2px;
+    font-size: 0.58rem;
+  }
+
+  .battle-console-v2__facts strong {
+    font-size: 0.58rem;
+  }
+
+  .game-button-v2--battle {
+    min-height: 38px;
+    padding-block: 6px;
+    font-size: 0.67rem;
+  }
+
+  .private-actions-v2 {
+    gap: 5px;
+    margin-top: 7px;
+  }
+
+  .private-actions-v2 .game-button-v2 {
+    min-height: 34px;
+    padding: 6px;
+    font-size: 0.61rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 700px) {
+  .command-center-v2 {
+    padding-block: 7px;
+  }
+
+  .battle-console-v2 .game-panel-v2--padded {
+    padding: 8px;
+  }
+
+  .battle-console-v2 h2 {
+    font-size: 0.86rem;
+  }
+
+  .battle-console-v2__description {
+    font-size: 0.57rem;
+    line-height: 1.2;
+  }
+
+  .battle-console-v2__facts {
+    margin-block: 6px;
+  }
+
+  .battle-console-v2__facts > div {
+    padding: 4px;
+  }
+
+  .game-button-v2--battle {
+    min-height: 34px;
+  }
+
+  .private-actions-v2 {
+    margin-top: 5px;
+  }
+
+  .private-actions-v2 .game-button-v2 {
+    min-height: 30px;
+    padding-block: 4px;
+  }
+}

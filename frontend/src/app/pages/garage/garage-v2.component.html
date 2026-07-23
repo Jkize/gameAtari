@@ -1,0 +1,17 @@
+<div class="game-page-v2 garage-page-v2">
+  <header class="game-page-header-v2">
+    <div>
+      <p class="game-eyebrow-v2">{{ 'garageV2.eyebrow' | transloco }}</p>
+      <h1>{{ 'garageV2.title' | transloco }}</h1>
+      <p>{{ 'garageV2.description' | transloco }}</p>
+    </div>
+    <span class="game-status-chip-v2">
+      <i class="ti ti-palette" aria-hidden="true"></i>
+      {{ 'tankCustomization.tabs.appearance' | transloco }}
+    </span>
+  </header>
+
+  <div class="garage-page-v2__editor">
+    <app-tank-customization [openOnInit]="true" />
+  </div>
+</div>

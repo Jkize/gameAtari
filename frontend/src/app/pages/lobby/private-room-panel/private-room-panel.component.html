@@ -1,4 +1,8 @@
-<section class="private-room-card" [class.closing]="isClosingSoon()">
+<section
+  class="private-room-card"
+  [class.private-room-card--compact]="compact"
+  [class.closing]="isClosingSoon()"
+>
   <header>
     <div>
       <p class="ui-eyebrow">{{ 'lobby.privateRooms.roomEyebrow' | transloco }}</p>

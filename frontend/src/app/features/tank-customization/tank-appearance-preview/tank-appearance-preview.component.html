@@ -1,0 +1,26 @@
+@if (urls(); as preview) {
+  <img
+    class="tank-part tank-tracks"
+    [class.tank-part--selected]="selectedPart === 'tracks'"
+    [class.tank-part--muted]="selectedPart !== null && selectedPart !== 'tracks'"
+    [src]="preview.tracks"
+    alt=""
+  />
+  <img
+    class="tank-part tank-body"
+    [class.tank-part--selected]="selectedPart === 'body'"
+    [class.tank-part--muted]="selectedPart !== null && selectedPart !== 'body'"
+    [src]="preview.body"
+    alt=""
+  />
+  <img
+    class="tank-part tank-turret"
+    [class.tank-part--selected]="selectedPart === 'turret'"
+    [class.tank-part--muted]="selectedPart !== null && selectedPart !== 'turret'"
+    [style.--turret-rotation]="turretRotation() + 'deg'"
+    [src]="preview.turret"
+    alt=""
+  />
+} @else {
+  <i class="ti ti-loader-2 preview-loader" aria-hidden="true"></i>
+}

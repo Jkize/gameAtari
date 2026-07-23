@@ -21,7 +21,7 @@
   box-shadow: 0 20px 60px rgba(44, 44, 42, 0.08);
 }
 
-[data-theme='dark'] .panel {
+:is([data-theme='dark'], [data-theme='dark_v2']) .panel {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 
