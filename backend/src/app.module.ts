@@ -11,6 +11,7 @@ import { SettingsModule } from './settings/settings.module';
 import { StatsModule } from './stats/stats.module';
 import { ThrottlerRedisModule } from './throttler/throttler.module';
 import { UsersAdminModule } from './users/users-admin.module';
+import { TankCustomizationModule } from './tank-customization/tank-customization.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
@@ -30,6 +31,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
     GameModule,
     StatsModule,
     SettingsModule,
+    TankCustomizationModule,
     UsersAdminModule,
   ],
   providers: [

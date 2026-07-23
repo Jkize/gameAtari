@@ -1,5 +1,6 @@
 import { GameRuntimeContext } from './game-runtime-context.service';
 import { GameSessionsService } from './game-sessions.service';
+import { EBulletKind } from '../types/bullet.types';
 
 describe('GameSessionsService', () => {
   it('isolates state between rooms', () => {
@@ -13,6 +14,7 @@ describe('GameSessionsService', () => {
       sessions.require('room-a').bullets.push({
         id: 'bullet-a',
         ownerId: 'player-a',
+        kind: EBulletKind.STANDARD,
         x: 0,
         y: 0,
         dirX: 1,

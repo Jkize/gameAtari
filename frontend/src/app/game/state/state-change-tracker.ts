@@ -9,6 +9,10 @@ import { HIT_REVEAL_MS, PLAYER_LABEL_OFFSET } from '@game/config/game-scene.cons
 import { EffectSpawner } from '@game/rendering/effect-spawner';
 import { ObstacleRenderer } from '@game/rendering/obstacle-renderer';
 import { PlayerRenderer } from '@game/rendering/player-renderer';
+import {
+  TankCustomization,
+  resolveTankRenderColors,
+} from '@game/contracts/tank-customization.types';
 import { PowerUpRenderer } from '@game/rendering/power-up-renderer';
 import { AudioManager, SoundPoint, WeaponFireSound } from '@game/audio/audio-manager';
 
@@ -91,7 +95,11 @@ export class StateChangeTracker {
     this.playerRenderer.remove(playerId);
   }
 
-  check(state: GameState, myPlayerId: string): void {
+  check(
+    state: GameState,
+    myPlayerId: string,
+    tankCustomizations: Record<string, TankCustomization> = {},
+  ): void {
     const curPlayers = new Set(state.players.map(p => p.id));
     const curBullets = new Set(state.bullets.map(b => b.id));
     const curObs = new Set(state.map.obstacles.map(o => o.id));
@@ -196,7 +204,8 @@ export class StateChangeTracker {
       const combatTextY = p.y - p.radius * PLAYER_LABEL_OFFSET - 30;
       if (tookHpDamage) {
         this.effects.spawnDamageNumber(p.x, combatTextY, prevHp - p.hp);
-        this.effects.spawnHitDebris(p.x, p.y, p.color, p.radius + 4);
+        const hullColor = resolveTankRenderColors(tankCustomizations[p.id], p.color).hull;
+        this.effects.spawnHitDebris(p.x, p.y, hullColor, p.radius + 4);
       }
       if (recoveredHp && !this.playerRenderer.isPlayerHiddenByBush(p, state.map)) {
         this.effects.spawnRecoveryNumber(p.x, combatTextY, p.hp - prevHp);

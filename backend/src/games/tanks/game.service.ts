@@ -47,7 +47,7 @@ export class GameService {
   set status(value: GameStatus) { this.runtime.current().status = value; }
   private get usedColorIndices(): Set<number> { return this.runtime.current().usedColorIndices; }
 
-  addPlayer(userId: string, username?: string): Player {
+  addPlayer(userId: string, username?: string, appearanceColor?: number): Player {
     const existing = this.players.get(userId);
     if (existing) return existing;
 
@@ -69,7 +69,7 @@ export class GameService {
       maxHp: PLAYER_HP,
       bodyAngle: -Math.PI / 2,
       aimAngle: 0,
-      color: PLAYER_COLORS[colorIndex],
+      color: appearanceColor ?? PLAYER_COLORS[colorIndex],
       input: { moveX: 0, moveY: 0, aimAngle: 0, shoot: false, dash: false, reload: false, shield: false },
       weapon: this.weaponService.createDefaultWeapon(),
       activePowerUp: undefined,

@@ -1,15 +1,15 @@
 @if (urls(); as preview) {
   <img
     class="tank-part tank-tracks"
-    [class.tank-part--selected]="selectedPart === 'tracks'"
-    [class.tank-part--muted]="selectedPart !== null && selectedPart !== 'tracks'"
+    [class.tank-part--selected]="selectedPart === 'trackTreadShadow'"
+    [class.tank-part--muted]="selectedPart !== null && selectedPart !== 'trackTreadShadow'"
     [src]="preview.tracks"
     alt=""
   />
   <img
     class="tank-part tank-body"
-    [class.tank-part--selected]="selectedPart === 'body'"
-    [class.tank-part--muted]="selectedPart !== null && selectedPart !== 'body'"
+    [class.tank-part--selected]="selectedPart === 'hull'"
+    [class.tank-part--muted]="selectedPart !== null && selectedPart !== 'hull'"
     [src]="preview.body"
     alt=""
   />

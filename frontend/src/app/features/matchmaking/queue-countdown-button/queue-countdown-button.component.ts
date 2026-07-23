@@ -1,10 +1,23 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostBinding,
+  Input,
+  Output,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { filter } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 import { QueueStatusService } from '../queue-status.service';
+
+export interface QueueLobbyNavigationRequest {
+  proceed(): void;
+}
 
 @Component({
   selector: 'app-queue-countdown-button',
@@ -14,6 +27,14 @@ import { QueueStatusService } from '../queue-status.service';
   styleUrl: './queue-countdown-button.component.css',
 })
 export class QueueCountdownButtonComponent {
+  @Input() embedded = false;
+  @Output() readonly lobbyRequested = new EventEmitter<QueueLobbyNavigationRequest>();
+
+  @HostBinding('class.queue-countdown--embedded')
+  get embeddedClass(): boolean {
+    return this.embedded;
+  }
+
   private readonly router = inject(Router);
   private readonly queueStatus = inject(QueueStatusService);
   private readonly auth = inject(AuthService);
@@ -38,7 +59,14 @@ export class QueueCountdownButtonComponent {
   }
 
   protected goToLobby(): void {
-    void this.router.navigateByUrl('/lobby');
+    const proceed = (): void => {
+      void this.router.navigateByUrl('/lobby', { replaceUrl: this.embedded });
+    };
+    if (this.embedded) {
+      this.lobbyRequested.emit({ proceed });
+      return;
+    }
+    proceed();
   }
 
   protected connectedPlayers(): number {

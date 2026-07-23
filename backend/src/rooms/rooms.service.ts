@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, OnModuleDestroy, Optional } from '@nestjs/common';
 import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'crypto';
 import { Server, Socket } from 'socket.io';
 import { promisify } from 'util';
@@ -25,6 +25,11 @@ import { RoomRequestError } from './room.errors';
 import { displayRoomName, normalizeRoomName } from './room-name.util';
 import { GameRoom, RoomMember, RoomPublicState } from './room.types';
 import { RuntimeActivityService } from '../runtime/runtime-activity.service';
+import { TankCustomizationService } from '../tank-customization/tank-customization.service';
+import {
+  resolveTankCustomization,
+  stableLegacyBaseColor,
+} from '../tank-customization/tank-customization.types';
 
 const scryptAsync = promisify(scrypt);
 
@@ -35,6 +40,7 @@ export class RoomsService implements OnModuleDestroy {
   private readonly privateRoomsByName = new Map<string, string>();
   private readonly pendingPrivateRoomNames = new Set<string>();
   private readonly usersCreatingPrivateRooms = new Set<string>();
+  private readonly roomsStarting = new Set<string>();
   private server!: Server;
 
   constructor(
@@ -43,6 +49,7 @@ export class RoomsService implements OnModuleDestroy {
     private readonly watcherPresence: WatcherPresenceService,
     private readonly runtimeActivity: RuntimeActivityService,
     private readonly developmentSettings?: DevelopmentSettingsService,
+    @Optional() private readonly tankCustomization?: TankCustomizationService,
   ) {}
 
   setServer(server: Server): void {
@@ -414,6 +421,7 @@ export class RoomsService implements OnModuleDestroy {
         map: initial.map,
         status: initial.state.status,
         roomId: room.id,
+        tankCustomizations: initial.tankCustomizations,
       });
       socket.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
       this.watcherPresence.sendCurrent(socket, room.id);
@@ -464,7 +472,7 @@ export class RoomsService implements OnModuleDestroy {
     if (room.countdownEndsAt <= Date.now()) {
       if (room.countdownTimer) clearInterval(room.countdownTimer);
       room.countdownTimer = undefined;
-      this.startGame(room);
+      void this.startGame(room);
       return;
     }
     const state = this.publicState(room);
@@ -472,17 +480,28 @@ export class RoomsService implements OnModuleDestroy {
     this.emitRoom(room);
   }
 
-  private startGame(room: GameRoom): void {
+  private async startGame(room: GameRoom): Promise<void> {
+    if (this.roomsStarting.has(room.id) || room.status === 'in_game') return;
+    this.roomsStarting.add(room.id);
+    try {
     this.clearInactivityTimers(room);
     if (room.countdownTimer) clearInterval(room.countdownTimer);
     room.countdownTimer = undefined;
     if (room.type === 'private') this.removeDisconnectedMembers(room);
-    room.status = 'in_game';
     room.countdownEndsAt = undefined;
-    const players = [...room.players.values()].map(member => ({
+    const members = [...room.players.values()];
+    const customizations = this.tankCustomization
+      ? await this.tankCustomization.getMany(members.map(member => member.userId))
+      : Object.fromEntries(members.map(member => [
+        member.userId,
+        resolveTankCustomization({}, stableLegacyBaseColor(member.userId)),
+      ]));
+    const players = members.map(member => ({
       userId: member.userId,
       username: member.username,
+      tankCustomization: customizations[member.userId],
     }));
+    room.status = 'in_game';
     this.gameLoop.prepare(room.id, players, room.rewardsEligible);
     this.gameLoop.start(room.id);
     const initial = this.gameLoop.buildInitialState(room.id);
@@ -494,11 +513,15 @@ export class RoomsService implements OnModuleDestroy {
         roomId: room.id,
         map: initial.map,
         status: initial.state.status,
+        tankCustomizations: initial.tankCustomizations,
       });
       if (socket) this.watcherPresence.sendCurrent(socket, room.id);
     }
     this.server.to(this.playerSocketRoom(room.id)).emit(SOCKET_EVENTS.GAME.STARTED, { status: 'playing', roomId: room.id });
     this.emitRoom(room);
+    } finally {
+      this.roomsStarting.delete(room.id);
+    }
   }
 
   private publicState(room: GameRoom): RoomPublicState {

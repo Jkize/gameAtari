@@ -10,7 +10,6 @@ import {
 import { TANK_TEMPLATE_PATHS, TANK_TRACK_TEMPLATE_PATHS } from '@game/assets/game-assets';
 import {
   TankCustomization,
-  TankPartColors,
   tankColorHexToNumber,
 } from '@game/contracts/tank-customization.types';
 import { applyTankColor, applyTrackColor } from '@game/rendering/textures/svg-texture-utils';
@@ -20,7 +19,7 @@ import {
   turretRotationForPoint,
 } from './tank-preview-geometry';
 
-type TankPart = keyof TankPartColors;
+type TankPart = 'hull' | 'turret' | 'trackTreadShadow';
 
 interface PreviewTemplates {
   body: string;
@@ -65,7 +64,7 @@ export class TankAppearancePreviewComponent implements OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
-    this.revoke(this.urls());
+    this.revokeAfterPaint(this.urls());
   }
 
   @HostListener('pointerdown', ['$event'])
@@ -112,15 +111,17 @@ export class TankAppearancePreviewComponent implements OnChanges, OnDestroy {
     try {
       const templates = await this.templates();
       if (this.destroyed || version !== this.renderVersion) return;
-      const colors = this.customization.colors;
+      const paint = this.customization.paint;
       const next: PreviewUrls = {
-        body: this.svgUrl(applyTankColor(templates.body, tankColorHexToNumber(colors.body))),
-        turret: this.svgUrl(applyTankColor(templates.turret, tankColorHexToNumber(colors.turret))),
-        tracks: this.svgUrl(applyTrackColor(templates.tracks, tankColorHexToNumber(colors.tracks))),
+        body: this.svgUrl(applyTankColor(templates.body, tankColorHexToNumber(paint.hull.base))),
+        turret: this.svgUrl(applyTankColor(templates.turret, tankColorHexToNumber(paint.turret.base))),
+        tracks: this.svgUrl(
+          applyTrackColor(templates.tracks, tankColorHexToNumber(paint.tracks.treadShadow)),
+        ),
       };
       const previous = this.urls();
       this.urls.set(next);
-      this.revoke(previous);
+      this.revokeAfterPaint(previous);
     } catch {
       // Parent surfaces keep their loading treatment if a public template is unavailable.
     }
@@ -159,5 +160,10 @@ export class TankAppearancePreviewComponent implements OnChanges, OnDestroy {
   private revoke(urls: PreviewUrls | null): void {
     if (!urls) return;
     Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
+  }
+
+  private revokeAfterPaint(urls: PreviewUrls | null): void {
+    if (!urls) return;
+    window.setTimeout(() => this.revoke(urls), 1_000);
   }
 }

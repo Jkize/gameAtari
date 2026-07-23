@@ -30,9 +30,9 @@
           <div>
             <span>{{ 'lobbyV2.currentAppearance' | transloco }}</span>
             <div class="hangar-v2__swatches">
-              <i [style.background]="tankCustomization.current().colors.body"></i>
-              <i [style.background]="tankCustomization.current().colors.turret"></i>
-              <i [style.background]="tankCustomization.current().colors.tracks"></i>
+                <i [style.background]="tankCustomization.current().paint.hull.base"></i>
+                <i [style.background]="tankCustomization.current().paint.turret.base"></i>
+                <i [style.background]="tankCustomization.current().paint.tracks.treadShadow"></i>
             </div>
           </div>
           <button

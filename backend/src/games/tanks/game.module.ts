@@ -22,9 +22,10 @@ import { EliminationService } from './events/elimination.service';
 import { GameEventPublisherService } from './events/game-event-publisher.service';
 import { WatcherPresenceService } from './events/watcher-presence.service';
 import { RuntimeModule } from '../../runtime/runtime.module';
+import { TankCustomizationModule } from '../../tank-customization/tank-customization.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, RewardsModule, RuntimeModule],
+  imports: [AuthModule, UsersModule, RewardsModule, RuntimeModule, TankCustomizationModule],
   providers: [
     GameGateway,
     GameService,

@@ -294,6 +294,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       roomId: body.roomId,
       map: initial.map,
       status: initial.state.status,
+      tankCustomizations: initial.tankCustomizations,
     });
     client.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
     this.watcherPresence.sendCurrent(client, body.roomId);
@@ -436,6 +437,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       roomId: room.id,
       map: initial.map,
       status: initial.state.status,
+      tankCustomizations: initial.tankCustomizations,
     });
     client.emit(SOCKET_EVENTS.GAME.STATE, initial.state);
   }

@@ -28,6 +28,7 @@ export class GameSessionsService {
       eliminationOrder: [],
       stats: new Map(),
       persisted: false,
+      tankCustomizations: {},
     };
     this.sessions.set(roomId, state);
     return state;

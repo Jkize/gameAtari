@@ -1,17 +1,22 @@
-import { Component, HostListener, Input, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, Input, computed, inject, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
-  DEFAULT_TANK_CUSTOMIZATION,
   TankColorHex,
   TankCustomization,
-  TankPartColors,
+  TANK_COLOR_PRESETS,
+  cloneTankCustomization,
   isTankColorHex,
+  tankCustomizationsEqual,
   tankColorHexToNumber,
 } from '@game/contracts/tank-customization.types';
+import {
+  QueueCountdownButtonComponent,
+  QueueLobbyNavigationRequest,
+} from '@features/matchmaking/queue-countdown-button/queue-countdown-button.component';
 import { TankAppearancePreviewComponent } from './tank-appearance-preview/tank-appearance-preview.component';
 import { TankCustomizationStore } from './tank-customization.store';
 
-type ColorPart = keyof TankPartColors;
+type ColorPart = 'hull' | 'turret' | 'trackTreadShadow';
 
 interface PartOption {
   id: ColorPart;
@@ -23,19 +28,23 @@ const MODAL_HISTORY_STATE_KEY = 'tankCustomizationEditor';
 @Component({
   selector: 'app-tank-customization',
   standalone: true,
-  imports: [TranslocoPipe, TankAppearancePreviewComponent],
+  imports: [TranslocoPipe, TankAppearancePreviewComponent, QueueCountdownButtonComponent],
   templateUrl: './tank-customization.component.html',
   styleUrl: './tank-customization.component.css',
 })
-export class TankCustomizationComponent implements OnInit {
-  @Input() openOnInit = false;
+export class TankCustomizationComponent {
   @Input() showLauncher = true;
 
   readonly store = inject(TankCustomizationStore);
   readonly editorOpen = signal(false);
-  readonly activePart = signal<ColorPart>('body');
+  readonly activePart = signal<ColorPart>('hull');
   readonly draft = signal<TankCustomization>(this.copy(this.store.current()));
-  readonly selectedColor = computed(() => this.draft().colors[this.activePart()]);
+  readonly savedSnapshot = signal<TankCustomization>(this.copy(this.store.current()));
+  readonly discardConfirmationOpen = signal(false);
+  readonly isDirty = computed(
+    () => !tankCustomizationsEqual(this.draft(), this.savedSnapshot()),
+  );
+  readonly selectedColor = computed(() => this.colorForPart(this.draft(), this.activePart()));
   readonly selectedRgb = computed(() => {
     const color = tankColorHexToNumber(this.selectedColor());
     return {
@@ -46,31 +55,23 @@ export class TankCustomizationComponent implements OnInit {
   });
 
   readonly partOptions: readonly PartOption[] = [
-    { id: 'body', icon: 'ti-car-4wd' },
+    { id: 'hull', icon: 'ti-car-4wd' },
     { id: 'turret', icon: 'ti-focus-centered' },
-    { id: 'tracks', icon: 'ti-track' },
+    { id: 'trackTreadShadow', icon: 'ti-track' },
   ];
 
-  readonly presets: readonly TankColorHex[] = [
-    '#db3a2c',
-    '#ff8a1f',
-    '#f3d33b',
-    '#42d97c',
-    '#24c7d9',
-    '#3478f6',
-    '#9b5de5',
-    '#e94f9c',
-  ];
+  readonly presets = TANK_COLOR_PRESETS;
   private modalHistoryEntryActive = false;
-
-  ngOnInit(): void {
-    if (this.openOnInit) this.openEditor();
-  }
+  private pendingNavigation: (() => void) | null = null;
+  private pendingCloseIsNavigation = false;
 
   openEditor(): void {
     if (this.editorOpen()) return;
-    this.draft.set(this.copy(this.store.current()));
-    this.activePart.set('body');
+    const saved = this.copy(this.store.current());
+    this.savedSnapshot.set(saved);
+    this.draft.set(this.copy(saved));
+    this.discardConfirmationOpen.set(false);
+    this.activePart.set('hull');
     this.editorOpen.set(true);
     const currentState = window.history.state;
     const modalState = currentState && typeof currentState === 'object'
@@ -82,26 +83,54 @@ export class TankCustomizationComponent implements OnInit {
 
   closeEditor(): void {
     if (!this.editorOpen()) return;
-    this.dismissEditor();
-    this.removeModalHistoryEntry();
+    this.requestClose();
   }
 
-  save(): void {
-    this.store.save(this.draft());
+  closeEditorForNavigation(request?: QueueLobbyNavigationRequest): void {
+    if (!this.editorOpen()) return;
+    this.requestClose(request?.proceed, true);
+  }
+
+  async save(): Promise<void> {
+    if (!await this.store.save(this.draft())) return;
     this.editorOpen.set(false);
     this.removeModalHistoryEntry();
   }
 
   reset(): void {
-    this.draft.set(this.copy(DEFAULT_TANK_CUSTOMIZATION));
+    this.draft.set(this.copy(this.savedSnapshot()));
+  }
+
+  continueEditing(): void {
+    this.discardConfirmationOpen.set(false);
+    this.clearPendingClose();
+  }
+
+  discardChanges(): void {
+    this.draft.set(this.copy(this.savedSnapshot()));
+    this.discardConfirmationOpen.set(false);
+    const navigation = this.pendingNavigation;
+    const isNavigation = this.pendingCloseIsNavigation;
+    this.clearPendingClose();
+    this.finishClose(navigation, isNavigation);
   }
 
   updateColor(part: ColorPart, value: string): void {
     if (!isTankColorHex(value)) return;
-    this.draft.update((current) => ({
-      ...current,
-      colors: { ...current.colors, [part]: value.toLowerCase() as TankColorHex },
-    }));
+    const color = value.toLowerCase() as TankColorHex;
+    this.draft.update((current) => {
+      const next = cloneTankCustomization(current);
+      if (part === 'hull') next.paint.hull.base = color;
+      else if (part === 'turret') next.paint.turret.base = color;
+      else next.paint.tracks.treadShadow = color;
+      return next;
+    });
+  }
+
+  colorForPart(customization: TankCustomization, part: ColorPart): TankColorHex {
+    if (part === 'hull') return customization.paint.hull.base;
+    if (part === 'turret') return customization.paint.turret.base;
+    return customization.paint.tracks.treadShadow;
   }
 
   selectPart(part: ColorPart): void {
@@ -114,19 +143,71 @@ export class TankCustomizationComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.discardConfirmationOpen()) {
+      this.continueEditing();
+      return;
+    }
     if (this.editorOpen()) this.closeEditor();
   }
 
   @HostListener('window:popstate')
   onBrowserBack(): void {
     if (!this.editorOpen() || !this.modalHistoryEntryActive) return;
+    if (this.isDirty()) {
+      this.restoreModalHistoryEntry();
+      this.requestClose();
+      return;
+    }
     this.modalHistoryEntryActive = false;
     this.dismissEditor();
   }
 
   private dismissEditor(): void {
-    this.draft.set(this.copy(this.store.current()));
+    this.draft.set(this.copy(this.savedSnapshot()));
+    this.discardConfirmationOpen.set(false);
+    this.clearPendingClose();
     this.editorOpen.set(false);
+  }
+
+  private requestClose(
+    navigation: (() => void) | null = null,
+    isNavigation = false,
+  ): void {
+    if (this.isDirty()) {
+      this.pendingNavigation = navigation;
+      this.pendingCloseIsNavigation = isNavigation;
+      this.discardConfirmationOpen.set(true);
+      return;
+    }
+    this.finishClose(navigation, isNavigation);
+  }
+
+  private finishClose(
+    navigation: (() => void) | null,
+    isNavigation: boolean,
+  ): void {
+    if (isNavigation) {
+      this.modalHistoryEntryActive = false;
+      this.dismissEditor();
+      navigation?.();
+      return;
+    }
+    this.dismissEditor();
+    this.removeModalHistoryEntry();
+  }
+
+  private clearPendingClose(): void {
+    this.pendingNavigation = null;
+    this.pendingCloseIsNavigation = false;
+  }
+
+  private restoreModalHistoryEntry(): void {
+    const currentState = window.history.state;
+    const modalState = currentState && typeof currentState === 'object'
+      ? { ...currentState, [MODAL_HISTORY_STATE_KEY]: true }
+      : { [MODAL_HISTORY_STATE_KEY]: true };
+    window.history.pushState(modalState, '', window.location.href);
+    this.modalHistoryEntryActive = true;
   }
 
   private removeModalHistoryEntry(): void {
@@ -136,6 +217,6 @@ export class TankCustomizationComponent implements OnInit {
   }
 
   private copy(customization: TankCustomization): TankCustomization {
-    return { ...customization, colors: { ...customization.colors } };
+    return cloneTankCustomization(customization);
   }
 }

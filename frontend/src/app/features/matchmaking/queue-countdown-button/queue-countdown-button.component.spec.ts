@@ -3,7 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { AuthService } from '@core/auth/auth.service';
-import { QueueCountdownButtonComponent } from './queue-countdown-button.component';
+import {
+  QueueCountdownButtonComponent,
+  QueueLobbyNavigationRequest,
+} from './queue-countdown-button.component';
 import { QueueStatusService } from '../queue-status.service';
 import { RoomState } from '@core/realtime/room-state';
 
@@ -61,6 +64,7 @@ describe('QueueCountdownButtonComponent', () => {
               'queueFloating.privateRoom': 'PRIVATE ROOM',
               'queueFloating.waiting': 'Waiting for players',
               'queueFloating.viewRoom': 'View room',
+              'queueFloating.waitAdmin': 'Wait admin',
               'queueFloating.startFailed': 'Could not start',
               'lobby.privateRooms.startMatch': 'Start match',
               'lobby.privateRooms.minimumPlayers': 'At least {{min}} players',
@@ -108,6 +112,16 @@ describe('QueueCountdownButtonComponent', () => {
     expect(fixture.nativeElement.querySelector('button')).toBeNull();
   });
 
+  it('stays visible in embedded mode on the lobby', async () => {
+    fixture.componentInstance.embedded = true;
+    await router.navigateByUrl('/lobby');
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.queue-card--embedded') as HTMLElement;
+    expect(card).toBeTruthy();
+    expect(card.textContent).toContain('12s');
+  });
+
   it('shows private-room stats and lets the room admin start away from the lobby', () => {
     floatingRoom.set({
       id: 'private-1',
@@ -137,5 +151,45 @@ describe('QueueCountdownButtonComponent', () => {
 
     startButton.click();
     expect(startPrivateRoom).toHaveBeenCalledWith('admin-1');
+  });
+
+  it('lets the embedded parent approve navigation before entering the lobby', async () => {
+    floatingRoom.set({
+      id: 'private-1',
+      name: 'Squad Room',
+      type: 'private',
+      adminUserId: 'admin-1',
+      rewardsEligible: false,
+      status: 'waiting',
+      playerCount: 2,
+      minPlayers: 2,
+      maxPlayers: 16,
+      countdownSeconds: null,
+      expiresAt: Date.now() + 240_000,
+      players: [
+        { userId: 'admin-1', username: 'Admin', connected: true },
+        { userId: 'player-2', username: 'Player 2', connected: true },
+      ],
+    });
+    user.set({ id: 'player-2' });
+    fixture.componentInstance.embedded = true;
+    const lobbyRequested = vi.fn();
+    fixture.componentInstance.lobbyRequested.subscribe(lobbyRequested);
+    fixture.detectChanges();
+
+    const waitAdmin = fixture.nativeElement.querySelector(
+      '.room-status--wait-admin',
+    ) as HTMLElement;
+    expect(waitAdmin.textContent?.trim()).toBe('Wait admin');
+
+    (fixture.nativeElement.querySelector('.view-room') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(lobbyRequested).toHaveBeenCalledOnce();
+    expect(router.url).toBe('/matches/me');
+    const request = lobbyRequested.mock.calls[0][0] as QueueLobbyNavigationRequest;
+    request.proceed();
+    await fixture.whenStable();
+    expect(router.url).toBe('/lobby');
   });
 });

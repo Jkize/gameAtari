@@ -69,6 +69,15 @@ describe('RolesGuard', () => {
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  it('converts an expired JWT into an HTTP unauthorized error', async () => {
+    const { guard, tokens } = createHarness();
+    const expired = Object.assign(new Error('jwt expired'), { name: 'TokenExpiredError' });
+    tokens.authenticateAccess.mockRejectedValueOnce(expired);
+    const { context } = createContext({ authorization: 'Bearer expired-token' });
+
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
   it('rejects a USER on an @Allow(ADMIN) endpoint', async () => {
     const { guard } = createHarness({ allowRoles: [EAuth.ADMIN], role: EAuth.USER });
     const { context } = createContext({ authorization: 'Bearer token-1' });

@@ -852,6 +852,20 @@
   }
 }
 
+@media (max-width: 600px) {
+  [data-ui-version='2'] app-tank-customization .dialog-backdrop {
+    padding:
+      max(30px, var(--safe-area-top))
+      max(30px, var(--safe-area-right))
+      max(30px, var(--safe-area-bottom))
+      max(30px, var(--safe-area-left));
+  }
+
+  [data-ui-version='2'] app-tank-customization .dialog-actions app-queue-countdown-button {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 600px) {
 
   .game-shell-v2 {
@@ -933,6 +947,14 @@
 
   .game-page-v2 {
     width: min(100% - 12px, 1240px);
+  }
+
+  [data-ui-version='2'] app-tank-customization .dialog-backdrop {
+    padding:
+      max(30px, var(--safe-area-top))
+      max(30px, var(--safe-area-right))
+      max(30px, var(--safe-area-bottom))
+      max(30px, var(--safe-area-left));
   }
 
   .game-sidebar-v2 {
@@ -1135,5 +1157,97 @@
   [data-ui-version='2'] app-tank-customization .preset {
     width: 21px;
     height: 21px;
+  }
+}
+[data-ui-version='2'] app-tank-customization .discard-confirmation-backdrop {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgb(0 3 12 / 78%);
+  backdrop-filter: blur(5px);
+}
+
+[data-ui-version='2'] app-tank-customization .discard-confirmation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  width: min(440px, 100%);
+  padding: 20px;
+  color: var(--color-text-primary);
+  background: linear-gradient(145deg, var(--game-surface-raised), var(--game-surface));
+  border: 1px solid color-mix(in srgb, var(--color-warning) 58%, var(--color-border));
+  border-radius: 10px;
+  box-shadow:
+    var(--game-shadow),
+    0 0 28px color-mix(in srgb, var(--color-warning) 12%, transparent);
+}
+
+[data-ui-version='2'] app-tank-customization .discard-confirmation__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 38%, var(--color-border));
+  border-radius: 8px;
+}
+
+[data-ui-version='2'] app-tank-customization .discard-confirmation h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+[data-ui-version='2'] app-tank-customization .discard-confirmation p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+[data-ui-version='2'] app-tank-customization .discard-confirmation__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+[data-ui-version='2'] app-tank-customization .discard-button {
+  min-height: 40px;
+  padding: 0 16px;
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border: 1px solid color-mix(in srgb, var(--color-error) 52%, var(--color-border));
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+:root[data-theme='light_v2'] app-tank-customization .discard-confirmation-backdrop {
+  background: rgb(65 47 27 / 30%);
+}
+
+:root[data-theme='light_v2'] app-tank-customization .discard-confirmation {
+  box-shadow:
+    0 22px 60px rgb(92 67 39 / 24%),
+    0 0 24px color-mix(in srgb, var(--color-warning) 10%, transparent);
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  [data-ui-version='2'] app-tank-customization .discard-confirmation {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    width: min(680px, 100%);
+    padding: 14px;
+  }
+
+  [data-ui-version='2'] app-tank-customization .discard-confirmation__actions {
+    grid-column: 3;
+    white-space: nowrap;
   }
 }

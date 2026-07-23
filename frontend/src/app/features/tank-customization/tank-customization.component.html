@@ -9,7 +9,7 @@
         @for (part of partOptions; track part.id) {
           <span
             class="color-dot"
-            [style.background]="store.current().colors[part.id]"
+            [style.background]="colorForPart(store.current(), part.id)"
             [title]="'tankCustomization.parts.' + part.id | transloco"
           ></span>
         }
@@ -145,9 +145,9 @@
                     <i class="ti {{ part.icon }}" aria-hidden="true"></i>
                     <span>
                       <strong>{{ 'tankCustomization.parts.' + part.id | transloco }}</strong>
-                      <small>{{ draft().colors[part.id] }}</small>
+                      <small>{{ colorForPart(draft(), part.id) }}</small>
                     </span>
-                    <span class="part-swatch" [style.background]="draft().colors[part.id]"></span>
+                    <span class="part-swatch" [style.background]="colorForPart(draft(), part.id)"></span>
                   </button>
                 }
               </div>
@@ -194,10 +194,19 @@
 
       <footer class="dialog-actions">
         <p></p>
-        <div>
-          <button class="reset-button" type="button" (click)="reset()">
+        <div class="dialog-action-controls">
+          <app-queue-countdown-button
+            [embedded]="true"
+            (lobbyRequested)="closeEditorForNavigation($event)"
+          />
+          <button
+            class="reset-button"
+            type="button"
+            [disabled]="!isDirty()"
+            (click)="reset()"
+          >
             <i class="ti ti-refresh" aria-hidden="true"></i>
-            {{ 'tankCustomization.reset' | transloco }}
+            {{ 'tankCustomization.revert' | transloco }}
           </button>
           <button class="primary-button save-button" type="button" (click)="save()">
             <i class="ti ti-check" aria-hidden="true"></i>
@@ -205,6 +214,39 @@
           </button>
         </div>
       </footer>
+
+      @if (discardConfirmationOpen()) {
+        <div class="discard-confirmation-backdrop">
+          <section
+            class="discard-confirmation"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="discard-confirmation-title"
+            aria-describedby="discard-confirmation-message"
+            (mousedown)="$event.stopPropagation()"
+          >
+            <span class="discard-confirmation__icon" aria-hidden="true">
+              <i class="ti ti-alert-triangle"></i>
+            </span>
+            <div>
+              <h2 id="discard-confirmation-title">
+                {{ 'tankCustomization.unsavedTitle' | transloco }}
+              </h2>
+              <p id="discard-confirmation-message">
+                {{ 'tankCustomization.unsavedMessage' | transloco }}
+              </p>
+            </div>
+            <div class="discard-confirmation__actions">
+              <button class="reset-button" type="button" (click)="continueEditing()">
+                {{ 'tankCustomization.keepEditing' | transloco }}
+              </button>
+              <button class="discard-button" type="button" (click)="discardChanges()">
+                {{ 'tankCustomization.discardChanges' | transloco }}
+              </button>
+            </div>
+          </section>
+        </div>
+      }
     </section>
   </div>
 }

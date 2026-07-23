@@ -3,6 +3,7 @@ import { PowerUpSpawn } from './power-up.types';
 import { PlayerPublicState } from './player.types';
 import type { DangerZonePublicState } from '../danger-zone.service';
 import { EBulletKind } from './bullet.types';
+import type { TankCustomization } from '../../../tank-customization/tank-customization.types';
 
 export type GameStatus = 'waiting' | 'playing' | 'finished';
 export type BulletImpactMaterial = 'spark' | 'wood' | 'rock' | 'steel' | 'mirror' | 'shield';
@@ -45,4 +46,5 @@ export interface GameState {
 export interface InitialGameState {
   map: GameMap;
   state: GameState;
+  tankCustomizations: Record<string, TankCustomization>;
 }

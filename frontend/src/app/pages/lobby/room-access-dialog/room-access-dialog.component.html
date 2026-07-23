@@ -30,39 +30,43 @@
     </p>
 
     <form autocomplete="off" (ngSubmit)="submit()">
-      <label for="private-room-name">{{ 'lobby.privateRooms.name' | transloco }}</label>
-      <input
-        #nameInput
-        id="private-room-name"
-        name="roomName"
-        type="text"
-        minlength="3"
-        maxlength="40"
-        required
-        autocomplete="off"
-        [disabled]="pending"
-        [(ngModel)]="name"
-      >
+      <div class="field-group">
+        <label for="private-room-name">{{ 'lobby.privateRooms.name' | transloco }}</label>
+        <input
+          #nameInput
+          id="private-room-name"
+          name="roomName"
+          type="text"
+          minlength="3"
+          maxlength="40"
+          required
+          autocomplete="off"
+          [disabled]="pending"
+          [(ngModel)]="name"
+        >
+      </div>
 
-      <label for="private-room-access-code">{{ 'lobby.privateRooms.password' | transloco }}</label>
-      <input
-        id="private-room-access-code"
-        name="privateRoomCode"
-        type="text"
-        minlength="4"
-        maxlength="32"
-        required
-        autocomplete="off"
-        autocapitalize="none"
-        autocorrect="off"
-        spellcheck="false"
-        aria-describedby="private-room-access-code-hint"
-        [disabled]="pending"
-        [(ngModel)]="password"
-      >
-      <small id="private-room-access-code-hint" class="field-hint">
-        {{ 'lobby.privateRooms.accessCodeHint' | transloco }}
-      </small>
+      <div class="field-group">
+        <label for="private-room-access-code">{{ 'lobby.privateRooms.password' | transloco }}</label>
+        <input
+          id="private-room-access-code"
+          name="privateRoomCode"
+          type="text"
+          minlength="4"
+          maxlength="32"
+          required
+          autocomplete="off"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          aria-describedby="private-room-access-code-hint"
+          [disabled]="pending"
+          [(ngModel)]="password"
+        >
+        <small id="private-room-access-code-hint" class="field-hint">
+          {{ 'lobby.privateRooms.accessCodeHint' | transloco }}
+        </small>
+      </div>
 
       @if (errorMessage) {
         <p class="error" role="alert">{{ errorMessage }}</p>

@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import { EBulletKind, GameMap, PlayerPublicState } from '@game/contracts/game-state.types';
 import {
+  TankCustomization,
+  resolveTankRenderColors,
+} from '@game/contracts/tank-customization.types';
+import {
   BODY_TURN_STEP,
   BUSH_COVER_DEPTH,
   C,
@@ -134,21 +138,28 @@ export class PlayerRenderer {
     });
   }
 
-  draw(players: PlayerPublicState[], map: GameMap, myPlayerId: string, time: number): void {
+  draw(
+    players: PlayerPublicState[],
+    map: GameMap,
+    myPlayerId: string,
+    time: number,
+    tankCustomizations: Record<string, TankCustomization> = {},
+  ): void {
     players.forEach(p => {
+      const renderColors = resolveTankRenderColors(tankCustomizations[p.id], p.color);
       const isLocal = p.id === myPlayerId;
       const hiddenByBush = this.isPlayerHiddenByBush(p, map);
       const revealAlpha = hiddenByBush ? this.getHitRevealAlpha(p.id, time) : undefined;
       const isRevealed = revealAlpha !== undefined;
-      this.drawTank(p, isLocal, time, revealAlpha);
+      this.drawTank(p, isLocal, time, revealAlpha, tankCustomizations[p.id]);
       if (p.alive && p.shielding) {
-        this.drawShield(p, time, revealAlpha);
+        this.drawShield(p, time, revealAlpha, renderColors.hull);
       } else {
         this.hideShield(p.id);
       }
       if (!hiddenByBush || isRevealed) {
         this.drawHpBar(p);
-        if (p.alive && p.shieldHp > 0) this.drawShieldBar(p);
+        if (p.alive && p.shieldHp > 0) this.drawShieldBar(p, renderColors.hull);
       }
 
       const txt = this.playerNameTexts.get(p.id);
@@ -156,6 +167,7 @@ export class PlayerRenderer {
         const nameLabel = p.username ?? p.id.slice(0, 8);
         const label = isLocal ? nameLabel : `${nameLabel}\n${p.hp}hp`;
         txt.setText(label);
+        txt.setColor(colorToCss(renderColors.hull));
         txt.setPosition(p.x, p.y - p.radius * PLAYER_LABEL_OFFSET);
         txt.setVisible(p.alive && (!hiddenByBush || isRevealed));
         txt.setAlpha(revealAlpha ?? 1);
@@ -189,10 +201,20 @@ export class PlayerRenderer {
     });
   }
 
-  private drawTank(p: PlayerPublicState, isLocal: boolean, time: number, revealAlpha: number | undefined): void {
+  private drawTank(
+    p: PlayerPublicState,
+    isLocal: boolean,
+    time: number,
+    revealAlpha: number | undefined,
+    customization?: TankCustomization,
+  ): void {
     const { x, y, radius: r, bodyAngle, aimAngle: a, color } = p;
-    const textureKeys = ensureTankSvgTextures(this.scene, color);
-    const trackTextureKeys = ensureTankTrackSvgTextures(this.scene, color);
+    const renderColors = resolveTankRenderColors(customization, color);
+    const hullColor = renderColors.hull;
+    const turretColor = renderColors.turret;
+    const trackTreadColor = renderColors.trackTreadShadow;
+    const textureKeys = ensureTankSvgTextures(this.scene, hullColor, turretColor);
+    const trackTextureKeys = ensureTankTrackSvgTextures(this.scene, trackTreadColor);
     if (!textureKeys || !trackTextureKeys) return;
 
     let sprites = this.playerTankSprites.get(p.id);
@@ -220,6 +242,8 @@ export class PlayerRenderer {
     const turretScale = (r * TANK_TURRET_SCALE) / sprites.turret.width;
     const hpFrac = Phaser.Math.Clamp(p.hp / (p.maxHp || 1), 0, 1);
     const bodyDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH : 5;
+    // Revealed tracks must clear the bush layer while remaining below the hull.
+    const trackDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH - 0.2 : bodyDepth - 1;
     const turretDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.2 : 7;
     const weaponDepth = revealAlpha !== undefined ? REVEALED_TANK_DEPTH + 0.4 : 8;
     const activeBodyTexture = hpFrac <= 0.35
@@ -269,17 +293,17 @@ export class PlayerRenderer {
 
     const pulse = isLocal ? (0.85 + 0.15 * Math.sin(time * 0.004)) : 1;
 
-    this.layers.glowGfx.fillStyle(color, 0.055 * pulse);
+    this.layers.glowGfx.fillStyle(hullColor, 0.055 * pulse);
     this.layers.glowGfx.fillCircle(x, y, r * 1.75);
-    this.layers.glowGfx.fillStyle(color, 0.035 * pulse);
+    this.layers.glowGfx.fillStyle(hullColor, 0.035 * pulse);
     this.layers.glowGfx.fillCircle(x, y, r * 1.05);
 
     if (p.dashing) {
-      this.layers.glowGfx.fillStyle(color, 0.13);
+      this.layers.glowGfx.fillStyle(hullColor, 0.13);
       this.layers.glowGfx.fillCircle(x, y, r * 2.05);
-      this.layers.glowGfx.lineStyle(4, color, 0.55);
+      this.layers.glowGfx.lineStyle(4, hullColor, 0.55);
       this.layers.glowGfx.strokeCircle(x, y, r * 1.45);
-      this.layers.glowGfx.lineStyle(2, color, 0.35);
+      this.layers.glowGfx.lineStyle(2, hullColor, 0.35);
       this.layers.glowGfx.strokeCircle(x, y, r * 1.9);
     }
 
@@ -309,7 +333,7 @@ export class PlayerRenderer {
       .setVisible(true)
       .setTexture(activeTrackTextureKeys[trackFrame])
       .setPosition(x, y)
-      .setDepth(bodyDepth - 1)
+      .setDepth(trackDepth)
       .setScale(bodyScale)
       .setRotation(sprites.body.rotation)
       .setAlpha(tankAlpha)
@@ -326,7 +350,7 @@ export class PlayerRenderer {
 
     const powerType = p.activePowerUp?.type;
     if (powerType) {
-      const weaponTexture = ensureWeaponOverlayTexture(this.scene, powerType, color);
+      const weaponTexture = ensureWeaponOverlayTexture(this.scene, powerType, turretColor);
       if (weaponTexture) {
         sprites.weapon
           ?.setVisible(true)
@@ -385,7 +409,7 @@ export class PlayerRenderer {
     }
   }
 
-  private drawShieldBar(p: PlayerPublicState): void {
+  private drawShieldBar(p: PlayerPublicState, hullColor: number): void {
     const frac = Phaser.Math.Clamp(p.shieldHp / (p.shieldMaxHp || 1), 0, 1);
     const r = p.radius;
     const bW = r * 2.6;
@@ -395,7 +419,7 @@ export class PlayerRenderer {
 
     this.layers.playerUiGfx.fillStyle(0x0a0a0a, 0.85);
     this.layers.playerUiGfx.fillRect(bx - 1, by - 1, bW + 2, bH + 2);
-    this.layers.playerUiGfx.fillStyle(p.color, 1);
+    this.layers.playerUiGfx.fillStyle(hullColor, 1);
     this.layers.playerUiGfx.fillRect(bx, by, bW * frac, bH);
   }
 
@@ -403,9 +427,14 @@ export class PlayerRenderer {
     this.playerTankSprites.get(playerId)?.shield?.setVisible(false);
   }
 
-  private drawShield(p: PlayerPublicState, time: number, revealAlpha: number | undefined): void {
-    const { x, y, radius: r, color } = p;
-    const textureKey = ensureShieldSvgTexture(this.scene, color);
+  private drawShield(
+    p: PlayerPublicState,
+    time: number,
+    revealAlpha: number | undefined,
+    hullColor: number,
+  ): void {
+    const { x, y, radius: r } = p;
+    const textureKey = ensureShieldSvgTexture(this.scene, hullColor);
     if (!textureKey) {
       this.hideShield(p.id);
       return;

@@ -5,6 +5,7 @@ import { socketManager } from '@core/realtime/socket';
 import { SOCKET_EVENTS, SESSION_MESSAGES } from '@core/realtime/socket-events';
 import { GameMap, GameState, RealtimeGameState } from '@game/contracts/game-state.types';
 import { SnapshotInterpolator } from '@game/state/snapshot-interpolator';
+import { TankCustomization } from '@game/contracts/tank-customization.types';
 import { ArenaBackgroundRenderer } from '@game/rendering/arena-background-renderer';
 import { AudioManager } from '@game/audio/audio-manager';
 import { BulletRenderer } from '@game/rendering/bullet-renderer';
@@ -39,6 +40,7 @@ export class GameScene extends Phaser.Scene {
   private myPlayerId = '';
   private gameState: GameState | null = null;
   private currentMap: GameMap | null = null;
+  private tankCustomizations: Record<string, TankCustomization> = {};
   private mapW = 1600;
   private mapH = 1200;
   private layers!: GameSceneLayers;
@@ -71,16 +73,29 @@ export class GameScene extends Phaser.Scene {
     enabled: environment.interpolationEnabled,
   });
   private readonly onGameJoined = (
-    data: { playerId: string; roomId: string; map: GameMap; status: GameState['status'] },
+    data: {
+      playerId: string;
+      roomId: string;
+      map: GameMap;
+      status: GameState['status'];
+      tankCustomizations?: Record<string, TankCustomization>;
+    },
   ): void => {
     this.resetRoundRenderState();
     this.joinedAsWatcher = false;
     this.currentRoomId = data.roomId;
     this.myPlayerId = data.playerId;
+    this.tankCustomizations = data.tankCustomizations ?? {};
     this.initializeMap(data.map, data.status);
   };
   private readonly onWatchJoined = (
-    data: { watcherId: string; roomId: string; map: GameMap; status: GameState['status'] },
+    data: {
+      watcherId: string;
+      roomId: string;
+      map: GameMap;
+      status: GameState['status'];
+      tankCustomizations?: Record<string, TankCustomization>;
+    },
   ): void => {
     // A delayed watch response must not replace a player identity established
     // by gameJoined on the same long-lived socket.
@@ -89,6 +104,7 @@ export class GameScene extends Phaser.Scene {
     this.joinedAsWatcher = true;
     this.currentRoomId = data.roomId;
     this.myPlayerId = '';
+    this.tankCustomizations = data.tankCustomizations ?? {};
     this.initializeMap(data.map, data.status);
     void data.watcherId;
   };
@@ -227,7 +243,11 @@ export class GameScene extends Phaser.Scene {
 
     // Authoritative: sounds, explosions, HP tracking, impact events, kill events.
     this.audioManager.syncMatchAudio(this.gameState, this.myPlayerId, this.joinedAsWatcher);
-    this.stateChangeTracker.check(this.gameState, this.myPlayerId);
+    this.stateChangeTracker.check(
+      this.gameState,
+      this.myPlayerId,
+      this.tankCustomizations,
+    );
 
     clearDynamicLayers(this.layers);
 
@@ -237,7 +257,13 @@ export class GameScene extends Phaser.Scene {
     this.dangerZoneRenderer.draw(this.gameState.dangerZone, this.gameState.map, time);
 
     // Interpolated visuals: remote player and bullet positions.
-    this.playerRenderer.draw(renderState.players, renderState.map, this.myPlayerId, time);
+    this.playerRenderer.draw(
+      renderState.players,
+      renderState.map,
+      this.myPlayerId,
+      time,
+      this.tankCustomizations,
+    );
     this.bulletRenderer.draw(renderState.bullets, time);
 
     if (!this.spectatorMode) this.followLocalPlayer(renderState);
@@ -410,6 +436,7 @@ export class GameScene extends Phaser.Scene {
     this.stateChangeTracker.reset();
     this.audioManager.resetMatchAudio();
     this.currentMap = null;
+    this.tankCustomizations = {};
     this.hudRenderer.setWaitingCountdown(null);
     this.hudRenderer.resetNotifications();
   }

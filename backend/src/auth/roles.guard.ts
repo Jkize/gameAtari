@@ -11,6 +11,12 @@ import { ALLOW_ROLES_KEY } from './decorators/allow.decorator';
 import { IS_PUBLIC_KEY } from './decorators/public.decorator';
 import { TokensService } from './tokens.service';
 
+const JWT_VERIFICATION_ERROR_NAMES = new Set([
+  'JsonWebTokenError',
+  'NotBeforeError',
+  'TokenExpiredError',
+]);
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
@@ -30,7 +36,15 @@ export class RolesGuard implements CanActivate {
     const token = typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7) : null;
     if (!token) throw new UnauthorizedException('Missing access token');
 
-    const user = await this.tokens.authenticateAccess(token);
+    let user: AuthenticatedUser;
+    try {
+      user = await this.tokens.authenticateAccess(token);
+    } catch (error) {
+      if (error instanceof Error && JWT_VERIFICATION_ERROR_NAMES.has(error.name)) {
+        throw new UnauthorizedException('Invalid or expired access token');
+      }
+      throw error;
+    }
     request.user = user;
 
     const requiredRoles = this.reflector.getAllAndOverride<EAuth[]>(ALLOW_ROLES_KEY, [

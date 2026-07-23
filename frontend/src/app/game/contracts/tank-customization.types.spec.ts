@@ -1,6 +1,7 @@
 import {
   DEFAULT_TANK_CUSTOMIZATION,
   normalizeTankCustomization,
+  resolveTankRenderColors,
   tankColorHexToNumber,
 } from './tank-customization.types';
 
@@ -9,27 +10,51 @@ describe('tank customization contract', () => {
     expect(
       normalizeTankCustomization({
         version: 1,
-        skinId: 'classic',
-        colors: { body: '#ABCDEF', turret: '#123456', tracks: '#FEDCBA' },
+        baseColor: '#ABCDEF',
+        paint: {
+          hull: { base: '#ABCDEF' },
+          turret: { base: '#123456' },
+          tracks: { treadShadow: '#FEDCBA' },
+        },
       }),
     ).toEqual({
       version: 1,
-      skinId: 'classic',
-      colors: { body: '#abcdef', turret: '#123456', tracks: '#fedcba' },
+      baseColor: '#abcdef',
+      paint: {
+        hull: { base: '#abcdef' },
+        turret: { base: '#123456' },
+        tracks: { treadShadow: '#fedcba' },
+      },
     });
   });
 
-  it('falls back when a payload has an unsupported skin or invalid color', () => {
+  it('falls back when a payload has an invalid base color', () => {
     expect(
       normalizeTankCustomization({
         version: 1,
-        skinId: 'future-skin',
-        colors: { body: '#fff', turret: '#123456', tracks: '#fedcba' },
+        baseColor: '#fff',
+        paint: { hull: '#fff', turret: '#123456', trackTread: '#fedcba' },
       }),
     ).toEqual(DEFAULT_TANK_CUSTOMIZATION);
   });
 
   it('converts contract colors to Phaser-compatible numbers', () => {
     expect(tankColorHexToNumber('#24c7d9')).toBe(0x24c7d9);
+  });
+
+  it('assigns hull to tank effects and turret to weapon rendering', () => {
+    expect(resolveTankRenderColors({
+      version: 1,
+      baseColor: '#db3a2c',
+      paint: {
+        hull: { base: '#24c7d9' },
+        turret: { base: '#3478f6' },
+        tracks: { treadShadow: '#222222' },
+      },
+    }, 0xffffff)).toEqual({
+      hull: 0x24c7d9,
+      turret: 0x3478f6,
+      trackTreadShadow: 0x222222,
+    });
   });
 });

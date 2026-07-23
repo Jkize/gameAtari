@@ -4,6 +4,7 @@ import { GameMap } from '../types/map.types';
 import { Player } from '../types/player.types';
 import type { DangerZoneRuntimeState } from '../danger-zone.service';
 import type { PlayerEliminatedEvent, RecentExternalDamage } from '../events/elimination-event.types';
+import type { TankCustomization } from '../../../tank-customization/tank-customization.types';
 
 export interface PlayerMatchStats {
   kills: number;
@@ -29,4 +30,5 @@ export interface GameRuntimeState {
   eliminationOrder: string[];
   stats: Map<string, PlayerMatchStats>;
   persisted: boolean;
+  tankCustomizations: Record<string, TankCustomization>;
 }

@@ -26,9 +26,9 @@ export function getWeaponOverlayTextureKey(type: WeaponOverlayType, color: numbe
 export function ensureWeaponOverlayTexture(
   scene: Phaser.Scene,
   type: WeaponOverlayType,
-  color: number,
+  turretColor: number,
 ): string | null {
-  const key = getWeaponOverlayTextureKey(type, color);
+  const key = getWeaponOverlayTextureKey(type, turretColor);
   if (scene.textures.exists(key)) return key;
 
   const pendingKey = `weaponOverlay:${key}`;
@@ -42,7 +42,13 @@ export function ensureWeaponOverlayTexture(
 
   void getWeaponOverlayTemplates()
     .then((templates) => {
-      const url = loadSvgTexture(scene, key, applyTankColor(templates[type], color), 112, 112);
+      const url = loadSvgTexture(
+        scene,
+        key,
+        applyTankColor(templates[type], turretColor),
+        112,
+        112,
+      );
       scene.load.once(`filecomplete-svg-${key}`, () => URL.revokeObjectURL(url));
       scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
         pending.delete(pendingKey);

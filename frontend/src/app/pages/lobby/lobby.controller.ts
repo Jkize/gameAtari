@@ -14,6 +14,8 @@ import {
   RoomDialogMode,
 } from './room-access-dialog/room-access-dialog.component';
 
+const PRIVATE_ROOM_CLOSED_NOTICE_MS = 30_000;
+
 @Directive()
 export abstract class LobbyController implements OnInit, OnDestroy {
   readonly rooms = signal<RoomState[]>([]);
@@ -40,6 +42,7 @@ export abstract class LobbyController implements OnInit, OnDestroy {
   private readonly socketListeners: Array<[string, (...args: any[]) => void]> = [];
   private destroyed = false;
   private preparationCancelled = false;
+  private noticeTimer?: number;
 
   private readonly transloco = inject(TranslocoService);
 
@@ -88,17 +91,20 @@ export abstract class LobbyController implements OnInit, OnDestroy {
     this.listen(SOCKET_EVENTS.ROOM.CLOSED, () => {
       this.currentRoom.set(null);
       this.startingPrivateRoom.set(false);
-      this.notice.set(this.transloco.translate('lobby.privateRooms.closedByInactivity'));
+      this.setNotice(
+        this.transloco.translate('lobby.privateRooms.closedByInactivity'),
+        PRIVATE_ROOM_CLOSED_NOTICE_MS,
+      );
     });
     this.listen(SOCKET_EVENTS.ROOM.RETURNED_TO_LOBBY, () => this.currentRoom.set(null));
     this.listen(SOCKET_EVENTS.ROOM.LEFT, () => this.currentRoom.set(null));
     this.listen(SOCKET_EVENTS.SESSION.CLAIMED, (data: { message?: string }) =>
-      this.notice.set(this.transloco.translate(data?.message ?? 'session.claimed')),
+      this.setNotice(this.transloco.translate(data?.message ?? 'session.claimed')),
     );
     this.listen(SOCKET_EVENTS.SESSION.REPLACED, (data: { message?: string }) => {
       this.currentRoom.set(null);
       this.error.set('');
-      this.notice.set(this.transloco.translate(data?.message ?? 'session.replaced'));
+      this.setNotice(this.transloco.translate(data?.message ?? 'session.replaced'));
     });
     this.listen(SOCKET_EVENTS.GAME.STARTED, (data: { roomId?: string }) => {
       // Production navigation is handled globally by MatchStartRedirectService,
@@ -130,6 +136,7 @@ export abstract class LobbyController implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroyed = true;
     this.gameAssets.cancel();
+    if (this.noticeTimer !== undefined) window.clearTimeout(this.noticeTimer);
     // Remove only this component's handlers. socket.off(event) without a
     // reference would also strip global listeners such as the
     // MatchStartRedirectService gameStarted redirect.
@@ -243,6 +250,19 @@ export abstract class LobbyController implements OnInit, OnDestroy {
     const stored = window.sessionStorage.getItem(key);
     if (!stored) return;
     window.sessionStorage.removeItem(key);
-    this.notice.set(this.transloco.translate(stored));
+    this.setNotice(this.transloco.translate(stored));
+  }
+
+  private setNotice(message: string, autoDismissMs?: number): void {
+    if (this.noticeTimer !== undefined) {
+      window.clearTimeout(this.noticeTimer);
+      this.noticeTimer = undefined;
+    }
+    this.notice.set(message);
+    if (autoDismissMs === undefined) return;
+    this.noticeTimer = window.setTimeout(() => {
+      this.notice.set('');
+      this.noticeTimer = undefined;
+    }, autoDismissMs);
   }
 }

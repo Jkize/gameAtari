@@ -1,6 +1,10 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuthProvider, Prisma, TutorialStatus, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  TANK_CUSTOMIZATION_SETTING_KEY,
+  createStoredTankCustomization,
+} from '../tank-customization/tank-customization.types';
 
 interface GoogleIdentity {
   subject: string;
@@ -145,7 +149,15 @@ export class UsersService {
 
     return this.prisma.$transaction(async tx => {
       const user = await tx.user.create({
-        data: { avatarUrl: identity.avatarUrl },
+        data: {
+          avatarUrl: identity.avatarUrl,
+          settings: {
+            create: {
+              key: TANK_CUSTOMIZATION_SETTING_KEY,
+              data: createStoredTankCustomization() as Prisma.InputJsonValue,
+            },
+          },
+        },
       });
       await tx.authAccount.create({
         data: {
@@ -192,7 +204,16 @@ export class UsersService {
     }
 
     return this.prisma.$transaction(async tx => {
-      const user = await tx.user.create({ data: {} });
+      const user = await tx.user.create({
+        data: {
+          settings: {
+            create: {
+              key: TANK_CUSTOMIZATION_SETTING_KEY,
+              data: createStoredTankCustomization() as Prisma.InputJsonValue,
+            },
+          },
+        },
+      });
       await tx.authAccount.create({
         data: {
           userId: user.id,

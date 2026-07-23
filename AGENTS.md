@@ -22,7 +22,7 @@ The authenticated frontend currently has two intentionally parallel UI versions.
 - `frontend/src/app/app.routes.ts` selects the authenticated shell and lobby from that flag.
 - V1 uses the existing `AppLayoutComponent` and `LobbyComponent`.
 - V2 uses `GameShellV2Component` and `LobbyV2Component`.
-- `/garage` is a V2-only route. V1 must not display tank personalization or link to the Garage.
+- V1 must not display tank personalization.
 - Game, tutorial, custom-game, and map-editor routes remain outside the authenticated shell.
 - Do not delete or redesign V1 unless explicitly requested. New game-oriented frontend work should target V2 by default.
 
@@ -61,21 +61,20 @@ The V2 lobby lives in `frontend/src/app/pages/lobby/lobby-v2/` and currently inc
 
 - A command-center/hangar presentation with the player's tank centered in the main panel.
 - Public battle and private-room controls backed by the existing matchmaking, reconnect, and room behavior.
-- Current tank color swatches and a Customize Tank action that navigates to `/garage`.
+- Current tank color swatches and a Customize Tank action that opens the editor modal.
 - No invented gameplay or backend data.
 
 Presentation-neutral lobby behavior is shared through `frontend/src/app/pages/lobby/lobby.controller.ts`. Both lobby presentations use this controller so the V1 templates can later be deleted without removing V2's matchmaking behavior.
 
-Navigation metadata is managed by `NavigationService`, including icons and the V2-only Garage entry.
+Navigation metadata is managed by `NavigationService`, including route labels and icons.
 
 ## Tank Customization Frontend Contract
 
 Tank customization is currently frontend-only and V2-only.
 
-- The Garage page is implemented in `frontend/src/app/pages/garage/garage-v2.component.*`.
 - The reusable customization feature lives in `frontend/src/app/features/tank-customization/`.
 - The tank preview is reusable through `tank-appearance-preview/`.
-- Opening the Garage starts the editor immediately through its `openOnInit` input.
+- The V2 lobby opens the editor as a modal through its Customize Tank action.
 - Appearance is active today. Skins and Effects are visible extension points but remain disabled/coming soon.
 - The user can select body, turret/cannon, or tracks and change colors through the palette/RGB controls with a live preview.
 
@@ -217,6 +216,7 @@ cd frontend && npm run build
 
 - Prefer small, focused edits in the existing NestJS/Phaser style.
 - Avoid broad refactors while gameplay behavior is moving quickly.
+- When testing with Playwright, reuse the frontend server that is already active. Never stop or restart a pre-existing frontend/watch process. If no frontend server is active and a temporary one must be started for testing, track its exact PID and only stop that agent-started process.
 - Treat obstacle positions as centers everywhere.
 - Keep bushes non-blocking for tanks unless explicitly changing game design.
 - When adding a mechanic that mutates map state, update backend simulation, public events/state, frontend types, and rendering/HUD together.

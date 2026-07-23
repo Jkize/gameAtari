@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { CanMatchFn, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { EAuth } from '@core/auth/auth.models';
 import { guestGuard } from '@core/auth/guest.guard';
 import { roleGuard } from '@core/auth/role.guard';
@@ -19,8 +19,6 @@ const loadLobby = () =>
   inject(UiVersionService).current() === 2
     ? import('@pages/lobby/lobby-v2/lobby-v2.component').then((module) => module.LobbyV2Component)
     : import('@pages/lobby/lobby/lobby.component').then((module) => module.LobbyComponent);
-
-const v2OnlyGuard: CanMatchFn = () => inject(UiVersionService).current() === 2;
 
 export const routes: Routes = [
   {
@@ -85,13 +83,6 @@ export const routes: Routes = [
         path: 'lobby',
         canActivate: [roleGuard, tutorialFinishedGuard],
         loadComponent: loadLobby,
-      },
-      {
-        path: 'garage',
-        canMatch: [v2OnlyGuard],
-        canActivate: [roleGuard, tutorialFinishedGuard],
-        loadComponent: () =>
-          import('@pages/garage/garage-v2.component').then((module) => module.GarageV2Component),
       },
       {
         path: 'matches/me',

@@ -158,6 +158,11 @@ h2 {
   content: '';
 }
 
+.reset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
 .lab-header {
   position: relative;
   z-index: 6;
@@ -610,6 +615,7 @@ h2 {
 
 .dialog-actions > div {
   display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -672,10 +678,6 @@ label:has(input:focus-visible) {
 }
 
 @media (max-width: 600px) {
-  .dialog-backdrop {
-    padding: 8px;
-  }
-
   .customization-dialog {
     max-height: 100%;
     border-radius: 8px;
@@ -738,10 +740,6 @@ label:has(input:focus-visible) {
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .dialog-backdrop {
-    padding: 8px;
-  }
-
   .customization-dialog {
     width: min(960px, 100%);
     height: 100%;

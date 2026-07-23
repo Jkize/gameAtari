@@ -7,6 +7,7 @@ import { SettingsService } from './settings.service';
 
 const KEY_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 const MAX_DATA_LENGTH = 10_000;
+const RESERVED_KEYS = new Set(['tank_customization']);
 
 @Controller('settings')
 export class SettingsController {
@@ -35,5 +36,8 @@ export class SettingsController {
 
   private assertValidKey(key: string): void {
     if (!KEY_PATTERN.test(key)) throw new BadRequestException('Invalid settings key');
+    if (RESERVED_KEYS.has(key)) {
+      throw new BadRequestException('Use the dedicated tank customization endpoint');
+    }
   }
 }

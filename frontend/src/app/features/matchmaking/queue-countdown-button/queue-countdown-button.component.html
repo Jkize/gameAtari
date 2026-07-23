@@ -1,6 +1,12 @@
-@if (visible(); as isVisible) {
-  @if (isVisible && room(); as activeRoom) {
-    <aside class="queue-card" aria-live="polite" aria-atomic="true">
+@if ((embedded || visible()) && room(); as activeRoom) {
+    <aside
+      class="queue-card"
+      [class.queue-card--embedded]="embedded"
+      [class.queue-card--countdown]="activeRoom.status === 'countdown'"
+      [class.queue-card--private]="activeRoom.status !== 'countdown'"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       @if (activeRoom.status === 'countdown') {
         <button type="button" class="room-link countdown-link" (click)="goToLobby()">
           <span class="countdown-label">{{ 'queueFloating.countdown' | transloco }}</span>
@@ -50,7 +56,12 @@
             </small>
           }
         } @else {
-          <small class="room-status">{{ 'lobby.privateRooms.waitingForAdmin' | transloco }}</small>
+          <small class="room-status" [class.room-status--wait-admin]="embedded">
+            {{
+              (embedded ? 'queueFloating.waitAdmin' : 'lobby.privateRooms.waitingForAdmin')
+                | transloco
+            }}
+          </small>
         }
 
         @if (startFailed()) {
@@ -58,5 +69,4 @@
         }
       }
     </aside>
-  }
 }

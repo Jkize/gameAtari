@@ -19,6 +19,7 @@ import { PowerUpSpawnService } from './power-up-spawn.service';
 import { DangerZoneService } from './danger-zone.service';
 import { GameEventPublisherService } from './events/game-event-publisher.service';
 import { WatcherPresenceService } from './events/watcher-presence.service';
+import type { TankCustomization } from '../../tank-customization/tank-customization.types';
 import {
   GAME_TICK_INTERVAL_MS,
   OBSTACLE_IMPACT_MATERIAL,
@@ -78,16 +79,27 @@ export class GameLoopService implements OnModuleDestroy {
 
   prepare(
     roomId: string,
-    players: Array<{ userId: string; username: string }>,
+    players: Array<{ userId: string; username: string; tankCustomization?: TankCustomization }>,
     rewardsEligible = true,
   ): void {
     const state = this.sessions.create(roomId);
     state.rewardsEligible = rewardsEligible;
+    state.tankCustomizations = Object.fromEntries(
+      players
+        .filter(player => player.tankCustomization)
+        .map(player => [player.userId, player.tankCustomization!]),
+    );
     this.sessions.run(roomId, () => {
       const preparedMap = this.gameService.map;
       this.gameService.reset();
       this.gameService.map = preparedMap ?? this.mapService.createMap(players.length);
-      for (const player of players) this.gameService.addPlayer(player.userId, player.username);
+      for (const player of players) {
+        const baseColor = player.tankCustomization
+          ? Number.parseInt(player.tankCustomization.baseColor.slice(1), 16)
+          : undefined;
+        if (baseColor === undefined) this.gameService.addPlayer(player.userId, player.username);
+        else this.gameService.addPlayer(player.userId, player.username, baseColor);
+      }
     });
   }
 
@@ -167,6 +179,7 @@ export class GameLoopService implements OnModuleDestroy {
     return this.sessions.run(roomId, () => ({
       map: this.gameService.map!,
       state: this.buildCurrentState(),
+      tankCustomizations: this.sessions.require(roomId).tankCustomizations,
     }));
   }
 
