@@ -4,9 +4,10 @@ Project memory for Codex when working in this repository.
 
 ## Context Maintenance
 
-- Every code, schema, configuration, contract, or user-visible behavior change must update the pertinent `AGENTS.md` and `CLAUDE.md` context files in the same change.
-- Update the closest module context for implementation details and the repository-root context when a cross-cutting contract or project-wide rule changes.
-- Before finishing, verify that the affected context documents describe the implemented behavior and do not preserve obsolete contracts.
+- Update pertinent `AGENTS.md` and `CLAUDE.md` context files only for material changes that alter architecture, public contracts, schemas, cross-module behavior, important user-visible behavior, operational requirements, or durable implementation rules.
+- Do not update context files for small or localized bug fixes, cosmetic changes, routine refactors, tests, formatting, or implementation details that do not change a durable project contract.
+- Update the closest module context for material implementation rules and the repository-root context only for cross-cutting contracts or project-wide rules.
+- Before finishing a material change, verify that affected context documents describe the implemented behavior and do not preserve obsolete contracts. A context update is not required merely because code changed.
 
 ## Project Overview
 

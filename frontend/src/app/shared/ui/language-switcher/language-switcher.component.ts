@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   APP_LANGUAGES,
@@ -10,7 +11,7 @@ import {
 @Component({
   selector: 'app-lang-switcher',
   standalone: true,
-  imports: [TranslocoPipe],
+  imports: [FormsModule, TranslocoPipe],
   templateUrl: './language-switcher.component.html',
   styleUrl: './language-switcher.component.css',
 })
@@ -19,8 +20,7 @@ export class LanguageSwitcherComponent {
   readonly activeLang = this.transloco.activeLang;
   readonly languages = APP_LANGUAGES;
 
-  select(event: Event): void {
-    const next = (event.target as HTMLSelectElement).value;
+  select(next: string): void {
     if (!isSupportedLanguage(next)) return;
     this.transloco.setActiveLang(next);
     applyDocumentLanguage(next);

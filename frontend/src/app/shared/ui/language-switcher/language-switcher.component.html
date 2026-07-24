@@ -1,8 +1,9 @@
 <select
   class="lang-select"
   [attr.aria-label]="'nav.selectLanguage' | transloco"
-  [value]="activeLang()"
-  (change)="select($event)"
+  [ngModel]="activeLang()"
+  [ngModelOptions]="{ standalone: true }"
+  (ngModelChange)="select($event)"
 >
   @for (language of languages; track language.code) {
     <option [value]="language.code">{{ language.shortLabel }}</option>
