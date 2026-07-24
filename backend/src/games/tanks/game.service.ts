@@ -267,6 +267,7 @@ export class GameService {
     this.usedColorIndices.clear();
     this.runtime.current().startedAt = null;
     this.runtime.current().endedAt = null;
+    this.runtime.current().rewardPlayerCount = 0;
     this.runtime.current().dangerZone = null;
     this.runtime.current().eliminationOrder = [];
     this.runtime.current().stats.clear();

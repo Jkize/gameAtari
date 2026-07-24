@@ -5,7 +5,10 @@ import { AuthenticatedUser } from '../common/auth.types';
 import { Public } from '../auth/decorators/public.decorator';
 import { SolanaConfigService } from '../solana/solana-config.service';
 import { RewardsHistoryService } from './rewards-history.service';
-import { REWARD_AMOUNTS_BY_PLACEMENT } from './rewards.config';
+import {
+  REWARD_PHASE_ONE_CONFIG,
+  REWARD_PHASE_ONE_SCHEDULE,
+} from './rewards.config';
 
 const MAX_CURSOR_LENGTH = 512;
 const CURSOR_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -19,17 +22,21 @@ export class RewardsHistoryController {
     private readonly solanaConfig: SolanaConfigService,
   ) {}
 
-  /** Public reward values used by clients when presenting the current prize podium. */
+  /** Public proportional reward schedule used by clients for live prize projections. */
   @Public()
   @Get('config')
   @Throttle({ default: { limit: 120, ttl: seconds(60) } })
   config() {
     return {
       enabled: this.solanaConfig.rewardsEnabled(),
-      prizes: Object.entries(REWARD_AMOUNTS_BY_PLACEMENT).map(([placement, amount]) => ({
-        placement: Number(placement),
-        amount,
+      phase: REWARD_PHASE_ONE_CONFIG.phase,
+      minimumPlayers: REWARD_PHASE_ONE_CONFIG.minimumPlayers,
+      maximumPlayers: REWARD_PHASE_ONE_CONFIG.maximumPlayers,
+      tiers: REWARD_PHASE_ONE_CONFIG.tiers.map(tier => ({
+        minimumPlayers: tier.minimumPlayers,
+        maximumPlayers: tier.maximumPlayers,
       })),
+      schedule: REWARD_PHASE_ONE_SCHEDULE,
     };
   }
 

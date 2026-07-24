@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { environment } from '@env/environment';
 import { AuthService } from '@core/auth/auth.service';
 import {
@@ -14,13 +14,18 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class RewardsService {
+  private configRequest?: Observable<RewardsConfig>;
+
   constructor(
     private readonly http: HttpClient,
     private readonly auth: AuthService,
   ) {}
 
   getConfig(): Observable<RewardsConfig> {
-    return this.http.get<RewardsConfig>(`${environment.backendUrl}/rewards/config`);
+    this.configRequest ??= this.http
+      .get<RewardsConfig>(`${environment.backendUrl}/rewards/config`)
+      .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    return this.configRequest;
   }
 
   getWalletStatus(): Observable<WalletStatus> {

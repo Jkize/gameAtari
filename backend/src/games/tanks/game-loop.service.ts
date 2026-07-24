@@ -127,6 +127,7 @@ export class GameLoopService implements OnModuleDestroy {
       const state = this.sessions.require(roomId);
       const startedAt = Date.now();
       state.startedAt = new Date(startedAt);
+      state.rewardPlayerCount = this.gameService.players.size;
       this.gameService.dangerZone = this.dangerZoneService.createRuntimeState(
         this.gameService.map,
         this.gameService.players.size,

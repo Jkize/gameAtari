@@ -9,7 +9,6 @@ import { SolanaConfigService } from '../solana/solana-config.service';
 import {
   DAILY_REWARD_LIMIT_TOKENS,
   MINIMUM_HOLDER_BALANCE_TOKENS,
-  REWARD_AMOUNTS_BY_PLACEMENT,
 } from './rewards.config';
 import { RewardsRepository } from './rewards.repository';
 import {
@@ -70,9 +69,7 @@ export class RewardsService {
    */
   private async registerAndEvaluate(candidate: RewardCandidate): Promise<void> {
     const rewardsEnabled = this.solanaConfig.rewardsEnabled();
-    const potentialAmount = rewardsEnabled
-      ? REWARD_AMOUNTS_BY_PLACEMENT[candidate.placement]
-      : 0;
+    const potentialAmount = rewardsEnabled ? candidate.amount : 0;
     const mint = this.solanaConfig.mint();
 
     await this.rewards.upsertRewardLog({

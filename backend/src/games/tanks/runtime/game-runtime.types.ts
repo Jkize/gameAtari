@@ -19,6 +19,7 @@ export interface GameRuntimeState {
   roomName: string;
   roomType: 'public' | 'private';
   rewardsEligible: boolean;
+  rewardPlayerCount: number;
   players: Map<string, Player>;
   bullets: Bullet[];
   impactEvents: BulletImpactPublicState[];

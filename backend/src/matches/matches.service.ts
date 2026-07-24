@@ -3,8 +3,8 @@ import { GameSessionsService } from '../games/tanks/runtime/game-sessions.servic
 import { RewardsService } from '../rewards/rewards.service';
 import { RewardProcessorScheduler } from '../rewards/reward-processor.scheduler';
 import { RuntimeTelemetryService } from '../runtime/runtime-telemetry.service';
-import { REWARD_AMOUNTS_BY_PLACEMENT } from '../rewards/rewards.config';
-import { RewardCandidate, RewardedPlacement } from '../rewards/rewards.types';
+import { rewardPrizesForPlayerCount } from '../rewards/rewards.config';
+import { RewardCandidate } from '../rewards/rewards.types';
 import { MatchResultsRepository } from './match-results.repository';
 
 @Injectable()
@@ -60,14 +60,18 @@ export class MatchesService {
         players,
       });
 
-      const rewardCandidates: RewardCandidate[] = players
-        .filter(player => player.placement in REWARD_AMOUNTS_BY_PLACEMENT)
-        .map(player => ({
-          matchId,
-          userId: player.userId,
-          placement: player.placement as RewardedPlacement,
-        }))
-        .sort((a, b) => a.placement - b.placement);
+      const rewardCandidates: RewardCandidate[] = rewardPrizesForPlayerCount(state.rewardPlayerCount)
+        .flatMap(prize => {
+          const player = players.find(candidate => candidate.placement === prize.placement);
+          return player
+            ? [{
+                matchId,
+                userId: player.userId,
+                placement: prize.placement,
+                amount: prize.amount,
+              }]
+            : [];
+        });
 
       try {
         if (state.rewardsEligible) {

@@ -19,12 +19,28 @@ export type RewardIneligibilityReason =
   | 'INSUFFICIENT_TOKEN_BALANCE'
   | 'DAILY_LIMIT_REACHED';
 
+export interface RewardPrize {
+  placement: 1 | 2 | 3;
+  amount: number;
+}
+
+export interface RewardScheduleEntry {
+  playerCount: number;
+  prizes: RewardPrize[];
+}
+
+export interface RewardTier {
+  minimumPlayers: number;
+  maximumPlayers: number;
+}
+
 export interface RewardsConfig {
   enabled: boolean;
-  prizes: Array<{
-    placement: number;
-    amount: number;
-  }>;
+  phase: 1;
+  minimumPlayers: number;
+  maximumPlayers: number;
+  tiers: RewardTier[];
+  schedule: RewardScheduleEntry[];
 }
 
 export interface RewardSummary {

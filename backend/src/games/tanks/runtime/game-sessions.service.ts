@@ -18,6 +18,7 @@ export class GameSessionsService {
       roomName: roomId,
       roomType: 'public',
       rewardsEligible: true,
+      rewardPlayerCount: 0,
       players: new Map(),
       bullets: [],
       impactEvents: [],

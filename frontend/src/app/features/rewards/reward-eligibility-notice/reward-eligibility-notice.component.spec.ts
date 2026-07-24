@@ -15,6 +15,7 @@ const es = {
   'rewards.eligibility.title': 'Premios en tokens',
   'rewards.eligibility.description': 'Todos pueden jugar. Para recibir premios debes iniciar sesión y vincular tu wallet Phantom.',
   'rewards.eligibility.hint': 'La elegibilidad se valida al finalizar la partida.',
+  'rewards.eligibility.maximumPrizes': 'Premios máximos con {{count}} jugadores',
   'rewards.eligibility.prizesAriaLabel': 'Premios disponibles',
   'rewards.eligibility.login': 'Iniciar sesión',
   'rewards.eligibility.configureAccount': 'Configura tu cuenta',
@@ -31,6 +32,15 @@ const es = {
   'rewards.eligibility.eligibleHint': 'Wallet conectada · Saldo suficiente',
   'rewards.eligibility.walletVerified': 'Elegible para recompensas',
   'rewards.eligibility.balanceSufficient': 'Saldo suficiente',
+  'rewards.eligibility.walletNotVerified': 'Wallet no verificada',
+  'rewards.eligibility.balanceInsufficient': 'Saldo insuficiente',
+  'rewards.eligibility.balanceUnavailable': 'Saldo no verificado',
+  'rewards.eligibility.eligibleShort': 'Elegible',
+  'rewards.eligibility.notEligibleShort': 'No elegible',
+  'rewards.eligibility.available': 'Los rewards están disponibles.',
+  'rewards.eligibility.compactWallet': 'Wallet',
+  'rewards.eligibility.compactBalance': 'Saldo',
+  'rewards.projection.viewRewards': 'Ver rewards',
   'rewards.eligibility.linkPhantomError': 'No se pudo vincular Phantom',
   'rewards.eligibility.linkPhantom': 'Vincular Phantom',
   'rewards.disabled.message': 'Las recompensas están temporalmente desactivadas.',
@@ -68,10 +78,49 @@ describe('RewardEligibilityNoticeComponent', () => {
     const rewards = {
       getConfig: vi.fn().mockReturnValue(of({
         enabled: rewardsEnabled,
-        prizes: [
-          { placement: 1, amount: 1000 },
-          { placement: 2, amount: 400 },
-          { placement: 3, amount: 250 },
+        phase: 1,
+        minimumPlayers: 4,
+        maximumPlayers: 16,
+        tiers: [
+          { minimumPlayers: 4, maximumPlayers: 4 },
+          { minimumPlayers: 5, maximumPlayers: 8 },
+          { minimumPlayers: 9, maximumPlayers: 16 },
+        ],
+        schedule: [
+          {
+            playerCount: 4,
+            prizes: [{ placement: 1, amount: 400 }],
+          },
+          {
+            playerCount: 5,
+            prizes: [
+              { placement: 1, amount: 475 },
+              { placement: 2, amount: 50 },
+            ],
+          },
+          {
+            playerCount: 8,
+            prizes: [
+              { placement: 1, amount: 700 },
+              { placement: 2, amount: 200 },
+            ],
+          },
+          {
+            playerCount: 9,
+            prizes: [
+              { placement: 1, amount: 750 },
+              { placement: 2, amount: 235 },
+              { placement: 3, amount: 75 },
+            ],
+          },
+          {
+            playerCount: 16,
+            prizes: [
+              { placement: 1, amount: 1100 },
+              { placement: 2, amount: 480 },
+              { placement: 3, amount: 250 },
+            ],
+          },
         ],
       })),
       getWalletStatus: vi.fn().mockReturnValue(wallet instanceof Subject ? wallet.asObservable() : of(wallet)),
@@ -106,7 +155,7 @@ describe('RewardEligibilityNoticeComponent', () => {
 
     expect(text).toContain('Las recompensas están temporalmente desactivadas.');
     expect(text).not.toContain('Premios en tokens');
-    expect(text).not.toContain('1000 tokens');
+    expect(text).not.toContain('1100 tokens');
     expect(text).not.toContain('Wallet no vinculada');
     expect(rewards.getWalletStatus).not.toHaveBeenCalled();
   });
@@ -115,8 +164,8 @@ describe('RewardEligibilityNoticeComponent', () => {
     const { fixture } = await setup(null);
 
     expect(fixture.nativeElement.textContent).toContain('Premios en tokens');
-    expect(fixture.nativeElement.textContent).toContain('1000 tokens');
-    expect(fixture.nativeElement.textContent).toContain('400 tokens');
+    expect(fixture.nativeElement.textContent).toContain('1100 tokens');
+    expect(fixture.nativeElement.textContent).toContain('480 tokens');
     expect(fixture.nativeElement.textContent).toContain('250 tokens');
     expect(fixture.nativeElement.textContent).toContain('Iniciar');
   });
@@ -164,6 +213,20 @@ describe('RewardEligibilityNoticeComponent', () => {
     });
 
     expect(fixture.nativeElement.textContent).toContain('Elegible para recompensas');
+  });
+
+  it('reduces the V2 panel to eligibility and a single modal action', async () => {
+    const { fixture } = await setup({ id: 'u1', username: 'Pilot' }, {
+      ...walletStatus,
+      phantom: { linked: true, verified: true },
+      holder: { status: 'eligible' as const, requiredTokens: 10000, message: 'ok' },
+    });
+    fixture.componentRef.setInput('compact', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[aria-label="Saldo suficiente"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).not.toContain('1100 tokens');
+    expect(fixture.nativeElement.querySelectorAll('.reward-trigger')).toHaveLength(1);
   });
 
   it('shows insufficient-balance state without exposing the token threshold as the only mention', async () => {

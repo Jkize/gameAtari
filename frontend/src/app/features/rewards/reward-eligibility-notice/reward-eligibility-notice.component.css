@@ -26,6 +26,12 @@ h2 {
   line-height: 1.45;
 }
 
+.prize-caption {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
 .prizes {
   display: grid;
   gap: 6px;
@@ -156,4 +162,102 @@ h2 {
   margin: 0;
   color: var(--color-error);
   font-size: 0.82rem;
+}
+
+.notice--compact {
+  gap: 11px;
+  padding: 16px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+
+.compact-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.compact-heading h2 {
+  font-size: 0.92rem;
+}
+
+.eligibility-badge {
+  padding: 4px 7px;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+  border-radius: 999px;
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 9%, transparent);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.eligibility-badge--eligible {
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 9%, transparent);
+}
+
+.compact-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, auto));
+  justify-content: start;
+  gap: 10px;
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--color-warning);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+
+.requirement--ok {
+  color: var(--color-success);
+}
+
+.requirement i {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+}
+
+.notice--compact .action,
+.notice--compact .action-link {
+  align-self: flex-start;
+  font-size: 0.72rem;
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .notice--compact {
+    gap: 6px;
+  }
+
+  .compact-heading {
+    gap: 4px;
+  }
+
+  .compact-heading h2 {
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .eligibility-badge {
+    padding: 3px 5px;
+    font-size: 0.5rem;
+  }
+
+  .compact-checks {
+    gap: 7px;
+  }
+
+  .requirement {
+    gap: 4px;
+    font-size: 0.58rem;
+  }
 }

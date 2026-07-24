@@ -390,6 +390,7 @@
   .private-actions-v2 {
     gap: 5px;
     margin-top: 5px;
+    margin-bottom: 3px;
   }
 
   .private-actions-v2 .game-button-v2 {

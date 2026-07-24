@@ -90,6 +90,51 @@ describe('GameLoopService room metadata', () => {
     expect(initial.state).not.toHaveProperty('tankCustomizations');
   });
 
+  it('snapshots the reward player count when the round starts', () => {
+    const sessions = new GameSessionsService(new GameRuntimeContext());
+    sessions.create('reward-room');
+    const gameService = {
+      map: { powerUps: [] },
+      players: new Map(Array.from({ length: 9 }, (_, index) => [
+        `player-${index}`,
+        { id: `player-${index}` },
+      ])),
+      status: 'waiting',
+      dangerZone: null,
+    };
+    const dangerZone = {
+      createRuntimeState: jest.fn(() => ({ phase: 'waiting' })),
+    };
+    const developmentSettings = {
+      dangerZoneOverride: jest.fn(() => ({})),
+      shouldClearInitialPowerUpsOnStart: jest.fn(() => false),
+      powerUps: jest.fn(() => ({
+        firstSpawnDelayMs: 3_000,
+        spawnIntervalMs: 15_000,
+      })),
+    };
+    const loop = new GameLoopService(
+      sessions,
+      gameService as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      dangerZone as never,
+      developmentSettings as never,
+      {} as never,
+      {} as never,
+    );
+
+    loop.start('reward-room');
+
+    expect(sessions.require('reward-room').rewardPlayerCount).toBe(9);
+    expect(sessions.require('reward-room').startedAt).toBeInstanceOf(Date);
+    loop.stop('reward-room');
+  });
+
   it('passes the authoritative winner to the finished handler', () => {
     const sessions = new GameSessionsService(new GameRuntimeContext());
     const state = sessions.create('room-1');

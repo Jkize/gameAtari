@@ -5,9 +5,10 @@ This folder owns SPL token reward eligibility, payment lifecycle, reward history
 ## Core Invariants
 
 - Rewards are for authenticated registered users with verified linked Phantom wallets. Local/dev guest-style players may be persisted for testing/history but are not eligible for production rewards.
-- Create or reuse exactly one `RewardLog` per `(matchId, placement)` for placements 1, 2, and 3.
+- Create or reuse exactly one `RewardLog` per `(matchId, placement)` for each placement rewarded by that match's frozen player-count schedule.
 - Idempotency key format is deterministic: `MATCH_REWARD:{matchId}:{placement}`.
-- Prize amounts are fixed in `rewards.config.ts`: 1st = 700, 2nd = 300, 3rd = 100. Never redistribute a missed prize.
+- Phase-one thresholds and formulas are centralized in `rewards.config.ts`: fewer than 4 players receive no prizes; 4 rewards first place with 400; 5-8 scale two prizes from 475/50 to 700/200; 9-16 scale three prizes from 750/235/75 to 1,100/480/250.
+- Snapshot the reward player count at round start. During match persistence, calculate each candidate amount from that frozen count and carry it into eligibility evaluation; never recalculate from mutable room state and never redistribute a missed prize.
 - Eligibility is evaluated using the wallet's token balance at match end, before reward payment.
 - Daily limit is 10,000 tokens and uses America/Bogota dates.
 - PostgreSQL is the source of truth for reward idempotency, daily reservations, retry state, and transaction signatures. Do not use Redis for reward consistency.
@@ -15,7 +16,7 @@ This folder owns SPL token reward eligibility, payment lifecycle, reward history
 ## RewardLog Lifecycle
 
 - `RewardLog` stores both eligibility audit data and payment state.
-- Non-eligible top-3 players still need a `RewardLog` for history/audit.
+- Non-eligible players in a configured rewarded placement still need a `RewardLog` for history/audit.
 - Retry recoverable failures on the same `RewardLog`; never insert a replacement reward row.
 - A `SUBMITTED` reward with `transactionSignature` must be reconciled before any resend attempt.
 - `transactionSignature` is unique when present.
@@ -32,6 +33,7 @@ This folder owns SPL token reward eligibility, payment lifecycle, reward history
 ## History API
 
 - `RewardsHistoryController` exposes:
+  - `GET /rewards/config`
   - `GET /rewards/me/history`
   - `GET /rewards/me/matches/:matchId`
   - `GET /rewards/matches/recent`
@@ -43,6 +45,7 @@ This folder owns SPL token reward eligibility, payment lifecycle, reward history
 - Private matches return no reward presentation even though disabled reward rows may remain internally for audit.
 - `roomType` and `rewardsEligible` are independent; do not use reward eligibility as the public/private visibility filter.
 - Backend must generate `solscanUrl`; frontend should only render returned URLs.
+- `GET /rewards/config` is the public source of truth for the live frontend projection and exposes the phase, thresholds, tiers, and exact schedule derived from `rewards.config.ts`.
 - Global history should avoid internal error details. Personal history can include user-facing ineligibility reasons.
 
 ## Module Wiring

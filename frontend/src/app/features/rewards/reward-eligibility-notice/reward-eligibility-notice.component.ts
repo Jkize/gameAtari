@@ -1,21 +1,37 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, signal } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '@core/auth/auth.service';
 import { RewardsService } from '../rewards.service';
 import { RewardsConfig, WalletStatus } from '../rewards.models';
+import { RewardProjectionComponent } from '../reward-projection/reward-projection.component';
 
 @Component({
   selector: 'app-reward-eligibility-notice',
   standalone: true,
-  imports: [RouterLink, TranslocoPipe],
+  imports: [RouterLink, TranslocoPipe, RewardProjectionComponent],
   templateUrl: './reward-eligibility-notice.component.html',
   styleUrl: './reward-eligibility-notice.component.css',
 })
 export class RewardEligibilityNoticeComponent implements OnInit, OnChanges {
   @Input() refreshKey = 0;
+  @Input() compact = false;
+  @Input() playerCount = 0;
   readonly walletStatus = signal<WalletStatus | null>(null);
-  readonly prizes = signal<RewardsConfig['prizes']>([]);
+  readonly config = signal<RewardsConfig | null>(null);
+  readonly prizes = computed(() => {
+    const schedule = this.config()?.schedule ?? [];
+    return schedule[schedule.length - 1]?.prizes ?? [];
+  });
   readonly rewardsEnabled = signal<boolean | null>(null);
   readonly configUnavailable = signal(false);
   readonly busy = signal(false);
@@ -33,7 +49,7 @@ export class RewardEligibilityNoticeComponent implements OnInit, OnChanges {
       next: config => {
         this.rewardsEnabled.set(config.enabled);
         if (!config.enabled) return;
-        this.prizes.set(config.prizes);
+        this.config.set(config);
         this.loadStatus();
       },
       error: () => this.configUnavailable.set(true),
@@ -51,6 +67,11 @@ export class RewardEligibilityNoticeComponent implements OnInit, OnChanges {
   canLinkPhantom(): boolean {
     const status = this.walletStatus();
     return this.auth.currentProvider() === 'GOOGLE' && status?.phantom?.verified !== true;
+  }
+
+  isEligible(): boolean {
+    const status = this.walletStatus();
+    return status?.phantom.verified === true && status.holder.status === 'eligible';
   }
 
   retryCheck(): void {

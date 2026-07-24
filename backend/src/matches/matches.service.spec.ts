@@ -14,6 +14,11 @@ import { RuntimeTelemetryService } from '../runtime/runtime-telemetry.service';
 
 describe('MatchesService', () => {
   const userId = '00000000-0000-4000-8000-000000000001';
+  const otherUserIds = [
+    '00000000-0000-4000-8000-000000000002',
+    '00000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000004',
+  ];
 
   const createHarness = () => {
     const state = {
@@ -22,10 +27,14 @@ describe('MatchesService', () => {
       roomType: 'public' as 'public' | 'private',
       persisted: false,
       rewardsEligible: true,
+      rewardPlayerCount: 4,
       startedAt: new Date('2026-07-09T20:00:00.000Z'),
       endedAt: new Date('2026-07-09T20:05:00.000Z'),
-      players: new Map([[userId, { id: userId, alive: true }]]),
-      eliminationOrder: [],
+      players: new Map([
+        [userId, { id: userId, alive: true }],
+        ...otherUserIds.map(id => [id, { id, alive: false }] as const),
+      ]),
+      eliminationOrder: [...otherUserIds].reverse(),
       stats: new Map([[userId, {
         kills: 2,
         deaths: 0,
@@ -73,6 +82,7 @@ describe('MatchesService', () => {
       matchId: 'match-1',
       userId,
       placement: 1,
+      amount: 400,
     }]);
     expect(telemetry.checkpointMatchMinuteAndFlush).toHaveBeenCalledTimes(1);
   });
@@ -117,7 +127,19 @@ describe('MatchesService', () => {
       matchId: 'match-1',
       userId,
       placement: 1,
+      amount: 400,
     }]);
+  });
+
+  it('does not create reward candidates below the four-player minimum', async () => {
+    const { rewards, service, state } = createHarness();
+    state.players = new Map([[userId, { id: userId, alive: true }]]);
+    state.eliminationOrder = [];
+    state.rewardPlayerCount = 1;
+
+    await service.persist('room-1');
+
+    expect(rewards.registerMatchRewards).toHaveBeenCalledWith([]);
   });
 
   it('unmarks persisted when storing the match itself fails', async () => {

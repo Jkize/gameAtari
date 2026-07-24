@@ -21,7 +21,7 @@ A module that owns providers should be imported by consumers, not have its provi
 
 ## Matches & Persistence
 
-`MatchesService.persist()` (`backend/src/matches/matches.service.ts`) runs at match end: upserts `Match`/`MatchPlayer` via `MatchResultsRepository` inside a Prisma transaction, computes placement from `eliminationOrder` plus the last survivor, and hands placements 1-3 to `RewardsService` (see `backend/src/rewards/CLAUDE.md`). Guest (non-UUID) player IDs are persisted with `userId: null`.
+`MatchesService.persist()` (`backend/src/matches/matches.service.ts`) runs at match end: upserts `Match`/`MatchPlayer` via `MatchResultsRepository` inside a Prisma transaction, computes placement from `eliminationOrder` plus the last survivor, and hands the placements enabled by the round-start player-count snapshot to `RewardsService` (see `backend/src/rewards/CLAUDE.md`). Guest (non-UUID) player IDs are persisted with `userId: null`.
 
 - Persistence idempotency uses the unique per-round `roundId`, not `roomId`.
 - `roomId` is indexed but non-unique so one private room can own multiple durable rounds.

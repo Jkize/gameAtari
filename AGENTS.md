@@ -62,6 +62,7 @@ The V2 shell lives in `frontend/src/app/layout/game-shell-v2/` and currently inc
 - Top game HUD with brand, token contract display, language control, and user menu.
 - Desktop left navigation and a responsive mobile bottom navigation.
 - Right-side account, public-statistics, and reward-eligibility panels using existing application data.
+- The V2 reward-eligibility rail panel contains the single `View rewards` trigger between its heading and compact wallet/balance row; it opens the two-column prize-and-rules modal. Do not add reward controls or inline prize details to the lobby battle card.
 - Bottom connection/status presentation.
 
 The V2 lobby lives in `frontend/src/app/pages/lobby/lobby-v2/` and currently includes:
@@ -185,13 +186,15 @@ Preserve the low-latency local-memory boundary.
 Tank Arena has an SPL token rewards system layered on top of completed matches.
 
 - Rewards are for authenticated registered users only. Local/dev guest-style players may exist for testing, but they are not eligible for production rewards.
-- On match completion, backend persists `Match`, `MatchPlayer`, and top-3 `RewardLog` rows idempotently. Match persistence is idempotent by the per-round `roundId`; reward idempotency keys use `MATCH_REWARD:{matchId}:{placement}`.
+- On match completion, backend persists `Match`, `MatchPlayer`, and the configured rewarded placements idempotently. Match persistence is idempotent by the per-round `roundId`; reward idempotency keys use `MATCH_REWARD:{matchId}:{placement}`.
 - `Match.roomId` groups multiple rounds played in the same room and is not unique. Each match snapshots `roomName`, `roomType: PUBLIC | PRIVATE`, and `rewardsEligible`.
 - `roomType` and `rewardsEligible` are independent. A future public room may be visible in public history without necessarily being reward-eligible.
 - All match-history screens and endpoints require authentication. The global feed/detail expose only `PUBLIC` matches; participant-aware detail may expose a private match only to one of its participants.
 - Personal history contains both public and private matches. Private matches keep their gameplay history but do not present reward-disabled/ineligible UI.
 - Eligibility is checked at match end, before payment: verified Phantom wallet, configured mint balance of at least 10,000 tokens, and daily reward limit availability.
-- Prizes are fixed: 1st = 700, 2nd = 300, 3rd = 100. Prizes are never redistributed.
+- Phase-one prizes are determined from a player-count snapshot taken at round start: fewer than 4 players receive no prizes; 4 rewards only first place with 400; 5-8 reward two places from 475/50 up to 700/200; 9-16 reward three places from 750/235/75 up to 1,100/480/250.
+- All reward thresholds, formulas, and the exact public schedule live in `backend/src/rewards/rewards.config.ts`. Missed or ineligible prizes are never redistributed.
+- `GET /rewards/config` exposes the enabled flag, phase, supported player range, tiers, and exact per-player-count schedule. The V2 lobby consumes this contract for its live projection and help panel; do not duplicate reward formulas in Angular.
 - Solana/Helius config is centralized in `backend/src/solana`; `NODE_ENV=production` uses mainnet-beta, all other environments use devnet.
 - Reward history endpoints live under `/rewards`: personal history, recent public matches, and match detail. Match browsing requires authentication; responses return backend-generated Solscan URLs and paginate at 50 items.
 - Frontend routed screens live in `frontend/src/app/pages`; Phaser runtime, rendering, audio, input, and public game contracts live in `frontend/src/app/game`.

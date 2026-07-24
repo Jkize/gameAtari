@@ -7,7 +7,7 @@ jest.mock('@solana/web3.js', () => ({
 import { RewardIneligibilityReason, RewardStatus } from '@prisma/client';
 import { SolanaConfigService } from '../solana/solana-config.service';
 import { SolanaGateway, SolanaGatewayError, SolanaGatewayErrorCode } from '../solana/solana.types';
-import { DAILY_REWARD_LIMIT_TOKENS, REWARD_AMOUNTS_BY_PLACEMENT } from './rewards.config';
+import { DAILY_REWARD_LIMIT_TOKENS, RewardedPlacement } from './rewards.config';
 import { RewardsRepository } from './rewards.repository';
 import { RewardsService } from './rewards.service';
 
@@ -15,6 +15,16 @@ describe('RewardsService eligibility', () => {
   const matchId = 'match-1';
   const userId = '00000000-0000-4000-8000-000000000001';
   const wallet = { address: 'wallet-1', verifiedAt: new Date('2026-07-09T10:00:00.000Z') };
+  const testAmounts: Record<RewardedPlacement, number> = { 1: 475, 2: 200, 3: 75 };
+  const candidate = (
+    placement: RewardedPlacement,
+    candidateUserId: string | null = userId,
+  ) => ({
+    matchId,
+    userId: candidateUserId,
+    placement,
+    amount: testAmounts[placement],
+  });
 
   const createHarness = () => {
     const repository = {
@@ -48,7 +58,7 @@ describe('RewardsService eligibility', () => {
     const { repository, solana, solanaConfig, service } = createHarness();
     solanaConfig.rewardsEnabled.mockReturnValue(false);
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.REWARDS_DISABLED,
@@ -67,7 +77,7 @@ describe('RewardsService eligibility', () => {
   it('records private-room placements as disabled without claiming evaluation or checking wallets', async () => {
     const { repository, solana, service } = createHarness();
 
-    await service.registerDisabledMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerDisabledMatchRewards([candidate(1)]);
 
     expect(repository.upsertRewardLog).toHaveBeenCalledWith(expect.objectContaining({
       matchId,
@@ -87,7 +97,7 @@ describe('RewardsService eligibility', () => {
   it('marks an unauthenticated first place as not eligible', async () => {
     const { repository, service } = createHarness();
 
-    await service.registerMatchRewards([{ matchId, userId: null, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1, null)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.NOT_ELIGIBLE,
@@ -100,7 +110,7 @@ describe('RewardsService eligibility', () => {
     const { repository, service } = createHarness();
     repository.findVerifiedWallet.mockResolvedValue(null);
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.NOT_ELIGIBLE,
@@ -112,7 +122,7 @@ describe('RewardsService eligibility', () => {
     const { repository, service } = createHarness();
     repository.findVerifiedWallet.mockResolvedValue({ address: 'wallet-1', verifiedAt: null });
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.NOT_ELIGIBLE,
@@ -126,7 +136,7 @@ describe('RewardsService eligibility', () => {
     repository.findVerifiedWallet.mockResolvedValue(wallet);
     solana.getTokenBalance.mockResolvedValue({ kind: 'found', amountRaw: 9999n, decimals: 0 });
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.NOT_ELIGIBLE,
@@ -140,17 +150,17 @@ describe('RewardsService eligibility', () => {
     repository.findVerifiedWallet.mockResolvedValue(wallet);
     solana.getTokenBalance.mockResolvedValue({ kind: 'found', amountRaw: 10000n, decimals: 0 });
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.tryReserveDailyAmount).toHaveBeenCalledWith(expect.objectContaining({
       userId,
       walletAddress: 'wallet-1',
       mint: 'mint-1',
-    }), REWARD_AMOUNTS_BY_PLACEMENT[1], DAILY_REWARD_LIMIT_TOKENS);
+    }), testAmounts[1], DAILY_REWARD_LIMIT_TOKENS);
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.PENDING,
       eligible: true,
-      amount: REWARD_AMOUNTS_BY_PLACEMENT[1],
+      amount: testAmounts[1],
       tokenBalanceChecked: '10000',
     }));
   });
@@ -160,12 +170,12 @@ describe('RewardsService eligibility', () => {
     repository.findVerifiedWallet.mockResolvedValue(wallet);
     solana.getTokenBalance.mockResolvedValue({ kind: 'found', amountRaw: 15000n, decimals: 0 });
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 2 }]);
+    await service.registerMatchRewards([candidate(2)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.PENDING,
       eligible: true,
-      amount: REWARD_AMOUNTS_BY_PLACEMENT[2],
+      amount: testAmounts[2],
     }));
   });
 
@@ -180,8 +190,8 @@ describe('RewardsService eligibility', () => {
     solana.getTokenBalance.mockResolvedValue({ kind: 'found', amountRaw: 10000n, decimals: 0 });
 
     await service.registerMatchRewards([
-      { matchId, userId: '00000000-0000-4000-8000-000000000001', placement: 1 },
-      { matchId, userId: '00000000-0000-4000-8000-000000000002', placement: 2 },
+      candidate(1, '00000000-0000-4000-8000-000000000001'),
+      candidate(2, '00000000-0000-4000-8000-000000000002'),
     ]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenNthCalledWith(1, 'reward-1', expect.objectContaining({
@@ -190,7 +200,7 @@ describe('RewardsService eligibility', () => {
     }));
     expect(repository.completeRewardEvaluation).toHaveBeenNthCalledWith(2, 'reward-2', expect.objectContaining({
       status: RewardStatus.PENDING,
-      amount: REWARD_AMOUNTS_BY_PLACEMENT[2],
+      amount: testAmounts[2],
     }));
   });
 
@@ -200,11 +210,11 @@ describe('RewardsService eligibility', () => {
     solana.getTokenBalance.mockResolvedValue({ kind: 'found', amountRaw: 10000n, decimals: 0 });
     repository.tryReserveDailyAmount.mockResolvedValue(true);
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 3 }]);
+    await service.registerMatchRewards([candidate(3)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.PENDING,
-      amount: REWARD_AMOUNTS_BY_PLACEMENT[3],
+      amount: testAmounts[3],
     }));
   });
 
@@ -214,7 +224,7 @@ describe('RewardsService eligibility', () => {
     solana.getTokenBalance.mockResolvedValue({ kind: 'found', amountRaw: 10000n, decimals: 0 });
     repository.tryReserveDailyAmount.mockResolvedValue(false);
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.DAILY_LIMIT_REACHED,
@@ -232,8 +242,8 @@ describe('RewardsService eligibility', () => {
     solana.getTokenBalance.mockResolvedValue({ kind: 'found', amountRaw: 10000n, decimals: 0 });
 
     await Promise.all([
-      service.registerMatchRewards([{ matchId, userId, placement: 1 }]),
-      service.registerMatchRewards([{ matchId, userId, placement: 1 }]),
+      service.registerMatchRewards([candidate(1)]),
+      service.registerMatchRewards([candidate(1)]),
     ]);
 
     expect(repository.upsertRewardLog).toHaveBeenCalledTimes(2);
@@ -250,7 +260,7 @@ describe('RewardsService eligibility', () => {
       true,
     ));
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.completeRewardEvaluation).toHaveBeenCalledWith('reward-1', expect.objectContaining({
       status: RewardStatus.FAILED,
@@ -265,7 +275,7 @@ describe('RewardsService eligibility', () => {
     const { repository, service } = createHarness();
     repository.claimRewardEvaluation.mockResolvedValue(null);
 
-    await service.registerMatchRewards([{ matchId, userId, placement: 1 }]);
+    await service.registerMatchRewards([candidate(1)]);
 
     expect(repository.completeRewardEvaluation).not.toHaveBeenCalled();
     expect(repository.tryReserveDailyAmount).not.toHaveBeenCalled();

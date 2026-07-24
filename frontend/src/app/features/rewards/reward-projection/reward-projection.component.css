@@ -1,0 +1,454 @@
+:host {
+  display: flex;
+  margin-bottom: 8px;
+  justify-content: flex-end;
+}
+
+:host.reward-projection--wide {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.reward-trigger {
+  display: inline-flex;
+  min-height: 34px;
+  padding: 7px 10px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--game-green) 38%, var(--game-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--game-surface) 90%, transparent);
+  color: var(--game-text);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.reward-trigger:hover,
+.reward-trigger:focus-visible {
+  border-color: var(--game-green);
+  outline: none;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--game-green) 22%, transparent);
+}
+
+.reward-trigger > .ti-trophy {
+  color: var(--game-green);
+  font-size: 0.9rem;
+}
+
+.reward-trigger__arrow {
+  margin-left: auto;
+  color: var(--game-text-muted);
+  font-size: 0.75rem;
+}
+
+.reward-trigger--wide {
+  width: 100%;
+  margin-block: 2px;
+  justify-content: center;
+}
+
+.reward-trigger--wide > .ti-trophy {
+  margin-left: auto;
+}
+
+.reward-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  background: rgba(3, 6, 15, 0.76);
+  backdrop-filter: blur(5px);
+}
+
+.reward-modal {
+  position: fixed;
+  z-index: 221;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  width: min(840px, calc(100% - 28px));
+  max-height: min(720px, calc(100dvh - 28px));
+  overflow: hidden;
+  flex-direction: column;
+  color: var(--game-text);
+  background: var(--game-surface);
+  border: 1px solid color-mix(in srgb, var(--game-green) 34%, var(--game-line));
+  border-radius: 12px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, -50%);
+}
+
+.reward-modal__header {
+  display: flex;
+  padding: 18px 18px 14px;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--game-line-soft);
+}
+
+.reward-modal h2 {
+  margin: 3px 0 0;
+  color: var(--game-text);
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.close-button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  flex: 0 0 auto;
+  border: 1px solid var(--game-line);
+  border-radius: 50%;
+  background: var(--game-surface-inset);
+  color: var(--game-text-muted);
+  cursor: pointer;
+  place-items: center;
+}
+
+.close-button:hover,
+.close-button:focus-visible {
+  border-color: var(--game-cyan);
+  color: var(--game-cyan);
+  outline: none;
+}
+
+.reward-modal__body {
+  display: grid;
+  min-height: 0;
+  padding: 16px 18px 20px;
+  gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--game-line-bright) var(--game-surface-inset);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.reward-modal__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(250px, 0.88fr);
+  align-items: start;
+  gap: 14px;
+}
+
+.reward-modal__column {
+  display: grid;
+  min-width: 0;
+  gap: 11px;
+}
+
+.reward-modal__column h3 {
+  margin: 0;
+  color: var(--game-text);
+  font-size: 0.76rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.eligibility-column {
+  padding: 13px;
+  border: 1px solid var(--game-line);
+  border-radius: 8px;
+  background: var(--game-surface-inset);
+}
+
+.column-copy {
+  margin: 0;
+  color: var(--game-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.modal-requirements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.modal-requirement {
+  display: flex;
+  padding: 9px 10px;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  border: 1px solid var(--game-line-soft);
+  border-radius: 7px;
+  color: var(--game-text-muted);
+  background: color-mix(in srgb, var(--game-surface) 75%, transparent);
+  font-size: 0.7rem;
+}
+
+.modal-requirement--ok {
+  border-color: color-mix(in srgb, var(--game-green) 38%, var(--game-line));
+  color: var(--game-green);
+}
+
+.modal-requirement--warn {
+  border-color: color-mix(in srgb, var(--color-warning) 38%, var(--game-line));
+  color: var(--color-warning);
+}
+
+.modal-requirement i {
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+}
+
+.rules-list {
+  display: grid;
+  padding-left: 18px;
+  margin: 2px 0 0;
+  gap: 7px;
+  color: var(--game-text-muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.reward-modal__body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reward-modal__body::-webkit-scrollbar-track {
+  background: var(--game-surface-inset);
+}
+
+.reward-modal__body::-webkit-scrollbar-thumb {
+  border: 2px solid var(--game-surface-inset);
+  border-radius: 999px;
+  background: var(--game-line-bright);
+}
+
+.intro,
+.projection-status,
+.next-step,
+.help-note {
+  margin: 0;
+}
+
+.intro,
+.help-note {
+  color: var(--game-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.current-reward {
+  display: grid;
+  padding: 13px;
+  gap: 10px;
+  border: 1px solid var(--game-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--game-green) 9%, transparent),
+      color-mix(in srgb, var(--game-cyan) 5%, var(--game-surface-inset))
+    );
+}
+
+.projection-status {
+  color: var(--game-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.projection-status--active {
+  color: var(--game-green);
+}
+
+.projected-prizes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0;
+  margin: 0;
+  gap: 7px;
+  list-style: none;
+}
+
+.projected-prizes li {
+  display: grid;
+  min-width: 0;
+  padding: 9px 6px;
+  gap: 3px;
+  border: 1px solid var(--game-line-soft);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--game-surface) 88%, transparent);
+  text-align: center;
+}
+
+.projected-prizes strong {
+  color: var(--game-text-muted);
+  font-size: 0.64rem;
+}
+
+.projected-prizes span {
+  overflow: hidden;
+  color: var(--game-text);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projected-prizes .place-1 {
+  border-color: color-mix(in srgb, var(--game-green) 45%, var(--game-line));
+}
+
+.projected-prizes .place-1 span {
+  color: var(--game-green);
+}
+
+.next-step {
+  color: var(--game-cyan);
+  font-size: 0.66rem;
+}
+
+.tier-list {
+  display: grid;
+  gap: 7px;
+}
+
+.tier-row {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) 1fr;
+  padding: 10px 11px;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--game-line-soft);
+  border-radius: 7px;
+  background: var(--game-surface-inset);
+  font-size: 0.68rem;
+}
+
+.tier-row strong {
+  color: var(--game-text);
+}
+
+.tier-row span {
+  color: var(--game-text-muted);
+  font-family: var(--font-mono);
+  line-height: 1.5;
+  text-align: right;
+}
+
+.help-note {
+  padding-top: 2px;
+}
+
+@media (max-width: 520px) {
+  .reward-trigger {
+    min-height: 34px;
+    padding: 6px 9px;
+  }
+
+  .reward-modal {
+    width: calc(100% - 20px);
+    max-height: calc(
+      100dvh
+      - env(safe-area-inset-top, 0px)
+      - env(safe-area-inset-bottom, 0px)
+      - 20px
+    );
+    border-radius: 10px;
+  }
+
+  .reward-modal__header {
+    padding: 15px 14px 12px;
+  }
+
+  .reward-modal__body {
+    padding: 13px 14px 17px;
+    gap: 12px;
+  }
+
+  .projected-prizes {
+    grid-template-columns: 1fr;
+  }
+
+  .tier-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .tier-row span {
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .reward-modal__columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  :host {
+    margin-bottom: 7px;
+  }
+
+  .reward-trigger {
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: 0.58rem;
+  }
+
+  .reward-modal {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .reward-modal__header {
+    padding: 10px 12px 8px;
+  }
+
+  .reward-modal h2 {
+    margin-top: 1px;
+    font-size: 0.84rem;
+  }
+
+  .close-button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .reward-modal__body {
+    padding: 9px 12px 11px;
+    gap: 8px;
+  }
+
+  .reward-modal__columns,
+  .reward-modal__column {
+    gap: 7px;
+  }
+
+  .current-reward,
+  .eligibility-column {
+    padding: 9px;
+    gap: 7px;
+  }
+
+  .projected-prizes li {
+    padding: 5px 4px;
+  }
+
+  .tier-list {
+    gap: 4px;
+  }
+
+  .tier-row {
+    padding: 6px 8px;
+  }
+
+  .modal-requirement {
+    padding: 6px 7px;
+  }
+
+  .rules-list {
+    gap: 4px;
+  }
+}

@@ -61,7 +61,8 @@ Backend for Tank Arena: NestJS + TypeScript + Socket.IO.
 - Completed matches are persisted idempotently by the runtime's unique `roundId`. `roomId` groups rematches and must not be unique.
 - Each match snapshots `roomName`, `roomType`, and `rewardsEligible`. Room visibility and reward eligibility remain independent.
 - Players are unique per match; reward logs are unique by `(matchId, placement)` and `idempotencyKey`.
-- Top-3 reward logs must exist for history/audit even when not eligible. Do not redistribute prizes to lower placements.
+- Rewarded placements come from the phase-one player-count snapshot taken at round start: no rewards below 4 players, one placement at 4, two at 5-8, and three at 9-16. Their amounts scale according to `src/rewards/rewards.config.ts`.
+- A configured rewarded placement must retain its reward log for history/audit even when the player is not eligible. Do not redistribute prizes to lower placements.
 - Eligibility rules: verified Phantom wallet, configured `MINT` token balance >= 10,000 at match end, and daily limit not exceeded. Daily reward accounting uses America/Bogota.
 - `RewardLog` represents both eligibility and payment lifecycle. Do not create a second row to retry a failed reward; retry the same row.
 - `DailyRewardLimit` is the source of truth for daily reservations. Use PostgreSQL atomic updates; do not rely on Redis for reward idempotency.
@@ -71,6 +72,7 @@ Backend for Tank Arena: NestJS + TypeScript + Socket.IO.
 ## Reward HTTP API
 
 - `GET /wallets/me`: authenticated account/wallet/holder status for lobby notice and account popup.
+- `GET /rewards/config`: public enabled state plus the proportional reward phase, tiers, and exact 4-16 player schedule.
 - `POST /wallets/phantom/link`: authenticated Phantom linking; verifies SIWS challenge without changing the current session.
 - `POST /account/google/link`: authenticated Google linking; no automatic account merge if the provider is already linked elsewhere.
 - `GET /rewards/me/history`: authenticated personal match history, paginated by cursor, max 50.

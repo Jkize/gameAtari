@@ -1,0 +1,176 @@
+@if (config()?.enabled) {
+  <button
+    #triggerButton
+    type="button"
+    class="reward-trigger"
+    [class.reward-trigger--wide]="wideTrigger()"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="modalOpen()"
+    (click)="openModal()"
+  >
+    <i class="ti ti-trophy" aria-hidden="true"></i>
+    <span>{{ 'rewards.projection.viewRewards' | transloco }}</span>
+    <i class="ti ti-chevron-right reward-trigger__arrow" aria-hidden="true"></i>
+  </button>
+
+  @if (modalOpen()) {
+    <div class="reward-modal-backdrop" role="presentation" (click)="closeModal()"></div>
+    <section
+      class="reward-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reward-modal-title"
+      aria-describedby="reward-modal-intro"
+    >
+      <header class="reward-modal__header">
+        <div>
+          <p class="game-eyebrow-v2">{{ 'rewards.projection.eyebrow' | transloco }}</p>
+          <h2 id="reward-modal-title">{{ 'rewards.projection.title' | transloco }}</h2>
+        </div>
+        <button
+          #closeButton
+          type="button"
+          class="close-button"
+          [attr.aria-label]="'rewards.projection.closeAction' | transloco"
+          (click)="closeModal()"
+        >
+          <i class="ti ti-x" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <div class="reward-modal__body">
+        <p id="reward-modal-intro" class="intro">
+          {{ 'rewards.projection.helpIntro' | transloco }}
+        </p>
+
+        <div class="reward-modal__columns">
+          <section class="reward-modal__column">
+            <h3>{{ 'rewards.projection.prizesColumnTitle' | transloco }}</h3>
+
+            <section
+              class="current-reward"
+              [attr.aria-label]="'rewards.projection.currentPrizes' | transloco"
+            >
+              @if (playersNeeded() > 0) {
+                <p class="projection-status">
+                  {{
+                    'rewards.projection.playersNeeded'
+                      | transloco: { count: playersNeeded(), minimum: config()!.minimumPlayers }
+                  }}
+                </p>
+              } @else {
+                <p class="projection-status projection-status--active">
+                  {{ 'rewards.projection.currentPlayers' | transloco: { count: playerCount() } }}
+                </p>
+              }
+
+              @if (displayedEntry(); as entry) {
+                <ol class="projected-prizes">
+                  @for (prize of entry.prizes; track prize.placement) {
+                    <li [class]="'place-' + prize.placement">
+                      <strong>#{{ prize.placement }}</strong>
+                      <span>{{ 'rewards.common.tokensAmount' | transloco: { amount: prize.amount } }}</span>
+                    </li>
+                  }
+                </ol>
+              }
+
+              @if (next(); as nextEntry) {
+                <p class="next-step">
+                  {{ 'rewards.projection.nextPlayer' | transloco: { count: nextEntry.playerCount } }}
+                </p>
+              }
+            </section>
+
+            <section class="tier-list" [attr.aria-label]="'rewards.projection.tiersLabel' | transloco">
+              @for (tier of tierSummaries(); track tier.minimumPlayers) {
+                <article class="tier-row">
+                  <strong>
+                    @if (tier.minimumPlayers === tier.maximumPlayers) {
+                      {{ 'rewards.projection.singlePlayerTier' | transloco: { count: tier.minimumPlayers } }}
+                    } @else {
+                      {{
+                        'rewards.projection.playerRange'
+                          | transloco
+                            : { minimum: tier.minimumPlayers, maximum: tier.maximumPlayers }
+                      }}
+                    }
+                  </strong>
+                  <span>
+                    @for (prize of tier.startingPrizes; track prize.placement; let last = $last) {
+                      #{{ prize.placement }} {{ prize.amount }}
+                      @if (tier.maximumPlayers > tier.minimumPlayers) {
+                        &rarr; {{ tier.endingPrizes[$index].amount }}
+                      }
+                      @if (!last) { &middot; }
+                    }
+                  </span>
+                </article>
+              }
+            </section>
+          </section>
+
+          <section class="reward-modal__column eligibility-column">
+            <h3>{{ 'rewards.projection.eligibilityColumnTitle' | transloco }}</h3>
+            <p class="column-copy">{{ 'rewards.projection.eligibilityIntro' | transloco }}</p>
+
+            <div class="modal-requirements">
+              <p
+                class="modal-requirement"
+                [class.modal-requirement--ok]="walletVerified() === true"
+                [class.modal-requirement--warn]="walletVerified() === false"
+              >
+                <i
+                  class="ti"
+                  [class.ti-circle-check]="walletVerified() === true"
+                  [class.ti-circle-x]="walletVerified() === false"
+                  [class.ti-circle-dashed]="walletVerified() === null"
+                  aria-hidden="true"
+                ></i>
+                {{
+                  (walletVerified() === true
+                    ? 'rewards.eligibility.walletVerified'
+                    : walletVerified() === false
+                      ? 'rewards.eligibility.walletNotVerified'
+                      : 'rewards.projection.walletRequirement') | transloco
+                }}
+              </p>
+              <p
+                class="modal-requirement"
+                [class.modal-requirement--ok]="balanceSufficient() === true"
+                [class.modal-requirement--warn]="balanceSufficient() === false"
+              >
+                <i
+                  class="ti"
+                  [class.ti-circle-check]="balanceSufficient() === true"
+                  [class.ti-circle-x]="balanceSufficient() === false"
+                  [class.ti-circle-dashed]="balanceSufficient() === null"
+                  aria-hidden="true"
+                ></i>
+                {{
+                  (balanceSufficient() === true
+                    ? 'rewards.eligibility.balanceSufficient'
+                    : balanceSufficient() === false
+                      ? 'rewards.eligibility.balanceInsufficient'
+                      : 'rewards.projection.balanceRequirement') | transloco
+                }}
+              </p>
+            </div>
+
+            <ul class="rules-list">
+              <li>{{ 'rewards.projection.ruleSignedIn' | transloco }}</li>
+              <li>
+                {{
+                  'rewards.projection.ruleBalance'
+                    | transloco: { amount: requiredTokens() }
+                }}
+              </li>
+              <li>{{ 'rewards.projection.ruleDailyLimit' | transloco }}</li>
+              <li>{{ 'rewards.projection.helpNote' | transloco }}</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </section>
+  }
+}

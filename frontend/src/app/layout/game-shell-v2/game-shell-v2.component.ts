@@ -7,6 +7,7 @@ import { AccountRefreshService } from '@features/account/account-refresh.service
 import { AccountSettingsComponent } from '@features/account/account-settings/account-settings.component';
 import { PublicStatsComponent } from '@features/public-stats/public-stats/public-stats.component';
 import { RewardEligibilityNoticeComponent } from '@features/rewards/reward-eligibility-notice/reward-eligibility-notice.component';
+import { QueueStatusService } from '@features/matchmaking/queue-status.service';
 import { APP_AUTHOR, APP_VERSION } from '@shared/config/app-version';
 import { LanguageSwitcherComponent } from '@shared/ui/language-switcher/language-switcher.component';
 import { TokenCaComponent } from '@shared/ui/token-ca/token-ca.component';
@@ -36,6 +37,7 @@ export class GameShellV2Component {
   readonly nav = inject(NavigationService);
   readonly accountModal = inject(AccountModalStateService);
   readonly accountRefresh = inject(AccountRefreshService);
+  readonly queueStatus = inject(QueueStatusService);
 
   readonly appVersion = APP_VERSION;
   readonly appAuthor = APP_AUTHOR;

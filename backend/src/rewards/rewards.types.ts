@@ -1,14 +1,14 @@
 import { RewardIneligibilityReason, RewardStatus } from '@prisma/client';
-import { REWARD_AMOUNTS_BY_PLACEMENT, REWARD_TIME_ZONE } from './rewards.config';
+import { REWARD_TIME_ZONE, RewardedPlacement } from './rewards.config';
 
-/** A top-3 placement that carries a fixed prize amount. */
-export type RewardedPlacement = keyof typeof REWARD_AMOUNTS_BY_PLACEMENT;
+export type { RewardedPlacement } from './rewards.config';
 
 /** A finished-match player eligible for reward evaluation, keyed by match and placement. */
 export interface RewardCandidate {
   matchId: string;
   userId: string | null;
   placement: RewardedPlacement;
+  amount: number;
 }
 
 /** Initial (pre-evaluation) values used to create or reuse a `RewardLog` row. */

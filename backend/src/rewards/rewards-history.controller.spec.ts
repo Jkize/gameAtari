@@ -12,6 +12,27 @@ import { RewardsHistoryController } from './rewards-history.controller';
 import { RewardsHistoryService } from './rewards-history.service';
 
 describe('RewardsHistoryController', () => {
+  it('publishes the proportional phase-one schedule', () => {
+    const controller = new RewardsHistoryController(
+      {} as RewardsHistoryService,
+      { rewardsEnabled: () => true } as SolanaConfigService,
+    );
+
+    const config = controller.config();
+
+    expect(config).toEqual(expect.objectContaining({
+      enabled: true,
+      phase: 1,
+      minimumPlayers: 4,
+      maximumPlayers: 16,
+    }));
+    expect(config.schedule.find(entry => entry.playerCount === 9)?.prizes).toEqual([
+      { placement: 1, amount: 750 },
+      { placement: 2, amount: 235 },
+      { placement: 3, amount: 75 },
+    ]);
+  });
+
   it('keeps recent matches private and requires authentication metadata', async () => {
     const history = {
       recentMatches: jest.fn().mockResolvedValue({ items: [], nextCursor: null }),

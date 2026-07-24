@@ -1,4 +1,8 @@
-<section class="notice" aria-labelledby="reward-notice-title">
+<section
+  class="notice"
+  [class.notice--compact]="compact"
+  aria-labelledby="reward-notice-title"
+>
   @if (rewardsEnabled() !== true) {
     <p class="disabled-message">
       @if (configUnavailable()) {
@@ -9,62 +13,151 @@
         {{ 'rewards.disabled.checking' | transloco }}
       }
     </p>
-  } @else {
-  <p class="ui-eyebrow">{{ 'rewards.eligibility.eyebrow' | transloco }}</p>
-  <h2 id="reward-notice-title">{{ 'rewards.eligibility.title' | transloco }}</h2>
-  <p class="copy">{{ 'rewards.eligibility.description' | transloco }}</p>
+  } @else if (compact) {
+    <p class="ui-eyebrow">{{ 'rewards.eligibility.eyebrow' | transloco }}</p>
+    <div class="compact-heading">
+      <h2 id="reward-notice-title">{{ 'rewards.eligibility.title' | transloco }}</h2>
+      @if (auth.user() && walletStatus() !== null) {
+        <span
+          class="eligibility-badge"
+          [class.eligibility-badge--eligible]="isEligible()"
+        >
+          {{
+            (isEligible()
+              ? 'rewards.eligibility.eligibleShort'
+              : 'rewards.eligibility.notEligibleShort') | transloco
+          }}
+        </span>
+      }
+    </div>
 
-  <ol class="prizes" [attr.aria-label]="'rewards.eligibility.prizesAriaLabel' | transloco">
-    @for (prize of prizes(); track prize.placement) {
-      <li [class]="'place-' + prize.placement">
-        <strong>
-          @if (prize.placement === 1) {
-            <i class="ti ti-trophy" aria-hidden="true"></i>
-          }
-          {{ prize.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}
-        </strong>
-        <span>{{ 'rewards.common.tokensAmount' | transloco: { amount: prize.amount } }}</span>
-      </li>
-    }
-  </ol>
+    <app-reward-projection
+      [playerCount]="playerCount"
+      [walletStatus]="walletStatus()"
+      [wideTrigger]="true"
+    />
 
-  <div class="state">
     @if (!auth.user()) {
       <a class="action-link" routerLink="/login">{{ 'rewards.eligibility.login' | transloco }}</a>
     } @else if (walletStatus() === null) {
       <p class="status-loading">{{ 'rewards.eligibility.checking' | transloco }}</p>
-    } @else if (walletStatus()!.holder.status === 'unavailable') {
-      <p class="status-title warn">
-        {{ 'rewards.eligibility.verificationFailedTitle' | transloco }}
-      </p>
-      <p class="status-hint">{{ 'rewards.eligibility.verificationFailedHint' | transloco }}</p>
-      <button class="action" type="button" (click)="retryCheck()">
-        {{ 'rewards.eligibility.retry' | transloco }}
-      </button>
-    } @else if (walletStatus()!.holder.status === 'insufficient') {
-      <p class="status-title warn">{{ 'rewards.eligibility.insufficientTitle' | transloco }}</p>
-      <p class="status-hint">{{ 'rewards.eligibility.insufficientHint' | transloco }}</p>
-    } @else if (canLinkPhantom()) {
-      <p class="status-title">{{ 'rewards.eligibility.notLinkedTitle' | transloco }}</p>
-      <p class="status-hint">{{ 'rewards.eligibility.notLinkedHint' | transloco }}</p>
-      <button class="action" type="button" (click)="linkPhantom()" [disabled]="busy()">
-        {{ 'rewards.eligibility.configureWallet' | transloco }}
-      </button>
-    } @else if (walletStatus()!.holder.status === 'eligible' && walletStatus()!.phantom.verified) {
-      <p class="check">
-        <i class="ti ti-circle-check" aria-hidden="true"></i>
-        {{ 'rewards.eligibility.walletVerified' | transloco }}
-      </p>
-      <p class="check">
-        <i class="ti ti-circle-check" aria-hidden="true"></i>
-        {{ 'rewards.eligibility.balanceSufficient' | transloco }}
-      </p>
     } @else {
-      <span class="neutral">{{ 'rewards.eligibility.configureAccount' | transloco }}</span>
+      <div class="compact-checks">
+        <p
+          class="requirement"
+          [class.requirement--ok]="walletStatus()!.phantom.verified"
+          [attr.aria-label]="
+            (walletStatus()!.phantom.verified
+              ? 'rewards.eligibility.walletVerified'
+              : 'rewards.eligibility.walletNotVerified') | transloco
+          "
+        >
+          <i
+            class="ti"
+            [class.ti-circle-check]="walletStatus()!.phantom.verified"
+            [class.ti-circle-x]="!walletStatus()!.phantom.verified"
+            aria-hidden="true"
+          ></i>
+          {{ 'rewards.eligibility.compactWallet' | transloco }}
+        </p>
+        <p
+          class="requirement"
+          [class.requirement--ok]="walletStatus()!.holder.status === 'eligible'"
+          [attr.aria-label]="
+            (walletStatus()!.holder.status === 'eligible'
+              ? 'rewards.eligibility.balanceSufficient'
+              : walletStatus()!.holder.status === 'insufficient'
+                ? 'rewards.eligibility.balanceInsufficient'
+                : 'rewards.eligibility.balanceUnavailable') | transloco
+          "
+        >
+          <i
+            class="ti"
+            [class.ti-circle-check]="walletStatus()!.holder.status === 'eligible'"
+            [class.ti-circle-x]="walletStatus()!.holder.status !== 'eligible'"
+            aria-hidden="true"
+          ></i>
+          {{ 'rewards.eligibility.compactBalance' | transloco }}
+        </p>
+      </div>
+
+      @if (walletStatus()!.holder.status === 'unavailable') {
+        <button class="action" type="button" (click)="retryCheck()">
+          {{ 'rewards.eligibility.retry' | transloco }}
+        </button>
+      } @else if (canLinkPhantom()) {
+        <button class="action" type="button" (click)="linkPhantom()" [disabled]="busy()">
+          {{ 'rewards.eligibility.configureWallet' | transloco }}
+        </button>
+      }
     }
+
     @if (error()) {
       <p class="error">{{ error() }}</p>
     }
-  </div>
+
+  } @else {
+    <p class="ui-eyebrow">{{ 'rewards.eligibility.eyebrow' | transloco }}</p>
+    <h2 id="reward-notice-title">{{ 'rewards.eligibility.title' | transloco }}</h2>
+    <p class="copy">{{ 'rewards.eligibility.description' | transloco }}</p>
+    <p class="prize-caption">
+      {{
+        'rewards.eligibility.maximumPrizes'
+          | transloco: { count: config()!.maximumPlayers }
+      }}
+    </p>
+
+    <ol class="prizes" [attr.aria-label]="'rewards.eligibility.prizesAriaLabel' | transloco">
+      @for (prize of prizes(); track prize.placement) {
+        <li [class]="'place-' + prize.placement">
+          <strong>
+            @if (prize.placement === 1) {
+              <i class="ti ti-trophy" aria-hidden="true"></i>
+            }
+            {{ prize.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}
+          </strong>
+          <span>{{ 'rewards.common.tokensAmount' | transloco: { amount: prize.amount } }}</span>
+        </li>
+      }
+    </ol>
+
+    <div class="state">
+      @if (!auth.user()) {
+        <a class="action-link" routerLink="/login">{{ 'rewards.eligibility.login' | transloco }}</a>
+      } @else if (walletStatus() === null) {
+        <p class="status-loading">{{ 'rewards.eligibility.checking' | transloco }}</p>
+      } @else if (walletStatus()!.holder.status === 'unavailable') {
+        <p class="status-title warn">
+          {{ 'rewards.eligibility.verificationFailedTitle' | transloco }}
+        </p>
+        <p class="status-hint">{{ 'rewards.eligibility.verificationFailedHint' | transloco }}</p>
+        <button class="action" type="button" (click)="retryCheck()">
+          {{ 'rewards.eligibility.retry' | transloco }}
+        </button>
+      } @else if (walletStatus()!.holder.status === 'insufficient') {
+        <p class="status-title warn">{{ 'rewards.eligibility.insufficientTitle' | transloco }}</p>
+        <p class="status-hint">{{ 'rewards.eligibility.insufficientHint' | transloco }}</p>
+      } @else if (canLinkPhantom()) {
+        <p class="status-title">{{ 'rewards.eligibility.notLinkedTitle' | transloco }}</p>
+        <p class="status-hint">{{ 'rewards.eligibility.notLinkedHint' | transloco }}</p>
+        <button class="action" type="button" (click)="linkPhantom()" [disabled]="busy()">
+          {{ 'rewards.eligibility.configureWallet' | transloco }}
+        </button>
+      } @else if (walletStatus()!.holder.status === 'eligible' && walletStatus()!.phantom.verified) {
+        <p class="check">
+          <i class="ti ti-circle-check" aria-hidden="true"></i>
+          {{ 'rewards.eligibility.walletVerified' | transloco }}
+        </p>
+        <p class="check">
+          <i class="ti ti-circle-check" aria-hidden="true"></i>
+          {{ 'rewards.eligibility.balanceSufficient' | transloco }}
+        </p>
+      } @else {
+        <span class="neutral">{{ 'rewards.eligibility.configureAccount' | transloco }}</span>
+      }
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+    </div>
   }
 </section>
