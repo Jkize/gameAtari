@@ -2,6 +2,12 @@
 
 Project memory for Codex when working in this repository.
 
+## Context Maintenance
+
+- Every code, schema, configuration, contract, or user-visible behavior change must update the pertinent `AGENTS.md` and `CLAUDE.md` context files in the same change.
+- Update the closest module context for implementation details and the repository-root context when a cross-cutting contract or project-wide rule changes.
+- Before finishing, verify that the affected context documents describe the implemented behavior and do not preserve obsolete contracts.
+
 ## Project Overview
 
 Tank Arena is a real-time multiplayer top-down tank game.
@@ -178,13 +184,24 @@ Preserve the low-latency local-memory boundary.
 Tank Arena has an SPL token rewards system layered on top of completed matches.
 
 - Rewards are for authenticated registered users only. Local/dev guest-style players may exist for testing, but they are not eligible for production rewards.
-- On match completion, backend persists `Match`, `MatchPlayer`, and top-3 `RewardLog` rows idempotently. Reward idempotency keys use `MATCH_REWARD:{matchId}:{placement}`.
+- On match completion, backend persists `Match`, `MatchPlayer`, and top-3 `RewardLog` rows idempotently. Match persistence is idempotent by the per-round `roundId`; reward idempotency keys use `MATCH_REWARD:{matchId}:{placement}`.
+- `Match.roomId` groups multiple rounds played in the same room and is not unique. Each match snapshots `roomName`, `roomType: PUBLIC | PRIVATE`, and `rewardsEligible`.
+- `roomType` and `rewardsEligible` are independent. A future public room may be visible in public history without necessarily being reward-eligible.
+- All match-history screens and endpoints require authentication. The global feed/detail expose only `PUBLIC` matches; participant-aware detail may expose a private match only to one of its participants.
+- Personal history contains both public and private matches. Private matches keep their gameplay history but do not present reward-disabled/ineligible UI.
 - Eligibility is checked at match end, before payment: verified Phantom wallet, configured mint balance of at least 10,000 tokens, and daily reward limit availability.
 - Prizes are fixed: 1st = 700, 2nd = 300, 3rd = 100. Prizes are never redistributed.
 - Solana/Helius config is centralized in `backend/src/solana`; `NODE_ENV=production` uses mainnet-beta, all other environments use devnet.
-- Reward history endpoints live under `/rewards`: personal history, recent public matches, and match detail. They return backend-generated Solscan URLs and paginate at 50 items.
+- Reward history endpoints live under `/rewards`: personal history, recent public matches, and match detail. Match browsing requires authentication; responses return backend-generated Solscan URLs and paginate at 50 items.
 - Frontend routed screens live in `frontend/src/app/pages`; Phaser runtime, rendering, audio, input, and public game contracts live in `frontend/src/app/game`.
 - Reusable reward UI lives in `frontend/src/app/features/rewards`; account/wallet linking UI lives in `frontend/src/app/features/account`.
+
+## Private-Room Round Statistics
+
+- Private rooms survive round completion and keep an in-memory room scoreboard until the room is destroyed or the backend restarts.
+- Each member accumulates `roundsPlayed`, `roundWins`, `kills`, and `damageDealt`; completed per-round results remain durable in PostgreSQL.
+- `room:stateUpdated` carries the accumulated room-member statistics. They do not belong in frequent `gameState` snapshots.
+- The private-room roster is ordered by wins, kills, damage, then username. Its compact UI uses `W` for rounds won and `K` for kills, with one accessible help control per column.
 
 ## Commands
 

@@ -22,9 +22,8 @@
     <div class="filters" role="group" [attr.aria-label]="'rewards.myMatches.title' | transloco">
       <button type="button" class="pill" [class.active]="filter() === 'all'" (click)="setFilter('all')">{{ 'rewards.myMatches.filterAll' | transloco }}</button>
       <button type="button" class="pill" [class.active]="filter() === 'victories'" (click)="setFilter('victories')">{{ 'rewards.myMatches.filterVictories' | transloco }}</button>
-      <button type="button" class="pill" [class.active]="filter() === 'rewarded'" (click)="setFilter('rewarded')">{{ 'rewards.myMatches.filterRewarded' | transloco }}</button>
-      <button type="button" class="pill" [class.active]="filter() === 'pending'" (click)="setFilter('pending')">{{ 'rewards.myMatches.filterPending' | transloco }}</button>
-      <button type="button" class="pill" [class.active]="filter() === 'unrewarded'" (click)="setFilter('unrewarded')">{{ 'rewards.myMatches.filterUnrewarded' | transloco }}</button>
+      <button type="button" class="pill" [class.active]="filter() === 'public'" (click)="setFilter('public')">{{ 'rewards.myMatches.filterPublic' | transloco }}</button>
+      <button type="button" class="pill" [class.active]="filter() === 'private'" (click)="setFilter('private')">{{ 'rewards.myMatches.filterPrivate' | transloco }}</button>
     </div>
 
     <app-match-summary-stats [items]="items()" />

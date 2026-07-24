@@ -19,9 +19,11 @@
         {{ player.placement }}{{ 'rewards.common.ordinalSuffix' | transloco }}
       </strong>
       <span class="username">{{ player.username || ('rewards.common.pilotFallback' | transloco) }}</span>
-      <span class="tokens">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</span>
-      <app-reward-status-badge [status]="player.reward?.status" [publicOnly]="true"></app-reward-status-badge>
-      <app-solscan-link [url]="player.reward?.solscanUrl"></app-solscan-link>
+      @if (showRewards && player.reward) {
+        <span class="tokens">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward.potentialAmount } }}</span>
+        <app-reward-status-badge [status]="player.reward.status" [publicOnly]="true"></app-reward-status-badge>
+        <app-solscan-link [url]="player.reward.solscanUrl"></app-solscan-link>
+      }
     </div>
   }
 </div>

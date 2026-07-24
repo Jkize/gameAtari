@@ -14,7 +14,10 @@ export interface PlayerMatchStats {
 }
 
 export interface GameRuntimeState {
+  roundId: string;
   roomId: string;
+  roomName: string;
+  roomType: 'public' | 'private';
   rewardsEligible: boolean;
   players: Map<string, Player>;
   bullets: Bullet[];

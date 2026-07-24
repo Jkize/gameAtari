@@ -31,11 +31,23 @@ describe('RewardsService', () => {
     req.flush({ items: [] });
   });
 
-  it('loads public history', () => {
+  it('loads recent public-match history as an authenticated user', () => {
     service.getRecentMatches().subscribe();
     const req = http.expectOne(`${environment.backendUrl}/rewards/matches/recent`);
 
-    expect(req.request.headers.has('Authorization')).toBe(false);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer token-1');
+    expect(req.request.withCredentials).toBe(true);
     req.flush({ items: [] });
+  });
+
+  it('loads match detail through the participant-aware authenticated endpoint', () => {
+    service.getMatchDetail('match/id').subscribe();
+    const req = http.expectOne(
+      `${environment.backendUrl}/rewards/me/matches/match%2Fid`,
+    );
+
+    expect(req.request.headers.get('Authorization')).toBe('Bearer token-1');
+    expect(req.request.withCredentials).toBe(true);
+    req.flush({});
   });
 });

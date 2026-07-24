@@ -7,9 +7,8 @@ import { MatchHistoryCardComponent } from '@features/rewards/match-history-card/
 import { MatchSummaryStatsComponent } from '@features/rewards/match-summary-stats/match-summary-stats.component';
 import { PersonalMatchHistoryItem } from '@features/rewards/rewards.models';
 import { RewardsService } from '@features/rewards/rewards.service';
-import { rewardStatusClass } from '@features/rewards/rewards-ui';
 
-export type MatchFilter = 'all' | 'victories' | 'rewarded' | 'unrewarded' | 'pending';
+export type MatchFilter = 'all' | 'victories' | 'public' | 'private';
 
 @Component({
   selector: 'app-my-matches',
@@ -38,15 +37,10 @@ export class MyMatchesComponent implements OnInit {
     switch (filter) {
       case 'victories':
         return items.filter(item => item.winner === true);
-      case 'rewarded':
-        return items.filter(item => rewardStatusClass(item.reward?.status) === 'ok');
-      case 'pending':
-        return items.filter(item => rewardStatusClass(item.reward?.status) === 'pending');
-      case 'unrewarded':
-        return items.filter(item => {
-          const statusClass = rewardStatusClass(item.reward?.status);
-          return statusClass !== 'ok' && statusClass !== 'pending';
-        });
+      case 'public':
+        return items.filter(item => item.roomType === 'PUBLIC');
+      case 'private':
+        return items.filter(item => item.roomType === 'PRIVATE');
       default:
         return items;
     }

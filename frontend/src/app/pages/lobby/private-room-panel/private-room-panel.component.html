@@ -10,7 +10,6 @@
     </div>
     <div class="badges">
       <span class="badge private">{{ 'lobby.privateRooms.privateBadge' | transloco }}</span>
-      <span class="badge no-rewards">{{ 'lobby.privateRooms.noRewardsBadge' | transloco }}</span>
     </div>
   </header>
 
@@ -36,18 +35,48 @@
         <h3>{{ 'lobby.privateRooms.players' | transloco }}</h3>
         <span>{{ 'lobby.privateRooms.connectedCount' | transloco: { count: connectedPlayers() } }}</span>
       </div>
+      <div class="roster-columns">
+        <span>{{ 'lobby.privateRooms.playerColumn' | transloco }}</span>
+        <span class="stat-column">
+          W
+          <button
+            type="button"
+            [attr.aria-label]="'lobby.privateRooms.winsHelp' | transloco"
+            [attr.aria-pressed]="statHelp() === 'wins'"
+            (click)="toggleStatHelp('wins')"
+          ><i class="ti ti-info-circle" aria-hidden="true"></i></button>
+        </span>
+        <span class="stat-column">
+          K
+          <button
+            type="button"
+            [attr.aria-label]="'lobby.privateRooms.killsHelp' | transloco"
+            [attr.aria-pressed]="statHelp() === 'kills'"
+            (click)="toggleStatHelp('kills')"
+          ><i class="ti ti-info-circle" aria-hidden="true"></i></button>
+        </span>
+      </div>
+      @if (statHelp()) {
+        <p class="stat-help" role="status">
+          {{ (statHelp() === 'wins' ? 'lobby.privateRooms.winsHelp' : 'lobby.privateRooms.killsHelp') | transloco }}
+        </p>
+      }
       <ul>
-        @for (player of room.players; track player.userId) {
+        @for (player of rankedPlayers(); track player.userId) {
           <li [class.disconnected]="!player.connected">
-            <span class="presence" [class.online]="player.connected" aria-hidden="true"></span>
-            <strong>{{ player.username }}</strong>
-            @if (player.userId === currentUserId) {
-              <span class="self">{{ 'lobby.privateRooms.you' | transloco }}</span>
-            }
-            @if (player.userId === room.adminUserId) {
-              <span class="admin"><i class="ti ti-crown" aria-hidden="true"></i> {{ 'lobby.privateRooms.admin' | transloco }}</span>
-            }
-            <span class="connection-label">
+            <div class="player-identity">
+              <span class="presence" [class.online]="player.connected" aria-hidden="true"></span>
+              <strong>{{ player.username }}</strong>
+              @if (player.userId === currentUserId) {
+                <span class="self">{{ 'lobby.privateRooms.you' | transloco }}</span>
+              }
+              @if (player.userId === room.adminUserId) {
+                <span class="admin"><i class="ti ti-crown" aria-hidden="true"></i> {{ 'lobby.privateRooms.admin' | transloco }}</span>
+              }
+            </div>
+            <span class="stat-value">{{ player.roundWins ?? 0 }}</span>
+            <span class="stat-value">{{ player.kills ?? 0 }}</span>
+            <span class="connection-label visually-hidden">
               {{ (player.connected ? 'lobby.privateRooms.connected' : 'lobby.privateRooms.disconnected') | transloco }}
             </span>
           </li>

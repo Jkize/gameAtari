@@ -5,13 +5,14 @@ jest.mock('@solana/web3.js', () => ({
 }));
 
 import { Test } from '@nestjs/testing';
+import { IS_PUBLIC_KEY } from '../auth/decorators/public.decorator';
 import request from 'supertest';
 import { SolanaConfigService } from '../solana/solana-config.service';
 import { RewardsHistoryController } from './rewards-history.controller';
 import { RewardsHistoryService } from './rewards-history.service';
 
 describe('RewardsHistoryController', () => {
-  it('allows browsers and shared caches to cache recent matches', async () => {
+  it('keeps recent matches private and requires authentication metadata', async () => {
     const history = {
       recentMatches: jest.fn().mockResolvedValue({ items: [], nextCursor: null }),
     };
@@ -29,8 +30,16 @@ describe('RewardsHistoryController', () => {
       await request(app.getHttpServer())
         .get('/rewards/matches/recent')
         .expect(200)
-        .expect('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=30');
+        .expect('Cache-Control', 'private, no-store');
       expect(history.recentMatches).toHaveBeenCalledWith(undefined);
+      expect(Reflect.getMetadata(
+        IS_PUBLIC_KEY,
+        RewardsHistoryController.prototype.recentMatches,
+      )).toBeUndefined();
+      expect(Reflect.getMetadata(
+        IS_PUBLIC_KEY,
+        RewardsHistoryController.prototype.matchDetail,
+      )).toBeUndefined();
     } finally {
       await app.close();
     }

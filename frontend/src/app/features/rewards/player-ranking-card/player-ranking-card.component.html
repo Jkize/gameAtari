@@ -21,9 +21,11 @@
     </div>
   </div>
 
-  <footer class="card-footer">
-    <span class="reward">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</span>
-    <app-reward-status-badge [status]="player.reward?.status" [publicOnly]="true"></app-reward-status-badge>
-    <app-solscan-link [url]="player.reward?.solscanUrl"></app-solscan-link>
-  </footer>
+  @if (showRewards && player.reward) {
+    <footer class="card-footer">
+      <span class="reward">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward.potentialAmount } }}</span>
+      <app-reward-status-badge [status]="player.reward.status" [publicOnly]="true"></app-reward-status-badge>
+      <app-solscan-link [url]="player.reward.solscanUrl"></app-solscan-link>
+    </footer>
+  }
 </article>

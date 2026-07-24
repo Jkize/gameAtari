@@ -7,9 +7,11 @@
         <th>{{ 'rewards.matchDetail.columnKills' | transloco }}</th>
         <th>{{ 'rewards.matchDetail.columnDamage' | transloco }}</th>
         <th>{{ 'rewards.matchDetail.columnResult' | transloco }}</th>
-        <th>{{ 'rewards.matchDetail.columnReward' | transloco }}</th>
-        <th>{{ 'rewards.matchDetail.columnStatus' | transloco }}</th>
-        <th>{{ 'rewards.matchDetail.columnSolscan' | transloco }}</th>
+        @if (showRewards) {
+          <th>{{ 'rewards.matchDetail.columnReward' | transloco }}</th>
+          <th>{{ 'rewards.matchDetail.columnStatus' | transloco }}</th>
+          <th>{{ 'rewards.matchDetail.columnSolscan' | transloco }}</th>
+        }
       </tr>
     </thead>
     <tbody>
@@ -25,9 +27,13 @@
           <td class="num">{{ player.kills }}</td>
           <td class="num">{{ player.damageDealt }}</td>
           <td>{{ (player.winner ? 'rewards.common.victory' : 'rewards.common.eliminated') | transloco }}</td>
-          <td class="num">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward?.potentialAmount ?? 0 } }}</td>
-          <td><app-reward-status-badge [status]="player.reward?.status" [publicOnly]="true"></app-reward-status-badge></td>
-          <td><app-solscan-link [url]="player.reward?.solscanUrl"></app-solscan-link></td>
+          @if (showRewards && player.reward) {
+            <td class="num">{{ 'rewards.common.tokensAmount' | transloco: { amount: player.reward.potentialAmount } }}</td>
+            <td><app-reward-status-badge [status]="player.reward.status" [publicOnly]="true"></app-reward-status-badge></td>
+            <td><app-solscan-link [url]="player.reward.solscanUrl"></app-solscan-link></td>
+          } @else if (showRewards) {
+            <td></td><td></td><td></td>
+          }
         </tr>
       }
     </tbody>

@@ -33,17 +33,24 @@ This folder owns SPL token reward eligibility, payment lifecycle, reward history
 
 - `RewardsHistoryController` exposes:
   - `GET /rewards/me/history`
+  - `GET /rewards/me/matches/:matchId`
   - `GET /rewards/matches/recent`
   - `GET /rewards/matches/:matchId`
 - History pages are capped at 50 rows and use cursor pagination.
+- Match history is gameplay history, not reward-only history. Personal history includes public and private matches.
+- Every history/detail endpoint requires authentication. `GET /rewards/matches/recent` and `GET /rewards/matches/:matchId` expose only `RoomType.PUBLIC`.
+- The authenticated match-detail endpoint permits any public match and a private match only when the caller is one of its participants.
+- Private matches return no reward presentation even though disabled reward rows may remain internally for audit.
+- `roomType` and `rewardsEligible` are independent; do not use reward eligibility as the public/private visibility filter.
 - Backend must generate `solscanUrl`; frontend should only render returned URLs.
-- Public history should avoid internal error details. Personal history can include user-facing ineligibility reasons.
+- Global history should avoid internal error details. Personal history can include user-facing ineligibility reasons.
 
 ## Module Wiring
 
 - `RewardsModule` owns rewards providers and `RewardsHistoryController`.
 - Keep `RewardsModule` imported by an active Nest module. If history routes return 404, first verify Nest logs contain:
   - `Mapped {/rewards/me/history, GET} route`
+  - `Mapped {/rewards/me/matches/:matchId, GET} route`
   - `Mapped {/rewards/matches/recent, GET} route`
   - `Mapped {/rewards/matches/:matchId, GET} route`
 - `GameModule` should import `RewardsModule` instead of manually declaring rewards providers, to avoid duplicate scheduler/processor instances.

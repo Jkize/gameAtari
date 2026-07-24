@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, RewardIneligibilityReason, RewardStatus } from '@prisma/client';
+import { Prisma, RewardIneligibilityReason, RewardStatus, RoomType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SolanaConfigService } from '../solana/solana-config.service';
 
@@ -9,6 +9,23 @@ interface HistoryCursor {
   endedAt: string;
   id: string;
 }
+
+const matchDetailInclude = Prisma.validator<Prisma.MatchInclude>()({
+  players: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    orderBy: { placement: 'asc' },
+  },
+});
+
+type MatchDetailRecord = Prisma.MatchGetPayload<{ include: typeof matchDetailInclude }>;
 
 /** Reward info attached to a match/player entry. Personal endpoints may include user-facing ineligibility reasons. */
 export interface RewardSummary {
@@ -62,6 +79,10 @@ export class RewardsHistoryService {
     return {
       items: items.map(item => ({
         matchId: item.matchId,
+        roomId: item.match.roomId,
+        roomName: item.match.roomName,
+        roomType: item.match.roomType,
+        rewardsEligible: item.match.rewardsEligible,
         playedAt: item.match.endedAt.toISOString(),
         mapName: item.match.mapName,
         placement: item.placement,
@@ -69,7 +90,9 @@ export class RewardsHistoryService {
         kills: item.kills,
         damageDealt: item.damageDealt,
         winner: item.winner,
-        reward: rewards.get(`${item.matchId}:${item.placement}`) ?? null,
+        reward: item.match.rewardsEligible
+          ? rewards.get(`${item.matchId}:${item.placement}`) ?? null
+          : null,
       })),
       nextCursor,
     };
@@ -78,7 +101,10 @@ export class RewardsHistoryService {
   /** Cursor-paginated public feed of recent matches with each match's top-3 podium and reward info. */
   async recentMatches(cursor?: string | null) {
     const matches = await this.prisma.match.findMany({
-      where: this.cursorWhere(cursor),
+      where: {
+        roomType: RoomType.PUBLIC,
+        ...(this.cursorWhere(cursor) ?? {}),
+      },
       include: {
         _count: {
           select: { players: true },
@@ -114,6 +140,10 @@ export class RewardsHistoryService {
     return {
       items: items.map(match => ({
         matchId: match.id,
+        roomId: match.roomId,
+        roomName: match.roomName,
+        roomType: match.roomType,
+        rewardsEligible: match.rewardsEligible,
         playedAt: match.endedAt.toISOString(),
         mapName: match.mapName,
         playerCount: match._count.players,
@@ -131,28 +161,46 @@ export class RewardsHistoryService {
 
   /** Full public detail for a single match: every player, placement and reward info. Throws `NotFoundException` if the match doesn't exist. */
   async matchDetail(matchId: string) {
-    const match = await this.prisma.match.findUnique({
-      where: { id: matchId },
-      include: {
-        players: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                avatarUrl: true,
-              },
-            },
-          },
-          orderBy: { placement: 'asc' },
-        },
-      },
+    const match = await this.prisma.match.findFirst({
+      where: { id: matchId, roomType: RoomType.PUBLIC },
+      include: matchDetailInclude,
     });
     if (!match) throw new NotFoundException('Match not found');
 
     const rewards = await this.rewardsForMatches([match.id], { includeIneligibilityReason: false });
+    return this.serializeDetail(match, rewards);
+  }
+
+  /** Authenticated detail for a match in which the caller participated, including private rooms. */
+  async personalMatchDetail(matchId: string, userId: string) {
+    const match = await this.prisma.match.findFirst({
+      where: {
+        id: matchId,
+        OR: [
+          { roomType: RoomType.PUBLIC },
+          { players: { some: { userId } } },
+        ],
+      },
+      include: matchDetailInclude,
+    });
+    if (!match) throw new NotFoundException('Match not found');
+
+    const rewards = match.rewardsEligible
+      ? await this.rewardsForMatches([match.id], { includeIneligibilityReason: true })
+      : new Map<string, RewardSummary>();
+    return this.serializeDetail(match, rewards);
+  }
+
+  private serializeDetail(
+    match: MatchDetailRecord,
+    rewards: Map<string, RewardSummary | PublicRewardSummary>,
+  ) {
     return {
       matchId: match.id,
+      roomId: match.roomId,
+      roomName: match.roomName,
+      roomType: match.roomType,
+      rewardsEligible: match.rewardsEligible,
       playedAt: match.endedAt.toISOString(),
       mapName: match.mapName,
       playerCount: match.players.length,
@@ -162,9 +210,13 @@ export class RewardsHistoryService {
         avatarUrl: player.user?.avatarUrl ?? null,
         placement: player.placement,
         kills: player.kills,
+        deaths: player.deaths,
         damageDealt: player.damageDealt,
+        damageTaken: player.damageTaken,
         winner: player.winner,
-        reward: rewards.get(`${match.id}:${player.placement}`) ?? null,
+        reward: match.rewardsEligible
+          ? rewards.get(`${match.id}:${player.placement}`) ?? null
+          : null,
       })),
     };
   }

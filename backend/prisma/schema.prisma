@@ -28,6 +28,11 @@ enum MatchStatus {
   ABORTED
 }
 
+enum RoomType {
+  PUBLIC
+  PRIVATE
+}
+
 enum RewardStatus {
   REWARDS_DISABLED
   NOT_ELIGIBLE
@@ -132,7 +137,10 @@ model UserSetting {
 
 model Match {
   id              String        @id @default(uuid()) @db.Uuid
-  roomId          String        @unique
+  roundId         String        @unique
+  roomId          String
+  roomName        String?
+  roomType        RoomType      @default(PUBLIC)
   rewardsEligible Boolean       @default(true)
   mapName         String?
   status          MatchStatus   @default(COMPLETED)
@@ -146,6 +154,8 @@ model Match {
   rewards         RewardLog[]
 
   @@index([endedAt])
+  @@index([roomId])
+  @@index([roomType, endedAt])
   @@index([winnerUserId])
 }
 

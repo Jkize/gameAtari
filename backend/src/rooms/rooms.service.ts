@@ -133,6 +133,10 @@ export class RoomsService implements OnModuleDestroy {
       userId: auth.userId,
       username: auth.username,
       socketId: socket.id,
+      roundsPlayed: 0,
+      roundWins: 0,
+      kills: 0,
+      damageDealt: 0,
     });
     this.runtimeActivity.playerConnected(auth.userId);
     this.watcherPresence.stopWatching(socket);
@@ -245,6 +249,10 @@ export class RoomsService implements OnModuleDestroy {
       userId: auth.userId,
       username: auth.username,
       socketId: socket.id,
+      roundsPlayed: 0,
+      roundWins: 0,
+      kills: 0,
+      damageDealt: 0,
     };
     room.players.set(auth.userId, member);
     this.runtimeActivity.playerConnected(auth.userId);
@@ -319,6 +327,14 @@ export class RoomsService implements OnModuleDestroy {
   async finish(roomId: string, winnerUserId: string | null): Promise<RoomPublicState | null> {
     const room = this.rooms.get(roomId);
     if (!room || room.status === 'finished') return room ? this.publicState(room) : null;
+    const roundStats = this.gameLoop.roundStats(roomId);
+    for (const member of room.players.values()) {
+      const stats = roundStats[member.userId];
+      member.roundsPlayed += 1;
+      if (member.userId === winnerUserId) member.roundWins += 1;
+      member.kills += stats?.kills ?? 0;
+      member.damageDealt += stats?.damageDealt ?? 0;
+    }
     room.status = 'finished';
     room.countdownEndsAt = undefined;
     this.emitRoom(room);
@@ -502,7 +518,11 @@ export class RoomsService implements OnModuleDestroy {
       tankCustomization: customizations[member.userId],
     }));
     room.status = 'in_game';
-    this.gameLoop.prepare(room.id, players, room.rewardsEligible);
+    this.gameLoop.prepare(room.id, players, {
+      roomName: room.name,
+      roomType: room.type,
+      rewardsEligible: room.rewardsEligible,
+    });
     this.gameLoop.start(room.id);
     const initial = this.gameLoop.buildInitialState(room.id);
     for (const member of room.players.values()) {
@@ -546,6 +566,10 @@ export class RoomsService implements OnModuleDestroy {
         alive: room.status === 'in_game'
           ? this.gameLoop.isPlayerAlive(room.id, member.userId)
           : true,
+        roundsPlayed: member.roundsPlayed,
+        roundWins: member.roundWins,
+        kills: member.kills,
+        damageDealt: member.damageDealt,
       })),
     };
   }

@@ -17,6 +17,9 @@ describe('MatchesService', () => {
 
   const createHarness = () => {
     const state = {
+      roundId: 'round-1',
+      roomName: 'Arena Room',
+      roomType: 'public' as 'public' | 'private',
       persisted: false,
       rewardsEligible: true,
       startedAt: new Date('2026-07-09T20:00:00.000Z'),
@@ -60,7 +63,10 @@ describe('MatchesService', () => {
 
     expect(result).toBe('match-1');
     expect(matchResults.persistCompleted).toHaveBeenCalledWith(expect.objectContaining({
+      roundId: 'round-1',
       roomId: 'room-1',
+      roomName: 'Arena Room',
+      roomType: 'public',
       winnerUserId: userId,
     }));
     expect(rewards.registerMatchRewards).toHaveBeenCalledWith([{
@@ -95,11 +101,15 @@ describe('MatchesService', () => {
   it('persists private matches without registering rewards', async () => {
     const { matchResults, rewards, service, state } = createHarness();
     state.rewardsEligible = false;
+    state.roomType = 'private';
+    state.roomName = 'Squad Room';
 
     await service.persist('private-room');
 
     expect(matchResults.persistCompleted).toHaveBeenCalledWith(expect.objectContaining({
       roomId: 'private-room',
+      roomName: 'Squad Room',
+      roomType: 'private',
       rewardsEligible: false,
     }));
     expect(rewards.registerMatchRewards).not.toHaveBeenCalled();

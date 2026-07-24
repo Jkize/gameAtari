@@ -80,10 +80,16 @@ export class GameLoopService implements OnModuleDestroy {
   prepare(
     roomId: string,
     players: Array<{ userId: string; username: string; tankCustomization?: TankCustomization }>,
-    rewardsEligible = true,
+    metadata: {
+      roomName?: string;
+      roomType?: 'public' | 'private';
+      rewardsEligible?: boolean;
+    } = {},
   ): void {
     const state = this.sessions.create(roomId);
-    state.rewardsEligible = rewardsEligible;
+    state.roomName = metadata.roomName ?? roomId;
+    state.roomType = metadata.roomType ?? 'public';
+    state.rewardsEligible = metadata.rewardsEligible ?? true;
     state.tankCustomizations = Object.fromEntries(
       players
         .filter(player => player.tankCustomization)
@@ -101,6 +107,16 @@ export class GameLoopService implements OnModuleDestroy {
         else this.gameService.addPlayer(player.userId, player.username, baseColor);
       }
     });
+  }
+
+  roundStats(roomId: string): Record<string, {
+    kills: number;
+    deaths: number;
+    damageDealt: number;
+    damageTaken: number;
+  }> {
+    const state = this.sessions.get(roomId);
+    return state ? Object.fromEntries(state.stats) : {};
   }
 
   start(roomId: string): void {

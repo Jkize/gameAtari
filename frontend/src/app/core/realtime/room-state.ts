@@ -15,6 +15,10 @@ export interface RoomState {
     username: string;
     connected: boolean;
     alive?: boolean;
+    roundsPlayed?: number;
+    roundWins?: number;
+    kills?: number;
+    damageDealt?: number;
   }>;
 }
 

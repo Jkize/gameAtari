@@ -60,4 +60,29 @@ describe('PrivateRoomPanelComponent', () => {
     expect(component.remainingSeconds()).toBe(240);
     expect(component.isClosingSoon()).toBe(false);
   });
+
+  it('ranks room players by wins, kills and damage without a points system', () => {
+    const component = new PrivateRoomPanelComponent();
+    component.room = room();
+    component.room.players = [
+      { userId: 'a', username: 'Alpha', connected: true, roundWins: 1, kills: 5, damageDealt: 500 },
+      { userId: 'b', username: 'Bravo', connected: true, roundWins: 2, kills: 1, damageDealt: 100 },
+      { userId: 'c', username: 'Charlie', connected: true, roundWins: 1, kills: 7, damageDealt: 300 },
+    ];
+
+    expect(component.rankedPlayers().map(player => player.userId)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('shows only one statistic explanation at a time', () => {
+    const component = new PrivateRoomPanelComponent();
+
+    component.toggleStatHelp('wins');
+    expect(component.statHelp()).toBe('wins');
+
+    component.toggleStatHelp('kills');
+    expect(component.statHelp()).toBe('kills');
+
+    component.toggleStatHelp('kills');
+    expect(component.statHelp()).toBeNull();
+  });
 });

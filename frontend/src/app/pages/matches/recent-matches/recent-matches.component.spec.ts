@@ -46,6 +46,10 @@ describe('RecentMatchesComponent', () => {
             getRecentMatches: () => of({
               items: [{
                 matchId: 'm1',
+                roomId: 'public-room',
+                roomName: 'Public Arena',
+                roomType: 'PUBLIC',
+                rewardsEligible: true,
                 playedAt: '2026-07-09T12:00:00.000Z',
                 mapName: 'Arena',
                 playerCount: 4,

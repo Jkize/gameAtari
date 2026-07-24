@@ -25,6 +25,7 @@ describe('RoomsService', () => {
         state: { status: 'playing' },
       })),
       isPlayerAlive: jest.fn(() => true),
+      roundStats: jest.fn(() => ({})),
     };
     const redis = {
       set: jest.fn(async () => undefined),
@@ -422,7 +423,11 @@ describe('RoomsService', () => {
     expect(state.expiresAt).toBeNull();
     jest.advanceTimersByTime(PRIVATE_ROOM_COUNTDOWN_SECONDS * 1000);
     expect(rooms.stateForUser('user-2')?.status).toBe('in_game');
-    expect(gameLoop.prepare).toHaveBeenCalledWith(state.id, expect.any(Array), false);
+    expect(gameLoop.prepare).toHaveBeenCalledWith(state.id, expect.any(Array), {
+      roomName: 'Admin Arena',
+      roomType: 'private',
+      rewardsEligible: false,
+    });
     jest.clearAllTimers();
     jest.useRealTimers();
   });
@@ -573,6 +578,10 @@ describe('RoomsService', () => {
         userId: `filled-${index}`,
         username: `Filled${index}`,
         socketId: null,
+        roundsPlayed: 0,
+        roundWins: 0,
+        kills: 0,
+        damageDealt: 0,
       });
     }
     await expect(rooms.joinPrivate('Full Room', 'secret', socket(17) as never, user(17)))
@@ -631,6 +640,10 @@ describe('RoomsService', () => {
     rooms.startNow('user-1');
     jest.advanceTimersByTime(PRIVATE_ROOM_COUNTDOWN_SECONDS * 1000);
     gameLoop.buildState.mockReturnValue({ players: [{ id: 'user-1', alive: true }] });
+    gameLoop.roundStats.mockReturnValue({
+      'user-1': { kills: 2, deaths: 0, damageDealt: 400, damageTaken: 50 },
+      'user-2': { kills: 0, deaths: 1, damageDealt: 120, damageTaken: 400 },
+    });
 
     await rooms.finish(created.id, 'user-1');
     jest.advanceTimersByTime(ROUND_RESET_MS);
@@ -644,6 +657,20 @@ describe('RoomsService', () => {
       rewardsEligible: false,
     });
     expect(waiting?.expiresAt).not.toBeNull();
+    expect(waiting?.players).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        userId: 'user-1',
+        roundsPlayed: 1,
+        roundWins: 1,
+        kills: 2,
+        damageDealt: 400,
+      }),
+      expect.objectContaining({
+        userId: 'user-2',
+        roundsPlayed: 1,
+        roundWins: 0,
+      }),
+    ]));
     expect(gameLoop.remove).toHaveBeenCalledWith(created.id);
     for (const playerSocket of playerSockets) {
       expect(playerSocket.emit).not.toHaveBeenCalledWith(SOCKET_EVENTS.ROOM.LEFT, expect.anything());

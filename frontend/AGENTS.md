@@ -52,6 +52,15 @@ this.gameState = { ...state, map: this.currentMap };
 
 - Obstacle render state must react to `obstacle:damaged` and `obstacle:destroyed`.
 - Room countdown events can show `STARTING IN Ns`.
+- `room:stateUpdated` member entries may include the private-room accumulated scoreboard: `roundsPlayed`, `roundWins`, `kills`, and `damageDealt`.
+- Keep room scoreboard data out of frequent `gameState`; it belongs to the lower-frequency room state contract.
+
+## Private Room Scoreboard
+
+- The private-room roster is sorted by wins, kills, damage dealt, then username.
+- Its compact columns are `W` (rounds won) and `K` (kills), with one accessible information control per column.
+- Prevent horizontal roster scrolling: the player identity column shrinks/ellipsizes while `W` and `K` remain fixed. Vertical scrolling is allowed when many members exceed the available height.
+- Do not invent a points system. Wins are the primary ranking metric until explicit scoring rules are designed.
 
 ## Rewards UI
 
@@ -61,9 +70,11 @@ this.gameState = { ...state, map: this.currentMap };
 - Do not infer or construct Solscan URLs in the frontend. Use `solscanUrl` returned by the backend and open links with safe new-tab attributes.
 - Reward history routes:
   - `/rewards/me` calls `GET /rewards/me/history` with auth and cursor pagination.
-  - `/matches/recent` calls `GET /rewards/matches/recent`.
-  - `/matches/:matchId` calls `GET /rewards/matches/:matchId`.
+  - `/matches/recent` is guarded and calls authenticated `GET /rewards/matches/recent`.
+  - `/matches/:matchId` calls authenticated `GET /rewards/me/matches/:matchId`; that endpoint allows any public match and only participant-owned private matches.
 - Histories load at most 50 rows per backend page and append more when `nextCursor` exists.
+- Every history/detail route requires authentication. Recent/global history contains public matches only. Personal history contains public and private matches and exposes `roomName`, `roomType`, and gameplay statistics.
+- Do not render reward badges, amounts, ineligibility reasons, or Solscan links when `rewardsEligible` is false. Private-room cards do not display a negative “No rewards” badge.
 - Personal history may show specific ineligibility reasons; public history should show public payment/eligibility state without internal errors.
 
 ## Input Rules

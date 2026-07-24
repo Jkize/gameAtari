@@ -40,12 +40,20 @@ export class RewardsService {
 
   getRecentMatches(cursor?: string | null): Observable<PagedResult<PublicMatchHistoryItem>> {
     return this.http.get<PagedResult<PublicMatchHistoryItem>>(`${environment.backendUrl}/rewards/matches/recent`, {
+      headers: this.authHeaders(),
       params: this.cursorParams(cursor),
+      withCredentials: true,
     });
   }
 
   getMatchDetail(matchId: string): Observable<PublicMatchDetail> {
-    return this.http.get<PublicMatchDetail>(`${environment.backendUrl}/rewards/matches/${encodeURIComponent(matchId)}`);
+    return this.http.get<PublicMatchDetail>(
+      `${environment.backendUrl}/rewards/me/matches/${encodeURIComponent(matchId)}`,
+      {
+        headers: this.authHeaders(),
+        withCredentials: true,
+      },
+    );
   }
 
   private cursorParams(cursor?: string | null): HttpParams {

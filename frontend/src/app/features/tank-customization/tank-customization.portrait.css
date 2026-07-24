@@ -1,0 +1,261 @@
+@media (orientation: portrait) and (max-width: 900px) {
+  .customization-dialog {
+    height: calc(100dvh - 20px);
+    max-height: none;
+    overflow: hidden;
+  }
+
+  .lab-header {
+    min-height: 0;
+    padding: 10px 14px;
+    gap: 8px 12px;
+  }
+
+  .lab-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .editor-tabs {
+    gap: 5px;
+  }
+
+  .editor-tab {
+    min-height: 38px;
+    padding: 6px 10px;
+    border-radius: 4px;
+  }
+
+  .editor-workspace {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .editor-preview {
+    display: grid;
+    grid-template-columns: minmax(140px, 0.85fr) minmax(0, 1.15fr);
+    grid-template-rows: auto 1fr;
+    gap: 10px 14px;
+    align-items: center;
+    min-height: 0;
+    padding: 16px 18px;
+  }
+
+  .section-heading {
+    grid-column: 2;
+    align-self: end;
+  }
+
+  .tank-stage--editor {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    width: min(38vw, 260px);
+    margin: 0 auto;
+  }
+
+  .selected-part-summary {
+    grid-column: 2;
+    align-self: start;
+    min-width: 0;
+    padding: 10px 12px;
+  }
+
+  .editor-controls {
+    padding: 16px 18px;
+  }
+
+  .control-panel-heading {
+    padding-bottom: 12px;
+  }
+
+  .control-columns {
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 0;
+  }
+
+  .control-section {
+    padding: 14px 0;
+  }
+
+  .part-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .part-option {
+    grid-template-columns: 24px minmax(0, 1fr);
+    min-height: 58px;
+    padding: 8px;
+  }
+
+  .part-option > i {
+    font-size: 1.1rem;
+  }
+
+  .color-value-row {
+    grid-template-columns: minmax(150px, 1fr) auto;
+  }
+
+  .rgb-values > span {
+    min-width: 42px;
+    padding: 5px 6px;
+  }
+
+  .quick-title {
+    margin-top: 14px;
+  }
+
+  .preset-list {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .preset {
+    width: 100%;
+    max-width: 34px;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .dialog-actions {
+    min-height: 58px;
+    padding: 8px 14px;
+  }
+
+  .dialog-actions > p {
+    display: none;
+  }
+
+  .dialog-actions > div {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 600px) {
+  :host-context([data-ui-version='2']) .dialog-backdrop {
+    padding:
+      max(0px, env(safe-area-inset-top))
+      max(0px, env(safe-area-inset-right))
+      max(0px, env(safe-area-inset-bottom))
+      max(0px, env(safe-area-inset-left));
+  }
+
+  .customization-dialog {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .lab-brand p {
+    font-size: 0.78rem;
+  }
+
+  .editor-preview {
+    grid-template-columns: minmax(126px, 0.8fr) minmax(0, 1.2fr);
+    gap: 8px 12px;
+    min-height: 190px;
+    padding: 14px;
+  }
+
+  .tank-stage--editor {
+    width: min(38vw, 170px);
+  }
+
+  .section-heading h2 {
+    font-size: 0.98rem;
+  }
+
+  .selected-part-summary {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .selected-part-summary > span {
+    width: 26px;
+    height: 26px;
+  }
+
+  .selected-part-summary p {
+    font-size: 0.64rem;
+  }
+
+  .editor-controls {
+    min-height: 370px;
+    padding: 14px;
+  }
+
+  .part-selector {
+    gap: 6px;
+  }
+
+  .part-option {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    min-height: 66px;
+    padding: 7px 4px;
+    text-align: center;
+  }
+
+  .part-option small {
+    display: none;
+  }
+
+  .part-option strong {
+    font-size: 0.58rem;
+  }
+
+  .color-value-row {
+    grid-template-columns: minmax(126px, 1fr) auto;
+    gap: 8px;
+  }
+
+  .large-picker {
+    gap: 8px;
+    min-height: 52px;
+    padding: 7px 9px;
+    font-size: 0.74rem;
+  }
+
+  .picker-color {
+    width: 32px;
+    height: 32px;
+  }
+
+  .rgb-values {
+    gap: 3px;
+  }
+
+  .rgb-values > span {
+    min-width: 35px;
+    padding: 4px;
+    font-size: 0.68rem;
+  }
+
+  .preset-list {
+    gap: 6px;
+  }
+
+  .dialog-actions {
+    padding: 8px 10px;
+  }
+
+  .dialog-actions > div {
+    gap: 6px;
+  }
+
+  :host-context([data-ui-version='2'])
+    .dialog-actions
+    app-queue-countdown-button {
+    grid-column: auto;
+  }
+
+  .reset-button,
+  .save-button {
+    min-height: 38px;
+    padding: 7px 9px;
+    font-size: 0.7rem;
+  }
+}

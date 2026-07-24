@@ -11,6 +11,8 @@ const es = {
   'rewards.common.victory': 'Victoria',
   'rewards.common.loadMore': 'Cargar más',
   'rewards.common.retry': 'Reintentar',
+  'rewards.common.publicRoom': 'PÚBLICA',
+  'rewards.common.privateRoom': 'PRIVADA',
   'rewards.myMatches.title': 'Mis partidas',
   'rewards.myMatches.loadingAriaLabel': 'Cargando historial',
   'rewards.myMatches.emptyState': 'Todavía no tienes partidas registradas.',
@@ -24,6 +26,8 @@ const es = {
   'rewards.myMatches.viewMatch': 'Ver partida',
   'rewards.myMatches.filterAll': 'Todos',
   'rewards.myMatches.filterVictories': 'Victorias',
+  'rewards.myMatches.filterPublic': 'Públicas',
+  'rewards.myMatches.filterPrivate': 'Privadas',
   'rewards.myMatches.filterRewarded': 'Con premio',
   'rewards.myMatches.filterUnrewarded': 'Sin premio',
   'rewards.myMatches.filterPending': 'Pendientes',
@@ -31,6 +35,7 @@ const es = {
   'rewards.myMatches.filteredEmpty': 'No hay partidas con este filtro entre los resultados cargados.',
   'rewards.myMatches.summaryLoadedCount': 'Cargadas',
   'rewards.myMatches.summaryVictories': 'Victorias',
+  'rewards.myMatches.summaryKills': 'Eliminaciones',
   'rewards.myMatches.summaryRewarded': 'Con premio',
   'rewards.myMatches.summaryCaption': 'Sobre las partidas cargadas',
   'rewards.status.notEligible': 'No elegible',
@@ -43,6 +48,12 @@ const es = {
 
 describe('MyMatchesComponent', () => {
   const setup = async (items: unknown[]) => {
+    const normalizedItems = items.map(item => ({
+      roomId: 'room-1',
+      roomType: 'PUBLIC',
+      rewardsEligible: true,
+      ...item as object,
+    }));
     await TestBed.configureTestingModule({
       imports: [
         MyMatchesComponent,
@@ -53,7 +64,7 @@ describe('MyMatchesComponent', () => {
       ],
       providers: [
         provideRouter([]),
-        { provide: RewardsService, useValue: { getMyMatches: () => of({ items }) } },
+        { provide: RewardsService, useValue: { getMyMatches: () => of({ items: normalizedItems }) } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(MyMatchesComponent);
@@ -167,5 +178,34 @@ describe('MyMatchesComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Sin resultados');
+  });
+
+  it('shows private matches without reward-disabled messaging and filters by room type', async () => {
+    const fixture = await setup([{
+      matchId: 'private-match',
+      roomId: 'private-room',
+      roomName: 'Squad Room',
+      roomType: 'PRIVATE',
+      rewardsEligible: false,
+      playedAt: '2026-07-09T12:00:00.000Z',
+      placement: 1,
+      playerCount: 2,
+      kills: 3,
+      damageDealt: 250,
+      winner: true,
+      reward: null,
+    }]);
+
+    expect(fixture.nativeElement.textContent).toContain('Squad Room');
+    expect(fixture.nativeElement.textContent).toContain('PRIVADA');
+    expect(fixture.nativeElement.textContent).not.toContain('Sin premio');
+
+    fixture.componentInstance.setFilter('private');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredItems()).toHaveLength(1);
+
+    fixture.componentInstance.setFilter('public');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredItems()).toHaveLength(0);
   });
 });

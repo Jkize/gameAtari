@@ -27,9 +27,18 @@ describe('GameLoopService room metadata', () => {
       {} as never,
     );
 
-    loop.prepare('private-room', [{ userId: 'user-1', username: 'Pilot1' }], false);
+    loop.prepare('private-room', [{ userId: 'user-1', username: 'Pilot1' }], {
+      roomName: 'Squad Room',
+      roomType: 'private',
+      rewardsEligible: false,
+    });
 
     expect(sessions.require('private-room').rewardsEligible).toBe(false);
+    expect(sessions.require('private-room')).toEqual(expect.objectContaining({
+      roomName: 'Squad Room',
+      roomType: 'private',
+      roundId: expect.any(String),
+    }));
     expect(gameService.reset).toHaveBeenCalledTimes(1);
     expect(mapService.createMap).toHaveBeenCalledWith(1);
     expect(gameService.addPlayer).toHaveBeenCalledWith('user-1', 'Pilot1');
@@ -116,5 +125,59 @@ describe('GameLoopService room metadata', () => {
     expect(gameService.status).toBe('finished');
     expect(state.endedAt).toBeInstanceOf(Date);
     expect(finished).toHaveBeenCalledWith('room-1', 'winner');
+  });
+
+  it('returns a snapshot of the authoritative round statistics', () => {
+    const sessions = new GameSessionsService(new GameRuntimeContext());
+    const state = sessions.create('room-stats');
+    state.stats.set('user-1', {
+      kills: 3,
+      deaths: 1,
+      damageDealt: 900,
+      damageTaken: 250,
+    });
+    const loop = new GameLoopService(
+      sessions,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    expect(loop.roundStats('room-stats')).toEqual({
+      'user-1': {
+        kills: 3,
+        deaths: 1,
+        damageDealt: 900,
+        damageTaken: 250,
+      },
+    });
+  });
+
+  it('returns empty round statistics when the game session does not exist', () => {
+    const sessions = new GameSessionsService(new GameRuntimeContext());
+    const loop = new GameLoopService(
+      sessions,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+
+    expect(loop.roundStats('missing-room')).toEqual({});
   });
 });

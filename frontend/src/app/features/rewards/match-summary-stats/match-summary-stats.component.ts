@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { PersonalMatchHistoryItem } from '../rewards.models';
-import { rewardStatusClass } from '../rewards-ui';
 
 @Component({
   selector: 'app-match-summary-stats',
@@ -21,7 +20,7 @@ export class MatchSummaryStatsComponent {
     return this.items.filter(item => item.winner === true).length;
   }
 
-  get rewardedCount(): number {
-    return this.items.filter(item => rewardStatusClass(item.reward?.status) === 'ok').length;
+  get killsCount(): number {
+    return this.items.reduce((total, item) => total + item.kills, 0);
   }
 }

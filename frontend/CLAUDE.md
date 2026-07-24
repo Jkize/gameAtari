@@ -30,6 +30,14 @@ Components with separate `.ts`, `.html`, and `.css` files live in dedicated comp
 - Apply obstacle events to cached map.
 - Send input at 60 Hz while playing.
 - Do not simulate authoritative collisions, HP, damage, deaths, map mutation, or winners.
+- Render accumulated private-room `W`/`K` scoreboard values from `room:stateUpdated`; never calculate those totals authoritatively in the client.
+
+## Match History And Room UI
+
+- Every history/detail route requires authentication. Personal history includes public and private matches; global recent history includes public matches only.
+- Match responses expose `roomName`, `roomType`, and `rewardsEligible`. These fields are independent.
+- Private/non-reward-eligible matches show gameplay results without reward-disabled/ineligible messaging.
+- The private roster uses fixed `W` and `K` columns and must not create horizontal scrolling; long player identities ellipsize first.
 
 ## Commands
 

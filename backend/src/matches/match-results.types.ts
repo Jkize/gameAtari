@@ -10,7 +10,10 @@ export interface CompletedMatchPlayerResult {
 }
 
 export interface CompletedMatchResult {
+  roundId: string;
   roomId: string;
+  roomName: string;
+  roomType: 'public' | 'private';
   rewardsEligible: boolean;
   mapName?: string;
   winnerUserId: string | null;

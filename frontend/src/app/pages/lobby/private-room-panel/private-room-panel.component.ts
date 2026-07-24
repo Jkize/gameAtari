@@ -19,6 +19,7 @@ export class PrivateRoomPanelComponent implements OnInit, OnDestroy {
   @Output() leaveRequested = new EventEmitter<void>();
 
   readonly now = signal(Date.now());
+  readonly statHelp = signal<'wins' | 'kills' | null>(null);
   private timer?: number;
 
   ngOnInit(): void {
@@ -35,6 +36,19 @@ export class PrivateRoomPanelComponent implements OnInit, OnDestroy {
 
   connectedPlayers(): number {
     return this.room.players?.filter(player => player.connected).length ?? 0;
+  }
+
+  rankedPlayers(): NonNullable<RoomState['players']> {
+    return [...(this.room.players ?? [])].sort((left, right) =>
+      (right.roundWins ?? 0) - (left.roundWins ?? 0)
+      || (right.kills ?? 0) - (left.kills ?? 0)
+      || (right.damageDealt ?? 0) - (left.damageDealt ?? 0)
+      || left.username.localeCompare(right.username),
+    );
+  }
+
+  toggleStatHelp(stat: 'wins' | 'kills'): void {
+    this.statHelp.update(current => current === stat ? null : stat);
   }
 
   canStart(): boolean {

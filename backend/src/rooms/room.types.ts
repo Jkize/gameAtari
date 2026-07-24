@@ -6,6 +6,10 @@ export interface RoomMember {
   username: string;
   socketId: string | null;
   disconnectedAt?: number;
+  roundsPlayed: number;
+  roundWins: number;
+  kills: number;
+  damageDealt: number;
 }
 
 export interface GameRoom {
@@ -40,5 +44,14 @@ export interface RoomPublicState {
   maxPlayers: number;
   countdownSeconds: number | null;
   expiresAt: number | null;
-  players: Array<{ userId: string; username: string; connected: boolean; alive: boolean }>;
+  players: Array<{
+    userId: string;
+    username: string;
+    connected: boolean;
+    alive: boolean;
+    roundsPlayed: number;
+    roundWins: number;
+    kills: number;
+    damageDealt: number;
+  }>;
 }

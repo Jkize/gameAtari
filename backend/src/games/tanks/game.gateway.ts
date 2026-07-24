@@ -417,13 +417,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     client: AuthenticatedSocket,
     room: {
       id: string;
+      name: string;
+      type: 'public' | 'private';
       rewardsEligible: boolean;
       players: Array<{ userId: string; username: string }>;
     },
   ): void {
     if (!this.isDevGameMode()) return;
     if (!this.gameLoop.hasSession(room.id)) {
-      this.gameLoop.prepare(room.id, room.players, room.rewardsEligible);
+      this.gameLoop.prepare(room.id, room.players, {
+        roomName: room.name,
+        roomType: room.type,
+        rewardsEligible: room.rewardsEligible,
+      });
     } else {
       this.gameLoop.addPlayer(
         room.id,

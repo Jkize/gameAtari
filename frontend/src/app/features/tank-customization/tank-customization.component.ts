@@ -30,7 +30,10 @@ const MODAL_HISTORY_STATE_KEY = 'tankCustomizationEditor';
   standalone: true,
   imports: [TranslocoPipe, TankAppearancePreviewComponent, QueueCountdownButtonComponent],
   templateUrl: './tank-customization.component.html',
-  styleUrl: './tank-customization.component.css',
+  styleUrls: [
+    './tank-customization.component.css',
+    './tank-customization.portrait.css',
+  ],
 })
 export class TankCustomizationComponent {
   @Input() showLauncher = true;

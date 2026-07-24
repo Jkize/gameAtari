@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+## Context Maintenance
+
+- Every code, schema, configuration, contract, or user-visible behavior change must update the pertinent `AGENTS.md` and `CLAUDE.md` context files in the same change.
+- Update the closest module context for implementation details and this repository-root context when a cross-cutting contract or project-wide rule changes.
+- Before finishing, verify that affected context documents match the implementation and remove obsolete guidance.
+
 ## Project Overview
 
 Tank Arena is a real-time multiplayer browser game.
@@ -75,6 +81,16 @@ The game loop separates simulation frequency from network frequency.
 - Phaser can render 60 FPS, but without interpolation it visually follows the latest 30 Hz authoritative snapshot.
 
 Frequent `gameState` does not include the map. Full detail (payload shapes, one-time map delivery) is in `backend/src/games/tanks/CLAUDE.md`.
+
+Accumulated private-room round statistics travel through `room:stateUpdated`, not frequent `gameState`. The in-memory room scoreboard survives private rematches but resets when the room is destroyed or the backend restarts; durable per-round history remains in PostgreSQL.
+
+## Match History Contract
+
+- Every completed round has a unique `roundId`; `Match.roomId` is a non-unique grouping key for rematches in the same room.
+- Matches snapshot `roomName`, `roomType: PUBLIC | PRIVATE`, and `rewardsEligible`.
+- Room visibility and reward eligibility are independent decisions.
+- All history/detail browsing requires authentication. Global history/detail includes only public matches; private match detail is available only to participants.
+- Personal history contains both types, while private matches omit reward status and amount presentation.
 
 ## Socket.IO Events
 

@@ -47,7 +47,10 @@ export class MatchesService {
       });
 
       const matchId = await this.matchResults.persistCompleted({
+        roundId: state.roundId,
         roomId,
+        roomName: state.roomName,
+        roomType: state.roomType,
         rewardsEligible: state.rewardsEligible,
         mapName: state.map?.name,
         winnerUserId,

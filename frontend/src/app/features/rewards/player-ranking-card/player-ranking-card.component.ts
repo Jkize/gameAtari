@@ -14,4 +14,5 @@ import { SolscanLinkComponent } from '../solscan-link/solscan-link.component';
 export class PlayerRankingCardComponent {
   @Input() player!: PublicMatchDetailPlayer;
   @Input() isCurrentUser = false;
+  @Input() showRewards = true;
 }

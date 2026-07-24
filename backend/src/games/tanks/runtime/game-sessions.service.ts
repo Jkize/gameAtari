@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { GameRuntimeContext } from './game-runtime-context.service';
 import { GameRuntimeState } from './game-runtime.types';
 
@@ -12,7 +13,10 @@ export class GameSessionsService {
     const existing = this.sessions.get(roomId);
     if (existing) return existing;
     const state: GameRuntimeState = {
+      roundId: randomUUID(),
       roomId,
+      roomName: roomId,
+      roomType: 'public',
       rewardsEligible: true,
       players: new Map(),
       bullets: [],

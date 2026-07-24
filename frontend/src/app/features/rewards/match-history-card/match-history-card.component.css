@@ -21,6 +21,10 @@ h2 {
   font-size: 15px;
   font-weight: 500;
 }
+.room-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.room-type { padding: 2px 7px; color: var(--color-success-text); background: color-mix(in srgb, var(--color-success) 12%, transparent); border-radius: var(--radius-pill); font-size: 10px; font-weight: 700; letter-spacing: 0.05em; }
+.room-type.private { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.map-name { margin: 3px 0 0; color: var(--color-text-muted); font-size: 12px; }
 
 .summary {
   margin: 6px 0 0;
@@ -39,7 +43,7 @@ h2 {
   font-weight: 500;
 }
 
-.reward {
+.result {
   display: grid;
   gap: 6px;
   justify-items: end;
@@ -67,7 +71,7 @@ h2 {
   .row {
     grid-template-columns: 1fr;
   }
-  .reward {
+  .result {
     justify-items: start;
     text-align: left;
   }

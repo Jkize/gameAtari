@@ -14,4 +14,5 @@ import { SolscanLinkComponent } from '../solscan-link/solscan-link.component';
 export class PlayerRankingTableComponent {
   @Input() players: PublicMatchDetailPlayer[] = [];
   @Input() currentUserId: string | null = null;
+  @Input() showRewards = true;
 }

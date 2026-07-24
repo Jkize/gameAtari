@@ -22,8 +22,12 @@
         <article class="match">
           <header>
             <div>
-              <h2>{{ item.mapName || ('rewards.common.mapFallback' | transloco) }}</h2>
+              <h2>{{ item.roomName || item.mapName || ('rewards.common.mapFallback' | transloco) }}</h2>
               <p class="meta">
+                @if (item.roomName && item.mapName) {
+                  <span>{{ item.mapName }}</span>
+                  <span>&middot;</span>
+                }
                 <time>{{ item.playedAt | date:'medium' }}</time>
                 <span>&middot;</span>
                 <span>{{ 'rewards.common.participants' | transloco: { count: item.playerCount } }}</span>
@@ -34,7 +38,7 @@
               <i class="ti ti-arrow-right" aria-hidden="true"></i>
             </a>
           </header>
-          <app-match-podium [podium]="item.podium" />
+          <app-match-podium [podium]="item.podium" [showRewards]="item.rewardsEligible" />
         </article>
       }
     </section>

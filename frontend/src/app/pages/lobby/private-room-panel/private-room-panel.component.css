@@ -17,24 +17,31 @@ h3 { font-size: 0.82rem; }
 .badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .badge { padding: 4px 8px; border-radius: var(--radius-pill); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; }
 .badge.private { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
-.badge.no-rewards { color: var(--color-text-muted); background: var(--color-bg-surface); border: 1px solid var(--color-border); }
 .room-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--color-text-secondary); font-size: 0.78rem; }
 .room-meta span { display: inline-flex; align-items: center; gap: 5px; }
 .room-meta .warning { color: var(--color-warning); font-weight: 600; }
-.roster { overflow: hidden; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-control); }
+.roster { min-width: 0; overflow: hidden; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-control); }
 .roster-heading { display: flex; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--color-border); }
 .roster-heading span { color: var(--color-text-muted); font-size: 0.72rem; }
+.roster-columns, li { display: grid; grid-template-columns: minmax(0, 1fr) 42px 42px; align-items: center; }
+.roster-columns { min-height: 28px; padding: 0 8px 0 12px; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; }
+.stat-column { display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
+.stat-column button { display: inline-grid; place-items: center; width: 18px; height: 18px; padding: 0; color: var(--color-text-muted); background: transparent; border: 0; border-radius: 50%; cursor: pointer; }
+.stat-column button:hover, .stat-column button[aria-pressed='true'] { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.stat-help { margin: 0; padding: 7px 12px; color: var(--color-text-secondary); background: color-mix(in srgb, var(--color-accent) 6%, var(--color-bg-surface)); border-bottom: 1px solid var(--color-border); font-size: 0.68rem; }
 ul { display: grid; gap: 0; padding: 0; margin: 0; list-style: none; }
-li { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); font-size: 0.8rem; }
+li { min-width: 0; min-height: 42px; padding: 8px; border-bottom: 1px solid var(--color-border); font-size: 0.8rem; }
 li:last-child { border-bottom: 0; }
 li.disconnected { opacity: 0.58; }
+.player-identity { display: flex; align-items: center; min-width: 0; gap: 7px; overflow: hidden; }
 .presence { width: 8px; height: 8px; background: var(--color-text-muted); border-radius: 50%; }
 .presence.online { background: var(--color-success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 15%, transparent); }
-li strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-identity strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .self, .admin { padding: 2px 6px; border-radius: var(--radius-pill); font-size: 0.62rem; font-weight: 600; }
 .self { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
 .admin { display: inline-flex; align-items: center; gap: 3px; color: var(--color-gold-text); background: var(--color-gold-bg); }
-.connection-label { margin-left: auto; color: var(--color-text-muted); font-size: 0.67rem; }
+.stat-value { color: var(--color-text-secondary); font-family: var(--font-mono); font-size: 0.72rem; text-align: center; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .empty { color: var(--color-text-muted); justify-content: center; }
 .status-copy { text-align: center; color: var(--color-text-secondary); font-size: 0.8rem; }
 .countdown { display: grid; justify-items: center; gap: 5px; padding: 24px; color: var(--color-text-secondary); background: var(--color-bg-surface); border-radius: var(--radius-control); }
@@ -70,7 +77,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .private-room-card--compact .roster {
   max-height: 300px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .private-room-card--compact .connection-label {
@@ -151,8 +159,22 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   .private-room-card--compact li {
     min-height: 27px;
     padding: 3px 5px;
-    gap: 4px;
     font-size: 0.56rem;
+  }
+
+  .private-room-card--compact :is(.roster-columns, li) {
+    grid-template-columns: minmax(0, 1fr) 28px 28px;
+  }
+
+  .private-room-card--compact .roster-columns {
+    min-height: 20px;
+    padding: 0 4px;
+    font-size: 0.45rem;
+  }
+
+  .private-room-card--compact .stat-column button {
+    width: 14px;
+    height: 14px;
   }
 
   .private-room-card--compact :is(.self, .admin) {

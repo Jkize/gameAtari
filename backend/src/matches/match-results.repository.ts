@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MatchStatus } from '@prisma/client';
+import { MatchStatus, RoomType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CompletedMatchResult } from './match-results.types';
 
@@ -10,9 +10,12 @@ export class MatchResultsRepository {
   async persistCompleted(result: CompletedMatchResult): Promise<string> {
     return this.prisma.$transaction(async tx => {
       const match = await tx.match.upsert({
-        where: { roomId: result.roomId },
+        where: { roundId: result.roundId },
         create: {
+          roundId: result.roundId,
           roomId: result.roomId,
+          roomName: result.roomName,
+          roomType: result.roomType === 'private' ? RoomType.PRIVATE : RoomType.PUBLIC,
           rewardsEligible: result.rewardsEligible,
           mapName: result.mapName,
           status: MatchStatus.COMPLETED,

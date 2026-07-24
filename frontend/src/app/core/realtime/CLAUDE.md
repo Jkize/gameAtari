@@ -11,3 +11,5 @@ Socket.IO connection ownership and the frontend's copy of the wire event contrac
 `frontend/src/app/core/realtime/socket.ts` owns one long-lived socket instance across route/component changes (`onCreated` callbacks let route-independent listeners survive component destruction and reconnects). Auth payload is `{ token, guestId }`; `guestId` is generated once via `crypto.randomUUID()` per manager instance and persists across reconnects. On a recoverable auth error (expired/missing/invalid token), it refreshes the token and reconnects the same socket rather than creating a new one — don't bypass this by manually calling `io()` elsewhere.
 
 Matchmaking UI and route-independent queue listeners live in `features/matchmaking`; transport ownership and wire contracts stay here.
+
+`room:stateUpdated` is also the transport for the private-room accumulated scoreboard. Member state may include `roundsPlayed`, `roundWins`, `kills`, and `damageDealt`; these values are server-owned and must not be recalculated from client game snapshots. They are intentionally absent from frequent `gameState`.

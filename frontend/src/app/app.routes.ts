@@ -94,6 +94,7 @@ export const routes: Routes = [
       },
       {
         path: 'matches/recent',
+        canActivate: [roleGuard],
         loadComponent: () =>
           import('@pages/matches/recent-matches/recent-matches.component').then(
             (module) => module.RecentMatchesComponent,
@@ -124,6 +125,7 @@ export const routes: Routes = [
       },
       {
         path: 'matches/:matchId',
+        canActivate: [roleGuard],
         loadComponent: () =>
           import('@pages/matches/match-detail/match-detail.component').then(
             (module) => module.MatchDetailComponent,

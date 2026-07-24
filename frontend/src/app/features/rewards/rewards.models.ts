@@ -10,6 +10,8 @@ export type RewardStatus =
   | 'MANUAL_REVIEW'
   | 'CANCELLED';
 
+export type MatchRoomType = 'PUBLIC' | 'PRIVATE';
+
 export type RewardIneligibilityReason =
   | 'USER_NOT_AUTHENTICATED'
   | 'WALLET_NOT_LINKED'
@@ -37,6 +39,10 @@ export interface RewardSummary {
 
 export interface PersonalMatchHistoryItem {
   matchId: string;
+  roomId: string;
+  roomName?: string | null;
+  roomType: MatchRoomType;
+  rewardsEligible: boolean;
   playedAt: string;
   mapName?: string | null;
   placement: number;
@@ -57,6 +63,10 @@ export interface PublicRewardPlayer {
 
 export interface PublicMatchHistoryItem {
   matchId: string;
+  roomId: string;
+  roomName?: string | null;
+  roomType: MatchRoomType;
+  rewardsEligible: boolean;
   playedAt: string;
   mapName?: string | null;
   playerCount: number;
@@ -69,13 +79,19 @@ export interface PublicMatchDetailPlayer {
   avatarUrl?: string | null;
   placement: number;
   kills: number;
+  deaths: number;
   damageDealt: number;
+  damageTaken: number;
   winner: boolean;
   reward?: RewardSummary | null;
 }
 
 export interface PublicMatchDetail {
   matchId: string;
+  roomId: string;
+  roomName?: string | null;
+  roomType: MatchRoomType;
+  rewardsEligible: boolean;
   playedAt: string;
   mapName?: string | null;
   playerCount: number;

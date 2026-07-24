@@ -13,6 +13,7 @@ import { SolscanLinkComponent } from '../solscan-link/solscan-link.component';
 })
 export class MatchPodiumComponent {
   @Input() podium: PublicRewardPlayer[] = [];
+  @Input() showRewards = true;
 
   initials(username?: string | null): string {
     return (username || 'P').slice(0, 2).toUpperCase();

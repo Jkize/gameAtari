@@ -41,18 +41,27 @@ export class RewardsHistoryController {
     return this.history.personalHistory(auth.userId, cursor);
   }
 
-  /** Public feed of recent matches with podium/reward info. Unauthenticated. */
-  @Public()
+  /** Authenticated match detail. Private matches are visible only to their participants. */
+  @Get('me/matches/:matchId')
+  @Throttle({ default: { limit: 120, ttl: seconds(60) } })
+  personalMatchDetail(
+    @RequestUser() auth: AuthenticatedUser,
+    @Param('matchId') matchId: string,
+  ) {
+    this.assertValidMatchId(matchId);
+    return this.history.personalMatchDetail(matchId, auth.userId);
+  }
+
+  /** Authenticated feed of recent public matches with podium/reward info. */
   @Get('matches/recent')
-  @Header('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=30')
+  @Header('Cache-Control', 'private, no-store')
   @Throttle({ default: { limit: 60, ttl: seconds(60) } })
   recentMatches(@Query('cursor') cursor?: string) {
     this.assertValidCursor(cursor);
     return this.history.recentMatches(cursor);
   }
 
-  /** Public detail view of a single match's players and rewards. Unauthenticated. */
-  @Public()
+  /** Authenticated detail view of a public match's players and rewards. */
   @Get('matches/:matchId')
   @Throttle({ default: { limit: 120, ttl: seconds(60) } })
   matchDetail(@Param('matchId') matchId: string) {
