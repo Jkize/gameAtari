@@ -19,7 +19,7 @@ export const POWER_UP_RADIUS = 18;
 export const MAX_ACTIVE_POWER_UPS_BY_PLAYER_TIER = {
   4: 3,
   8: 4,
-  16: 5,
+  16: 8,
 } as const;
 
 export const POWER_UP_ASSET_ID: Record<PowerUpType, string> = {

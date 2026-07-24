@@ -7,9 +7,9 @@ export const PROD_MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 16;
 
 export const COUNTDOWN_TIERS = [
-  { minPlayers: 15, seconds: 10 },
-  { minPlayers: 8, seconds: 20 },
-  { minPlayers: 4, seconds: 40 },
+  { minPlayers: 16, seconds: 10 },
+  { minPlayers: 8, seconds: 15 },
+  { minPlayers: 4, seconds: 30 },
 ] as const;
 
 export const RECONNECT_GRACE_MS = 60_000;
